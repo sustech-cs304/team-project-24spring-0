@@ -1,0 +1,30 @@
+name: Rust
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  dependencies-install:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Install tauri
+      run: |
+        cargo install tauri-cli --force
+        export PATH="$HOME/.cargo/bin:$PATH"
+        cd src-ui && npm install
+
+  build-check:
+    runs-on: [ ubuntu-latest, windows-latest, macos-latest ]
+    steps:
+    - uses: actions/checkout@v3
+    - name: Build
+      run: cargo tauri build
+    #- name: Run tests
+      #run: cargo test --verbose
+

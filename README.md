@@ -1,4 +1,4 @@
 # Moras
 
-A mordern assembly runner
+A modern assembly runner
 
