@@ -1,7 +1,7 @@
 {
   "build": {
-    "beforeBuildCommand": "cd src-ui&&npm run build",
-    "beforeDevCommand": "cd src-ui&&npm run dev",
+    "beforeBuildCommand": "cd src-ui && npm run build",
+    "beforeDevCommand": "cd src-ui && npm run dev",
     "devPath": "http://localhost:3000",
     "distDir": "../src-ui/out"
   },
