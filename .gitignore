@@ -1,1 +1,7 @@
-.vscode
+# editor config
+.vscode/
+.idea/
+.cache/
+
+# debuger storage
+.gdb_history
