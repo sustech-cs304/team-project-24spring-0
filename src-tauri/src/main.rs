@@ -2,6 +2,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod file_io;
+mod middleware;
 mod simulator;
 
 #[tauri::command]
