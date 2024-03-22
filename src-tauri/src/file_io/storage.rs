@@ -1,40 +1,71 @@
 use ropey::Rope;
 use std::fs::File;
 use std::io::{BufReader, BufWriter};
+use std::rc::Rc;
 
-struct Text {
-    data: Rope,
+use crate::interface::file_io::MFile;
+use crate::interface::BasicOp;
+
+struct Text<D> {
+    data: Rc<D>,
     path: String,
-    last_save: u64,
+    last_modified: std::time::SystemTime,
 }
 
-impl Text {
-    pub fn open_file(&mut self, path: &str) -> Result<bool, std::io::Error> {
-        self.data = Rope::from_reader(BufReader::new(File::open(path)?))?;
+impl<D> BasicOp<String, String> for Text<D> {
+    fn get_status(&self) -> String {
+        String::new()
+    }
+
+    fn get_error(&self) -> String {
+        String::new()
+    }
+
+    fn interrupt(&mut self) {}
+}
+
+impl MFile<Rope> for Text<Rope> {
+    //TODO
+    fn open_directory(&self, path: &str) -> bool {
+        //std::fs::read_dir(path)?;
+        true
+    }
+
+    fn create_directory(&self, path: &str) -> bool {
+        //std::fs::create_dir_all(path)?;
+        true
+    }
+
+    fn open_file(&mut self, path: &str) -> bool {
+        //self.data = Rope::from_reader(BufReader::new(File::open(path)?))?;
         self.path = path.to_string();
-        Result::Ok(true)
+        true
     }
 
-    pub fn from_str(&mut self, text: &str) {
-        self.data = Rope::from_str(text);
+    fn from_str(&mut self, text: &str) {
+        //self.data = Rope::from_str(text);
     }
 
-    pub fn save_file(&self) -> Result<bool, std::io::Error> {
-        let file = File::create(&self.path)?;
-        let mut writer = BufWriter::new(file);
-        self.data.write_to(&mut writer)?;
-        Result::Ok(true)
+    fn save_file(&self) -> bool {
+        //let file = File::create(&self.path)?;
+        //let mut writer = BufWriter::new(file);
+        //self.data.write_to(&mut writer)?;
+        true
     }
 
-    pub fn save_as(&self, path: &str) -> Result<bool, std::io::Error> {
-        let file = File::create(path)?;
-        let mut writer = BufWriter::new(file);
-        self.data.write_to(&mut writer)?;
-        Result::Ok(true)
+    fn set_path(&mut self, path: &str) {
+        self.path = path.to_string();
     }
 
-    pub fn get_rope(&mut self) -> &mut Rope {
-        &mut self.data
+    fn save_as(&self, path: &str) -> bool {
+        //let file = File::create(path)?;
+        //let mut writer = BufWriter::new(file);
+        //self.data.write_to(&mut writer)?;
+        true
+    }
+
+    fn get_storage(&mut self) -> Option<Rc<Rope>> {
+        Some(Rc::clone(&self.data))
     }
 
     //https://docs.rs/ropey/latest/ropey/index.html
