@@ -4,8 +4,8 @@ use super::BasicOp;
 type MemStatus = String;
 type Error = String;
 
-pub trait Simulator<IR, REG>: BasicOp<MemStatus, Error> {
-    fn load_inst(&mut self, ir: &IR) -> bool;
+pub trait Simulator<ER, REG, MS, ERR>: BasicOp<MS, ERR> {
+    fn load_inst(&mut self, ir: &ER) -> bool;
     fn run(&mut self) -> bool;
     fn step(&mut self) -> bool;
     fn reset(&mut self) -> bool;

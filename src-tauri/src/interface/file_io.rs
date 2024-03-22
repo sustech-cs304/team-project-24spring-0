@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use super::BasicOp;
 
-pub trait MFile<D>: BasicOp<String, String> {
+pub trait MFile<D, STA, ERR>: BasicOp<STA, ERR> {
     fn open_directory(&self, path: &str) -> bool;
 
     fn create_directory(&self, path: &str) -> bool;

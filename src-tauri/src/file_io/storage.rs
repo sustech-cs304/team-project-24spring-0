@@ -24,7 +24,7 @@ impl<D> BasicOp<String, String> for Text<D> {
     fn interrupt(&mut self) {}
 }
 
-impl MFile<Rope> for Text<Rope> {
+impl MFile<Rope, String, String> for Text<Rope> {
     //TODO
     fn open_directory(&self, path: &str) -> bool {
         //std::fs::read_dir(path)?;

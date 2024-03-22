@@ -10,8 +10,8 @@ struct Tabs {
 }
 
 struct Tab {
-    text: Box<dyn MFile<Rope>>,
-    parser: Box<dyn Parser<String>>,
-    assembler: Box<dyn Assembler<String, String, String>>,
-    simulator: Box<dyn Simulator<String, String>>,
+    text: Box<dyn MFile<Rope, String, String>>,
+    parser: Box<dyn Parser<Rope, i32, i32, i32>>,
+    assembler: Box<dyn Assembler<i32, i32, i32, i32, i32>>,
+    simulator: Box<dyn Simulator<i32, i32, i32, i32>>,
 }
