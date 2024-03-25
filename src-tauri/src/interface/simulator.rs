@@ -1,16 +1,10 @@
-use super::BasicOp;
-
-//TODO define the status and error type
-type MemStatus = String;
-type Error = String;
-
-pub trait Simulator<ER, REG, MS, ERR>: BasicOp<MS, ERR> {
-    fn load_inst(&mut self, ir: &ER) -> bool;
-    fn run(&mut self) -> bool;
-    fn step(&mut self) -> bool;
-    fn reset(&mut self) -> bool;
-    fn redo(&mut self) -> bool;
-    fn set_breakpoint(&mut self, addr: u64) -> bool;
-    fn remove_breakpoint(&mut self, addr: u64) -> bool;
-    fn set_register(&mut self, reg: REG, value: u64) -> bool;
+pub trait Simulator<EXR, SYSC, REG, ERR> {
+    fn load_inst(&mut self, ir: &EXR) -> Result<bool, ERR>;
+    fn run(&mut self) -> Result<REG, ERR>;
+    fn step(&mut self) -> Result<REG, ERR>;
+    fn reset(&mut self) -> Result<REG, ERR>;
+    fn redo(&mut self) -> Result<REG, ERR>;
+    fn set_breakpoint(&mut self, line_number: u64) -> Result<bool, ERR>;
+    fn remove_breakpoint(&mut self, line_number: u64) -> Result<bool, ERR>;
+    fn syscall_input(&mut self, input: SYSC);
 }

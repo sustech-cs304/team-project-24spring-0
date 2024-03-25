@@ -2,9 +2,7 @@ use ropey::Rope;
 
 use std::rc::Rc;
 
-use super::BasicOp;
-
-pub trait Parser<CODE, OUT, STA, ERR>: BasicOp<STA, ERR> {
-    fn parse(&mut self, code: Rc<CODE>) -> Box<OUT>;
-    fn line_to_addr(&self, line: u64) -> u64;
+pub trait Parser<CODE, COMP, OUT, ERR> {
+    fn parse(&mut self, code: &CODE) -> Result<OUT, ERR>;
+    fn completion(&mut self, code: CODE, pos: (u64, u64)) -> Result<COMP, ERR>;
 }

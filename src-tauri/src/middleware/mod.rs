@@ -1,6 +1,6 @@
 mod backend_test;
 mod frontend_test;
-mod implementation;
+pub mod implementation;
 
 mod middleware_constants {
     pub enum Lint {
