@@ -1,4 +1,4 @@
-name: Build&Test
+name: Moras CI
 
 on:
   push:
@@ -11,7 +11,7 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  Test:
+  Build-Test:
     runs-on: ubuntu-latest
     steps:
 
@@ -21,6 +21,17 @@ jobs:
         run: |
           sudo apt-get update &&
           sudo apt-get install -y libgtk-3-dev libayatana-appindicator3-dev libwebkit2gtk-4.0-dev webkit2gtk-driver xvfb
+
+      - name: Cache Cargo packages
+        uses: actions/cache@v3
+        with:
+          path: |
+           ~/.cargo
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/Cargo.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
 
       - name: Cargo test
         working-directory: ./src-tauri
