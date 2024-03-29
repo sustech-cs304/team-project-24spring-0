@@ -17,7 +17,7 @@ export default function Home() {
 
                       <div className='row-span-5'>
                           <Card className='h-full w-full'>
-                              <CardBody className='h-full w-full'>
+                              <CardBody className='h-full w-full overflow-y-auto'>
                                   <Code/>
                               </CardBody>
                           </Card>

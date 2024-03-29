@@ -1,5 +1,5 @@
 import React from "react";
-// import Editor from '@monaco-editor/react';
+import Editor from '@monaco-editor/react';
 import {Tabs, Tab, Card, CardBody, Textarea} from "@nextui-org/react";
 import {Table, TableHeader, TableBody, TableRow, TableColumn, TableCell} from "@nextui-org/react";
 
@@ -12,11 +12,11 @@ export default function Code() {
                 <Tab key="edit" title="Edit" className="h-full">
                     <Card className="h-full">
                         <CardBody className="h-full">
-                            <textarea
-                                className="h-full w-full border bg-zinc-50 text-gray-700 rounded-lg p-4"
-                                placeholder="Write your code here..."
-                            />
-                            {/*<Editor className='overflow-hidden h-full'/>*/}
+                            {/*<textarea*/}
+                            {/*    className="h-full w-full border bg-zinc-50 text-gray-700 rounded-lg p-4"*/}
+                            {/*    placeholder="Write your code here..."*/}
+                            {/*/>*/}
+                            <Editor language='javascript' className='overflow-hidden h-full'/>
                         </CardBody>
                     </Card>
                 </Tab>
