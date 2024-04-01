@@ -9,11 +9,11 @@ export default function Home() {
   return (
       <main className='h-[calc(100vh-60px)]'>
           <Taskbar/>
-          <div className='grid grid-cols-7 gap-2 p-2 max-h-[calc(100vh-60px)] w-full'>
+          <div className='grid grid-cols-7 gap-4 p-2 max-h-[calc(100vh-60px)] w-full'>
 
               <div className='col-span-5 max-h-[calc(100vh-60px)]'>
 
-                  <div className='grid grid-rows-8 gap-2 h-full grow'>
+                  <div className='grid grid-rows-8 gap-4 h-full grow'>
 
                       <div className='row-span-5'>
                           <Card className='h-full w-full'>
