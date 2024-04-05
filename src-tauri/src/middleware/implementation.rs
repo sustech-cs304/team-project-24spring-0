@@ -1,13 +1,45 @@
-use ropey::Rope;
+// Tab Manage
+pub mod tab_mamagement {
+    use crate::io::file_io;
+    use crate::types::*;
+    use tauri::State;
 
-use crate::interface::{
-    assembler::Assembler, parser::Parser, simulator::Simulator, storage::MFile,
-};
-use std::{collections::HashMap, sync::Mutex};
+    #[tauri::command]
+    pub fn create_tab(tab_map: State<TabMap>, file_path_str: &str) -> (bool, String) {
+        match file_io::read_file(file_path_str) {
+            Ok(data) => {
+                todo!("Create Tab !!!");
+                let mut tab;
+                //let mut tab = Tab {
+                //text: Box::new(Rope::from_str("")),
+                //parser: Box::new(Parser::new()),
+                //assembler: Box::new(Assembler::new()),
+                //simulator: Box::new(Simulator::new()),
+                //};
+                tab_map.insert(file_path_str.to_string(), tab);
+                (true, data)
+            }
+            Err(e) => (false, e),
+        }
+    }
+}
 
-pub struct Tab {
-    text: Box<dyn MFile<Rope, String, String>>,
-    parser: Box<dyn Parser<Rope, i32, i32, i32>>,
-    assembler: Box<dyn Assembler<i32, i32, i32, i32>>,
-    simulator: Box<dyn Simulator<i32, i32, i32, i32>>,
+pub mod frontend_api {
+    use crate::io::file_io;
+
+    #[tauri::command]
+    pub fn read_file(file_path_str: &str) -> (bool, String) {
+        match file_io::read_file(file_path_str) {
+            Ok(data) => (true, data),
+            Err(e) => (false, e),
+        }
+    }
+
+    #[tauri::command]
+    pub fn write_file(file_path_str: &str, data: &str) -> (bool, String) {
+        match file_io::write_file(file_path_str, data) {
+            Ok(_) => (true, "File saved".to_string()),
+            Err(e) => (false, e),
+        }
+    }
 }
