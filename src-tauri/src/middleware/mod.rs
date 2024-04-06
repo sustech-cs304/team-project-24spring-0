@@ -1,5 +1,5 @@
-mod backend_test;
-mod frontend_test;
+pub mod backend_test;
+pub mod frontend_test;
 pub mod implementation;
 
 mod middleware_constants {

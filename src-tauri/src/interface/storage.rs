@@ -1,13 +1,7 @@
-pub trait MFile<D, STA, ERR> {
-    fn open_directory(&self, path: &str) -> Result<Vec<String>, ERR>;
+pub trait MFile<D, STA, ERR>: Send + Sync {
+    fn from_file(&mut self, path: &str) -> Result<bool, ERR>;
 
-    fn create_directory(&self, path: &str) -> Result<bool, ERR>;
-
-    fn open_file(&mut self, path: &str) -> Result<bool, ERR>;
-
-    //fn new_storage(path: &str) -> Option<Rc<D>>;
-
-    fn from_str(&mut self, text: &str);
+    fn from_str(&mut self, text: &str) -> Result<bool, ERR>;
 
     fn save_file(&self) -> Result<bool, ERR>;
 

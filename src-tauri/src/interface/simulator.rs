@@ -1,4 +1,4 @@
-pub trait Simulator<EXR, SYSC, REG, ERR> {
+pub trait Simulator<EXR, SYSC, REG, ERR>: Send + Sync {
     fn load_inst(&mut self, ir: &EXR) -> Result<bool, ERR>;
     fn run(&mut self) -> Result<REG, ERR>;
     fn step(&mut self) -> Result<REG, ERR>;

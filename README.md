@@ -4,7 +4,7 @@
 
 - 在各个分支开发，完成后在 github 提交 pull request，审核后合并到 main 分支
 - 分支命名规则:
-  - feature-xxx（新功能）
+  - feat-xxx（新功能）
   - fix-xxx（修复 bug）
   - refactor-xxx（重构）
   - doc-xxx（文档）
