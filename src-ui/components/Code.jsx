@@ -1,11 +1,45 @@
-import React from "react";
-import Editor from '@monaco-editor/react';
-import {Tabs, Tab, Card, CardBody, Textarea, CardHeader} from "@nextui-org/react";
+import React, {useEffect} from "react";
+import Editor, { useMonaco } from '@monaco-editor/react';
+import {Tabs, Tab, Card, CardBody, Textarea} from "@nextui-org/react";
 import {Table, TableHeader, TableBody, TableRow, TableColumn, TableCell} from "@nextui-org/react";
 import TestPage from "@/components/TestPage";
 
 
 export default function Code() {
+    const monaco = useMonaco()
+    useEffect(() => {
+        if (monaco) {
+            monaco.editor.defineTheme('myTheme', {
+                base: 'vs-dark',
+                inherit: true,
+                rules: [
+                    { token: 'comment',
+                        foreground: 'ffa500',
+                        fontStyle: 'italic underline'
+                    },
+                    { token: 'comment.js',
+                        foreground: '008800',
+                        fontStyle: 'bold'
+                    },
+                    { token: 'comment.css',
+                        foreground: '0000ff'
+                    }
+                ],
+                colors: {
+                    'editor.foreground': '#F8F8F2',
+                    'editor.background': '#272822',
+                    'editor.selectionBackground': '#49483E',
+                    'editor.lineHighlightBackground': '#3E3D32',
+                    'editorCursor.foreground': '#F8F8F0',
+                    'editorWhitespace.foreground': '#3B3A32',
+                    'editorIndentGuide.background': '#3B3A32',
+                    'editorLineNumber.foreground': '#75715E',
+                    'editorLineNumber.activeForeground': '#F8F8F0',
+                    'editorCursor.background': '#A7A7A7'
+                }
+            });
+        }
+    }, [monaco]);
 
     return (
         <div className="flex flex-col h-full">
@@ -13,11 +47,11 @@ export default function Code() {
                 <Tab key="edit" title="Edit" className="h-full">
                     <Card className="h-full">
                         <CardBody className="h-full">
-                            {/*<textarea*/}
-                            {/*    className="h-full w-full border bg-zinc-50 text-gray-700 rounded-lg p-4"*/}
-                            {/*    placeholder="Write your code here..."*/}
-                            {/*/>*/}
-                            <Editor language='javascript' className='overflow-hidden h-full'/>
+                            <Tabs key="small" size="small" aria-label="Tabs sizes">
+                                <Tab key="file1" title="file1.m" className="h-full"> <Editor language='javascript' className='overflow-hidden h-full'/> </Tab>
+                                <Tab key="file2" title="file2.m" className="h-full"> <Editor language='javascript' className='overflow-hidden h-full'/> </Tab>
+                                <Tab key="file3" title="file3.m" className="h-full"> <Editor language='javascript' className='overflow-hidden h-full'/> </Tab>
+                            </Tabs>
                         </CardBody>
                     </Card>
                 </Tab>
