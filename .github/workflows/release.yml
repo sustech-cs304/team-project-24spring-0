@@ -1,10 +1,9 @@
-name: 'publish'
+name: Moras Release
 
 on:
-  push:
-    branches:
-      - feat-CD
-
+  release:
+    types: [published ]
+    
 jobs:
   publish-tauri:
     permissions:
