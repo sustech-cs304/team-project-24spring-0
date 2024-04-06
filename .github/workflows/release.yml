@@ -39,6 +39,7 @@ jobs:
         with:
           node-version: lts/*
           cache: 'npm' # Set this to npm, yarn or pnpm.
+          working-directory: ./src-ui
 
       - name: install Rust stable
         uses: dtolnay/rust-toolchain@stable
@@ -54,8 +55,6 @@ jobs:
       - name: install frontend dependencies
         # If you don't have `beforeBuildCommand` configured you may want to build your frontend here too.
         run: npm install # change this to npm or pnpm depending on which one you use.
-        with:
-          working-directory: ./src-ui
 
       - uses: tauri-apps/tauri-action@v0
         env:
