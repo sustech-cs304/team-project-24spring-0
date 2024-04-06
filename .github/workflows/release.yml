@@ -39,7 +39,7 @@ jobs:
         with:
           node-version: lts/*
           cache: 'npm' # Set this to npm, yarn or pnpm.
-          workspace: './src-ui' # This is the path to your frontend workspace.
+          workspaces: './src-ui' # This is the path to your frontend workspace.
 
       - name: install Rust stable
         uses: dtolnay/rust-toolchain@stable
