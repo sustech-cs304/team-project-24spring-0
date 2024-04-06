@@ -37,12 +37,7 @@ impl Into<PackedInstruction> for RInstruction {
         all_into_scope!(self, funct7 rs2 rs1 funct3 rd opcode);
         all_into! {u32, funct7 rs2 rs1 funct3 rd opcode }
         PackedInstruction(
-            (funct7 << 25)
-                + (rs2 << 20)
-                + (rs1 << 15)
-                + (funct3 << 12)
-                + (rd << 7)
-                + opcode,
+            (funct7 << 25) + (rs2 << 20) + (rs1 << 15) + (funct3 << 12) + (rd << 7) + opcode,
         )
     }
 }
@@ -61,9 +56,7 @@ impl Into<PackedInstruction> for IInstruction {
     fn into(self) -> PackedInstruction {
         all_into_scope!(self, imm  rs1 funct3 rd opcode);
         all_into! {u32, imm  rs1 funct3 rd opcode }
-        PackedInstruction(
-            (imm << 20) + (rs1 << 15) + (funct3 << 12) + (rd << 7) + opcode,
-        )
+        PackedInstruction((imm << 20) + (rs1 << 15) + (funct3 << 12) + (rd << 7) + opcode)
     }
 }
 
@@ -93,12 +86,7 @@ impl Into<PackedInstruction> for SInstruction {
         all_into_scope!(self, imm11_5 rs2 rs1 funct3 imm4_0 opcode);
         all_into! {u32, imm11_5 rs2 rs1 funct3 imm4_0 opcode}
         PackedInstruction(
-            (imm11_5 << 25)
-                + (rs2 << 20)
-                + (rs1 << 15)
-                + (funct3 << 12)
-                + (imm4_0 << 7)
-                + opcode,
+            (imm11_5 << 25) + (rs2 << 20) + (rs1 << 15) + (funct3 << 12) + (imm4_0 << 7) + opcode,
         )
     }
 }
@@ -179,12 +167,7 @@ impl Into<PackedInstruction> for JInstruction {
         all_into_scope!(self, imm20 imm10_1 imm11 imm19_12 rd opcode);
         all_into! { u32, imm20 imm10_1 imm11 imm19_12 rd opcode }
         PackedInstruction(
-            (imm20 << 31)
-                + (imm10_1 << 21)
-                + (imm11 << 20)
-                + (imm19_12 << 12)
-                + (rd << 7)
-                + opcode,
+            (imm20 << 31) + (imm10_1 << 21) + (imm11 << 20) + (imm19_12 << 12) + (rd << 7) + opcode,
         )
     }
 }

@@ -1,12 +1,12 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod assembler;
 mod interface;
 mod middleware;
+mod modules;
 mod simulator;
 mod storage;
-mod assembler;
-mod modules;
 
 use std::collections::HashMap;
 use std::sync::Mutex;
