@@ -10,7 +10,7 @@ mod types;
 mod utility;
 
 use middleware::implementation::*;
-use types::*;
+use types::middleware_types::*;
 
 fn main() {
     tauri::Builder::default()

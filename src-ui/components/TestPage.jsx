@@ -13,11 +13,10 @@ export default function TestPage() {
 
     const handleClick = async () => {
         try {
-            const result = await invoke('read_file', {val : inputValue});
-            setOutput('===result===\n' + result + '\n===    type===\n' + typeof (result));
+            const result = await invoke('read_file', {filepath : inputValue});
+            setOutput('===result===\n' + result + '\n===type===\n' + typeof (result));
         } catch (error) {
-            console.error('Error calling Tauri command:', error);
-            setOutput('Error occurred: ' + error);
+            setOutput('Error occurred:\n' + error);
         }
     };
 
