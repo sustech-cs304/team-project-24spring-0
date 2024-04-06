@@ -1,4 +1,4 @@
-name: Moras Release
+name: Moras CD
 
 on:
   release:
