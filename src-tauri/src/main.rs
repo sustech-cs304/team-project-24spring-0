@@ -14,8 +14,21 @@ mod utility;
 use middleware::implementation::*;
 use types::middleware_types::*;
 
+use tauri::{CustomMenuItem, Menu, MenuItem, Submenu};
+
 fn main() {
+    let menu = init_menu();
     tauri::Builder::default()
+        .menu(menu)
+        .on_menu_event(|event| match event.menu_item_id() {
+            "quit" => {
+                std::process::exit(0);
+            }
+            "close" => {
+                event.window().close().unwrap();
+            }
+            _ => {}
+        })
         .setup(|app| {
             //todo!("init function need here");
             Ok(())
@@ -28,4 +41,20 @@ fn main() {
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+fn init_menu() -> Menu {
+    Menu::with_items([
+        MenuItem::SelectAll.into(),
+        #[cfg(target_os = "macos")]
+        MenuItem::Redo.into(),
+        Submenu::new(
+            "File",
+            Menu::with_items([
+                CustomMenuItem::new("open_file", "Open").into(),
+                CustomMenuItem::new("save_file", "Save").into(),
+                //CustomMenuItem::new(, title)
+            ]),
+        )
+        .into(),
+    ])
 }
