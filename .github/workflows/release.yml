@@ -3,7 +3,7 @@ name: 'publish'
 on:
   push:
     branches:
-      - "*"
+      - feat-CD
 
 jobs:
   publish-tauri:
