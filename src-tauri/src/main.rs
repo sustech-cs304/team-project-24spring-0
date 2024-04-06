@@ -5,6 +5,8 @@ mod interface;
 mod middleware;
 mod simulator;
 mod storage;
+mod assembler;
+mod modules;
 
 use std::collections::HashMap;
 use std::sync::Mutex;
