@@ -6,7 +6,7 @@ export default function Register() {
     return (
         <div className="flex flex-col h-full">
             <Tabs aria-label="Options">
-                <Tab key="registers" title="Registers" className='grow h-full'>
+                <Tab size="small" key="registers" title="Registers" className='grow h-full'>
                     <Card className='h-full'>
                         <CardBody>
                             <Table className='h-full overflow-y-auto'  aria-label="Example static collection table">
