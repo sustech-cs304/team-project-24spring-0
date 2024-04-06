@@ -36,7 +36,6 @@ jobs:
 
       - name: setup node
         uses: actions/setup-node@v4
-        working-directory: src-tauri
         with:
           node-version: lts/*
           cache: 'npm' # Set this to npm, yarn or pnpm.
