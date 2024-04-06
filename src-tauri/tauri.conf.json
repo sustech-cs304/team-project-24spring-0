@@ -11,7 +11,20 @@
   },
   "tauri": {
     "allowlist": {
-      "all": false
+      "clipboard": {
+        "all": true
+      },
+      "notification": {
+        "all": true
+      },
+      "fs": {
+        "readDir": true,
+        "createDir": true,
+        "exists": true,
+        "scope": [
+          "**"
+        ]
+      }
     },
     "bundle": {
       "active": true,

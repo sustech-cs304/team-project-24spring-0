@@ -1,8 +1,8 @@
 import React, {useEffect} from "react";
-
 import Editor, { useMonaco } from '@monaco-editor/react';
 import {Tabs, Tab, Card, CardBody, Textarea} from "@nextui-org/react";
 import {Table, TableHeader, TableBody, TableRow, TableColumn, TableCell} from "@nextui-org/react";
+import TestPage from "@/components/TestPage";
 
 
 export default function Code() {
@@ -116,6 +116,13 @@ export default function Code() {
                                     </TableRow>
                                 </TableBody>
                             </Table>
+                        </CardBody>
+                    </Card>
+                </Tab>
+                <Tab key="test" title="Test" className="h-full">
+                    <Card className='h-full'>
+                        <CardBody>
+                            <TestPage />
                         </CardBody>
                     </Card>
                 </Tab>
