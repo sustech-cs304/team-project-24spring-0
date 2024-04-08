@@ -16,10 +16,22 @@ pub mod tab_mamagement {
                 //assembler: Box::new(Assembler::new()),
                 //simulator: Box::new(Simulator::new()),
                 //};
-                tab_map.insert(filepath.to_string(), tab);
+                tab_map
+                    .tabs
+                    .lock()
+                    .unwrap()
+                    .insert(filepath.to_string(), tab);
                 (true, data)
             }
             Err(e) => (false, e),
+        }
+    }
+
+    #[tauri::command]
+    pub fn close_tab(tab_map: State<TabMap>, filepath: &str) -> (bool, String) {
+        match tab_map.tabs.lock().unwrap().remove(filepath) {
+            Some(_) => (true, "Tab closed".to_string()),
+            None => (false, "Tab not found".to_string()),
         }
     }
 }

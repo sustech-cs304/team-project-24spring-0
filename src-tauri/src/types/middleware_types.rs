@@ -11,5 +11,41 @@ pub struct Tab {
     simulator: Box<dyn Simulator<i32, i32, i32, i32>>,
 }
 
-use std::collections::HashMap;
-pub type TabMap = HashMap<String, Tab>;
+use std::{collections::HashMap, sync::Mutex};
+
+pub struct TabMap {
+    pub tabs: Mutex<HashMap<String, Tab>>,
+}
+
+pub mod constants {
+    pub enum Lint {
+        Info,
+        Lint,
+        Warn,
+        Error,
+    }
+
+    pub enum AssemblerOp {
+        Assemble,
+        Dump,
+        DumpAs,
+    }
+
+    pub enum SimulatorOp {
+        Run,
+        Debug,
+        RunStep,
+        Redo,
+    }
+
+    pub enum FileOp {
+        Save,
+        SaveAs,
+        Open,
+        Close,
+    }
+
+    pub enum WebSocketOp {
+        RefreshText,
+    }
+}
