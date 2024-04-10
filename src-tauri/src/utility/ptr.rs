@@ -42,9 +42,12 @@ impl<T> Hash for Ptr<T> {
     }
 }
 
+unsafe impl<T> Send for Ptr<T> {}
+unsafe impl<T> Sync for Ptr<T> {}
+
 impl<T> Ptr<T> {
     pub fn new(t: &T) -> Self {
-        Ptr(unsafe { t as *const T as *mut T })
+        Ptr(t as *const T as *mut T)
     }
 
     pub fn as_ref(&self) -> &T {
