@@ -6,7 +6,7 @@ use ropey::Rope;
 
 pub struct Tab {
     text: Box<dyn MFile<Rope, String, String>>,
-    parser: Box<dyn Parser>,
+    parser: Box<dyn Parser<Rope, crate::modules::riscv::basic::interface::parser::RISCV>>,
     assembler: Box<dyn Assembler<i32, i32, i32, i32>>,
     simulator: Box<dyn Simulator<i32, i32, i32, i32>>,
 }
