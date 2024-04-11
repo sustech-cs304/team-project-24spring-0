@@ -8,6 +8,7 @@ mod modules;
 mod parser;
 mod simulator;
 mod storage;
+mod test;
 mod types;
 mod utility;
 
