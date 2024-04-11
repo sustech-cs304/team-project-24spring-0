@@ -1,5 +1,6 @@
 use std::hash::Hash;
 
+#[derive(Debug)]
 pub struct Ptr<T>(*mut T);
 
 impl<T> Clone for Ptr<T> {

@@ -4,6 +4,8 @@
 mod interface;
 mod io;
 mod middleware;
+mod modules;
+mod parser;
 mod simulator;
 mod storage;
 mod types;
