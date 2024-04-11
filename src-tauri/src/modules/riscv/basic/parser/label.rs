@@ -1,10 +1,10 @@
-use crate::interface::parser::{ParserRISCVInstOpd, ParserResultText};
+use super::super::super::basic::interface::parser::*;
 use crate::utility::ptr::Ptr;
 
 #[derive(Clone)]
-pub struct LabelData {
+pub(super) struct LabelData {
     pub name: String,
-    pub def: Option<Ptr<ParserResultText>>,
+    pub def: Option<Ptr<ParserResultText<RISCV>>>,
     pub refs: Vec<Ptr<ParserRISCVInstOpd>>,
 }
 

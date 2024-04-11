@@ -1,5 +1,4 @@
-use crate::interface::parser::Parser;
-use crate::parser::parser::RISCVParser;
+use crate::modules::riscv::basic::interface::parser::{Parser, RISCVParser};
 
 pub fn test_parser() {
     let mut p = RISCVParser::new();

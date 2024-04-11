@@ -1,59 +1,10 @@
+use super::super::interface::parser::*;
 use super::label::LabelData;
 use super::lexer::{LexerIter, RISCVToken};
 use super::r#macro::MacroData;
-use crate::interface::parser::*;
-use crate::modules::riscv::rv32i::constants::{RISCVImmediate, RISCVInstruction, RISCVRegister};
 use crate::utility::ptr::Ptr;
 use logos::Logos;
 use std::collections::BTreeMap;
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum RISCVDataType {
-    Byte,
-    Half,
-    Word,
-    Dword,
-    Float,
-    Double,
-    String,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum RISCVImmediateType {
-    U12,
-    U20,
-    U32,
-    U64,
-    I12,
-    I20,
-    I32,
-    I64,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum RISCVExpectToken {
-    Comma,
-    LParen,
-    RParen,
-    Reg,
-    Imm(RISCVImmediateType),
-    Lbl,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
-pub enum RISCVSegment {
-    Data(RISCVDataType),
-    #[default]
-    Text,
-}
-
-pub struct RISCVParserStatus<'a> {
-    segment: RISCVSegment,
-    iter: LexerIter<'a>,
-    macro_def: Option<MacroData>,
-    label_def: Option<Ptr<LabelData>>,
-    result: ParserResult,
-}
 
 pub struct RISCVParser {
     macro_list: BTreeMap<String, MacroData>,
@@ -61,11 +12,8 @@ pub struct RISCVParser {
     lbl_placeholder: ParserRISCVInstOpd,
 }
 
-use RISCVExpectToken::*;
-use RISCVImmediateType::*;
-
-impl Parser for RISCVParser {
-    fn parse(&mut self, code: &ropey::Rope) -> Result<ParserResult, ParserError> {
+impl Parser<ropey::Rope, RISCV> for RISCVParser {
+    fn parse(&mut self, code: &ropey::Rope) -> Result<ParserResult<RISCV>, ParserError> {
         self.init();
         let code_str = code.to_string();
         let mut _status = RISCVParserStatus {
@@ -90,12 +38,63 @@ impl Parser for RISCVParser {
     }
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(super) enum RISCVDataType {
+    Byte,
+    Half,
+    Word,
+    Dword,
+    Float,
+    Double,
+    String,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(super) enum RISCVImmediateType {
+    U12,
+    U20,
+    U32,
+    U64,
+    I12,
+    I20,
+    I32,
+    I64,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(super) enum RISCVExpectToken {
+    Comma,
+    LParen,
+    RParen,
+    Reg,
+    Imm(RISCVImmediateType),
+    Lbl,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
+pub(super) enum RISCVSegment {
+    Data(RISCVDataType),
+    #[default]
+    Text,
+}
+
+pub(super) struct RISCVParserStatus<'a> {
+    segment: RISCVSegment,
+    iter: LexerIter<'a>,
+    macro_def: Option<MacroData>,
+    label_def: Option<Ptr<LabelData>>,
+    result: ParserResult<RISCV>,
+}
+
+use RISCVExpectToken::*;
+use RISCVImmediateType::*;
+
 impl RISCVParser {
     pub fn new() -> Self {
         RISCVParser {
             macro_list: BTreeMap::new(),
             label_list: BTreeMap::new(),
-            lbl_placeholder: ParserRISCVInstOpd::Lbl(Ptr::new(&ParserRISCVInst {
+            lbl_placeholder: ParserRISCVInstOpd::Lbl(Ptr::new(&ParserInst::<RISCV> {
                 line: 0,
                 op: RISCVInstruction::Add,
                 opd: Vec::new(),
@@ -106,7 +105,7 @@ impl RISCVParser {
     fn init(&mut self) {
         self.macro_list = BTreeMap::new();
         self.label_list = BTreeMap::new();
-        self.lbl_placeholder = ParserRISCVInstOpd::Lbl(Ptr::new(&ParserRISCVInst {
+        self.lbl_placeholder = ParserRISCVInstOpd::Lbl(Ptr::new(&ParserInst::<RISCV> {
             line: 0,
             op: RISCVInstruction::Add,
             opd: Vec::new(),
@@ -153,7 +152,7 @@ impl RISCVParser {
         let mut token_set_valid = vec![true; token_sets.len()];
         let mut token_idx = 0;
         let op_char_pos = status.iter.pos();
-        let mut result = ParserRISCVInst {
+        let mut result = ParserInst::<RISCV> {
             line: status.iter.line(),
             op,
             opd: Vec::new(),

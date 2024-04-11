@@ -1,7 +1,7 @@
 use super::parser::RISCVSegment;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum MacroParaType {
+pub(super) enum MacroParaType {
     Register,
     Immediate,
     Label,
@@ -9,7 +9,7 @@ pub enum MacroParaType {
 }
 
 #[derive(Clone, Debug)]
-pub struct MacroData {
+pub(super) struct MacroData {
     pub name: String,
     pub para: Vec<(String, MacroParaType)>,
     pub ret_seg: RISCVSegment,

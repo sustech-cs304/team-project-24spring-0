@@ -1,8 +1,7 @@
-use std::fmt::Display;
-
+use super::super::interface::parser::{ParseRISCVRegisterError, RISCVRegister};
 use crate::interface::parser::{ParserError, Pos};
-use crate::modules::riscv::rv32i::constants::{ParseRISCVRegisterError, RISCVRegister};
 use logos::Logos;
+use std::fmt::Display;
 
 #[derive(Debug, PartialEq, Clone, Default)]
 pub enum LexingError {
@@ -12,7 +11,7 @@ pub enum LexingError {
     Other,
 }
 
-pub struct LexerIter<'a> {
+pub(super) struct LexerIter<'a> {
     pub raw: logos::Lexer<'a, RISCVToken<'a>>,
 }
 
