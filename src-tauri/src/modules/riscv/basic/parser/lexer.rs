@@ -1,4 +1,4 @@
-use super::super::interface::parser::{ParseRISCVRegisterError, RISCVRegister};
+use super::super::interface::parser::{ParseRISCVRegisterError, RISCVCsr, RISCVRegister};
 use crate::interface::parser::{ParserError, Pos};
 use logos::Logos;
 use std::fmt::Display;
@@ -69,7 +69,7 @@ impl LexerIter<'_> {
 
 #[derive(Logos, Clone, Copy, Debug, PartialEq)]
 #[logos(skip r"([ \t\f]+)|(#.*)", error = LexingError, extras = (usize, usize))]
-pub enum RISCVToken<'a> {
+pub(super) enum RISCVToken<'a> {
     #[token(",")]
     Comma,
     #[token("\n", |lex| lex.extras.0 += 1; lex.extras.1 = lex.span().end;)]
@@ -101,6 +101,7 @@ pub enum RISCVToken<'a> {
     #[regex(r"a[0-7]", |lex| lex.slice().parse(), priority = 10)]
     #[regex(r"x(([1-2]?[0-9])|(3[0-1]))", |lex| lex.slice().parse(), priority = 10)]
     Register(RISCVRegister),
+    Csr(RISCVCsr),
     #[token(".align", priority = 10)]
     Align,
     #[token(".ascii", priority = 10)]
@@ -145,351 +146,356 @@ pub enum RISCVToken<'a> {
     Word,
     #[regex(r"\.[a-zA-Z_][a-zA-Z0-9_]*")]
     UnknownDirective(&'a str),
-    #[token("add", priority = 10)]
+    #[token("add", |_| RISCVOpToken::Add, priority = 10)]
+    #[token("addi", |_| RISCVOpToken::Addi ,priority = 10)]
+    #[token("and", |_| RISCVOpToken::And ,priority = 10)]
+    #[token("andi", |_| RISCVOpToken::Andi ,priority = 10)]
+    #[token("auipc", |_| RISCVOpToken::Auipc ,priority = 10)]
+    #[token("beq", |_| RISCVOpToken::Beq ,priority = 10)]
+    #[token("bge", |_| RISCVOpToken::Bge ,priority = 10)]
+    #[token("bgeu", |_| RISCVOpToken::Bgeu ,priority = 10)]
+    #[token("blt", |_| RISCVOpToken::Blt ,priority = 10)]
+    #[token("bltu", |_| RISCVOpToken::Bltu ,priority = 10)]
+    #[token("bne", |_| RISCVOpToken::Bne ,priority = 10)]
+    #[token("csrrc", |_| RISCVOpToken::Csrrc ,priority = 10)]
+    #[token("csrrci", |_| RISCVOpToken::Csrrci ,priority = 10)]
+    #[token("csrrs", |_| RISCVOpToken::Csrrs ,priority = 10)]
+    #[token("csrrsi", |_| RISCVOpToken::Csrrsi ,priority = 10)]
+    #[token("csrrw", |_| RISCVOpToken::Csrrw ,priority = 10)]
+    #[token("csrrwi", |_| RISCVOpToken::Csrrwi ,priority = 10)]
+    #[token("div", |_| RISCVOpToken::Div ,priority = 10)]
+    #[token("divu", |_| RISCVOpToken::Divu ,priority = 10)]
+    #[token("ebreak", |_| RISCVOpToken::Ebreak ,priority = 10)]
+    #[token("ecall", |_| RISCVOpToken::Ecall ,priority = 10)]
+    // #[token("fadd.d", priority = 10)]
+    // #[token("fadd.s", priority = 10)]
+    // #[token("fclass.d", priority = 10)]
+    // #[token("fclass.s", priority = 10)]
+    // #[token("fcvt.d.s", priority = 10)]
+    // #[token("fcvt.d.w", priority = 10)]
+    // #[token("fcvt.d.wu", priority = 10)]
+    // #[token("fcvt.s.d", priority = 10)]
+    // #[token("fcvt.s.w", priority = 10)]
+    // #[token("fcvt.s.wu", priority = 10)]
+    // #[token("fcvt.w.d", priority = 10)]
+    // #[token("fcvt.w.s", priority = 10)]
+    // #[token("fcvt.wu.d", priority = 10)]
+    // #[token("fcvt.wu.s", priority = 10)]
+    // #[token("fdiv.d", priority = 10)]
+    // #[token("fdiv.s", priority = 10)]
+    // #[token("fence", priority = 10)]
+    // #[token("fence.i", priority = 10)]
+    // #[token("feq.d", priority = 10)]
+    // #[token("feq.s", priority = 10)]
+    // #[token("fld", priority = 10)]
+    // #[token("fle.d", priority = 10)]
+    // #[token("fle.s", priority = 10)]
+    // #[token("flt.d", priority = 10)]
+    // #[token("flt.s", priority = 10)]
+    // #[token("flw", priority = 10)]
+    // #[token("fmadd.d", priority = 10)]
+    // #[token("fmadd.s", priority = 10)]
+    // #[token("fmax.d", priority = 10)]
+    // #[token("fmax.s", priority = 10)]
+    // #[token("fmin.d", priority = 10)]
+    // #[token("fmin.s", priority = 10)]
+    // #[token("fmsub.d", priority = 10)]
+    // #[token("fmsub.s", priority = 10)]
+    // #[token("fmul.d", priority = 10)]
+    // #[token("fmul.s", priority = 10)]
+    // #[token("fmv.s.x", priority = 10)]
+    // #[token("fmv.x.s", priority = 10)]
+    // #[token("fnmadd.d", priority = 10)]
+    // #[token("fnmadd.s", priority = 10)]
+    // #[token("fnmsub.d", priority = 10)]
+    // #[token("fnmsub.s", priority = 10)]
+    // #[token("fsd", priority = 10)]
+    // #[token("fsgnj.d", priority = 10)]
+    // #[token("fsgnj.s", priority = 10)]
+    // #[token("fsgnjn.d", priority = 10)]
+    // #[token("fsgnjn.s", priority = 10)]
+    // #[token("fsgnjx.d", priority = 10)]
+    // #[token("fsgnjx.s", priority = 10)]
+    // #[token("fsqrt.d", priority = 10)]
+    // #[token("fsqrt.s", priority = 10)]
+    // #[token("fsub.d", priority = 10)]
+    // #[token("fsub.s", priority = 10)]
+    // #[token("fsw", priority = 10)]
+    #[token("jal", |_| RISCVOpToken::Jal, priority = 10)]
+    #[token("jalr", |_| RISCVOpToken::Jalr, priority = 10)]
+    #[token("lb", |_| RISCVOpToken::Lb, priority = 10)]
+    #[token("lbu", |_| RISCVOpToken::Lbu, priority = 10)]
+    #[token("lh", |_| RISCVOpToken::Lh, priority = 10)]
+    #[token("lhu", |_| RISCVOpToken::Lhu, priority = 10)]
+    #[token("lui", |_| RISCVOpToken::Lui, priority = 10)]
+    #[token("lw", |_| RISCVOpToken::Lw, priority = 10)]
+    #[token("mul", |_| RISCVOpToken::Mul, priority = 10)]
+    #[token("mulh", |_| RISCVOpToken::Mulh, priority = 10)]
+    #[token("mulhsu", |_| RISCVOpToken::Mulhsu, priority = 10)]
+    #[token("mulhu", |_| RISCVOpToken::Mulhu, priority = 10)]
+    #[token("or", |_| RISCVOpToken::Or, priority = 10)]
+    #[token("ori", |_| RISCVOpToken::Ori, priority = 10)]
+    #[token("rem", |_| RISCVOpToken::Rem, priority = 10)]
+    #[token("remu", |_| RISCVOpToken::Remu, priority = 10)]
+    #[token("sb", |_| RISCVOpToken::Sb, priority = 10)]
+    #[token("sh", |_| RISCVOpToken::Sh, priority = 10)]
+    #[token("sll", |_| RISCVOpToken::Sll, priority = 10)]
+    #[token("slli", |_| RISCVOpToken::Slli, priority = 10)]
+    #[token("slt", |_| RISCVOpToken::Slt, priority = 10)]
+    #[token("slti", |_| RISCVOpToken::Slti, priority = 10)]
+    #[token("sltiu", |_| RISCVOpToken::Sltiu, priority = 10)]
+    #[token("sltu", |_| RISCVOpToken::Sltu, priority = 10)]
+    #[token("sra", |_| RISCVOpToken::Sra, priority = 10)]
+    #[token("srai", |_| RISCVOpToken::Srai, priority = 10)]
+    #[token("srl", |_| RISCVOpToken::Srl, priority = 10)]
+    #[token("srli", |_| RISCVOpToken::Srli, priority = 10)]
+    #[token("sub", |_| RISCVOpToken::Sub, priority = 10)]
+    #[token("sw", |_| RISCVOpToken::Sw, priority = 10)]
+    #[token("uret", |_| RISCVOpToken::Uret, priority = 10)]
+    #[token("wfi", |_| RISCVOpToken::Wfi, priority = 10)]
+    #[token("xor", |_| RISCVOpToken::Xor, priority = 10)]
+    #[token("xori", |_| RISCVOpToken::Xori, priority = 10)]
+    #[token("b", |_| RISCVOpToken::B, priority = 10)]
+    #[token("beqz", |_| RISCVOpToken::Beqz, priority = 10)]
+    #[token("bgez", |_| RISCVOpToken::Bgez, priority = 10)]
+    #[token("bgt", |_| RISCVOpToken::Bgt, priority = 10)]
+    #[token("bgtu", |_| RISCVOpToken::Bgtu, priority = 10)]
+    #[token("bgtz", |_| RISCVOpToken::Bgtz, priority = 10)]
+    #[token("ble", |_| RISCVOpToken::Ble, priority = 10)]
+    #[token("bleu", |_| RISCVOpToken::Bleu, priority = 10)]
+    #[token("blez", |_| RISCVOpToken::Blez, priority = 10)]
+    #[token("bltz", |_| RISCVOpToken::Bltz, priority = 10)]
+    #[token("bnez", |_| RISCVOpToken::Bnez, priority = 10)]
+    #[token("call", |_| RISCVOpToken::Call, priority = 10)]
+    #[token("csrc", |_| RISCVOpToken::Csrc, priority = 10)]
+    #[token("csrci", |_| RISCVOpToken::Csrci, priority = 10)]
+    #[token("csrr", |_| RISCVOpToken::Csrr, priority = 10)]
+    #[token("csrs", |_| RISCVOpToken::Csrs, priority = 10)]
+    #[token("csrsi", |_| RISCVOpToken::Csrsi, priority = 10)]
+    #[token("csrw", |_| RISCVOpToken::Csrw, priority = 10)]
+    #[token("csrwi", |_| RISCVOpToken::Csrwi, priority = 10)]
+    // #[token("fabs.d", |_| RISCVOpToken::FabsD, priority = 10)]
+    // #[token("fabs.s", |_| RISCVOpToken::FabsS, priority = 10)]
+    // #[token("fge.d", |_| RISCVOpToken::FgeD, priority = 10)]
+    // #[token("fge.s", |_| RISCVOpToken::FgeS, priority = 10)]
+    // #[token("fgt.d", |_| RISCVOpToken::FgtD, priority = 10)]
+    // #[token("fgt.s", |_| RISCVOpToken::FgtS, priority = 10)]
+    // #[token("fmv.d", |_| RISCVOpToken::FmvD, priority = 10)]
+    // #[token("fmv.s", |_| RISCVOpToken::FmvS, priority = 10)]
+    // #[token("fmv.w.x", |_| RISCVOpToken::FmvWX, priority = 10)]
+    // #[token("fmv.x.w", |_| RISCVOpToken::FmvXW, priority = 10)]
+    // #[token("fneg.d", |_| RISCVOpToken::FnegD, priority = 10)]
+    // #[token("fneg.s", |_| RISCVOpToken::FnegS, priority = 10)]
+    // #[token("frcsr", |_| RISCVOpToken::Frcsr, priority = 10)]
+    // #[token("frflags", |_| RISCVOpToken::Frflags, priority = 10)]
+    // #[token("frrm", |_| RISCVOpToken::Frrm, priority = 10)]
+    // #[token("frsr", |_| RISCVOpToken::Frsr, priority = 10)]
+    // #[token("fsflags", |_| RISCVOpToken::Fsflags, priority = 10)]
+    // #[token("fsrm", |_| RISCVOpToken::Fsrm, priority = 10)]
+    // #[token("fsrr", |_| RISCVOpToken::Fsrr, priority = 10)]
+    #[token("j", |_| RISCVOpToken::J, priority = 10)]
+    #[token("jr", |_| RISCVOpToken::Jr, priority = 10)]
+    #[token("la", |_| RISCVOpToken::La, priority = 10)]
+    #[token("li", |_| RISCVOpToken::Li, priority = 10)]
+    #[token("mv", |_| RISCVOpToken::Mv, priority = 10)]
+    #[token("neg", |_| RISCVOpToken::Neg, priority = 10)]
+    #[token("nop", |_| RISCVOpToken::Nop, priority = 10)]
+    #[token("not", |_| RISCVOpToken::Not, priority = 10)]
+    #[token("rdcycle", |_| RISCVOpToken::Rdcycle, priority = 10)]
+    #[token("rdcycleh", |_| RISCVOpToken::Rdcycleh, priority = 10)]
+    #[token("rdinstret", |_| RISCVOpToken::Rdinstret, priority = 10)]
+    #[token("rdinstreth", |_| RISCVOpToken::Rdinstreth, priority = 10)]
+    #[token("rdtime", |_| RISCVOpToken::Rdtime, priority = 10)]
+    #[token("rdtimeh", |_| RISCVOpToken::Rdtimeh, priority = 10)]
+    #[token("ret", |_| RISCVOpToken::Ret, priority = 10)]
+    #[token("seqz", |_| RISCVOpToken::Seqz, priority = 10)]
+    #[token("sext.b", |_| RISCVOpToken::SextB, priority = 10)]
+    #[token("sext.h", |_| RISCVOpToken::SextH, priority = 10)]
+    #[token("sgt", |_| RISCVOpToken::Sgt, priority = 10)]
+    #[token("sgtu", |_| RISCVOpToken::Sgtu, priority = 10)]
+    #[token("sgtz", |_| RISCVOpToken::Sgtz, priority = 10)]
+    #[token("sltz", |_| RISCVOpToken::Sltz, priority = 10)]
+    #[token("snez", |_| RISCVOpToken::Snez, priority = 10)]
+    #[token("tail", |_| RISCVOpToken::Tail, priority = 10)]
+    #[token("zext.b", |_| RISCVOpToken::ZextB, priority = 10)]
+    #[token("zext.h", |_| RISCVOpToken::ZextH, priority = 10)]
+    Operator(RISCVOpToken),
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub(super) enum RISCVOpToken {
     Add,
-    #[token("addi", priority = 10)]
     Addi,
-    #[token("and", priority = 10)]
     And,
-    #[token("andi", priority = 10)]
     Andi,
-    #[token("auipc", priority = 10)]
     Auipc,
-    #[token("beq", priority = 10)]
     Beq,
-    #[token("bge", priority = 10)]
     Bge,
-    #[token("bgeu", priority = 10)]
     Bgeu,
-    #[token("blt", priority = 10)]
     Blt,
-    #[token("bltu", priority = 10)]
     Bltu,
-    #[token("bne", priority = 10)]
     Bne,
-    #[token("csrrc", priority = 10)]
     Csrrc,
-    #[token("csrrci", priority = 10)]
     Csrrci,
-    #[token("csrrs", priority = 10)]
     Csrrs,
-    #[token("csrrsi", priority = 10)]
     Csrrsi,
-    #[token("csrrw", priority = 10)]
     Csrrw,
-    #[token("csrrwi", priority = 10)]
     Csrrwi,
-    #[token("div", priority = 10)]
     Div,
-    #[token("divu", priority = 10)]
     Divu,
-    #[token("ebreak", priority = 10)]
     Ebreak,
-    #[token("ecall", priority = 10)]
     Ecall,
-    #[token("fadd.d", priority = 10)]
     FaddD,
-    #[token("fadd.s", priority = 10)]
     FaddS,
-    #[token("fclass.d", priority = 10)]
     FclassD,
-    #[token("fclass.s", priority = 10)]
     FclassS,
-    #[token("fcvt.d.s", priority = 10)]
     FcvtDS,
-    #[token("fcvt.d.w", priority = 10)]
     FcvtDW,
-    #[token("fcvt.d.wu", priority = 10)]
     FcvtDWu,
-    #[token("fcvt.s.d", priority = 10)]
     FcvtSD,
-    #[token("fcvt.s.w", priority = 10)]
     FcvtSW,
-    #[token("fcvt.s.wu", priority = 10)]
     FcvtSWu,
-    #[token("fcvt.w.d", priority = 10)]
     FcvtWD,
-    #[token("fcvt.w.s", priority = 10)]
     FcvtWS,
-    #[token("fcvt.wu.d", priority = 10)]
     FcvtWuD,
-    #[token("fcvt.wu.s", priority = 10)]
     FcvtWuS,
-    #[token("fdiv.d", priority = 10)]
     FdivD,
-    #[token("fdiv.s", priority = 10)]
     FdivS,
-    #[token("fence", priority = 10)]
     Fence,
-    #[token("fence.i", priority = 10)]
     FenceI,
-    #[token("feq.d", priority = 10)]
     FeqD,
-    #[token("feq.s", priority = 10)]
     FeqS,
-    #[token("fld", priority = 10)]
     Fld,
-    #[token("fle.d", priority = 10)]
     FleD,
-    #[token("fle.s", priority = 10)]
     FleS,
-    #[token("flt.d", priority = 10)]
     FltD,
-    #[token("flt.s", priority = 10)]
     FltS,
-    #[token("flw", priority = 10)]
     Flw,
-    #[token("fmadd.d", priority = 10)]
     FmaddD,
-    #[token("fmadd.s", priority = 10)]
     FmaddS,
-    #[token("fmax.d", priority = 10)]
     FmaxD,
-    #[token("fmax.s", priority = 10)]
     FmaxS,
-    #[token("fmin.d", priority = 10)]
     FminD,
-    #[token("fmin.s", priority = 10)]
     FminS,
-    #[token("fmsub.d", priority = 10)]
     FmsubD,
-    #[token("fmsub.s", priority = 10)]
     FmsubS,
-    #[token("fmul.d", priority = 10)]
     FmulD,
-    #[token("fmul.s", priority = 10)]
     FmulS,
-    #[token("fmv.s.x", priority = 10)]
     FmvSX,
-    #[token("fmv.x.s", priority = 10)]
     FmvXS,
-    #[token("fnmadd.d", priority = 10)]
     FnmaddD,
-    #[token("fnmadd.s", priority = 10)]
     FnmaddS,
-    #[token("fnmsub.d", priority = 10)]
     FnmsubD,
-    #[token("fnmsub.s", priority = 10)]
     FnmsubS,
-    #[token("fsd", priority = 10)]
     Fsd,
-    #[token("fsgnj.d", priority = 10)]
     FsgnjD,
-    #[token("fsgnj.s", priority = 10)]
     FsgnjS,
-    #[token("fsgnjn.d", priority = 10)]
     FsgnjnD,
-    #[token("fsgnjn.s", priority = 10)]
     FsgnjnS,
-    #[token("fsgnjx.d", priority = 10)]
     FsgnjxD,
-    #[token("fsgnjx.s", priority = 10)]
     FsgnjxS,
-    #[token("fsqrt.d", priority = 10)]
     FsqrtD,
-    #[token("fsqrt.s", priority = 10)]
     FsqrtS,
-    #[token("fsub.d", priority = 10)]
     FsubD,
-    #[token("fsub.s", priority = 10)]
     FsubS,
-    #[token("fsw", priority = 10)]
     Fsw,
-    #[token("jal", priority = 10)]
     Jal,
-    #[token("jalr", priority = 10)]
     Jalr,
-    #[token("lb", priority = 10)]
     Lb,
-    #[token("lbu", priority = 10)]
     Lbu,
-    #[token("lh", priority = 10)]
     Lh,
-    #[token("lhu", priority = 10)]
     Lhu,
-    #[token("lui", priority = 10)]
     Lui,
-    #[token("lw", priority = 10)]
     Lw,
-    #[token("mul", priority = 10)]
     Mul,
-    #[token("mulh", priority = 10)]
     Mulh,
-    #[token("mulhsu", priority = 10)]
     Mulhsu,
-    #[token("mulhu", priority = 10)]
     Mulhu,
-    #[token("or", priority = 10)]
     Or,
-    #[token("ori", priority = 10)]
     Ori,
-    #[token("rem", priority = 10)]
     Rem,
-    #[token("remu", priority = 10)]
     Remu,
-    #[token("sb", priority = 10)]
     Sb,
-    #[token("sh", priority = 10)]
     Sh,
-    #[token("sll", priority = 10)]
     Sll,
-    #[token("slli", priority = 10)]
     Slli,
-    #[token("slt", priority = 10)]
     Slt,
-    #[token("slti", priority = 10)]
     Slti,
-    #[token("sltiu", priority = 10)]
     Sltiu,
-    #[token("sltu", priority = 10)]
     Sltu,
-    #[token("sra", priority = 10)]
     Sra,
-    #[token("srai", priority = 10)]
     Srai,
-    #[token("srl", priority = 10)]
     Srl,
-    #[token("srli", priority = 10)]
     Srli,
-    #[token("sub", priority = 10)]
     Sub,
-    #[token("sw", priority = 10)]
     Sw,
-    #[token("uret", priority = 10)]
     Uret,
-    #[token("wfi", priority = 10)]
     Wfi,
-    #[token("xor", priority = 10)]
     Xor,
-    #[token("xori", priority = 10)]
     Xori,
-    #[token("b", priority = 10)]
     B,
-    #[token("beqz", priority = 10)]
     Beqz,
-    #[token("bgez", priority = 10)]
     Bgez,
-    #[token("bgt", priority = 10)]
     Bgt,
-    #[token("bgtu", priority = 10)]
     Bgtu,
-    #[token("bgtz", priority = 10)]
     Bgtz,
-    #[token("ble", priority = 10)]
     Ble,
-    #[token("bleu", priority = 10)]
     Bleu,
-    #[token("blez", priority = 10)]
     Blez,
-    #[token("bltz", priority = 10)]
     Bltz,
-    #[token("bnez", priority = 10)]
     Bnez,
-    #[token("call", priority = 10)]
     Call,
-    #[token("csrc", priority = 10)]
     Csrc,
-    #[token("csrci", priority = 10)]
     Csrci,
-    #[token("csrr", priority = 10)]
     Csrr,
-    #[token("csrs", priority = 10)]
     Csrs,
-    #[token("csrsi", priority = 10)]
     Csrsi,
-    #[token("csrw", priority = 10)]
     Csrw,
-    #[token("csrwi", priority = 10)]
     Csrwi,
-    #[token("fabs.d", priority = 10)]
     FabsD,
-    #[token("fabs.s", priority = 10)]
     FabsS,
-    #[token("fge.d", priority = 10)]
     FgeD,
-    #[token("fge.s", priority = 10)]
     FgeS,
-    #[token("fgt.d", priority = 10)]
     FgtD,
-    #[token("fgt.s", priority = 10)]
     FgtS,
-    #[token("fmv.d", priority = 10)]
     FmvD,
-    #[token("fmv.s", priority = 10)]
     FmvS,
-    #[token("fmv.w.x", priority = 10)]
     FmvWX,
-    #[token("fmv.x.w", priority = 10)]
     FmvXW,
-    #[token("fneg.d", priority = 10)]
     FnegD,
-    #[token("fneg.s", priority = 10)]
     FnegS,
-    #[token("frcsr", priority = 10)]
     Frcsr,
-    #[token("frflags", priority = 10)]
     Frflags,
-    #[token("frrm", priority = 10)]
     Frrm,
-    #[token("frsr", priority = 10)]
     Frsr,
-    #[token("fsflags", priority = 10)]
     Fsflags,
-    #[token("fsrm", priority = 10)]
     Fsrm,
-    #[token("fsrr", priority = 10)]
     Fsrr,
-    #[token("j", priority = 10)]
     J,
-    #[token("jr", priority = 10)]
     Jr,
-    #[token("la", priority = 10)]
     La,
-    #[token("li", priority = 10)]
     Li,
-    #[token("mv", priority = 10)]
     Mv,
-    #[token("neg", priority = 10)]
     Neg,
-    #[token("nop", priority = 10)]
     Nop,
-    #[token("not", priority = 10)]
     Not,
-    #[token("rdcycle", priority = 10)]
     Rdcycle,
-    #[token("rdcycleh", priority = 10)]
     Rdcycleh,
-    #[token("rdinstret", priority = 10)]
     Rdinstret,
-    #[token("rdinstreth", priority = 10)]
     Rdinstreth,
-    #[token("rdtime", priority = 10)]
     Rdtime,
-    #[token("rdtimeh", priority = 10)]
     Rdtimeh,
-    #[token("ret", priority = 10)]
     Ret,
-    #[token("seqz", priority = 10)]
     Seqz,
-    #[token("sext.b", priority = 10)]
     SextB,
-    #[token("sext.h", priority = 10)]
     SextH,
-    #[token("sgt", priority = 10)]
     Sgt,
-    #[token("sgtu", priority = 10)]
     Sgtu,
-    #[token("sgtz", priority = 10)]
     Sgtz,
-    #[token("sltz", priority = 10)]
     Sltz,
-    #[token("snez", priority = 10)]
     Snez,
-    #[token("tail", priority = 10)]
     Tail,
-    #[token("zext.b", priority = 10)]
     ZextB,
-    #[token("zext.h", priority = 10)]
     ZextH,
 }
 
