@@ -47,11 +47,12 @@ export default function Code() {
                 <Tab key="edit" title="Edit" className="h-full">
                     <Card className="h-full">
                         <CardBody className="h-full">
-                            <Tabs key="small" size="small" aria-label="Tabs sizes">
+                            {/* <Tabs key="small" size="small" aria-label="Tabs sizes">
                                 <Tab key="file1" title="file1.m" className="h-full"> <Editor language='javascript' className='overflow-hidden h-full'/> </Tab>
                                 <Tab key="file2" title="file2.m" className="h-full"> <Editor language='javascript' className='overflow-hidden h-full'/> </Tab>
                                 <Tab key="file3" title="file3.m" className="h-full"> <Editor language='javascript' className='overflow-hidden h-full'/> </Tab>
-                            </Tabs>
+                            </Tabs> */}
+                            <Editor language='javascript' className='overflow-hidden h-full'/>
                         </CardBody>
                     </Card>
                 </Tab>
