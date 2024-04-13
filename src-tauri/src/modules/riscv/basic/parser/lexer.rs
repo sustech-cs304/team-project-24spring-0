@@ -17,7 +17,7 @@ pub(super) struct LexerIter<'a> {
 
 impl LexerIter<'_> {
     #[inline(always)]
-    pub fn next<'a>(&'a mut self) -> Result<Option<RISCVToken<'a>>, ParserError> {
+    pub fn next<'a>(&'a mut self) -> Result<Option<RISCVToken<'a>>, Vec<ParserError>> {
         match self.raw.next() {
             Some(unit) => match unit {
                 Ok(token) => Ok(Some(token)),
@@ -27,7 +27,7 @@ impl LexerIter<'_> {
         }
     }
 
-    pub fn next_not_newline<'a>(&'a mut self) -> Result<Option<RISCVToken<'a>>, ParserError> {
+    pub fn next_not_newline<'a>(&'a mut self) -> Result<Option<RISCVToken<'a>>, Vec<ParserError>> {
         loop {
             match self.raw.next() {
                 Some(unit) => match unit {
@@ -45,11 +45,11 @@ impl LexerIter<'_> {
     }
 
     #[inline(always)]
-    pub fn get_error<'a>(&mut self, msg: String) -> ParserError {
-        ParserError {
+    pub fn get_error<'a>(&mut self, msg: String) -> Vec<ParserError> {
+        vec![ParserError {
             pos: self.pos(),
             msg,
-        }
+        }]
     }
 
     #[inline(always)]
@@ -522,7 +522,7 @@ impl Display for LexingError {
         match self {
             LexingError::NumberParseError => write!(f, "Number parse error"),
             LexingError::RegisterParseError => write!(f, "Register parse error"),
-            LexingError::Other => write!(f, "Other lexing error"),
+            LexingError::Other => write!(f, "unrecognized character"),
         }
     }
 }

@@ -3,30 +3,16 @@ use crate::modules::riscv::basic::interface::parser::{Parser, RISCVParser};
 pub fn test_parser() {
     let mut p = RISCVParser::new();
     let rope = ropey::Rope::from_str(
-        ".macro i (%a)
-    add a2,a3,a1
-    .end_macro
-    .data
-    .global a 
-    a : .string \"1a\"
-    .text
-    Li :
-        nop
-        la a0, aaa
-    c :
-        i a2
-    d :
-        # 1341
-        addi a0, a1, 10
-    .data
-    aaa: .string \"11\"
-    addi a0, a1, 1
-    .text
-    addi a0, a1, 1
-    .data
-    la a0, a
-    .word
-    12 123 123 12",
+        "
+        a:
+        addi a1, a2, 0x1\n \
+        jal a\n \
+        .data\n \
+        bb:.align 2\n \
+        .byte 0x1\n \
+        .text\n \
+        beq a1, a2, bb\n \
+        ",
     );
     let res = p.parse(&rope);
     println!("{:?}", res);

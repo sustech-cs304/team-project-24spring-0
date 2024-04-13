@@ -2,7 +2,7 @@ pub trait Parser<CODE, IS>: Send + Sync
 where
     IS: ParserInstSet,
 {
-    fn parse(&mut self, code: &CODE) -> Result<ParserResult<IS>, ParserError>;
+    fn parse(&mut self, code: &CODE) -> Result<ParserResult<IS>, Vec<ParserError>>;
 }
 
 // in crate::modules::[instruction_set]::basic::interface::parser

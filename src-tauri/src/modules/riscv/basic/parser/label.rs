@@ -1,11 +1,17 @@
 use super::super::super::basic::interface::parser::*;
 use crate::utility::ptr::Ptr;
 
+#[derive(Clone, Debug)]
+pub(super) enum LabelDef {
+    Text(ParserResultText<RISCV>),
+    Data(ParserResultData),
+}
+
 #[derive(Clone)]
 pub(super) struct LabelData {
     pub name: String,
-    pub def: Option<Ptr<ParserResultText<RISCV>>>,
-    pub refs: Vec<Ptr<ParserRISCVInstOpd>>,
+    pub def: Option<ParserRISCVLabel>,
+    pub refs: Vec<Ptr<ParserRISCVLabel>>,
 }
 
 // impl PartialEq for LabelData {
