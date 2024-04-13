@@ -3,6 +3,7 @@
 
 mod interface;
 mod io;
+mod menu;
 mod middleware;
 mod modules;
 mod parser;
@@ -11,18 +12,24 @@ mod storage;
 mod types;
 mod utility;
 
-use middleware::implementation::*;
-use types::middleware_types::*;
+use middleware::implementation::{frontend_api, tab_mamagement};
+use tauri::{Manager, State};
+use types::middleware_types;
 
 fn main() {
     tauri::Builder::default()
-        .setup(|app| {
-            //todo!("init function need here");
-            Ok(())
+        .menu(menu::init_menu())
+        .on_menu_event(menu::event_handler)
+        .manage(middleware_types::TabMap {
+            tabs: Default::default(),
         })
-        .manage(TabMap::default())
+        .manage(middleware_types::CurTabName {
+            name: Default::default(),
+        })
+        .setup(|app| Ok(()))
         .invoke_handler(tauri::generate_handler![
             tab_mamagement::create_tab,
+            tab_mamagement::close_tab,
             frontend_api::read_file,
             frontend_api::write_file
         ])

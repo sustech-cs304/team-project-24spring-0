@@ -1,8 +1,9 @@
 use std::fs::File;
 use std::io::prelude::*;
+use std::path::Path;
 
-pub fn read_file(file_path_str: &str) -> Result<String, String> {
-    let file_path = std::path::Path::new(file_path_str);
+/// Read file with  std::Path.
+pub fn read_file(file_path: &Path) -> Result<String, String> {
     let file = File::open(file_path);
     match file {
         Ok(mut file) => {
@@ -16,8 +17,8 @@ pub fn read_file(file_path_str: &str) -> Result<String, String> {
     }
 }
 
-pub fn write_file(file_path_str: &str, data: &str) -> Result<bool, String> {
-    let file_path = std::path::Path::new(file_path_str);
+/// Write file with  std::Path.
+pub fn write_file(file_path: &Path, data: &str) -> Result<bool, String> {
     let file = File::create(file_path);
     match file {
         Ok(mut file) => match file.write_all(data.as_bytes()) {
@@ -26,4 +27,16 @@ pub fn write_file(file_path_str: &str, data: &str) -> Result<bool, String> {
         },
         Err(e) => Err(format!("Error: {}", e)),
     }
+}
+
+/// Read file with string path.
+pub fn read_file_str(file_path_str: &str) -> Result<String, String> {
+    let file_path = std::path::Path::new(file_path_str);
+    read_file(file_path)
+}
+
+/// write file with string path
+pub fn write_file_str(file_path_str: &str, data: &str) -> Result<bool, String> {
+    let file_path = std::path::Path::new(file_path_str);
+    write_file(file_path, data)
 }

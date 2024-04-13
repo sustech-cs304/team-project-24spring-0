@@ -1,7 +1,7 @@
 import {Input, Button, Textarea} from "@nextui-org/react";
 import {invoke} from '@tauri-apps/api/tauri';
-import {useState} from 'react';
-import { readTextFile, BaseDirectory } from '@tauri-apps/api/fs';
+import {useState, useEffect} from 'react';
+import {listen} from "@tauri-apps/api/event";
 
 export default function TestPage() {
     const [inputValue, setInputValue] = useState('');
@@ -13,12 +13,22 @@ export default function TestPage() {
 
     const handleClick = async () => {
         try {
-            const result = await invoke('read_file', {filepath : inputValue});
+            const result = await invoke('read_file', {filepath: inputValue});
             setOutput('===result===\n' + result + '\n===type===\n' + typeof (result));
         } catch (error) {
             setOutput('Error occurred:\n' + error);
         }
     };
+
+    useEffect(() => {
+        const unListened = listen('front_file_open', (event) => {
+            setOutput(prevOutput => prevOutput + '\nEvent received:\n' + JSON.stringify(event.payload));
+        });
+
+        return () => {
+            unListened.then(dispose => dispose());
+        };
+    }, []);
 
     return (
         <div className='items-center gap-4'>
@@ -32,7 +42,7 @@ export default function TestPage() {
                     onChange={handleInputChange}/>
                 <Button color='primary' onClick={handleClick}>Run</Button>
             </div>
-            <textarea value={output} className='h-full bg-gray-50 pt-2 w-full rounded-2xl' readOnly/>
+            <Textarea value={output} className='h-full bg-gray-50 pt-2 w-full rounded-2xl' readOnly/>
         </div>
     );
 }
