@@ -13,19 +13,20 @@ mod types;
 mod utility;
 
 use middleware::implementation::{frontend_api, tab_mamagement};
+use tauri::{Manager, State};
 use types::middleware_types;
 
 fn main() {
     tauri::Builder::default()
         .menu(menu::init_menu())
         .on_menu_event(menu::event_handler)
-        .setup(|app| {
-            //todo!("init function need here");
-            Ok(())
-        })
         .manage(middleware_types::TabMap {
             tabs: Default::default(),
         })
+        .manage(middleware_types::CurTabName {
+            name: Default::default(),
+        })
+        .setup(|app| Ok(()))
         .invoke_handler(tauri::generate_handler![
             tab_mamagement::create_tab,
             tab_mamagement::close_tab,
