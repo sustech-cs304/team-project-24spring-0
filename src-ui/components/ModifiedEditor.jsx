@@ -45,11 +45,10 @@ export default function ModifiedEditor() {
     return (
         <div className='h-full relative'>
             <Editor language='javascript' className='overflow-hidden h-full'/>
-            <div className='absolute right-4 top-0 flex-row gap-2'>
-                <button className='bg-gray-100 rounded-3xl hover:bg-green-300'>
-                    <Image src='/icons/run.svg' width={12} height={12}/>
+            <div className='absolute right-2 top-0 flex-row gap-2'>
+                <button className='bg-gray-100 rounded-2xl hover:bg-gray-200'>
+                    <Image src='/icons/run.svg' width={16} height={16}/>
                 </button>
-
             </div>
         </div>
 
