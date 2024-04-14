@@ -1,11 +1,15 @@
-use crate::types::middleware_types::TabMap;
-use crate::utility::state_helper::{get_current_tab, get_current_tab_mut, get_current_tab_name};
-use crate::{io::file_io, types::menu_types};
-
-use tauri::api::dialog::MessageDialogKind;
-use tauri::{CustomMenuItem, Manager, Menu, State, Submenu, WindowMenuEvent};
+use tauri::api::dialog::{FileDialogBuilder, MessageDialogKind};
+use tauri::{CustomMenuItem, Menu, Submenu, WindowMenuEvent};
 
 use super::display_alert_dialog;
+use crate::{
+    io::file_io,
+    types::{
+        menu_types,
+        middleware_types::{Tab, TabMap},
+    },
+    utility::state_helper::get_current_tab,
+};
 
 pub fn new() -> Submenu {
     Submenu::new(
@@ -48,7 +52,7 @@ pub fn event_handler(event: WindowMenuEvent) {
 }
 
 fn open_handler(event: WindowMenuEvent) {
-    let picker = tauri::api::dialog::FileDialogBuilder::new();
+    let picker = FileDialogBuilder::new();
     picker.pick_file(move |file_path| match file_path {
         Some(file_path) => match file_io::read_file_str(file_path.to_str().unwrap()) {
             Ok(content) => {
@@ -76,7 +80,9 @@ fn open_handler(event: WindowMenuEvent) {
 }
 
 fn save_handler<'a>(event: WindowMenuEvent) {
-    match get_current_tab_mut(&event).text.save() {
+    let tab_ptr = get_current_tab(&event);
+    let tab = tab_ptr.as_mut();
+    match tab.text.save() {
         Ok(_) => {}
         Err(err) => {
             display_alert_dialog(
@@ -90,24 +96,14 @@ fn save_handler<'a>(event: WindowMenuEvent) {
 }
 
 fn save_as_handler(event: WindowMenuEvent) {
-    let content = get_current_tab(&event)
-        .tabs
-        .lock()
-        .unwrap()
-        .get(&get_current_tab_name(&event))
-        .unwrap()
-        .text
-        .get_string();
+    let tab_ptr = get_current_tab(&event);
+    let tab = tab_ptr.as_ref();
+    let content = tab.text.get_string();
     let picker = tauri::api::dialog::FileDialogBuilder::new();
-    let mut save_success = false;
     picker.save_file(move |file_path| match file_path {
         Some(file_path) => match file_io::write_file(file_path.as_path(), &content) {
             Ok(_) => {
-                save_success = true;
-                event
-                    .window()
-                    .emit("front_file_save_as", save_success)
-                    .unwrap();
+                event.window().emit("front_file_save_as", true).unwrap();
             }
             Err(err) => {
                 display_alert_dialog(

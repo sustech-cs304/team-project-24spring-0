@@ -1,5 +1,7 @@
 use crate::types::middleware_types::{CurTabName, Tab, TabMap};
-use tauri::{Manager, State, WindowMenuEvent};
+use tauri::{Manager, WindowMenuEvent};
+
+use super::ptr::Ptr;
 
 pub fn get_current_tab_name(event: &WindowMenuEvent) -> String {
     event
@@ -10,14 +12,16 @@ pub fn get_current_tab_name(event: &WindowMenuEvent) -> String {
         .unwrap()
         .clone()
 }
-
-pub fn get_current_tab(event: &WindowMenuEvent) -> State<TabMap> {
-    let tab_name = get_current_tab_name(event);
-    event.window().state::<TabMap>()
-}
-
-pub fn get_current_tab_mut(event: &WindowMenuEvent) -> &mut Tab {
-    let tab_name = get_current_tab_name(event);
-    let mut tm = event.window().state::<TabMap>();
-    tm.tabs.lock().unwrap().get_mut(&tab_name).unwrap()
+pub fn get_current_tab(event: &WindowMenuEvent) -> Ptr<Tab> {
+    let name = get_current_tab_name(&event);
+    Ptr::new(
+        event
+            .window()
+            .state::<TabMap>()
+            .tabs
+            .lock()
+            .unwrap()
+            .get(&name)
+            .unwrap(),
+    )
 }
