@@ -11,6 +11,17 @@ pub struct Tab {
     pub simulator: Box<dyn Simulator<i32, i32, i32, i32>>,
 }
 
+//impl Tab {
+//pub fn new(conetnt: &str) -> Self {
+//Self {
+//Box::new(MFile::),
+//arser,
+//assembler,
+//simulator,
+//}
+//}
+//}
+
 use std::{collections::HashMap, sync::Mutex};
 
 pub struct TabMap {

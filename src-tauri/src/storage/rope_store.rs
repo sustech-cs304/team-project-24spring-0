@@ -12,25 +12,11 @@ pub struct Text {
 }
 
 impl MFile<String> for Text {
-    fn from_path(&mut self, filepath: &str) -> Result<bool, String> {
-        match file_io::read_file_str(filepath) {
-            Ok(content) => {
-                self.data = Box::new(Rope::from_str(&content));
-                self.path = PathBuf::from(filepath);
-                self.dirty = false;
-                Ok(true)
-            }
-            Err(e) => Err(e),
-        }
+    fn get_string(&self) -> String {
+        self.data.as_ref().to_string()
     }
 
-    fn from_str(&mut self, text: &str) -> Result<bool, String> {
-        self.data = Box::new(Rope::from_str(text));
-        self.dirty = false;
-        Ok(true)
-    }
-
-    fn save_file(&mut self) -> Result<bool, String> {
+    fn save(&mut self) -> Result<bool, String> {
         match file_io::write_file(self.path.as_path(), &self.data.as_ref().to_string()) {
             Ok(_) => {
                 self.dirty = false;
@@ -39,5 +25,27 @@ impl MFile<String> for Text {
             Err(e) => Err(e),
         }
     }
+
+    fn from_path(filepath: &str) -> Result<Box<Self>, String> {
+        match file_io::read_file_str(filepath) {
+            Ok(content) =>Ok ( Text {
+                data: Box::new(Rope::from_str(&content)),
+                path: PathBuf::from(filepath),
+                dirty: false,
+                last_modified: file_io::get_last_modified(filepath),
+            } )
+            Err(e) => Err(e),
+        }
+    }
+
+    fn from_str(text: &str) -> Result<Box<Self>, String> {
+        Ok(Text {
+            data: Box::new(Rope::from_str(text)),
+            path: PathBuf::new(),
+            dirty: false,
+            last_modified: std::time::SystemTime::now(),
+        })
+    }
+
     //https://docs.rs/ropey/latest/ropey/index.html
 }
