@@ -1,6 +1,7 @@
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::Path;
+use std::time::SystemTime;
 
 /// Read file with  std::Path.
 pub fn read_file(file_path: &Path) -> Result<String, String> {
@@ -39,4 +40,17 @@ pub fn read_file_str(file_path_str: &str) -> Result<String, String> {
 pub fn write_file_str(file_path_str: &str, data: &str) -> Result<bool, String> {
     let file_path = std::path::Path::new(file_path_str);
     write_file(file_path, data)
+}
+
+pub fn get_last_modified_str(file_path: &str) -> Result<SystemTime, String> {
+    let file_path = std::path::Path::new(file_path);
+    get_last_modified(file_path)
+}
+
+pub fn get_last_modified(file_path: &Path) -> Result<SystemTime, String> {
+    let metadata = std::fs::metadata(file_path);
+    match metadata {
+        Ok(metadata) => Ok(metadata.modified().unwrap()),
+        Err(e) => Err(format!("Error: {}", e)),
+    }
 }

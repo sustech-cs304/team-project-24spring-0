@@ -76,7 +76,7 @@ fn open_handler(event: WindowMenuEvent) {
 }
 
 fn save_handler<'a>(event: WindowMenuEvent) {
-    match get_current_tab_mut(&event).text.save_file() {
+    match get_current_tab_mut(&event).text.save() {
         Ok(_) => {}
         Err(err) => {
             display_alert_dialog(
