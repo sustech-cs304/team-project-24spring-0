@@ -28,7 +28,6 @@ pub struct CloseTabResponse {
     pub message: String,
 }
 
-
 //pub mod constants {
 //pub enum Lint {
 //Info,
