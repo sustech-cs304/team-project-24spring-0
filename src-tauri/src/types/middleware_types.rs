@@ -21,35 +21,35 @@ pub struct CurTabName {
     pub name: Mutex<String>,
 }
 
-pub mod constants {
-    pub enum Lint {
-        Info,
-        Lint,
-        Warn,
-        Error,
-    }
+//pub mod constants {
+//pub enum Lint {
+//Info,
+//Lint,
+//Warn,
+//Error,
+//}
 
-    pub enum AssemblerOp {
-        Assemble,
-        Dump,
-        DumpAs,
-    }
+//pub enum AssemblerOp {
+//Assemble,
+//Dump,
+//DumpAs,
+//}
 
-    pub enum SimulatorOp {
-        Run,
-        Debug,
-        RunStep,
-        Redo,
-    }
+//pub enum SimulatorOp {
+//Run,
+//Debug,
+//RunStep,
+//Redo,
+//}
 
-    pub enum FileOp {
-        Save,
-        SaveAs,
-        Open,
-        Close,
-    }
+//pub enum FileOp {
+//Save,
+//SaveAs,
+//Open,
+//Close,
+//}
 
-    pub enum WebSocketOp {
-        RefreshText,
-    }
-}
+//pub enum WebSocketOp {
+//RefreshText,
+//}
+//}

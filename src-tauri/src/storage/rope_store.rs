@@ -18,11 +18,11 @@ impl MFile<String> for Text {
 
     fn save(&mut self) -> Result<bool, String> {
         match file_io::write_file(self.path.as_path(), &self.data.as_ref().to_string()) {
-            Ok(_) => {
+            Some(e) => Err(e),
+            None => {
                 self.dirty = false;
                 Ok(true)
             }
-            Err(e) => Err(e),
         }
     }
 

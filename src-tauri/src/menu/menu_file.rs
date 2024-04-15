@@ -6,7 +6,7 @@ use tauri::{
 use super::display_alert_dialog;
 use crate::{
     io::file_io,
-    middleware::implementation::tab_mamagement::{close_tab, create_tab},
+    middleware::implementation::tab_mamagement::{self, close_tab, create_tab},
     types::{
         menu_types,
         middleware_types::{Tab, TabMap},
@@ -105,16 +105,16 @@ fn save_as_handler(event: WindowMenuEvent) {
     let picker = tauri::api::dialog::FileDialogBuilder::new();
     picker.save_file(move |file_path| match file_path {
         Some(file_path) => match file_io::write_file(file_path.as_path(), &content) {
-            Ok(_) => {
-                event.window().emit("front_file_save_as", true).unwrap();
-            }
-            Err(err) => {
+            Some(err) => {
                 display_alert_dialog(
                     MessageDialogKind::Info,
                     "Failed to save file",
                     err.as_str(),
                     |_| {},
                 );
+            }
+            None => {
+                event.window().emit("front_file_save_as", true).unwrap();
             }
         },
         _ => {}
@@ -125,9 +125,7 @@ fn share_handler(event: WindowMenuEvent) {
     todo!("Share file with socket");
 }
 
-fn close_handler(event: WindowMenuEvent) {
-    //TODO
-}
+fn close_handler(event: WindowMenuEvent) {}
 
 fn exit_handler(event: WindowMenuEvent) {
     event.window().close().unwrap();

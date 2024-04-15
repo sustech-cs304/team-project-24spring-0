@@ -32,6 +32,7 @@ pub mod tab_mamagement {
         }
     }
 
+    #[tauri::command]
     pub fn close_tab(tab_map: State<TabMap>, filepath: &str) -> (bool, String) {
         match tab_map.tabs.lock().unwrap().remove(filepath) {
             Some(_) => (true, "Tab closed".to_string()),
@@ -54,8 +55,8 @@ pub mod frontend_api {
     #[tauri::command]
     pub fn write_file(filepath: &str, data: &str) -> (bool, String) {
         match file_io::write_file_str(filepath, data) {
-            Ok(_) => (true, "File saved".to_string()),
-            Err(e) => (false, e),
+            Some(e) => (false, e),
+            None => (true, "File saved".to_string()),
         }
     }
 }
