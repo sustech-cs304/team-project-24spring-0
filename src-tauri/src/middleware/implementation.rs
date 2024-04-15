@@ -1,42 +1,60 @@
 pub mod tab_mamagement {
-    use crate::interface::storage::MFile;
-    use crate::io::file_io;
-    use crate::storage::rope_store;
-    use crate::types::middleware_types::{CurTabName, Tab, TabMap};
-    use tauri::State;
+    use tauri::{Manager, State, WindowMenuEvent};
 
-    #[tauri::command]
-    pub fn create_tab(
-        tab_map: State<TabMap>,
-        cur_tab_name: State<CurTabName>,
-        filepath: &str,
-    ) -> (bool, String) {
-        match file_io::read_file_str(filepath) {
-            Ok(data) => {
-                //let mut tab = Tab {
-                //text: Box::new(rope_store::Text::from_path(filepath)),
-                //parser: Box::new(Default::default()),
-                //assembler: Box::new(Default::default()),
-                //simulator: Box::new(Default::default()),
-                //};
-                //tab_map
-                //.tabs
-                //.lock()
-                //.unwrap()
-                //.insert(filepath.to_string(), tab);
-                ////cur_tab_name.name.lock().unwrap().as_mut() = filepath.to_string();
-                (true, data)
+    use crate::{
+        modules::riscv::basic::interface::parser::RISCVParser,
+        storage::rope_store,
+        types::middleware_types::{CloseTabResponse, CurTabName, Tab, TabMap},
+        utility::state_helper::set_current_tab_name,
+    };
+
+    use std::path::Path;
+
+    pub fn create_tab(event: &WindowMenuEvent, file_path: &Path) -> Option<String> {
+        //TODO: change this to export function
+        match rope_store::Text::from_path(file_path) {
+            Ok(content) => {
+                let tab_map = event.window().state::<TabMap>();
+                let tab = Tab {
+                    text: Box::new(content),
+                    parser: Box::new(RISCVParser::new()),
+                    //assembler: Box::new(Default::default()),
+                    //simulator: Box::new(Default::default()),
+                };
+                tab_map
+                    .tabs
+                    .lock()
+                    .unwrap()
+                    .insert(file_path.to_str().unwrap().to_string(), tab);
+                set_current_tab_name(&event, file_path.to_str().unwrap());
+                None
             }
-            Err(e) => (false, e),
+            Err(e) => Some(e),
         }
     }
 
     #[tauri::command]
-    pub fn close_tab(tab_map: State<TabMap>, filepath: &str) -> (bool, String) {
+    pub fn close_tab(
+        cur_name: State<CurTabName>,
+        tab_map: State<TabMap>,
+        filepath: &str,
+    ) -> CloseTabResponse {
         match tab_map.tabs.lock().unwrap().remove(filepath) {
-            Some(_) => (true, "Tab closed".to_string()),
-            None => (false, "Tab not found".to_string()),
+            Some(_) => CloseTabResponse {
+                success: true,
+                message: String::new(),
+            },
+            None => CloseTabResponse {
+                success: false,
+                message: "Tab not found".to_string(),
+            },
         }
+    }
+
+    #[tauri::command]
+    pub fn change_current_tab(cur_name: State<CurTabName>, newpath: &str) -> bool {
+        //set_current_tab_name(&cur_name, newpath)
+        todo!("Implement change_current_tab")
     }
 }
 
@@ -54,8 +72,8 @@ pub mod frontend_api {
     #[tauri::command]
     pub fn write_file(filepath: &str, data: &str) -> (bool, String) {
         match file_io::write_file_str(filepath, data) {
-            Ok(_) => (true, "File saved".to_string()),
-            Err(e) => (false, e),
+            Some(e) => (false, e),
+            None => (true, "File saved".to_string()),
         }
     }
 }

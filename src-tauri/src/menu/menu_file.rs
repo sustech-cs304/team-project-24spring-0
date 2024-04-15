@@ -1,11 +1,18 @@
-use crate::types::middleware_types::TabMap;
-use crate::utility::state_helper::get_current_tab_name;
-use crate::{io::file_io, types::menu_types};
-
-use tauri::api::dialog::MessageDialogKind;
-use tauri::{CustomMenuItem, Manager, Menu, Submenu, WindowMenuEvent};
+use tauri::{
+    api::dialog::{FileDialogBuilder, MessageDialogKind},
+    CustomMenuItem, Manager, Menu, Submenu, WindowMenuEvent,
+};
 
 use super::display_alert_dialog;
+use crate::{
+    io::file_io,
+    middleware::implementation::tab_mamagement::{self, close_tab, create_tab},
+    types::{
+        menu_types,
+        middleware_types::{Tab, TabMap},
+    },
+    utility::state_helper::get_current_tab,
+};
 
 pub fn new() -> Submenu {
     Submenu::new(
@@ -48,10 +55,17 @@ pub fn event_handler(event: WindowMenuEvent) {
 }
 
 fn open_handler(event: WindowMenuEvent) {
-    let picker = tauri::api::dialog::FileDialogBuilder::new();
+    let picker = FileDialogBuilder::new();
     picker.pick_file(move |file_path| match file_path {
-        Some(file_path) => match file_io::read_file_str(file_path.to_str().unwrap()) {
-            Ok(content) => {
+        Some(file_path) => match create_tab(&event, file_path.as_path()) {
+            Some(err) => display_alert_dialog(
+                MessageDialogKind::Info,
+                format!("Failed to open {:?}", file_path.file_name().unwrap()).as_str(),
+                err.as_str(),
+                |_| {},
+            ),
+            _ => {
+                let content = get_current_tab(&event).as_ref().text.get_string();
                 event
                     .window()
                     .emit(
@@ -63,25 +77,35 @@ fn open_handler(event: WindowMenuEvent) {
                     )
                     .unwrap();
             }
-            Err(err) => display_alert_dialog(
-                MessageDialogKind::Info,
-                format!("Failed to open {:?}", file_path.file_name().unwrap()).as_str(),
-                err.as_str(),
-                |_| {},
-            ),
         },
         _ => {}
     });
 }
 
 fn save_handler<'a>(event: WindowMenuEvent) {
-    let name = get_current_tab_name(&event);
-    let tm = event.window().state::<TabMap>();
-    let mut inner_map = tm.tabs.lock().unwrap();
-    match inner_map.get_mut(&name) {
-        Some(tab) => match tab.text.save_file() {
-            Ok(_) => {}
-            Err(err) => {
+    let tab_ptr = get_current_tab(&event);
+    let tab = tab_ptr.as_mut();
+    match tab.text.save() {
+        Ok(_) => {}
+        Err(err) => {
+            display_alert_dialog(
+                MessageDialogKind::Info,
+                "Failed to save file",
+                err.as_str(),
+                |_| {},
+            );
+        }
+    }
+}
+
+fn save_as_handler(event: WindowMenuEvent) {
+    let tab_ptr = get_current_tab(&event);
+    let tab = tab_ptr.as_ref();
+    let content = tab.text.get_string();
+    let picker = tauri::api::dialog::FileDialogBuilder::new();
+    picker.save_file(move |file_path| match file_path {
+        Some(file_path) => match file_io::write_file(file_path.as_path(), &content) {
+            Some(err) => {
                 display_alert_dialog(
                     MessageDialogKind::Info,
                     "Failed to save file",
@@ -89,24 +113,10 @@ fn save_handler<'a>(event: WindowMenuEvent) {
                     |_| {},
                 );
             }
+            None => {
+                event.window().emit("front_file_save_as", true).unwrap();
+            }
         },
-        None => {}
-    }
-}
-
-fn save_as_handler(event: WindowMenuEvent) {
-    let name = get_current_tab_name(&event);
-    let picker = tauri::api::dialog::FileDialogBuilder::new();
-    let mut save_success = false;
-    picker.save_file(move |file_path| match file_path {
-        Some(file_path) => {
-            //match file_io::write_file_str(file_path, data)
-            //save_success = true;
-            event
-                .window()
-                .emit("front_file_save_as", save_success)
-                .unwrap();
-        }
         _ => {}
     });
 }
@@ -115,9 +125,7 @@ fn share_handler(event: WindowMenuEvent) {
     todo!("Share file with socket");
 }
 
-fn close_handler(event: WindowMenuEvent) {
-    //TODO
-}
+fn close_handler(event: WindowMenuEvent) {}
 
 fn exit_handler(event: WindowMenuEvent) {
     event.window().close().unwrap();

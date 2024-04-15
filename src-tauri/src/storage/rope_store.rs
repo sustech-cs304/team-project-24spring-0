@@ -2,7 +2,7 @@ use ropey::Rope;
 
 use crate::interface::storage::MFile;
 use crate::io::file_io;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 pub struct Text {
     data: Box<Rope>,
@@ -12,32 +12,49 @@ pub struct Text {
 }
 
 impl MFile<String> for Text {
-    fn from_path(&mut self, filepath: &str) -> Result<bool, String> {
-        match file_io::read_file_str(filepath) {
-            Ok(content) => {
-                self.data = Box::new(Rope::from_str(&content));
-                self.path = PathBuf::from(filepath);
-                self.dirty = false;
-                Ok(true)
-            }
-            Err(e) => Err(e),
-        }
+    fn get_string(&self) -> String {
+        self.data.as_ref().to_string()
     }
 
-    fn from_str(&mut self, text: &str) -> Result<bool, String> {
-        self.data = Box::new(Rope::from_str(text));
-        self.dirty = false;
-        Ok(true)
-    }
-
-    fn save_file(&mut self) -> Result<bool, String> {
+    fn save(&mut self) -> Result<bool, String> {
         match file_io::write_file(self.path.as_path(), &self.data.as_ref().to_string()) {
-            Ok(_) => {
+            Some(e) => Err(e),
+            None => {
                 self.dirty = false;
                 Ok(true)
             }
+        }
+    }
+
+    //https://docs.rs/ropey/latest/ropey/index.html
+}
+
+impl Text {
+    pub fn from_path(file_path: &Path) -> Result<Self, String> {
+        match file_io::read_file(file_path) {
+            Ok(content) => match file_io::get_last_modified(file_path) {
+                Ok(last_modified) => Ok(Text {
+                    data: Box::new(Rope::from_str(&content)),
+                    path: PathBuf::from(file_path),
+                    dirty: false,
+                    last_modified,
+                }),
+                Err(e) => Err(e),
+            },
             Err(e) => Err(e),
         }
     }
-    //https://docs.rs/ropey/latest/ropey/index.html
+
+    pub fn from_path_str(file_path: &str) -> Result<Self, String> {
+        Text::from_path(Path::new(file_path))
+    }
+
+    pub fn from_str(text: &str) -> Result<Self, String> {
+        Ok(Text {
+            data: Box::new(Rope::from_str(text)),
+            path: PathBuf::new(),
+            dirty: false,
+            last_modified: std::time::SystemTime::now(),
+        })
+    }
 }

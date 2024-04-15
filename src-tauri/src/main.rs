@@ -27,9 +27,16 @@ fn main() {
         .manage(middleware_types::CurTabName {
             name: Default::default(),
         })
-        .setup(|app| Ok(()))
+        .setup(|app| {
+            //let tab_map = app.state::<middleware_types::TabMap>();
+            //tab_map
+            //.tabs
+            //.lock()
+            //.unwrap()
+            //.insert("foo", middleware_types::Tab::new("foo"));
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
-            tab_mamagement::create_tab,
             tab_mamagement::close_tab,
             frontend_api::read_file,
             frontend_api::write_file

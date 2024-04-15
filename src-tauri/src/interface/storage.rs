@@ -1,7 +1,5 @@
 pub trait MFile<ERR>: Send + Sync {
-    fn from_path(&mut self, path: &str) -> Result<bool, ERR>;
+    fn get_string(&self) -> String;
 
-    fn from_str(&mut self, text: &str) -> Result<bool, ERR>;
-
-    fn save_file(&mut self) -> Result<bool, ERR>;
+    fn save(&mut self) -> Result<bool, ERR>;
 }
