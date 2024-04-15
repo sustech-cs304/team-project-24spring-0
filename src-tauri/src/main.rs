@@ -37,8 +37,6 @@ fn main() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
-            tab_mamagement::create_tab,
-            tab_mamagement::close_tab,
             frontend_api::read_file,
             frontend_api::write_file
         ])

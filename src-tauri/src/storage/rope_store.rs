@@ -1,8 +1,8 @@
 use ropey::Rope;
 
-use crate::interface::storage::{MFile, MFileInit};
+use crate::interface::storage::MFile;
 use crate::io::file_io;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 pub struct Text {
     data: Box<Rope>,
@@ -28,28 +28,33 @@ impl MFile<String> for Text {
 
     //https://docs.rs/ropey/latest/ropey/index.html
 }
-impl MFileInit<String> for Text {
-    fn from_path(filepath: &str) -> Result<Box<dyn MFile<String>>, String> {
-        match file_io::read_file_str(filepath) {
-            Ok(content) => match file_io::get_last_modified_str(filepath) {
-                Ok(last_modified) => Ok(Box::new(Text {
+
+impl Text {
+    pub fn from_path(file_path: &Path) -> Result<Self, String> {
+        match file_io::read_file(file_path) {
+            Ok(content) => match file_io::get_last_modified(file_path) {
+                Ok(last_modified) => Ok(Text {
                     data: Box::new(Rope::from_str(&content)),
-                    path: PathBuf::from(filepath),
+                    path: PathBuf::from(file_path),
                     dirty: false,
                     last_modified,
-                })),
+                }),
                 Err(e) => Err(e),
             },
             Err(e) => Err(e),
         }
     }
 
-    fn from_str(text: &str) -> Result<Box<dyn MFile<String>>, String> {
-        Ok(Box::new(Text {
+    pub fn from_path_str(file_path: &str) -> Result<Self, String> {
+        Text::from_path(Path::new(file_path))
+    }
+
+    pub fn from_str(text: &str) -> Result<Self, String> {
+        Ok(Text {
             data: Box::new(Rope::from_str(text)),
             path: PathBuf::new(),
             dirty: false,
             last_modified: std::time::SystemTime::now(),
-        }))
+        })
     }
 }

@@ -7,20 +7,9 @@ use ropey::Rope;
 pub struct Tab {
     pub text: Box<dyn MFile<String>>,
     pub parser: Box<dyn Parser<Rope, crate::modules::riscv::basic::interface::parser::RISCV>>,
-    pub assembler: Box<dyn Assembler<i32, i32, i32, i32>>,
-    pub simulator: Box<dyn Simulator<i32, i32, i32, i32>>,
+    //pub assembler: Box<dyn Assembler<i32, i32, i32, i32>>,
+    //pub simulator: Box<dyn Simulator<i32, i32, i32, i32>>,
 }
-
-//impl Tab {
-//pub fn new(conetnt: &str) -> Self {
-//Self {
-//Box::new(MFile::),
-//arser,
-//assembler,
-//simulator,
-//}
-//}
-//}
 
 use std::{collections::HashMap, sync::Mutex};
 

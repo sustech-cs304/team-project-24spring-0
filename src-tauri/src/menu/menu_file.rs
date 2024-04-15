@@ -1,9 +1,12 @@
-use tauri::api::dialog::{FileDialogBuilder, MessageDialogKind};
-use tauri::{CustomMenuItem, Menu, Submenu, WindowMenuEvent};
+use tauri::{
+    api::dialog::{FileDialogBuilder, MessageDialogKind},
+    CustomMenuItem, Manager, Menu, Submenu, WindowMenuEvent,
+};
 
 use super::display_alert_dialog;
 use crate::{
     io::file_io,
+    middleware::implementation::tab_mamagement::{close_tab, create_tab},
     types::{
         menu_types,
         middleware_types::{Tab, TabMap},
@@ -54,9 +57,15 @@ pub fn event_handler(event: WindowMenuEvent) {
 fn open_handler(event: WindowMenuEvent) {
     let picker = FileDialogBuilder::new();
     picker.pick_file(move |file_path| match file_path {
-        Some(file_path) => match file_io::read_file_str(file_path.to_str().unwrap()) {
-            Ok(content) => {
-                //TODO: create tab in backend
+        Some(file_path) => match create_tab(&event, file_path.as_path()) {
+            Some(err) => display_alert_dialog(
+                MessageDialogKind::Info,
+                format!("Failed to open {:?}", file_path.file_name().unwrap()).as_str(),
+                err.as_str(),
+                |_| {},
+            ),
+            _ => {
+                let content = get_current_tab(&event).as_ref().text.get_string();
                 event
                     .window()
                     .emit(
@@ -68,12 +77,6 @@ fn open_handler(event: WindowMenuEvent) {
                     )
                     .unwrap();
             }
-            Err(err) => display_alert_dialog(
-                MessageDialogKind::Info,
-                format!("Failed to open {:?}", file_path.file_name().unwrap()).as_str(),
-                err.as_str(),
-                |_| {},
-            ),
         },
         _ => {}
     });
