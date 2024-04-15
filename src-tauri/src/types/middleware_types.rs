@@ -3,6 +3,7 @@ use crate::interface::{
 };
 
 use ropey::Rope;
+use serde::{de, Serialize};
 
 pub struct Tab {
     pub text: Box<dyn MFile<String>>,
@@ -20,6 +21,13 @@ pub struct TabMap {
 pub struct CurTabName {
     pub name: Mutex<String>,
 }
+
+#[derive(Clone, Serialize)]
+pub struct CloseTabResponse {
+    pub success: bool,
+    pub message: String,
+}
+
 
 //pub mod constants {
 //pub enum Lint {

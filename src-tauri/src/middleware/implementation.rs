@@ -4,13 +4,14 @@ pub mod tab_mamagement {
     use crate::{
         modules::riscv::basic::interface::parser::RISCVParser,
         storage::rope_store,
-        types::middleware_types::{Tab, TabMap},
+        types::middleware_types::{CloseTabResponse, CurTabName, Tab, TabMap},
         utility::state_helper::set_current_tab_name,
     };
 
     use std::path::Path;
 
     pub fn create_tab(event: &WindowMenuEvent, file_path: &Path) -> Option<String> {
+        //TODO: change this to export function
         match rope_store::Text::from_path(file_path) {
             Ok(content) => {
                 let tab_map = event.window().state::<TabMap>();
@@ -33,11 +34,27 @@ pub mod tab_mamagement {
     }
 
     #[tauri::command]
-    pub fn close_tab(tab_map: State<TabMap>, filepath: &str) -> (bool, String) {
+    pub fn close_tab(
+        cur_name: State<CurTabName>,
+        tab_map: State<TabMap>,
+        filepath: &str,
+    ) -> CloseTabResponse {
         match tab_map.tabs.lock().unwrap().remove(filepath) {
-            Some(_) => (true, "Tab closed".to_string()),
-            None => (false, "Tab not found".to_string()),
+            Some(_) => CloseTabResponse {
+                success: true,
+                message: String::new(),
+            },
+            None => CloseTabResponse {
+                success: false,
+                message: "Tab not found".to_string(),
+            },
         }
+    }
+
+    #[tauri::command]
+    pub fn change_current_tab(cur_name: State<CurTabName>, newpath: &str) -> bool {
+        //set_current_tab_name(&cur_name, newpath)
+        todo!("Implement change_current_tab")
     }
 }
 
