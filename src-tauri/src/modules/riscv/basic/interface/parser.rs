@@ -10,14 +10,14 @@ pub struct RISCV;
 
 pub type ParserRISCVInstOp = RISCVInstruction;
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum ParserRISCVInstOpd {
     Reg(RISCVRegister),
     Imm(RISCVImmediate),
     Lbl(ParserRISCVLabel),
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ParserRISCVLabel {
     Text(usize),          // ParserResult<RISCV>::text[usize]
     Data((usize, usize)), // ParserResult<RISCV>::data[usize][usize]
