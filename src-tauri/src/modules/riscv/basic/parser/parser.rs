@@ -1,9 +1,7 @@
 use super::super::interface::parser::*;
 use super::label::LabelData;
-use super::lexer::{LexerIter, RISCVOpToken, RISCVToken};
-use super::oplist::{
-    RISCVExpectToken, RISCVImmediateType, RISCVOpdSetAim, RISCVOpdSetAimOpd, OP_LIST,
-};
+use super::lexer::{LexerIter, RISCVOpTokenTrait, RISCVToken, Symbol};
+use super::oplist::{RISCVExpectImm, RISCVExpectToken, RISCVOpdSetAim, RISCVOpdSetAimOpd};
 use super::r#macro::MacroData;
 use crate::utility::ptr::Ptr;
 use logos::Logos;
@@ -14,10 +12,9 @@ pub struct RISCVParser {
     label_list: BTreeMap<String, LabelData>,
 }
 
-impl Parser<ropey::Rope, RISCV> for RISCVParser {
-    fn parse(&mut self, code: &ropey::Rope) -> Result<ParserResult<RISCV>, Vec<ParserError>> {
+impl Parser<RISCV> for RISCVParser {
+    fn parse(&mut self, code_str: String) -> Result<ParserResult<RISCV>, Vec<ParserError>> {
         self.init();
-        let code_str = code.to_string();
         let mut _status = RISCVParserStatus::new(&code_str);
         let status_ptr = Ptr::new(&_status);
         let status = status_ptr.as_mut();
@@ -77,8 +74,8 @@ impl RISCVParserStatus<'_> {
     }
 }
 
+use RISCVExpectImm::*;
 use RISCVExpectToken::*;
-use RISCVImmediateType::*;
 
 macro_rules! load_data_helper {
     ($label_list:expr, $status:expr, $vec:expr) => {
@@ -170,9 +167,9 @@ impl RISCVParser {
         self.label_list.clear();
     }
 
-    fn in_bound_int(token: RISCVToken, min: i128, max: i128) -> bool {
+    fn in_bound_int(token: &RISCVToken, min: i128, max: i128) -> bool {
         match token {
-            RISCVToken::ImmediateInt(val) => val >= min && val <= max,
+            RISCVToken::ImmediateInt(val) => *val >= min && *val <= max,
             _ => false,
         }
     }
@@ -193,7 +190,7 @@ impl RISCVParser {
                 RISCVOpdSetAimOpd::Idx(idx) => {
                     inst.opd.push((idx.handler)(stash_opd[idx.idx].unwrap()))
                 }
-                RISCVOpdSetAimOpd::Val(val) => inst.opd.push(val.clone()),
+                RISCVOpdSetAimOpd::Val(val) => inst.opd.push(*val),
             }
         }
         result.text.push(ParserResultText::Text(inst));
@@ -262,7 +259,7 @@ impl RISCVParser {
     fn parse_op(
         &mut self,
         status_ptr: Ptr<RISCVParserStatus>,
-        op: RISCVOpToken,
+        op: &dyn RISCVOpTokenTrait,
     ) -> Result<(), Vec<ParserError>> {
         let status = status_ptr.as_mut();
 
@@ -272,7 +269,7 @@ impl RISCVParser {
                 .get_error("operator in data segment".to_string()));
         }
 
-        let token_sets = OP_LIST.get(&op).unwrap();
+        let token_sets = op.get_opd_set();
         let token_set_len = token_sets.len();
 
         if token_set_len == 0 {
@@ -295,7 +292,7 @@ impl RISCVParser {
         }
 
         while let Some(token) = status.iter.next()? {
-            if token == RISCVToken::Newline {
+            if matches!(token, RISCVToken::Newline) {
                 term_by = 1;
                 break;
             }
@@ -312,23 +309,17 @@ impl RISCVParser {
                     Comma => type_fit = matches!(token, RISCVToken::Comma),
                     LParen => type_fit = matches!(token, RISCVToken::LParen),
                     RParen => type_fit = matches!(token, RISCVToken::RParen),
-                    Reg => type_fit = matches!(token, RISCVToken::Register(_)),
+                    Reg => type_fit = matches!(token, RISCVToken::Symbol(Symbol::Reg(_))),
                     Csr => type_fit = matches!(token, RISCVToken::Csr(_)),
                     Imm(imm_t) => match imm_t {
-                        U4 => type_fit = Self::in_bound_int(token, 0, 0xf),
-                        U5 => type_fit = Self::in_bound_int(token, 0, 0x1f),
-                        U12 => type_fit = Self::in_bound_int(token, 0, 0xfff),
-                        U20 => type_fit = Self::in_bound_int(token, 0, 0xf_ffff),
-                        U32 => type_fit = Self::in_bound_int(token, 0, 0xffff_ffff),
-                        U64 => type_fit = Self::in_bound_int(token, 0, u64::MAX as i128),
-                        I12 => type_fit = Self::in_bound_int(token, -0x800, 0x7ff),
-                        I20 => type_fit = Self::in_bound_int(token, -0x8_0000, 0x7_ffff),
-                        I32 => type_fit = Self::in_bound_int(token, -0x8000_0000, 0x7fff_ffff),
-                        I64 => {
-                            type_fit = Self::in_bound_int(token, i64::MIN as i128, i64::MAX as i128)
-                        }
+                        U4 => type_fit = Self::in_bound_int(&token, 0, 0xf),
+                        U5 => type_fit = Self::in_bound_int(&token, 0, 0x1f),
+                        U12 => type_fit = Self::in_bound_int(&token, 0, 0xfff),
+                        U20 => type_fit = Self::in_bound_int(&token, 0, 0xf_ffff),
+                        I12 => type_fit = Self::in_bound_int(&token, -0x800, 0x7ff),
+                        I32 => type_fit = Self::in_bound_int(&token, -0x8000_0000, 0x7fff_ffff),
                     },
-                    Lbl => type_fit = matches!(token, RISCVToken::Label(_)),
+                    Lbl => type_fit = matches!(token, RISCVToken::Symbol(Symbol::Label(_))),
                 }
                 if !type_fit {
                     token_set_state[i] = 0;
@@ -345,15 +336,15 @@ impl RISCVParser {
             }
             // stash operand
             match token {
-                RISCVToken::Register(reg) => {
+                RISCVToken::Symbol(Symbol::Reg(reg)) => {
                     stash_opd.push(Some(ParserRISCVInstOpd::Reg(reg)));
                     stash_label_name.push(String::new());
                 }
                 RISCVToken::ImmediateInt(val) => {
-                    stash_opd.push(Some(ParserRISCVInstOpd::Imm(RISCVImmediate::Int(val))));
+                    stash_opd.push(Some(ParserRISCVInstOpd::Imm(val as ParserRISCVImmediate)));
                     stash_label_name.push(String::new());
                 }
-                RISCVToken::Label(lbl) => {
+                RISCVToken::Symbol(Symbol::Label(lbl)) => {
                     stash_opd.push(Some(ParserRISCVInstOpd::Lbl(ParserRISCVLabel::Unknown(
                         status_ptr.as_ref().iter.pos(),
                     ))));
@@ -418,7 +409,7 @@ impl RISCVParser {
                     let mut msg = vec!["unmatched operands.\ncandidates are:"];
                     for opd_set in token_sets {
                         msg.push("\n");
-                        msg.push(opd_set.hint);
+                        msg.push(&opd_set.hint);
                     }
                     Err(vec![ParserError {
                         pos: op_char_pos,
@@ -430,7 +421,7 @@ impl RISCVParser {
                 let mut msg = vec!["unmatched operands.\ncandidates are:"];
                 for opd_set in token_sets {
                     msg.push("\n");
-                    msg.push(opd_set.hint);
+                    msg.push(&opd_set.hint);
                 }
                 Err(vec![ParserError {
                     pos: op_char_pos,
@@ -457,33 +448,37 @@ impl RISCVParser {
             | RISCVToken::ImmediateString(_) => {
                 Self::load_data(&mut self.label_list, status, &token)
             }
-            RISCVToken::Label(value) => {
-                let pos = status.iter.pos();
-                let next_token = status.iter.next()?;
-                if status.label_def.is_some()
-                    || next_token.is_none()
-                    || next_token.unwrap() != RISCVToken::Colon
-                {
-                    return Err(vec![ParserError {
-                        pos,
-                        msg: "unrecognized symbol".to_string(),
-                    }]);
+            RISCVToken::Symbol(symbol) => match symbol {
+                Symbol::Label(value) => {
+                    let pos = status.iter.pos();
+                    let next_token = status.iter.next()?;
+                    if status.label_def.is_some()
+                        || next_token.is_none()
+                        || !matches!(next_token.unwrap(), RISCVToken::Colon)
+                    {
+                        return Err(vec![ParserError {
+                            pos,
+                            msg: "unrecognized symbol".to_string(),
+                        }]);
+                    }
+                    let label_name = value.to_string();
+                    if self.label_list.get(&label_name).is_none() {
+                        self.label_list.insert(
+                            label_name.clone(),
+                            LabelData {
+                                name: label_name.clone(),
+                                def: None,
+                                refs: Vec::new(),
+                            },
+                        );
+                    }
+                    status.label_def = Some(label_name);
+                    Ok(())
                 }
-                let label_name = value.to_string();
-                if self.label_list.get(&label_name).is_none() {
-                    self.label_list.insert(
-                        label_name.clone(),
-                        LabelData {
-                            name: label_name.clone(),
-                            def: None,
-                            refs: Vec::new(),
-                        },
-                    );
-                }
-                status.label_def = Some(label_name);
-                Ok(())
-            }
-            RISCVToken::MacroParameter(_) | RISCVToken::Register(_) | RISCVToken::Csr(_) => {
+                Symbol::Op(op) => self.parse_op(status_ptr, op),
+                Symbol::Reg(_) => Err(status.iter.get_error("unexpected symbol".to_string())),
+            },
+            RISCVToken::MacroParameter(_) | RISCVToken::Csr(_) => {
                 Err(status.iter.get_error("unexpected symbol".to_string()))
             }
             RISCVToken::Align => {
@@ -538,7 +533,8 @@ impl RISCVParser {
             RISCVToken::Section => {
                 let next_token = status.iter.next()?;
                 match next_token {
-                    Some(RISCVToken::Label(_)) | Some(RISCVToken::ImmediateString(_)) => Ok(()),
+                    Some(RISCVToken::Symbol(Symbol::Label(_)))
+                    | Some(RISCVToken::ImmediateString(_)) => Ok(()),
                     Some(_) => Err(status.iter.get_error("invalid section name".to_string())),
                     None => Err(status.iter.get_error("missing section name".to_string())),
                 }
@@ -581,7 +577,6 @@ impl RISCVParser {
             RISCVToken::UnknownDirective(_) => {
                 Err(status.iter.get_error("unrecognized directive".to_string()))
             }
-            RISCVToken::Operator(op) => self.parse_op(status_ptr, op),
         }
     }
 
