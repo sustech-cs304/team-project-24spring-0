@@ -1,15 +1,39 @@
+use std::path::Path;
+
 use tauri::{
-    api::dialog::{FileDialogBuilder, MessageDialogKind},
-    CustomMenuItem, Menu, Submenu, WindowMenuEvent,
+    api::dialog::{FileDialogBuilder, MessageDialogKind}, CustomMenuItem, Manager, Menu, Submenu, WindowMenuEvent
 };
 
 use super::display_alert_dialog;
 use crate::{
     io::file_io,
-    middleware::implementation::tab_management::new_tab,
-    types::menu_types,
-    utility::state_helper::{get_current_tab, get_current_tab_name},
+    storage::rope_store,
+    types::{middleware_types::{Tab,TabMap}, menu_types },
+    utility::state_helper::event::{get_current_tab, get_current_tab_name, set_current_tab_name },
+    modules::riscv::basic::parser::parser::RISCVParser
 };
+
+  fn new_tab(event: &WindowMenuEvent, file_path: &Path) -> Option<String> {
+        match rope_store::Text::from_path(file_path) {
+            Ok(content) => {
+                let tab_map = event.window().state::<TabMap>();
+                let tab = Tab {
+                    text: Box::new(content),
+                    parser: Box::new(RISCVParser::new()),
+                    //assembler: Box::new(Default::default()),
+                    //simulator: Box::new(Default::default()),
+                };
+                tab_map
+                    .tabs
+                    .lock()
+                    .unwrap()
+                    .insert(file_path.to_str().unwrap().to_string(), tab);
+                set_current_tab_name(&event, file_path.to_str().unwrap());
+                None
+            }
+            Err(e) => Some(e),
+        }
+    }
 
 pub fn new() -> Submenu {
     Submenu::new(

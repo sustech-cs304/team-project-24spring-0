@@ -14,10 +14,9 @@ pub struct RISCVParser {
     label_list: BTreeMap<String, LabelData>,
 }
 
-impl Parser<ropey::Rope, RISCV> for RISCVParser {
-    fn parse(&mut self, code: &ropey::Rope) -> Result<ParserResult<RISCV>, Vec<ParserError>> {
+impl Parser< RISCV> for RISCVParser {
+    fn parse(&mut self, code_str: String) -> Result<ParserResult<RISCV>, Vec<ParserError>> {
         self.init();
-        let code_str = code.to_string();
         let mut _status = RISCVParserStatus::new(&code_str);
         let status_ptr = Ptr::new(&_status);
         let status = status_ptr.as_mut();

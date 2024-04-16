@@ -14,6 +14,6 @@ pub fn test_parser() {
         beq a1, a2, bb\n \
         ",
     );
-    let res = p.parse(&rope);
+    let res = p.parse(rope.to_string());
     println!("{:?}", res);
 }
