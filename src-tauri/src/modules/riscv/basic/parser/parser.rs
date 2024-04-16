@@ -1,7 +1,7 @@
 use super::super::interface::parser::*;
 use super::label::LabelData;
-use super::lexer::{LexerIter, RISCVOpToken, RISCVToken, Symbol};
-use super::oplist::{RISCVExpectToken, RISCVImmediateType, RISCVOpdSetAim, RISCVOpdSetAimOpd};
+use super::lexer::{LexerIter, RISCVOpTokenTrait, RISCVToken, Symbol};
+use super::oplist::{RISCVExpectImm, RISCVExpectToken, RISCVOpdSetAim, RISCVOpdSetAimOpd};
 use super::r#macro::MacroData;
 use crate::utility::ptr::Ptr;
 use logos::Logos;
@@ -75,8 +75,8 @@ impl RISCVParserStatus<'_> {
     }
 }
 
+use RISCVExpectImm::*;
 use RISCVExpectToken::*;
-use RISCVImmediateType::*;
 
 macro_rules! load_data_helper {
     ($label_list:expr, $status:expr, $vec:expr) => {
@@ -191,7 +191,7 @@ impl RISCVParser {
                 RISCVOpdSetAimOpd::Idx(idx) => {
                     inst.opd.push((idx.handler)(stash_opd[idx.idx].unwrap()))
                 }
-                RISCVOpdSetAimOpd::Val(val) => inst.opd.push(val.clone()),
+                RISCVOpdSetAimOpd::Val(val) => inst.opd.push(*val),
             }
         }
         result.text.push(ParserResultText::Text(inst));
@@ -260,7 +260,7 @@ impl RISCVParser {
     fn parse_op(
         &mut self,
         status_ptr: Ptr<RISCVParserStatus>,
-        op: &dyn RISCVOpToken,
+        op: &dyn RISCVOpTokenTrait,
     ) -> Result<(), Vec<ParserError>> {
         let status = status_ptr.as_mut();
 
@@ -310,21 +310,15 @@ impl RISCVParser {
                     Comma => type_fit = matches!(token, RISCVToken::Comma),
                     LParen => type_fit = matches!(token, RISCVToken::LParen),
                     RParen => type_fit = matches!(token, RISCVToken::RParen),
-                    Reg => type_fit = matches!(token, RISCVToken::Register(_)),
+                    Reg => type_fit = matches!(token, RISCVToken::Symbol(Symbol::Reg(_))),
                     Csr => type_fit = matches!(token, RISCVToken::Csr(_)),
                     Imm(imm_t) => match imm_t {
                         U4 => type_fit = Self::in_bound_int(&token, 0, 0xf),
                         U5 => type_fit = Self::in_bound_int(&token, 0, 0x1f),
                         U12 => type_fit = Self::in_bound_int(&token, 0, 0xfff),
                         U20 => type_fit = Self::in_bound_int(&token, 0, 0xf_ffff),
-                        U32 => type_fit = Self::in_bound_int(&token, 0, 0xffff_ffff),
-                        U64 => type_fit = Self::in_bound_int(&token, 0, u64::MAX as i128),
                         I12 => type_fit = Self::in_bound_int(&token, -0x800, 0x7ff),
-                        I20 => type_fit = Self::in_bound_int(&token, -0x8_0000, 0x7_ffff),
                         I32 => type_fit = Self::in_bound_int(&token, -0x8000_0000, 0x7fff_ffff),
-                        I64 => {
-                            type_fit = Self::in_bound_int(&token, i64::MIN as i128, i64::MAX as i128)
-                        }
                     },
                     Lbl => type_fit = matches!(token, RISCVToken::Symbol(Symbol::Label(_))),
                 }
@@ -343,12 +337,14 @@ impl RISCVParser {
             }
             // stash operand
             match token {
-                RISCVToken::Register(reg) => {
+                RISCVToken::Symbol(Symbol::Reg(reg)) => {
                     stash_opd.push(Some(ParserRISCVInstOpd::Reg(reg)));
                     stash_label_name.push(String::new());
                 }
                 RISCVToken::ImmediateInt(val) => {
-                    stash_opd.push(Some(ParserRISCVInstOpd::Imm(RISCVImmediate::Int(val))));
+                    stash_opd.push(Some(ParserRISCVInstOpd::Imm(ParserRISCVImmediate::Int(
+                        val,
+                    ))));
                     stash_label_name.push(String::new());
                 }
                 RISCVToken::Symbol(Symbol::Label(lbl)) => {
@@ -483,8 +479,9 @@ impl RISCVParser {
                     Ok(())
                 }
                 Symbol::Op(op) => self.parse_op(status_ptr, op),
+                Symbol::Reg(_) => Err(status.iter.get_error("unexpected symbol".to_string())),
             },
-            RISCVToken::MacroParameter(_) | RISCVToken::Register(_) | RISCVToken::Csr(_) => {
+            RISCVToken::MacroParameter(_) | RISCVToken::Csr(_) => {
                 Err(status.iter.get_error("unexpected symbol".to_string()))
             }
             RISCVToken::Align => {

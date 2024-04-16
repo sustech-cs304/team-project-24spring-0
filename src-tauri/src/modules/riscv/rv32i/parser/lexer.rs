@@ -1,13 +1,21 @@
-use std::collections::HashMap;
-
-use super::super::super::basic::parser::lexer::RISCVOpToken;
+use super::super::super::basic::interface::parser::ParserRISCVRegister;
+use super::super::super::basic::parser::lexer::{RISCVOpToken, RISCVOpTokenTrait};
+use super::super::constants::RV32IRegister;
 use super::oplist::{RISCVOpdSet, OP_LIST};
 use lazy_static::lazy_static;
+use std::collections::HashMap;
 
-pub fn op_lexer(op: &str) -> Option<&'static dyn RISCVOpToken> {
+pub fn parse_op(op: &str) -> Option<RISCVOpToken> {
     match OP_TOKEN.get(op) {
-        Some(op) => Some(op as &dyn RISCVOpToken),
+        Some(op) => Some(op),
         None => None,
+    }
+}
+
+pub fn parse_reg(op: &str) -> Option<ParserRISCVRegister> {
+    match op.parse::<RV32IRegister>() {
+        Ok(reg) => Some(reg.into()),
+        Err(_) => None,
     }
 }
 
@@ -367,7 +375,7 @@ pub enum RV32IOpToken {
     ZextH,
 }
 
-impl RISCVOpToken for RV32IOpToken {
+impl RISCVOpTokenTrait for RV32IOpToken {
     fn get_opd_set(&self) -> &Vec<RISCVOpdSet> {
         &OP_LIST.get(self).unwrap()
     }

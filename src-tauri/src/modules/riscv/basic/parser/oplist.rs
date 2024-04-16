@@ -1,19 +1,17 @@
+use crate::modules::riscv::basic::interface::parser::ParserRISCVRegisterTrait;
+
 use super::super::interface::parser::{
-    ParserRISCVInstOp, ParserRISCVInstOpd, RISCVImmediate, RISCVRegister,
+    ParserRISCVImmediate, ParserRISCVInstOp, ParserRISCVInstOpd,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum RISCVImmediateType {
+pub enum RISCVExpectImm {
     U4,
     U5,
     U12,
     U20,
-    U32,
-    U64,
     I12,
-    I20,
     I32,
-    I64,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -23,7 +21,7 @@ pub enum RISCVExpectToken {
     RParen,
     Reg,
     Csr,
-    Imm(RISCVImmediateType),
+    Imm(RISCVExpectImm),
     Lbl,
 }
 
@@ -52,20 +50,16 @@ pub struct RISCVOpdSet {
     pub aim_basics: Vec<RISCVOpdSetAim>,
 }
 
+pub use RISCVExpectImm::*;
 pub use RISCVExpectToken::*;
-pub use RISCVImmediateType::*;
-pub use RISCVRegister::*;
 
 // --------------------reg-------------------------
-pub fn reg(reg: RISCVRegister) -> RISCVOpdSetAimOpd {
-    RISCVOpdSetAimOpd::Val(ParserRISCVInstOpd::Reg(reg))
+pub fn reg<T: ParserRISCVRegisterTrait + 'static>(reg: T) -> RISCVOpdSetAimOpd {
+    RISCVOpdSetAimOpd::Val(ParserRISCVInstOpd::Reg(reg.into()))
 }
 // --------------------imm-------------------------
 pub fn imm_i(imm: i128) -> RISCVOpdSetAimOpd {
-    RISCVOpdSetAimOpd::Val(ParserRISCVInstOpd::Imm(RISCVImmediate::Int(imm)))
-}
-pub fn imm_f(imm: f64) -> RISCVOpdSetAimOpd {
-    RISCVOpdSetAimOpd::Val(ParserRISCVInstOpd::Imm(RISCVImmediate::Float(imm)))
+    RISCVOpdSetAimOpd::Val(ParserRISCVInstOpd::Imm(ParserRISCVImmediate::Int(imm)))
 }
 // --------------------idx-------------------------
 pub fn idx(idx: usize) -> RISCVOpdSetAimOpd {
@@ -78,24 +72,24 @@ pub fn idx_handler(
     RISCVOpdSetAimOpd::Idx(RISCVOpdSetAimOpdIdx { idx, handler })
 }
 pub fn idx_handler_low(opd: ParserRISCVInstOpd) -> ParserRISCVInstOpd {
-    if let ParserRISCVInstOpd::Imm(RISCVImmediate::Int(i)) = opd {
+    if let ParserRISCVInstOpd::Imm(ParserRISCVImmediate::Int(i)) = opd {
         if i & 0x800 != 0 {
-            ParserRISCVInstOpd::Imm(RISCVImmediate::Int(-(i & 0x7ff)))
+            ParserRISCVInstOpd::Imm(ParserRISCVImmediate::Int(-(i & 0x7ff)))
         } else {
-            ParserRISCVInstOpd::Imm(RISCVImmediate::Int(i & 0x7ff))
+            ParserRISCVInstOpd::Imm(ParserRISCVImmediate::Int(i & 0x7ff))
         }
     } else {
         opd
     }
 }
 pub fn idx_handler_high(opd: ParserRISCVInstOpd) -> ParserRISCVInstOpd {
-    if let ParserRISCVInstOpd::Imm(RISCVImmediate::Int(i)) = opd {
+    if let ParserRISCVInstOpd::Imm(ParserRISCVImmediate::Int(i)) = opd {
         if i & 0x800 != 0 {
-            ParserRISCVInstOpd::Imm(RISCVImmediate::Int(
+            ParserRISCVInstOpd::Imm(ParserRISCVImmediate::Int(
                 ((i as u32 + 0x0000_1000) >> 12) as i128,
             ))
         } else {
-            ParserRISCVInstOpd::Imm(RISCVImmediate::Int(((i as u32) >> 12) as i128))
+            ParserRISCVInstOpd::Imm(ParserRISCVImmediate::Int(((i as u32) >> 12) as i128))
         }
     } else {
         opd
@@ -178,62 +172,4 @@ pub fn opd_set(
 }
 pub fn opd_set_no_opd(op: ParserRISCVInstOp, name: &str) -> RISCVOpdSet {
     opd_set(vec![], vec![basic_op(op, vec![])], name.to_string())
-}
-pub fn opd_set_sl_mem(
-    op: ParserRISCVInstOp,
-    name: &str,
-    unit: &str,
-    src: [&str; 5],
-    dst: [&str; 5],
-) -> Vec<RISCVOpdSet> {
-    vec![
-        opd_set(
-            expect_opd(vec![Reg, Comma, Imm(I12), LParen, Reg, RParen]),
-            vec![basic_op_024(op)],
-            format!("{} t1, -0x1(t2) ({} = {}{})", name, dst[0], unit, src[0]),
-        ),
-        opd_set(
-            expect_opd(vec![Reg, Comma, LParen, Reg, RParen]),
-            vec![basic_op(op, vec![idx(0), imm_i(0), idx(3)])],
-            format!("{} t1, (t2) ({} = {}{})", name, dst[1], unit, src[1]),
-        ),
-        opd_set(
-            expect_reg_any(Imm(I12)),
-            vec![basic_op(op, vec![idx(0), idx(2), reg(Zero)])],
-            format!("{} t1, -0x1 ({} = {}{})", name, dst[2], unit, src[2]),
-        ),
-        opd_set(
-            expect_reg_any(Imm(I32)),
-            vec![
-                basic_op(
-                    ParserRISCVInstOp::Lui,
-                    vec![reg(A0), idx_handler(2, idx_handler_high)],
-                ),
-                basic_op(op, vec![idx(0), idx_handler(2, idx_handler_low), reg(A0)]),
-            ],
-            format!(
-                "{} t1, 0x100000 (a0 = 0x100000[12:31](i32); {} = {}{})",
-                name, dst[3], unit, src[3]
-            ),
-        ),
-        opd_set(
-            expect_reg_any(Lbl),
-            vec![basic_op_024(op)],
-            format!("{} t1, label ({} = {}{})", name, dst[4], unit, src[4]),
-        ),
-    ]
-}
-const SL_MEM_REG: [&str; 5] = ["t1", "t1", "t1", "t1", "t1"];
-const SL_MEM_MEM: [&str; 5] = [
-    "mem[t2 + -0x1(i12)]",
-    "mem[t2]",
-    "mem[-0x1(i12)]",
-    "mem[a0 + 0x100000[0:11](i32)]",
-    "mem[label]",
-];
-pub fn opd_set_load_mem(op: ParserRISCVInstOp, name: &str, unit: &str) -> Vec<RISCVOpdSet> {
-    opd_set_sl_mem(op, name, unit, SL_MEM_MEM, SL_MEM_REG)
-}
-pub fn opd_set_store_mem(op: ParserRISCVInstOp, name: &str, unit: &str) -> Vec<RISCVOpdSet> {
-    opd_set_sl_mem(op, name, unit, SL_MEM_REG, SL_MEM_MEM)
 }

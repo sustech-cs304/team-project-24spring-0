@@ -1,28 +1,38 @@
-use super::super::interface::parser::{ParseRISCVRegisterError, RISCVCsr, RISCVRegister};
+use super::super::interface::parser::{ParserRISCVCsr, ParserRISCVRegister};
 use super::oplist::RISCVOpdSet;
 use crate::interface::parser::{ParserError, Pos};
 use logos::Logos;
 use std::fmt::Display;
 
-static EXTENSION: [fn(&str) -> Option<&'static dyn RISCVOpToken>; 1] =
-    [super::super::super::rv32i::parser::lexer::op_lexer];
+static EXTENSION: [LexerExtension; 1] = [LexerExtension {
+    name: "rv32i",
+    parse_op: super::super::super::rv32i::parser::lexer::parse_op,
+    parse_reg: super::super::super::rv32i::parser::lexer::parse_reg,
+}];
+
+pub struct LexerExtension {
+    pub name: &'static str,
+    pub parse_op: fn(&str) -> Option<RISCVOpToken>,
+    pub parse_reg: fn(&str) -> Option<ParserRISCVRegister>,
+}
 
 #[derive(Debug, PartialEq, Clone, Default)]
 pub enum LexingError {
     NumberParseError,
-    RegisterParseError,
     #[default]
     Other,
 }
 
 pub enum Symbol<'a> {
     Label(&'a str),
-    Op(&'static dyn RISCVOpToken),
+    Op(RISCVOpToken),
+    Reg(ParserRISCVRegister),
 }
 
-pub trait RISCVOpToken {
+pub trait RISCVOpTokenTrait {
     fn get_opd_set(&self) -> &Vec<RISCVOpdSet>;
 }
+pub type RISCVOpToken = &'static dyn RISCVOpTokenTrait;
 
 pub(super) struct LexerIter<'a> {
     pub raw: logos::Lexer<'a, RISCVToken<'a>>,
@@ -80,7 +90,10 @@ impl LexerIter<'_> {
 
 fn dispatch_symbol(token: &str) -> Symbol {
     for ext in &EXTENSION {
-        if let Some(op) = ext(token) {
+        if let Some(reg) = (ext.parse_reg)(token) {
+            return Symbol::Reg(reg);
+        }
+        if let Some(op) = (ext.parse_op)(token) {
             return Symbol::Op(op);
         }
     }
@@ -111,17 +124,7 @@ pub enum RISCVToken<'a> {
     Symbol(Symbol<'a>),
     #[regex(r"%[a-zA-Z_][a-zA-Z0-9_]*")]
     MacroParameter(&'a str),
-    #[token("zero", |lex| lex.slice().parse(), priority = 10)]
-    #[token("ra", |lex| lex.slice().parse(), priority = 10)]
-    #[token("sp", |lex| lex.slice().parse(), priority = 10)]
-    #[token("gp", |lex| lex.slice().parse(), priority = 10)]
-    #[token("tp", |lex| lex.slice().parse(), priority = 10)]
-    #[regex(r"t[0-6]", |lex| lex.slice().parse(), priority = 10)]
-    #[regex(r"s([0-9]|(1[0-1]))", |lex| lex.slice().parse(), priority = 10)]
-    #[regex(r"a[0-7]", |lex| lex.slice().parse(), priority = 10)]
-    #[regex(r"x(([1-2]?[0-9])|(3[0-1]))", |lex| lex.slice().parse(), priority = 10)]
-    Register(RISCVRegister),
-    Csr(RISCVCsr),
+    Csr(ParserRISCVCsr),
     #[token(".align", priority = 10)]
     Align,
     #[token(".ascii", priority = 10)]
@@ -180,17 +183,10 @@ impl From<std::num::ParseFloatError> for LexingError {
     }
 }
 
-impl From<ParseRISCVRegisterError> for LexingError {
-    fn from(_: ParseRISCVRegisterError) -> Self {
-        LexingError::RegisterParseError
-    }
-}
-
 impl Display for LexingError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             LexingError::NumberParseError => write!(f, "Number parse error"),
-            LexingError::RegisterParseError => write!(f, "Register parse error"),
             LexingError::Other => write!(f, "unrecognized character"),
         }
     }

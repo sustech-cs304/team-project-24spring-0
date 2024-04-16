@@ -1,2 +1,2 @@
-pub mod oplist;
 pub mod lexer;
+pub mod oplist;
