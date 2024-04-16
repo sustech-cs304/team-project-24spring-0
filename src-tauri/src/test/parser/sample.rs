@@ -1,4 +1,4 @@
-use crate::modules::riscv::basic::interface::parser::{Parser, RISCVParser};
+use crate::modules::riscv::basic::interface::parser::*;
 
 pub fn test_parser() {
     let mut p = RISCVParser::new();
@@ -15,5 +15,12 @@ pub fn test_parser() {
         ",
     );
     let res = p.parse(rope.to_string());
-    println!("{:?}", res);
+    match res {
+        Ok(res) => println!("{}", res.to_string()),
+        Err(err) => {
+            for e in err {
+                println!("{}", e.to_string());
+            }
+        }
+    }
 }
