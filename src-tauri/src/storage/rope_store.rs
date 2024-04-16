@@ -16,12 +16,12 @@ impl MFile<String> for Text {
         self.data.as_ref().to_string()
     }
 
-    fn save(&mut self) -> Result<bool, String> {
+    fn save(&mut self) -> Option<String> {
         match file_io::write_file(self.path.as_path(), &self.data.as_ref().to_string()) {
-            Some(e) => Err(e),
+            Some(e) => Some(e),
             None => {
                 self.dirty = false;
-                Ok(true)
+                None
             }
         }
     }
