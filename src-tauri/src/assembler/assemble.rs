@@ -16,14 +16,14 @@ impl RiscVAssembler {
 
 impl<IN, OUT, SET, ERR> Assembler<IN, OUT, SET, ERR> for RiscVAssembler {
     fn assemble(&mut self, ast: &IN) -> Result<OUT, ERR> {
-        self.assemble(ast)
+        unimplemented!()
     }
 
     fn dump(&self, ast: &IN) -> Result<String, ERR> {
-        self.dump(ast)
+        unimplemented!()
     }
 
     fn update_setting(&mut self, settings: &SET) -> Result<bool, String> {
-        self.update_setting(settings)
+        unimplemented!()
     }
 }

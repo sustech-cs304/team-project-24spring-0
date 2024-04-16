@@ -1,4 +1,4 @@
-use ux::{u12, u20, u3, u4, u5};
+use ux::{u1, u10, u12, u20, u3, u4, u5, u6, u7};
 
 use crate::assembler::basic::{
     BOpcode, IOpcode, ImmediateFormatter, JOpcode, Opcode, PackedInstruction, ROpcode, SOpcode,
@@ -51,29 +51,16 @@ impl Into<u20> for Immediate20 {
 
 pub struct RV32I {}
 
-macro_rules! uinstimpl {
-    ($name:ident, $func_name:ident) => {
-        pub fn $func_name(imm: Immediate20, rd: Register) -> PackedInstruction {
-            UOpcode::$name
+macro_rules! rinstimpl {
+    ($name:ident, $func_name:ident, $funct7:literal, $funct3:literal, $rs2name:ident) => {
+        pub fn $func_name($rs2name: Register, rs1: Register, rd: Register) -> PackedInstruction {
+            ROpcode::$name
                 .builder()
-                .imm(imm.into())
-                .rd(rd.into())
-                .build()
-                .unwrap()
-                .into()
-        }
-    };
-}
-
-macro_rules! binstimpl {
-    ($name:ident, $func_name:ident, $funct3:literal) => {
-        pub fn $func_name(imm: Immediate12, rs2: Register, rs1: Register) -> PackedInstruction {
-            BOpcode::$name
-                .builder()
-                .immediate(imm.into())
-                .rs2(rs2.into())
+                .funct7(($funct7 as u32).try_into().unwrap())
+                .rs2($rs2name.into())
                 .rs1(rs1.into())
                 .funct3(($funct3 as u32).try_into().unwrap())
+                .rd(rd.into())
                 .build()
                 .unwrap()
                 .into()
@@ -97,6 +84,20 @@ macro_rules! iinstimpl {
     };
 }
 
+macro_rules! uinstimpl {
+    ($name:ident, $func_name:ident) => {
+        pub fn $func_name(imm: Immediate20, rd: Register) -> PackedInstruction {
+            UOpcode::$name
+                .builder()
+                .imm(imm.into())
+                .rd(rd.into())
+                .build()
+                .unwrap()
+                .into()
+        }
+    };
+}
+
 macro_rules! sinstimpl {
     ($name:ident, $func_name:ident, $funct3:literal) => {
         pub fn $func_name(imm: Immediate12, rs2: Register, rs1: Register) -> PackedInstruction {
@@ -113,16 +114,15 @@ macro_rules! sinstimpl {
     };
 }
 
-macro_rules! rinstimpl {
-    ($name:ident, $func_name:ident, $funct7:literal, $funct3:literal, $rs2name:ident) => {
-        pub fn $func_name($rs2name: Register, rs1: Register, rd: Register) -> PackedInstruction {
-            ROpcode::$name
+macro_rules! binstimpl {
+    ($name:ident, $func_name:ident, $funct3:literal) => {
+        pub fn $func_name(imm: Immediate12, rs2: Register, rs1: Register) -> PackedInstruction {
+            BOpcode::$name
                 .builder()
-                .funct7(($funct7 as u32).try_into().unwrap())
-                .rs2($rs2name.into())
+                .immediate(imm.into())
+                .rs2(rs2.into())
                 .rs1(rs1.into())
                 .funct3(($funct3 as u32).try_into().unwrap())
-                .rd(rd.into())
                 .build()
                 .unwrap()
                 .into()
@@ -130,90 +130,88 @@ macro_rules! rinstimpl {
     };
 }
 
-// TODO: B and J Type Instructions
-
 impl RV32I {
-    uinstimpl!(LUI, lui);
-    uinstimpl!(AUIPC, auipc);
-
-    pub fn jal(imm: Immediate20, rd: Register) -> PackedInstruction {
-        let imm: u32 = Into::<u32>::into(imm).into();
-        JOpcode::JAL
-            .builder()
-            .imm20((imm >> 20).try_into().unwrap())
-            .imm19_12(((imm >> 12) & 0b11111111).try_into().unwrap())
-            .imm11(((imm >> 11) & 1).try_into().unwrap())
-            .imm10_1(((imm >> 1) & 0b1111111111).try_into().unwrap())
-            .rd(rd.into())
-            .build()
-            .unwrap()
-            .into()
-    }
-
-    iinstimpl!(JALR, jalr, 0b000);
-
-    binstimpl!(Branch, beq, 0b000);
-    binstimpl!(Branch, bne, 0b001);
-    binstimpl!(Branch, blt, 0b100);
-    binstimpl!(Branch, bge, 0b101);
-    binstimpl!(Branch, bltu, 0b110);
-    binstimpl!(Branch, bgeu, 0b111);
-
-    iinstimpl!(Load, lb, 0b000);
-    iinstimpl!(Load, lh, 0b001);
-    iinstimpl!(Load, lw, 0b010);
-    iinstimpl!(Load, lbu, 0b100);
-    iinstimpl!(Load, lhu, 0b101);
-
-    sinstimpl!(Store, sb, 0b000);
-    sinstimpl!(Store, sh, 0b001);
-    sinstimpl!(Store, sw, 0b010);
-
-    iinstimpl!(ALUImm, addi, 0b000);
-    iinstimpl!(ALUImm, slti, 0b010);
-    iinstimpl!(ALUImm, sltiu, 0b011);
-    iinstimpl!(ALUImm, xori, 0b100);
-    iinstimpl!(ALUImm, ori, 0b110);
-    iinstimpl!(ALUImm, andi, 0b111);
-
-    rinstimpl!(Shift, slli, 0b0000000, 0b001, shamt);
-    rinstimpl!(Shift, srli, 0b0000000, 0b101, shamt);
-    rinstimpl!(Shift, srai, 0b0100000, 0b101, shamt);
-
-    rinstimpl!(ALUReg, add, 0b0000000, 0b000, rs2);
-    rinstimpl!(ALUReg, sub, 0b0100000, 0b000, rs2);
-    rinstimpl!(ALUReg, sll, 0b0000000, 0b001, rs2);
-    rinstimpl!(ALUReg, slt, 0b0000000, 0b010, rs2);
-    rinstimpl!(ALUReg, sltu, 0b0000000, 0b011, rs2);
-    rinstimpl!(ALUReg, xor, 0b0000000, 0b100, rs2);
-    rinstimpl!(ALUReg, srl, 0b0000000, 0b101, rs2);
-    rinstimpl!(ALUReg, sra, 0b0100000, 0b101, rs2);
-    rinstimpl!(ALUReg, or, 0b0000000, 0b110, rs2);
-    rinstimpl!(ALUReg, and, 0b0000000, 0b111, rs2);
-
-    pub fn fence(fm: u5, pred: u4, succ: u3, rs1: Register, rd: Register) -> PackedInstruction {
-        let fm: u32 = fm.into();
-        let pred: u32 = pred.into();
-        let succ: u32 = succ.into();
-        let imm: u32 = (fm << 7) | (pred << 3) | succ;
-        IOpcode::FENCE
-            .builder()
-            .imm(imm.try_into().unwrap())
-            .rs1(rs1.into())
-            .funct3((0b000 as u32).try_into().unwrap())
-            .rd(rd.into())
-            .build()
-            .unwrap()
-            .into()
-    }
-
-    pub fn ecall() -> PackedInstruction {
-        (IOpcode::Environment as u32).into()
-    }
-
-    pub fn ebreak() -> PackedInstruction {
-        (IOpcode::Environment as u32 | 0b00000000000100000000000000000000).into()
-    }
+    // uinstimpl!(LUI, lui);
+    // uinstimpl!(AUIPC, auipc);
+    //
+    // pub fn jal(imm: Immediate20, rd: Register) -> PackedInstruction {
+    //     let imm: u32 = Into::<u32>::into(imm).into();
+    //     JOpcode::JAL
+    //         .builder()
+    //         .imm20((imm >> 20).try_into().unwrap())
+    //         .imm19_12(((imm >> 12) & 0b11111111).try_into().unwrap())
+    //         .imm11(((imm >> 11) & 1).try_into().unwrap())
+    //         .imm10_1(((imm >> 1) & 0b1111111111).try_into().unwrap())
+    //         .rd(rd.into())
+    //         .build()
+    //         .unwrap()
+    //         .into()
+    // }
+    //
+    // iinstimpl!(JALR, jalr, 0b000);
+    //
+    // binstimpl!(Branch, beq, 0b000);
+    // binstimpl!(Branch, bne, 0b001);
+    // binstimpl!(Branch, blt, 0b100);
+    // binstimpl!(Branch, bge, 0b101);
+    // binstimpl!(Branch, bltu, 0b110);
+    // binstimpl!(Branch, bgeu, 0b111);
+    //
+    // iinstimpl!(Load, lb, 0b000);
+    // iinstimpl!(Load, lh, 0b001);
+    // iinstimpl!(Load, lw, 0b010);
+    // iinstimpl!(Load, lbu, 0b100);
+    // iinstimpl!(Load, lhu, 0b101);
+    //
+    // sinstimpl!(Store, sb, 0b000);
+    // sinstimpl!(Store, sh, 0b001);
+    // sinstimpl!(Store, sw, 0b010);
+    //
+    // iinstimpl!(ALUImm, addi, 0b000);
+    // iinstimpl!(ALUImm, slti, 0b010);
+    // iinstimpl!(ALUImm, sltiu, 0b011);
+    // iinstimpl!(ALUImm, xori, 0b100);
+    // iinstimpl!(ALUImm, ori, 0b110);
+    // iinstimpl!(ALUImm, andi, 0b111);
+    //
+    // // rinstimpl!(Shift, slli, 0b0000000, 0b001, shamt);
+    // // rinstimpl!(Shift, srli, 0b0000000, 0b101, shamt);
+    // // rinstimpl!(Shift, srai, 0b0100000, 0b101, shamt);
+    //
+    // rinstimpl!(ALUReg, add, 0b0000000, 0b000, rs2);
+    // rinstimpl!(ALUReg, sub, 0b0100000, 0b000, rs2);
+    // rinstimpl!(ALUReg, sll, 0b0000000, 0b001, rs2);
+    // rinstimpl!(ALUReg, slt, 0b0000000, 0b010, rs2);
+    // rinstimpl!(ALUReg, sltu, 0b0000000, 0b011, rs2);
+    // rinstimpl!(ALUReg, xor, 0b0000000, 0b100, rs2);
+    // rinstimpl!(ALUReg, srl, 0b0000000, 0b101, rs2);
+    // rinstimpl!(ALUReg, sra, 0b0100000, 0b101, rs2);
+    // rinstimpl!(ALUReg, or, 0b0000000, 0b110, rs2);
+    // rinstimpl!(ALUReg, and, 0b0000000, 0b111, rs2);
+    //
+    // pub fn fence(fm: u5, pred: u4, succ: u3, rs1: Register, rd: Register) -> PackedInstruction {
+    //     let fm: u32 = fm.into();
+    //     let pred: u32 = pred.into();
+    //     let succ: u32 = succ.into();
+    //     let imm: u32 = (fm << 7) | (pred << 3) | succ;
+    //     IOpcode::FENCE
+    //         .builder()
+    //         .imm(imm.try_into().unwrap())
+    //         .rs1(rs1.into())
+    //         .funct3((0b000 as u32).try_into().unwrap())
+    //         .rd(rd.into())
+    //         .build()
+    //         .unwrap()
+    //         .into()
+    // }
+    //
+    // pub fn ecall() -> PackedInstruction {
+    //     (IOpcode::Environment as u32).into()
+    // }
+    //
+    // pub fn ebreak() -> PackedInstruction {
+    //     (IOpcode::Environment as u32 | 0b00000000000100000000000000000000).into()
+    // }
 }
 
 #[cfg(test)]

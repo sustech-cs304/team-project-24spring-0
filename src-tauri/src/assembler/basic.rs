@@ -45,6 +45,7 @@ impl Into<PackedInstruction> for RInstruction {
 #[derive(Default, Builder)]
 #[builder(public)]
 pub struct IInstruction {
+    // I-type
     imm: u12,
     rs1: u5,
     funct3: u3,
@@ -73,11 +74,12 @@ pub struct SInstruction {
 
 impl ImmediateFormatter for SInstruction {
     fn immediate<'a>(&'a mut self, imm: u12) -> &'a mut Self {
-        all_into!(u32, imm);
-        let imm11_5 = (imm >> 5) & 0b1111111;
-        let imm4_0 = imm & 0b1111;
-        self.imm11_5(imm11_5.try_into().unwrap())
-            .imm4_0(imm4_0.try_into().unwrap())
+        let imm: u32 = imm.into();
+        let imm11_5 = ((imm >> 5) & 0b1111111).try_into().unwrap();
+        let imm4_0 = (imm & 0b1111).try_into().unwrap();
+        self.imm11_5 = imm11_5;
+        self.imm4_0 = imm4_0;
+        self
     }
 }
 
@@ -111,10 +113,11 @@ impl ImmediateFormatter for BInstruction {
         let imm10_5: u6 = ((imm >> 5) & 0b111111).try_into().unwrap();
         let imm4_1: u4 = ((imm >> 1) & 0b1111).try_into().unwrap();
         let imm11: u1 = ((imm >> 11) & 0b1).try_into().unwrap();
-        self.imm12(imm12)
-            .imm10_5(imm10_5)
-            .imm4_1(imm4_1)
-            .imm11(imm11)
+        self.imm12 = imm12;
+        self.imm10_5 = imm10_5;
+        self.imm4_1 = imm4_1;
+        self.imm11 = imm11;
+        self
     }
 }
 
@@ -178,38 +181,37 @@ pub trait Opcode<T>: Sized {
 
 #[repr(u8)]
 pub enum ROpcode {
-    Shift = 0b0010011,
-    ALUReg = 0b0110011, // ADD, SUB, SLL, SLT, SLTU, XOR, SRL, SRA, OR, AND
+    ALUReg = 0b0110011, // Add, And, Or, Sll, Slt, Sltu, Sra, Srl, Sub, Xor
 }
 
 #[repr(u8)]
 pub enum IOpcode {
-    JALR = 0b1100111,
-    Load = 0b0000011,   // LB, LH, LW, LBU, LHU
-    ALUImm = 0b0010011, //ADDI, SLTI, SLTIU, XORI, ORI, ANDI,
-    FENCE = 0b0001111,
-    Environment = 0b1110011, // ECALL, EBREAK
+    JALR = 0b1100111,        //Jalr
+    Load = 0b0000011,        // Lb, Lbu, Lh, Lhu, Lw
+    ALUImm = 0b0010011,      // Addi, Andi, Ori, Slli, Slti, Sltiu, Srai, Srli, Xori
+    FENCE = 0b0001111,       // Fence, FenceI
+    Environment = 0b1110011, // Csrrc, Csrrci, Csrrs, Csrrsi, Csrrw, Csrrwi. Ebreak, Ecall
 }
 
 #[repr(u8)]
 pub enum SOpcode {
-    Store = 0b100011, // SB, SH, SW
+    Store = 0b100011, // Sb, Sh, Sw
 }
 
 #[repr(u8)]
 pub enum BOpcode {
-    Branch = 0b1100011, // BEQ, BNE, BLT, BGE, BLTU, BGEU
+    Branch = 0b1100011, // Beq, Bge, Bgeu, Blt, Bltu, Bne
 }
 
 #[repr(u8)]
 pub enum UOpcode {
-    AUIPC = 0b0010111,
-    LUI = 0b0110111,
+    AUIPC = 0b0010111, // Auipc
+    LUI = 0b0110111,   // Lui
 }
 
 #[repr(u8)]
 pub enum JOpcode {
-    JAL = 0b1101111,
+    JAL = 0b1101111, // Jal
 }
 
 macro_rules! implopcode {
@@ -217,7 +219,7 @@ macro_rules! implopcode {
         impl Opcode<$builder> for $opcode {
             fn builder(self) -> $builder {
                 $builder {
-                    opcode: Some((self as u8).try_into().unwrap()),
+                    opcode: (self as u8).try_into().unwrap(),
                     ..$builder::default()
                 }
             }
@@ -248,13 +250,6 @@ implinto!(BOpcode);
 implinto!(UOpcode);
 implinto!(JOpcode);
 
-/**
- * Formats:
- *  R   : register-register ALU
- *  I   : immediate ALU, load
- *  S(B): store, comparison, branch
- *  U(J): jump, jump and link
- */
 #[derive(Copy, Clone, Debug)]
 pub struct PackedInstruction(u32);
 
@@ -269,3 +264,4 @@ impl From<u32> for PackedInstruction {
         Self(u)
     }
 }
+// Refer to github.com/dotjulia/riscv_emitter, and RISC-V tutorial
