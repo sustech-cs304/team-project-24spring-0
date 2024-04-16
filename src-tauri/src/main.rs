@@ -13,8 +13,7 @@ mod test;
 mod types;
 mod utility;
 
-use middleware::implementation::{frontend_api, tab_mamagement};
-use tauri::{Manager, State};
+use middleware::implementation::{frontend_api, tab_management};
 use types::middleware_types;
 
 fn main() {
@@ -37,7 +36,8 @@ fn main() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
-            tab_mamagement::close_tab,
+            tab_management::create_tab,
+            tab_management::close_tab,
             frontend_api::read_file,
             frontend_api::write_file
         ])

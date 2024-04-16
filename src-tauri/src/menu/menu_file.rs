@@ -1,17 +1,14 @@
 use tauri::{
     api::dialog::{FileDialogBuilder, MessageDialogKind},
-    CustomMenuItem, Manager, Menu, Submenu, WindowMenuEvent,
+    CustomMenuItem, Menu, Submenu, WindowMenuEvent,
 };
 
 use super::display_alert_dialog;
 use crate::{
     io::file_io,
-    middleware::implementation::tab_mamagement::{self, close_tab, create_tab},
-    types::{
-        menu_types,
-        middleware_types::{Tab, TabMap},
-    },
-    utility::state_helper::get_current_tab,
+    middleware::implementation::tab_management::new_tab,
+    types::menu_types,
+    utility::state_helper::{get_current_tab, get_current_tab_name},
 };
 
 pub fn new() -> Submenu {
@@ -57,7 +54,7 @@ pub fn event_handler(event: WindowMenuEvent) {
 fn open_handler(event: WindowMenuEvent) {
     let picker = FileDialogBuilder::new();
     picker.pick_file(move |file_path| match file_path {
-        Some(file_path) => match create_tab(&event, file_path.as_path()) {
+        Some(file_path) => match new_tab(&event, file_path.as_path()) {
             Some(err) => display_alert_dialog(
                 MessageDialogKind::Info,
                 format!("Failed to open {:?}", file_path.file_name().unwrap()).as_str(),
@@ -86,14 +83,18 @@ fn save_handler<'a>(event: WindowMenuEvent) {
     let tab_ptr = get_current_tab(&event);
     let tab = tab_ptr.as_mut();
     match tab.text.save() {
-        Ok(_) => {}
-        Err(err) => {
+        Some(err) => {
             display_alert_dialog(
                 MessageDialogKind::Info,
                 "Failed to save file",
                 err.as_str(),
                 |_| {},
             );
+        }
+        None => {
+            let _ = event
+                .window()
+                .emit("front_file_save", get_current_tab_name(&event));
         }
     }
 }

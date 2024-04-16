@@ -21,12 +21,7 @@ create_tab(file_path: String, content: String) -> bool;
 ### close_tab
 
 ```rust
-close_tab(filepath: String) -> CloseTabResponse;
-
-struct CloseTabResponse {
-    pub success: bool,
-    pub message: String,
-}
+close_tab(filepath: String) -> Optional;
 ```
 
 close_tab 方法用于关闭指定的 tab。
@@ -36,8 +31,10 @@ close_tab 方法用于关闭指定的 tab。
 ### write_file
 
 ```rust
-write_file(filepath: String) -> (bool, String) {
+write_file(filepath: String) -> Optional;
 ```
+
+保存文件到原本路径。保存失败时，String 返回错误信息。该操作会更新 last_modified 并清除 dirty bit.
 
 ### change_current_tab
 
@@ -48,4 +45,32 @@ change_current_tab(newpath: String) -> bool;
 当仅后端不存在该 tab 时返回 false，否则返回 true。
 
 ## event
+
+### front_file_open
+
+```rust
+event: “front_file_open”,
+payload: {
+  filepath: String,
+  content: String,
+}
+```
+
+### front_file_save
+
+```rust
+event: “front_file_save”,
+payload: String,
+```
+
+## Struct definition
+
+### Optional
+
+```rust
+Struct Optional{
+  success: bool,
+  message: String,
+}
+```
 

@@ -23,7 +23,7 @@ pub struct CurTabName {
 }
 
 #[derive(Clone, Serialize)]
-pub struct CloseTabResponse {
+pub struct Optional {
     pub success: bool,
     pub message: String,
 }
