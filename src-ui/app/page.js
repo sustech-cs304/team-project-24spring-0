@@ -4,8 +4,31 @@ import MultifileCode from "@/components/MultifileCode";
 import Register from "@/components/Register";
 import MessageIO from "@/components/MessageIO";
 import {Card, CardBody, Textarea} from "@nextui-org/react";
+import { useEffect } from "react";
+import { listen } from '@tauri-apps/api/event';
+import useFileStore from "@/utils/state";
 
 export default function Home() {
+    const state = useFileStore();
+
+    useEffect(() => {
+        const unListenedFileOpen = listen('front_file_open', (event) => {
+            // setOutput(prevOutput => prevOutput + '\nEvent received:\n' + JSON.stringify(event.payload));
+            state.addFile(
+                {
+                    fileName: event.payload["file_path"],
+                    code: event.payload["content"],
+                }
+            );
+            return event.payload;
+        });
+
+
+        return () => {
+            unListenedFileOpen.then(dispose => dispose());
+        };
+    }, []);
+
   return (
       <main className='h-[calc(100vh-45px)]'>
           <div className='grid grid-cols-7 gap-4 p-2 max-h-[calc(100vh-45px)] w-full'>
