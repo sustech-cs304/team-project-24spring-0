@@ -1,39 +1,21 @@
 use std::path::Path;
 
 use tauri::{
-    api::dialog::{FileDialogBuilder, MessageDialogKind}, CustomMenuItem, Manager, Menu, Submenu, WindowMenuEvent
+    api::dialog::{FileDialogBuilder, MessageDialogKind},
+    CustomMenuItem, Manager, Menu, Submenu, WindowMenuEvent,
 };
 
 use super::display_alert_dialog;
 use crate::{
     io::file_io,
+    modules::riscv::basic::parser::parser::RISCVParser,
     storage::rope_store,
-    types::{middleware_types::{Tab,TabMap}, menu_types },
-    utility::state_helper::event::{get_current_tab, get_current_tab_name, set_current_tab_name },
-    modules::riscv::basic::parser::parser::RISCVParser
+    types::{
+        menu_types,
+        middleware_types::{Tab, TabMap},
+    },
+    utility::state_helper::event::{get_current_tab, get_current_tab_name, set_current_tab_name},
 };
-
-  fn new_tab(event: &WindowMenuEvent, file_path: &Path) -> Option<String> {
-        match rope_store::Text::from_path(file_path) {
-            Ok(content) => {
-                let tab_map = event.window().state::<TabMap>();
-                let tab = Tab {
-                    text: Box::new(content),
-                    parser: Box::new(RISCVParser::new()),
-                    //assembler: Box::new(Default::default()),
-                    //simulator: Box::new(Default::default()),
-                };
-                tab_map
-                    .tabs
-                    .lock()
-                    .unwrap()
-                    .insert(file_path.to_str().unwrap().to_string(), tab);
-                set_current_tab_name(&event, file_path.to_str().unwrap());
-                None
-            }
-            Err(e) => Some(e),
-        }
-    }
 
 pub fn new() -> Submenu {
     Submenu::new(
@@ -86,7 +68,7 @@ fn open_handler(event: WindowMenuEvent) {
                 |_| {},
             ),
             _ => {
-                let content = get_current_tab(&event).as_ref().text.get_string();
+                let content = get_current_tab(&event).as_ref().text.to_string();
                 event
                     .window()
                     .emit(
@@ -126,7 +108,7 @@ fn save_handler<'a>(event: WindowMenuEvent) {
 fn save_as_handler(event: WindowMenuEvent) {
     let tab_ptr = get_current_tab(&event);
     let tab = tab_ptr.as_ref();
-    let content = tab.text.get_string();
+    let content = tab.text.to_string();
     let picker = tauri::api::dialog::FileDialogBuilder::new();
     picker.save_file(move |file_path| match file_path {
         Some(file_path) => match file_io::write_file(file_path.as_path(), &content) {
@@ -150,9 +132,38 @@ fn share_handler(event: WindowMenuEvent) {
     todo!("Share file with socket");
 }
 
-fn close_handler(event: WindowMenuEvent) {}
+fn close_handler(event: WindowMenuEvent) {
+    //TODO: check if the file is dirty
+}
 
 fn exit_handler(event: WindowMenuEvent) {
     event.window().close().unwrap();
     todo!("check all dirty file before exit");
+}
+
+fn new_tab(event: &WindowMenuEvent, file_path: &Path) -> Option<String> {
+    match rope_store::Text::from_path(file_path) {
+        Ok(content) => {
+            let tab_map = event.window().state::<TabMap>();
+            let tab = Tab {
+                text: Box::new(content),
+                parser: Box::new(RISCVParser::new()),
+                //assembler: Box::new(Default::default()),
+                //simulator: Box::new(Default::default()),
+            };
+            tab_map
+                .tabs
+                .lock()
+                .unwrap()
+                .insert(file_path.to_str().unwrap().to_string(), tab);
+            set_current_tab_name(&event, file_path.to_str().unwrap());
+            None
+        }
+        Err(e) => Some(e),
+    }
+}
+
+fn dirty_close_checker(event: &WindowMenuEvent, tab: &mut Tab) -> bool {
+    if tab.text.is_dirty() {}
+    true
 }

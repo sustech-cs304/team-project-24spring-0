@@ -10,8 +10,8 @@ mod test;
 mod types;
 mod utility;
 
-use types::middleware_types;
 use modules::riscv;
+use types::middleware_types;
 
 fn main() {
     tauri::Builder::default()

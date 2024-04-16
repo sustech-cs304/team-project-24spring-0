@@ -2,9 +2,8 @@ use crate::interface::{
     assembler::Assembler, parser::Parser, simulator::Simulator, storage::MFile,
 };
 
-
-use serde::Serialize;
 use crate::modules::riscv::basic::interface::parser::RISCV;
+use serde::Serialize;
 
 pub struct Tab {
     pub text: Box<dyn MFile<String>>,
@@ -13,6 +12,7 @@ pub struct Tab {
     //pub simulator: Box<dyn Simulator<i32, i32, i32, i32>>,
 }
 
+use crate::interface::parser::ParserError;
 use std::{collections::HashMap, sync::Mutex};
 
 pub struct TabMap {
@@ -29,3 +29,8 @@ pub struct Optional {
     pub message: String,
 }
 
+#[derive(Clone, Serialize)]
+pub struct AssembleResult {
+    pub success: bool,
+    pub error: Vec<ParserError>,
+}

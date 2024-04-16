@@ -8,9 +8,6 @@ pub mod tab_management {
         types::middleware_types::{CurTabName, Optional, Tab, TabMap},
     };
 
-    
-
-   
     #[tauri::command]
     pub fn create_tab(tab_map: State<TabMap>, filepath: &str) -> Optional {
         if tab_map.tabs.lock().unwrap().contains_key(filepath) {
@@ -118,23 +115,23 @@ pub mod tab_management {
 
 pub mod frontend_api {
     use crate::{
-        types::middleware_types::{CurTabName, Optional, TabMap},
+        types::middleware_types::{AssembleResult, CurTabName, TabMap},
         utility::state_helper::state::get_current_tab,
     };
     use tauri::State;
 
     #[tauri::command]
-    pub fn assemble(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> Optional {
+    pub fn assemble(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> AssembleResult {
         let tab_ptr = get_current_tab(cur_tab_name, tab_map);
         let tab = tab_ptr.as_mut();
-        match tab.parser.parse(tab.text.get_string()) {
-            Ok(ir) => Optional {
+        match tab.parser.parse(tab.text.to_string()) {
+            Ok(ir) => AssembleResult {
                 success: true,
-                message: String::new(),
+                error: Default::default(),
             },
-            Err(e) => Optional {
+            Err(e) => AssembleResult {
                 success: false,
-                message: "".to_string(),
+                error: e,
             },
         }
     }

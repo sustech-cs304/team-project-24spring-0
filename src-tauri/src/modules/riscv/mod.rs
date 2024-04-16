@@ -1,3 +1,3 @@
 pub mod basic;
-pub mod rv32i;
 pub mod middleware;
+pub mod rv32i;

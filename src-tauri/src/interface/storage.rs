@@ -1,5 +1,9 @@
 pub trait MFile<ERR>: Send + Sync {
-    fn get_string(&self) -> String;
+    fn is_dirty(&self) -> bool;
+
+    fn set_dirty(&mut self, dirty: bool);
+
+    fn to_string(&self) -> String;
 
     fn save(&mut self) -> Option<ERR>;
 }
