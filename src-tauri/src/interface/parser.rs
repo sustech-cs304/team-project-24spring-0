@@ -70,11 +70,11 @@ where
             data:\n",
         )?;
         for (i, d) in self.data.iter().enumerate() {
-            write!(f, "{:3} {}\n", i, d.to_string())?;
+            write!(f, "{:3} {}\n", i + 1, d.to_string())?;
         }
         f.write_str("text:\n")?;
         for (i, t) in self.text.iter().enumerate() {
-            write!(f, "{:3} {}\n", i, t.to_string())?;
+            write!(f, "{:3} {}\n", i + 1, t.to_string())?;
         }
         Ok(())
     }
@@ -102,7 +102,7 @@ where
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             ParserResultText::Text(inst) => {
-                write!(f, "{:3}: {:?}", inst.line, inst.op)?;
+                write!(f, "{:3}: {:?}", inst.line + 1, inst.op)?;
                 for opd in &inst.opd {
                     write!(f, " {:?}", opd)?;
                 }

@@ -59,7 +59,7 @@ pub fn reg<T: ParserRISCVRegisterTrait + 'static>(reg: T) -> RISCVOpdSetAimOpd {
 }
 // --------------------imm-------------------------
 pub fn imm_i(imm: i128) -> RISCVOpdSetAimOpd {
-    RISCVOpdSetAimOpd::Val(ParserRISCVInstOpd::Imm(ParserRISCVImmediate::Int(imm)))
+    RISCVOpdSetAimOpd::Val(ParserRISCVInstOpd::Imm(imm as ParserRISCVImmediate))
 }
 // --------------------idx-------------------------
 pub fn idx(idx: usize) -> RISCVOpdSetAimOpd {
@@ -71,26 +71,18 @@ pub fn idx_handler(
 ) -> RISCVOpdSetAimOpd {
     RISCVOpdSetAimOpd::Idx(RISCVOpdSetAimOpdIdx { idx, handler })
 }
+// used with idx_handler_high, i = u20 << 12 + i12, get the i12 imm
 pub fn idx_handler_low(opd: ParserRISCVInstOpd) -> ParserRISCVInstOpd {
-    if let ParserRISCVInstOpd::Imm(ParserRISCVImmediate::Int(i)) = opd {
-        if i & 0x800 != 0 {
-            ParserRISCVInstOpd::Imm(ParserRISCVImmediate::Int(-(i & 0x7ff)))
-        } else {
-            ParserRISCVInstOpd::Imm(ParserRISCVImmediate::Int(i & 0x7ff))
-        }
+    if let ParserRISCVInstOpd::Imm(i) = opd {
+        ParserRISCVInstOpd::Imm((i & 0x7ff) | -(i & 0x800))
     } else {
         opd
     }
 }
+// used with idx_handler_low, i = u20 << 12 + i12, get the u20 imm
 pub fn idx_handler_high(opd: ParserRISCVInstOpd) -> ParserRISCVInstOpd {
-    if let ParserRISCVInstOpd::Imm(ParserRISCVImmediate::Int(i)) = opd {
-        if i & 0x800 != 0 {
-            ParserRISCVInstOpd::Imm(ParserRISCVImmediate::Int(
-                ((i as u32 + 0x0000_1000) >> 12) as i128,
-            ))
-        } else {
-            ParserRISCVInstOpd::Imm(ParserRISCVImmediate::Int(((i as u32) >> 12) as i128))
-        }
+    if let ParserRISCVInstOpd::Imm(i) = opd {
+        ParserRISCVInstOpd::Imm((i >> 12) + ((i & 0x800) >> 11))
     } else {
         opd
     }
@@ -118,18 +110,23 @@ pub fn expect_csr(last_opd: RISCVExpectToken) -> Vec<RISCVExpectToken> {
 pub fn basic_op(op: ParserRISCVInstOp, opds: Vec<RISCVOpdSetAimOpd>) -> RISCVOpdSetAim {
     RISCVOpdSetAim { op, opds }
 }
+// basic_op op idx(0) idx(2)
 pub fn basic_op_02(op: ParserRISCVInstOp) -> RISCVOpdSetAim {
     basic_op(op, vec![idx(0), idx(2)])
 }
+// basic_op op idx(2) idx(0)
 pub fn basic_op_20(op: ParserRISCVInstOp) -> RISCVOpdSetAim {
     basic_op(op, vec![idx(2), idx(0)])
 }
+// basic_op op idx(0) idx(2) idx(4)
 pub fn basic_op_024(op: ParserRISCVInstOp) -> RISCVOpdSetAim {
     basic_op(op, vec![idx(0), idx(2), idx(4)])
 }
+// basic_op op idx(0) idx(4) idx(2)
 pub fn basic_op_042(op: ParserRISCVInstOp) -> RISCVOpdSetAim {
     basic_op(op, vec![idx(0), idx(4), idx(2)])
 }
+// basic_op op idx(2) idx(0) idx(4)
 pub fn basic_op_204(op: ParserRISCVInstOp) -> RISCVOpdSetAim {
     basic_op(op, vec![idx(2), idx(0), idx(4)])
 }

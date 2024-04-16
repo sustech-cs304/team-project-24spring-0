@@ -91,11 +91,7 @@ pub enum RV32IInstruction {
     Xori,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub enum RISCVImmediate {
-    Int(i128),
-    Float(f64),
-}
+pub type RISCVImmediate = i32;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum RISCVCsr {}
