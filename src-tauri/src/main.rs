@@ -13,7 +13,7 @@ mod test;
 mod types;
 mod utility;
 
-use middleware::implementation::{frontend_api, tab_management};
+use middleware::implementation::tab_management;
 use types::middleware_types;
 
 fn main() {
@@ -38,8 +38,10 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             tab_management::create_tab,
             tab_management::close_tab,
-            frontend_api::read_file,
-            frontend_api::write_file
+            tab_management::change_current_tab,
+            tab_management::update_tab,
+            tab_management::read_tab,
+            tab_management::write_tab
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

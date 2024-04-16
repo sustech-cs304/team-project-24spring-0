@@ -2,6 +2,7 @@ pub mod tab_management {
     use tauri::{Manager, State, WindowMenuEvent};
 
     use crate::{
+        io::file_io,
         modules::riscv::basic::interface::parser::RISCVParser,
         storage::rope_store,
         types::middleware_types::{CurTabName, Optional, Tab, TabMap},
@@ -90,13 +91,26 @@ pub mod tab_management {
         *cur_name.name.lock().unwrap() = newpath.to_string();
         todo!("Implement change_current_tab")
     }
-}
-
-pub mod frontend_api {
-    use crate::{io::file_io, types::middleware_types::Optional};
 
     #[tauri::command]
-    pub fn read_file(filepath: &str) -> Optional {
+    pub fn update_tab(tab_map: State<TabMap>, filepath: &str, data: &str) -> Optional {
+        match tab_map.tabs.lock().unwrap().get_mut(filepath) {
+            Some(tab) => {
+                tab.text = Box::new(rope_store::Text::from_str(data).unwrap());
+                Optional {
+                    success: true,
+                    message: String::new(),
+                }
+            }
+            None => Optional {
+                success: false,
+                message: "Tab not found".to_string(),
+            },
+        }
+    }
+
+    #[tauri::command]
+    pub fn read_tab(filepath: &str) -> Optional {
         match file_io::read_file_str(filepath) {
             Ok(data) => Optional {
                 success: true,
@@ -110,7 +124,7 @@ pub mod frontend_api {
     }
 
     #[tauri::command]
-    pub fn write_file(filepath: &str, data: &str) -> Optional {
+    pub fn write_tab(filepath: &str, data: &str) -> Optional {
         match file_io::write_file_str(filepath, data) {
             Some(e) => Optional {
                 success: false,
@@ -123,3 +137,5 @@ pub mod frontend_api {
         }
     }
 }
+
+pub mod frontend_api {}
