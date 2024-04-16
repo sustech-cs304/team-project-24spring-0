@@ -11,7 +11,20 @@
   },
   "tauri": {
     "allowlist": {
-      "all": false
+      "clipboard": {
+        "all": false
+      },
+      "notification": {
+        "all": true
+      },
+      "fs": {
+        "readDir": true,
+        "createDir": true,
+        "exists": true,
+        "scope": [
+          "**"
+        ]
+      }
     },
     "bundle": {
       "active": true,
@@ -55,10 +68,10 @@
     "windows": [
       {
         "fullscreen": false,
-        "height": 600,
-        "resizable": true,
+        "height": 800,
+        "resizable": false,
         "title": "Moras",
-        "width": 800
+        "width": 1280
       }
     ]
   }
