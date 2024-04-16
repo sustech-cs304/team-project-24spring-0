@@ -4,17 +4,13 @@
 mod interface;
 mod io;
 mod menu;
-mod middleware;
 mod modules;
-mod parser;
-mod simulator;
 mod storage;
 mod test;
 mod types;
 mod utility;
 
-use middleware::implementation::{frontend_api, tab_mamagement};
-use tauri::{Manager, State};
+use modules::riscv;
 use types::middleware_types;
 
 fn main() {
@@ -27,12 +23,23 @@ fn main() {
         .manage(middleware_types::CurTabName {
             name: Default::default(),
         })
-        .setup(|app| Ok(()))
+        .setup(|app| {
+            //let tab_map = app.state::<middleware_types::TabMap>();
+            //tab_map
+            //.tabs
+            //.lock()
+            //.unwrap()
+            //.insert("foo", middleware_types::Tab::new("foo"));
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
-            tab_mamagement::create_tab,
-            tab_mamagement::close_tab,
-            frontend_api::read_file,
-            frontend_api::write_file
+            riscv::middleware::tab_management::create_tab,
+            riscv::middleware::tab_management::close_tab,
+            riscv::middleware::tab_management::change_current_tab,
+            riscv::middleware::tab_management::update_tab,
+            riscv::middleware::tab_management::read_tab,
+            riscv::middleware::tab_management::write_tab,
+            riscv::middleware::frontend_api::assemble,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
