@@ -1,37 +1,12 @@
 pub mod tab_management {
-    use tauri::{Manager, State, WindowMenuEvent};
+    use tauri::State;
 
     use crate::{
         io::file_io,
         modules::riscv::basic::interface::parser::RISCVParser,
         storage::rope_store,
         types::middleware_types::{CurTabName, Optional, Tab, TabMap},
-        utility::state_helper::set_current_tab_name,
     };
-
-    use std::path::Path;
-
-    pub fn new_tab(event: &WindowMenuEvent, file_path: &Path) -> Option<String> {
-        match rope_store::Text::from_path(file_path) {
-            Ok(content) => {
-                let tab_map = event.window().state::<TabMap>();
-                let tab = Tab {
-                    text: Box::new(content),
-                    parser: Box::new(RISCVParser::new()),
-                    //assembler: Box::new(Default::default()),
-                    //simulator: Box::new(Default::default()),
-                };
-                tab_map
-                    .tabs
-                    .lock()
-                    .unwrap()
-                    .insert(file_path.to_str().unwrap().to_string(), tab);
-                set_current_tab_name(&event, file_path.to_str().unwrap());
-                None
-            }
-            Err(e) => Some(e),
-        }
-    }
 
     #[tauri::command]
     pub fn create_tab(tab_map: State<TabMap>, filepath: &str) -> Optional {
@@ -138,4 +113,26 @@ pub mod tab_management {
     }
 }
 
-pub mod frontend_api {}
+pub mod frontend_api {
+    use crate::{
+        types::middleware_types::{AssembleResult, CurTabName, TabMap},
+        utility::state_helper::state::get_current_tab,
+    };
+    use tauri::State;
+
+    #[tauri::command]
+    pub fn assemble(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> AssembleResult {
+        let tab_ptr = get_current_tab(cur_tab_name, tab_map);
+        let tab = tab_ptr.as_mut();
+        match tab.parser.parse(tab.text.to_string()) {
+            Ok(ir) => AssembleResult {
+                success: true,
+                error: Default::default(),
+            },
+            Err(e) => AssembleResult {
+                success: false,
+                error: e,
+            },
+        }
+    }
+}

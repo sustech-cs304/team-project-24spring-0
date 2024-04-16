@@ -4,16 +4,13 @@
 mod interface;
 mod io;
 mod menu;
-mod middleware;
 mod modules;
-mod parser;
-mod simulator;
 mod storage;
 mod test;
 mod types;
 mod utility;
 
-use middleware::implementation::tab_management;
+use modules::riscv;
 use types::middleware_types;
 
 fn main() {
@@ -36,12 +33,13 @@ fn main() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
-            tab_management::create_tab,
-            tab_management::close_tab,
-            tab_management::change_current_tab,
-            tab_management::update_tab,
-            tab_management::read_tab,
-            tab_management::write_tab
+            riscv::middleware::tab_management::create_tab,
+            riscv::middleware::tab_management::close_tab,
+            riscv::middleware::tab_management::change_current_tab,
+            riscv::middleware::tab_management::update_tab,
+            riscv::middleware::tab_management::read_tab,
+            riscv::middleware::tab_management::write_tab,
+            riscv::middleware::frontend_api::assemble,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

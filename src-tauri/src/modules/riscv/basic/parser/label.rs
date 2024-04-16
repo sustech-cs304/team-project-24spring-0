@@ -1,12 +1,6 @@
 use super::super::super::basic::interface::parser::*;
 use crate::utility::ptr::Ptr;
 
-#[derive(Clone, Debug)]
-pub(super) enum LabelDef {
-    Text(ParserResultText<RISCV>),
-    Data(ParserResultData),
-}
-
 #[derive(Clone)]
 pub(super) struct LabelData {
     pub name: String,

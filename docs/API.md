@@ -59,6 +59,12 @@ change_current_tab(newpath: String) -> bool;
 设置新聚焦 tab 的 filepath
 当仅后端不存在该 tab 时返回 false，否则返回 true。
 
+### assemble
+
+```rust
+assemble()->
+```
+
 ## event
 
 ### front_file_open

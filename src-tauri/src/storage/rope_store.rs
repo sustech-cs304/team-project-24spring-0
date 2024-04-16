@@ -12,7 +12,15 @@ pub struct Text {
 }
 
 impl MFile<String> for Text {
-    fn get_string(&self) -> String {
+    fn is_dirty(&self) -> bool {
+        self.dirty
+    }
+
+    fn set_dirty(&mut self, dirty: bool) {
+        self.dirty = dirty;
+    }
+
+    fn to_string(&self) -> String {
         self.data.as_ref().to_string()
     }
 
