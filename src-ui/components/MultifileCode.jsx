@@ -1,18 +1,19 @@
 import Code from "@/components/Code";
 import {Tab, Tabs} from "@nextui-org/react";
 
+import useFileStore from "@/utils/state";
+
 export default function MultifileCode() {
+    const state = useFileStore();
+    const files = useFileStore(state => state.files);
+
     return (
         <Tabs size="small" aria-label="Files">
-            <Tab key="file1.m" title="file1.m" className="h-full">
-                <Code />
-            </Tab>
-            <Tab key="file2.m" title="file2.m" className="h-full">
-                <Code />
-            </Tab>
-            <Tab key="file3.m" title="file3.m" className="h-full">
-                <Code />
-            </Tab>
+            {files.map(file => (
+                <Tab key={file.fileName} title={file.fileName} className="h-full">
+                    <Code fileName={file.fileName}/>
+                </Tab>
+            ))}
         </Tabs>
     );
 }

@@ -2,10 +2,12 @@ import {Input, Button, Textarea} from "@nextui-org/react";
 import {invoke} from '@tauri-apps/api/tauri';
 import {useState, useEffect} from 'react';
 import {listen} from "@tauri-apps/api/event";
+import useFileStore from "@/utils/state";
 
 export default function TestPage() {
     const [inputValue, setInputValue] = useState('');
     const [output, setOutput] = useState('');
+    const state = useFileStore();
 
     const handleInputChange = (event) => {
         setInputValue(event.target.value);
@@ -20,15 +22,32 @@ export default function TestPage() {
         }
     };
 
-    useEffect(() => {
-        const unListened = listen('front_file_open', (event) => {
-            setOutput(prevOutput => prevOutput + '\nEvent received:\n' + JSON.stringify(event.payload));
-        });
+    // useEffect(() => {
+    //     const unListened = listen('front_file_open', (event) => {
+    //         setOutput(prevOutput => prevOutput + '\nEvent received:\n' + JSON.stringify(event.payload));
+    //     });
 
-        return () => {
-            unListened.then(dispose => dispose());
-        };
-    }, []);
+    //     return () => {
+    //         unListened.then(dispose => dispose());
+    //     };
+    // }, []);
+
+    // useEffect(() => {
+    //     const unListened = listen('front_file_open', (event) => {
+    //         setOutput(prevOutput => prevOutput + '\nEvent received:\n' + JSON.stringify(event.payload));
+    //         state.addFile(
+    //             {
+    //                 fileName: event.payload["file_path"],
+    //                 code: event.payload["content"],
+    //             }
+    //         );
+    //         return event.payload;
+    //     });
+
+    //     return () => {
+    //         const result = unListened.then(dispose => dispose());
+    //     };
+    // }, []);
 
     return (
         <div className='items-center gap-4'>

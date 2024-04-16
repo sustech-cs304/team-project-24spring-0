@@ -2,9 +2,13 @@ import Editor, {useMonaco} from "@monaco-editor/react";
 import React, {useEffect} from "react";
 import Image from "next/image";
 
+import useFileStore from "@/utils/state";
 
-export default function ModifiedEditor() {
-    const monaco = useMonaco()
+
+export default function ModifiedEditor({fileName}) {
+    const monaco = useMonaco();
+    const state = useFileStore();
+    const file = useFileStore(state => state.files.find(file => file.fileName === fileName));
     useEffect(() => {
         if (monaco) {
             monaco.editor.defineTheme('myTheme', {
@@ -44,7 +48,12 @@ export default function ModifiedEditor() {
 
     return (
         <div className='h-full relative'>
-            <Editor language='javascript' className='overflow-hidden h-full'/>
+            <Editor 
+            language='javascript' 
+            className='overflow-hidden h-full'
+            value={file.code}
+            onChange={(value) => state.updateFile(fileName, value)}
+            />
             <div className='absolute right-2 top-0 flex-row gap-2'>
                 <button className='bg-gray-100 rounded-2xl hover:bg-gray-200'>
                     <Image src='/icons/run.svg' width={16} height={16}/>
