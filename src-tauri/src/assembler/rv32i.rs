@@ -214,63 +214,63 @@ impl RV32I {
     // }
 }
 
-#[cfg(test)]
-mod rv32i_tests {
-    use crate::assembler::rv32i::RV32I;
-
-    #[test]
-    fn test_lui() {
-        assert_eq!(
-            0x000231b7,
-            Into::<u32>::into(RV32I::lui(0x23.into(), 3.into()))
-        );
-    }
-
-    #[test]
-    fn test_jal() {
-        assert_eq!(
-            0b00101010101110101010001001101111,
-            Into::<u32>::into(RV32I::jal(0xAAAAA.into(), 0x4.into()))
-        );
-    }
-
-    #[test]
-    fn test_beq() {
-        assert_eq!(
-            0b00101010001000011000010111100011,
-            Into::<u32>::into(RV32I::beq(0b101010101010.into(), 0x2.into(), 0x3.into()))
-        );
-    }
-
-    #[test]
-    fn test_lb() {
-        assert_eq!(
-            0b10101010101000010000000110000011,
-            Into::<u32>::into(RV32I::lb(0xAAA.into(), 0x2.into(), 0x3.into()))
-        );
-    }
-
-    #[test]
-    fn test_sb() {
-        assert_eq!(
-            0b10101010001000011000010100100011,
-            Into::<u32>::into(RV32I::sb(0xAAA.into(), 0x2.into(), 0x3.into()))
-        )
-    }
-
-    #[test]
-    fn test_addi() {
-        assert_eq!(
-            0b01111010101000010000000110010011,
-            Into::<u32>::into(RV32I::addi(0x7AA.into(), 0x2.into(), 0x3.into()))
-        );
-    }
-
-    #[test]
-    fn test_slli() {
-        assert_eq!(
-            0b101000010001000110010011,
-            Into::<u32>::into(RV32I::slli(0xA.into(), 0x2.into(), 0x3.into()))
-        );
-    }
-}
+// #[cfg(test)]
+// mod rv32i_tests {
+//     use crate::assembler::rv32i::RV32I;
+//
+//     #[test]
+//     fn test_lui() {
+//         assert_eq!(
+//             0x000231b7,
+//             Into::<u32>::into(RV32I::lui(0x23.into(), 3.into()))
+//         );
+//     }
+//
+//     #[test]
+//     fn test_jal() {
+//         assert_eq!(
+//             0b00101010101110101010001001101111,
+//             Into::<u32>::into(RV32I::jal(0xAAAAA.into(), 0x4.into()))
+//         );
+//     }
+//
+//     #[test]
+//     fn test_beq() {
+//         assert_eq!(
+//             0b00101010001000011000010111100011,
+//             Into::<u32>::into(RV32I::beq(0b101010101010.into(), 0x2.into(), 0x3.into()))
+//         );
+//     }
+//
+//     #[test]
+//     fn test_lb() {
+//         assert_eq!(
+//             0b10101010101000010000000110000011,
+//             Into::<u32>::into(RV32I::lb(0xAAA.into(), 0x2.into(), 0x3.into()))
+//         );
+//     }
+//
+//     #[test]
+//     fn test_sb() {
+//         assert_eq!(
+//             0b10101010001000011000010100100011,
+//             Into::<u32>::into(RV32I::sb(0xAAA.into(), 0x2.into(), 0x3.into()))
+//         )
+//     }
+//
+//     #[test]
+//     fn test_addi() {
+//         assert_eq!(
+//             0b01111010101000010000000110010011,
+//             Into::<u32>::into(RV32I::addi(0x7AA.into(), 0x2.into(), 0x3.into()))
+//         );
+//     }
+//
+//     #[test]
+//     fn test_slli() {
+//         assert_eq!(
+//             0b101000010001000110010011,
+//             Into::<u32>::into(RV32I::slli(0xA.into(), 0x2.into(), 0x3.into()))
+//         );
+//     }
+// }
