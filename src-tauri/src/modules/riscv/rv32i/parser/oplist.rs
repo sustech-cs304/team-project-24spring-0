@@ -49,7 +49,7 @@ pub fn opd_set_sl_mem(
         ),
         opd_set(
             expect_reg_any(Lbl),
-            vec![basic_op_024(op)],
+            vec![basic_op(op, vec![idx(0)])],
             format!("{} t1, label ({} = {}{})", name, dst[4], unit, src[4]),
         ),
     ]
@@ -648,7 +648,17 @@ lazy_static! {
         (RV32IOpToken::Fsflags, vec![]),
         (RV32IOpToken::Fsrm, vec![]),
         (RV32IOpToken::Fsrr, vec![]),
-        (RV32IOpToken::J, vec![]),
+        (
+            RV32IOpToken::J,
+            vec![opd_set(
+                expect_opd(vec![Lbl]),
+                vec![basic_op(
+                    RV32IInstruction::Jal.into(),
+                    vec![reg(Ra), idx(0)]
+                )],
+                "j label (ra = pc + 4; pc = label)".to_string()
+            )]
+        ),
         (RV32IOpToken::Jr, vec![]),
         (RV32IOpToken::La, vec![]),
         (RV32IOpToken::Li, vec![]),
