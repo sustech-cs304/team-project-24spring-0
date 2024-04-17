@@ -2,8 +2,6 @@ use crate::simulator::bus::*;
 /// Default dram size (128MiB).
 pub const DRAM_SIZE: u64 = 1024 * 1024 * 128;
 
-
-
 pub struct Dram {
     pub dram: Vec<u8>,
 }

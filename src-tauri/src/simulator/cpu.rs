@@ -1,5 +1,5 @@
-use crate::bus::*;
-use crate::dram::*;
+use crate::simulator::bus::*;
+use crate::simulator::dram::*;
 
 /// The `Cpu` struct that contains registers, a program coutner, system bus that connects
 /// peripheral devices, and control and status registers.
@@ -24,16 +24,13 @@ impl Cpu {
         }
     }
 
-
     pub fn load(&mut self, addr: u64, size: u64) -> Result<u64, ()> {
         self.bus.load(addr, size)
     }
 
-
     pub fn store(&mut self, addr: u64, size: u64, value: u64) -> Result<(), ()> {
         self.bus.store(addr, size, value)
     }
-
 
     pub fn fetch(&mut self) -> Result<u64, ()> {
         match self.bus.load(self.pc, 32) {
