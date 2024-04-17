@@ -13,42 +13,42 @@
 ```text
 .
 ├── README.md
-├── docs                       // report and documents of our project
-├── references                 // to add assembly document
-├── src-tauri                  // backend
-│   ├── Cargo.lock 
-│   ├── Cargo.toml
-│   ├── build.rs
-│   ├── src                    // backend source code root folder
+├── docs                            // report and documents of our project
+├── references                      // to add assembly document
+├── src-tauri                       // backend
+│   ├── src                         // backend source code root folder
 │   │   ├── assembler
-│   │   ├── interface          // interface of each components
+│   │   ├── interface               // interface of each components
 │   │   │   ├── assembler.rs
-│   │   │   ├── frontend.rs
 │   │   │   ├── middleware.rs
 │   │   │   ├── mod.rs
 │   │   │   ├── parser.rs
 │   │   │   ├── simulator.rs
 │   │   │   └── storage.rs
 │   │   ├── io
-│   │   ├── main.rs            // entry of the backend
 │   │   ├── menu
-│   │   ├── middleware
-│   │   ├── modules            // implemntation of each architecture
-│   │   │   ├── mips           // mips
-│   │   │   ├── mod.rs
-│   │   │   └── riscv          // riscv
-│   │   │       ├── basic      // basic file of each components (parser, assembler, simulator)
-│   │   │       ├── mod.rs
-│   │   │       └── rv32i      // some constants of rv32i
-│   │   │                      // to add more extension of riscv
-│   │   ├── parser
+│   │   ├── modules                 // implemntation of each architecture
+│   │   │   ├── mips                // mips
+│   │   │   ├── riscv               // riscv
+│   │   │   │   ├── basic           // basic file of each components (parser, assembler, simulator)
+│   │   │   │   │   ├── interface   // interface of each components under riscv
+│   │   │   │   │   ├── parser
+│   │   │   │   │   └── mod.rs
+│   │   │   │   ├── rv32i           // some constants of rv32i
+│   │   │   │   │                   // to add more extension of riscv
+│   │   │   │   └── mod.rs
+│   │   │   └── mod.rs
 │   │   ├── simulator
 │   │   ├── storage
+│   │   ├── test
 │   │   ├── types
-│   │   └── utility
+│   │   ├── utility
+│   │   └── main.rs                 // entry of the backend
+│   ├── build.rs
+│   ├── Cargo.lock 
+│   ├── Cargo.toml
 │   └── tauri.conf.json
-└── src-ui                     // frontend
-    ├── README.md
+└── src-ui                          // frontend
     ├── app
     │   ├── favicon.ico
     │   ├── globals.css
@@ -66,6 +66,7 @@
     ├── package-lock.json
     ├── package.json
     ├── postcss.config.js
+    ├── README.md
     └── tailwind.config.js
 ```
 
@@ -95,13 +96,11 @@
 
 ## UI
 
-![sprint1-ui1](img/sprint1-ui1)
+![sprint1-ui1](img/sprint1-ui5.png)
 
-![sprint1-ui2](img/sprint1-ui2)
+![sprint1-ui2](img/sprint1-ui6.png)
 
-![sprint1-ui3](img/sprint1-ui3)
-
-![sprint1-ui4](img/sprint1-ui4)
+![sprint1-ui3](img/sprint1-ui7.png)
 
 This is the UI for our RISC-V IDE. The UI contains three main cards, including code and excecute card, message and RunIO card, and also a register card.
 
