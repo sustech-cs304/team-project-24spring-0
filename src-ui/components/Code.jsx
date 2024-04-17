@@ -1,45 +1,11 @@
 import React, {useEffect} from "react";
-import Editor, { useMonaco } from '@monaco-editor/react';
+import ModifiedEditor from "@/components/ModifiedEditor";
 import {Tabs, Tab, Card, CardBody, Textarea} from "@nextui-org/react";
 import {Table, TableHeader, TableBody, TableRow, TableColumn, TableCell} from "@nextui-org/react";
 import TestPage from "@/components/TestPage";
 
 
-export default function Code() {
-    const monaco = useMonaco()
-    useEffect(() => {
-        if (monaco) {
-            monaco.editor.defineTheme('myTheme', {
-                base: 'vs-dark',
-                inherit: true,
-                rules: [
-                    { token: 'comment',
-                        foreground: 'ffa500',
-                        fontStyle: 'italic underline'
-                    },
-                    { token: 'comment.js',
-                        foreground: '008800',
-                        fontStyle: 'bold'
-                    },
-                    { token: 'comment.css',
-                        foreground: '0000ff'
-                    }
-                ],
-                colors: {
-                    'editor.foreground': '#F8F8F2',
-                    'editor.background': '#272822',
-                    'editor.selectionBackground': '#49483E',
-                    'editor.lineHighlightBackground': '#3E3D32',
-                    'editorCursor.foreground': '#F8F8F0',
-                    'editorWhitespace.foreground': '#3B3A32',
-                    'editorIndentGuide.background': '#3B3A32',
-                    'editorLineNumber.foreground': '#75715E',
-                    'editorLineNumber.activeForeground': '#F8F8F0',
-                    'editorCursor.background': '#A7A7A7'
-                }
-            });
-        }
-    }, [monaco]);
+export default function Code({fileName}) {
 
     return (
         <div className="flex flex-col h-full">
@@ -47,72 +13,91 @@ export default function Code() {
                 <Tab key="edit" title="Edit" className="h-full">
                     <Card className="h-full">
                         <CardBody className="h-full">
-                            <Tabs key="small" size="small" aria-label="Tabs sizes">
+                            {/* <Tabs key="small" size="small" aria-label="Tabs sizes">
                                 <Tab key="file1" title="file1.m" className="h-full"> <Editor language='javascript' className='overflow-hidden h-full'/> </Tab>
                                 <Tab key="file2" title="file2.m" className="h-full"> <Editor language='javascript' className='overflow-hidden h-full'/> </Tab>
                                 <Tab key="file3" title="file3.m" className="h-full"> <Editor language='javascript' className='overflow-hidden h-full'/> </Tab>
-                            </Tabs>
+                            </Tabs> */}
+                            <ModifiedEditor fileName={fileName}/>
                         </CardBody>
                     </Card>
                 </Tab>
-                <Tab key="excecute" title="Excecute" className="h-full">
+                    <Tab key="excecute" title="Execute" className="h-full">
                     <Card className='h-full'>
                         <CardBody className="h-full flow grid-flow-row gap-4">
-                            <Table aria-label="Example static collection table" className='row-span-1'>
+                            <Table aria-label="Example static collection table" disallowEmptySelection selectionMode="single" className='row-span-1' color="success" defaultSelectedKeys={["r1"]}>
                                 <TableHeader>
-                                    <TableColumn>NAME</TableColumn>
-                                    <TableColumn>ROLE</TableColumn>
-                                    <TableColumn>STATUS</TableColumn>
+                                    <TableColumn>Line</TableColumn>
+                                    <TableColumn>Code</TableColumn>
                                 </TableHeader>
                                 <TableBody>
-                                    <TableRow key="1">
-                                        <TableCell>Tony Reichert</TableCell>
-                                        <TableCell>CEO</TableCell>
-                                        <TableCell>Active</TableCell>
+                                    <TableRow key="r1">
+                                        <TableCell>1</TableCell>
+                                        <TableCell>li x1, 0</TableCell>
                                     </TableRow>
-                                    <TableRow key="2">
-                                        <TableCell>Zoey Lang</TableCell>
-                                        <TableCell>Technical Lead</TableCell>
-                                        <TableCell>Paused</TableCell>
-                                    </TableRow>
-                                    <TableRow key="4">
-                                        <TableCell>William Howard</TableCell>
-                                        <TableCell>Community Manager</TableCell>
-                                        <TableCell>Vacation</TableCell>
-                                    </TableRow>
-                                    <TableRow key="5">
-                                        <TableCell>William Howard</TableCell>
-                                        <TableCell>Community Manager</TableCell>
-                                        <TableCell>Vacation</TableCell>
+                                    <TableRow key="r2" >
+                                        <TableCell>2</TableCell>
+                                        <TableCell>add x2, x1, x3 </TableCell>
                                     </TableRow>
                                 </TableBody>
                             </Table>
-                            <Table aria-label="Example static collection table" className='row-span-1'>
+                            <Table aria-label="Example static collection table" className='row-span-1' hideHeader>
                                 <TableHeader>
-                                    <TableColumn>NAME</TableColumn>
-                                    <TableColumn>ROLE</TableColumn>
-                                    <TableColumn>STATUS</TableColumn>
+                                    <TableColumn>1</TableColumn>
+                                    <TableColumn>2</TableColumn>
+                                    <TableColumn>3</TableColumn>
+                                    <TableColumn>4</TableColumn>
+                                    <TableColumn>5</TableColumn>
+                                    <TableColumn>6</TableColumn>
                                 </TableHeader>
                                 <TableBody>
-                                    <TableRow key="1">
-                                        <TableCell>Tony Reichert</TableCell>
-                                        <TableCell>CEO</TableCell>
-                                        <TableCell>Active</TableCell>
+                                    <TableRow key="r1">
+                                        <TableCell>0x00000000</TableCell>
+                                        <TableCell>0x00000000</TableCell>
+                                        <TableCell>0x00000000</TableCell>
+                                        <TableCell>0x00000000</TableCell>
+                                        <TableCell>0x00000000</TableCell>
+                                        <TableCell>0x00000000</TableCell>
                                     </TableRow>
-                                    <TableRow key="2">
-                                        <TableCell>Zoey Lang</TableCell>
-                                        <TableCell>Technical Lead</TableCell>
-                                        <TableCell>Paused</TableCell>
+                                    <TableRow key="r2">
+                                        <TableCell>0x00000000</TableCell>
+                                        <TableCell>0x00000000</TableCell>
+                                        <TableCell>0x00000000</TableCell>
+                                        <TableCell>0x00000000</TableCell>
+                                        <TableCell>0x00000000</TableCell>
+                                        <TableCell>0x00000000</TableCell>
                                     </TableRow>
-                                    <TableRow key="3">
-                                        <TableCell>Jane Fisher</TableCell>
-                                        <TableCell>Senior Developer</TableCell>
-                                        <TableCell>Active</TableCell>
+                                    <TableRow key="r3">
+                                        <TableCell>0x00000000</TableCell>
+                                        <TableCell>0x00000000</TableCell>
+                                        <TableCell>0x00000000</TableCell>
+                                        <TableCell>0x00000000</TableCell>
+                                        <TableCell>0x00000000</TableCell>
+                                        <TableCell>0x00000000</TableCell>
                                     </TableRow>
-                                    <TableRow key="4">
-                                        <TableCell>William Howard</TableCell>
-                                        <TableCell>Community Manager</TableCell>
-                                        <TableCell>Vacation</TableCell>
+                                    <TableRow key="r4">
+                                        <TableCell>0x00000000</TableCell>
+                                        <TableCell>0x00000000</TableCell>
+                                        <TableCell>0x00000000</TableCell>
+                                        <TableCell>0x00000000</TableCell>
+                                        <TableCell>0x00000000</TableCell>
+                                        <TableCell>0x00000000</TableCell>
+                                    </TableRow>
+                                    <TableRow key="r5">
+                                        <TableCell>0x00000000</TableCell>
+                                        <TableCell>0x00000000</TableCell>
+                                        <TableCell>0x00000000</TableCell>
+                                        <TableCell>0x00000000</TableCell>
+                                        <TableCell>0x00000000</TableCell>
+                                        <TableCell>0x00000000</TableCell>
+                                    </TableRow>
+                                    <TableRow key="r6">
+                                        <TableCell>0x00000000</TableCell>
+                                        <TableCell>0x00000000</TableCell>
+                                        <TableCell>0x00000000</TableCell>
+                                        <TableCell>0x00000000</TableCell>
+                                        <TableCell>0x00000000</TableCell>
+                                        <TableCell>0x00000000</TableCell>
                                     </TableRow>
                                 </TableBody>
                             </Table>

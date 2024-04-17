@@ -1,9 +1,9 @@
-pub trait MFile<D, STA, ERR>: Send + Sync {
-    fn from_file(&mut self, path: &str) -> Result<bool, ERR>;
+pub trait MFile<ERR>: Send + Sync {
+    fn is_dirty(&self) -> bool;
 
-    fn from_str(&mut self, text: &str) -> Result<bool, ERR>;
+    fn set_dirty(&mut self, dirty: bool);
 
-    fn save_file(&self) -> Result<bool, ERR>;
+    fn to_string(&self) -> String;
 
-    fn save_as(&self, path: String) -> Result<bool, ERR>;
+    fn save(&mut self) -> Option<ERR>;
 }

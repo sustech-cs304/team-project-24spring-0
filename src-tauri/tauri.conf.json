@@ -12,7 +12,7 @@
   "tauri": {
     "allowlist": {
       "clipboard": {
-        "all": true
+        "all": false
       },
       "notification": {
         "all": true
@@ -71,7 +71,7 @@
         "height": 800,
         "resizable": false,
         "title": "Moras",
-        "width": 1024
+        "width": 1280
       }
     ]
   }
