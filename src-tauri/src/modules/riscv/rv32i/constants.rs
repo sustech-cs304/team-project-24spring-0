@@ -96,6 +96,7 @@ pub type RISCVImmediate = i32;
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum RISCVCsr {}
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct ParseRV32IRegisterError;
 
 impl FromStr for RV32IRegister {
@@ -111,7 +112,7 @@ impl FromStr for RV32IRegister {
             "t0" | "x5" => Ok(RV32IRegister::T0),
             "t1" | "x6" => Ok(RV32IRegister::T1),
             "t2" | "x7" => Ok(RV32IRegister::T2),
-            "s0" | "x8" => Ok(RV32IRegister::S0),
+            "s0" | "fp" | "x8" => Ok(RV32IRegister::S0),
             "s1" | "x9" => Ok(RV32IRegister::S1),
             "a0" | "x10" => Ok(RV32IRegister::A0),
             "a1" | "x11" => Ok(RV32IRegister::A1),

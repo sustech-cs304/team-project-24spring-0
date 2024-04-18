@@ -1,5 +1,6 @@
 use crate::modules::riscv::basic::interface::parser::*;
 
+#[test]
 pub fn test_parser() {
     let mut p = RISCVParser::new();
     let rope = ropey::Rope::from_str(

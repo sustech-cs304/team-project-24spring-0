@@ -19,7 +19,7 @@ pub type ParserRISCVImmediate = super::super::super::rv32i::constants::RISCVImme
 
 pub type ParserRISCVCsr = super::super::super::rv32i::constants::RISCVCsr;
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ParserRISCVInstOpd {
     Reg(ParserRISCVRegister),
     Imm(ParserRISCVImmediate),

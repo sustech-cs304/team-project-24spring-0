@@ -7,7 +7,7 @@ mod io;
 mod menu;
 mod modules;
 mod storage;
-mod test;
+mod tests;
 mod types;
 mod utility;
 
