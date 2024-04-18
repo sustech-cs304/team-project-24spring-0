@@ -1,7 +1,6 @@
-use crate::modules::riscv::basic::interface::parser::ParserRISCVRegisterTrait;
-
 use super::super::interface::parser::{
-    ParserRISCVImmediate, ParserRISCVInstOp, ParserRISCVInstOpd,
+    ParserRISCVImmediate, ParserRISCVInstOp, ParserRISCVInstOpd, ParserRISCVRegister,
+    ParserRISCVRegisterTrait,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -55,7 +54,7 @@ pub use RISCVExpectToken::*;
 
 // --------------------reg-------------------------
 pub fn reg<T: ParserRISCVRegisterTrait + 'static>(reg: T) -> RISCVOpdSetAimOpd {
-    RISCVOpdSetAimOpd::Val(ParserRISCVInstOpd::Reg(reg.into()))
+    RISCVOpdSetAimOpd::Val(ParserRISCVInstOpd::Reg(ParserRISCVRegister::from(reg)))
 }
 // --------------------imm-------------------------
 pub fn imm_i(imm: i128) -> RISCVOpdSetAimOpd {
