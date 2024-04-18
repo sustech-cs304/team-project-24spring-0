@@ -2,19 +2,8 @@ use super::super::interface::parser::{ParserRISCVCsr, ParserRISCVRegister};
 use super::oplist::RISCVOpdSet;
 use crate::interface::parser::{ParserError, Pos};
 use logos::Logos;
+use std::collections::HashMap;
 use std::fmt::Display;
-
-static EXTENSION: [LexerExtension; 1] = [LexerExtension {
-    name: "rv32i",
-    parse_op: super::super::super::rv32i::parser::lexer::parse_op,
-    parse_reg: super::super::super::rv32i::parser::lexer::parse_reg,
-}];
-
-pub struct LexerExtension {
-    pub name: &'static str,
-    pub parse_op: fn(&str) -> Option<RISCVOpToken>,
-    pub parse_reg: fn(&str) -> Option<ParserRISCVRegister>,
-}
 
 #[derive(Debug, PartialEq, Clone, Default)]
 pub enum LexingError {
@@ -23,16 +12,18 @@ pub enum LexingError {
     Other,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Symbol<'a> {
     Label(&'a str),
     Op(RISCVOpToken),
     Reg(ParserRISCVRegister),
 }
 
-pub trait RISCVOpTokenTrait {
-    fn get_opd_set(&self) -> &Vec<RISCVOpdSet>;
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct RISCVOpToken {
+    pub val: u8,
+    pub get_opd_set: fn(u8) -> &'static Vec<RISCVOpdSet>,
 }
-pub type RISCVOpToken = &'static dyn RISCVOpTokenTrait;
 
 pub(super) struct LexerIter<'a> {
     pub raw: logos::Lexer<'a, RISCVToken<'a>>,
@@ -40,28 +31,25 @@ pub(super) struct LexerIter<'a> {
 
 impl LexerIter<'_> {
     #[inline(always)]
-    pub fn next<'a>(&'a mut self) -> Result<Option<RISCVToken<'a>>, Vec<ParserError>> {
+    pub fn next<'a>(
+        &'a mut self,
+        symbol_list: &HashMap<&'static str, Symbol<'static>>,
+    ) -> Result<Option<RISCVToken<'a>>, Vec<ParserError>> {
         match self.raw.next() {
             Some(unit) => match unit {
-                Ok(token) => Ok(Some(token)),
+                Ok(token) => match token {
+                    RISCVToken::Symbol(Symbol::Label(symbol)) => {
+                        if let Some(symbol) = symbol_list.get(symbol) {
+                            Ok(Some(RISCVToken::Symbol(*symbol)))
+                        } else {
+                            Ok(Some(token))
+                        }
+                    }
+                    _ => Ok(Some(token)),
+                },
                 Err(e) => Err(self.get_error(e.to_string())),
             },
             None => Ok(None),
-        }
-    }
-
-    pub fn next_not_newline<'a>(&'a mut self) -> Result<Option<RISCVToken<'a>>, Vec<ParserError>> {
-        loop {
-            match self.raw.next() {
-                Some(unit) => match unit {
-                    Ok(token) => match token {
-                        RISCVToken::Newline => continue,
-                        _ => return Ok(Some(token)),
-                    },
-                    Err(e) => return Err(self.get_error(e.to_string())),
-                },
-                None => return Ok(None),
-            }
         }
     }
 
@@ -88,17 +76,8 @@ impl LexerIter<'_> {
     }
 }
 
-fn dispatch_symbol(token: &str) -> Symbol {
-    for ext in &EXTENSION {
-        if let Some(reg) = (ext.parse_reg)(token) {
-            return Symbol::Reg(reg);
-        }
-        if let Some(op) = (ext.parse_op)(token) {
-            return Symbol::Op(op);
-        }
-    }
-    Symbol::Label(token)
-}
+unsafe impl<'a> Send for Symbol<'_> {}
+unsafe impl<'a> Sync for Symbol<'_> {}
 
 #[derive(Logos)]
 #[logos(skip r"([ \t\f]+)|(#.*)", error = LexingError, extras = (usize, usize))]
@@ -120,7 +99,7 @@ pub enum RISCVToken<'a> {
     ImmediateFloat(f64),
     #[regex("\"([^\\\\\"]*\\\\.)*\"")]
     ImmediateString(&'a str),
-    #[regex(r"[a-zA-Z_][a-zA-Z0-9_]*", |lex| dispatch_symbol(lex.slice()))]
+    #[regex(r"[a-zA-Z_][a-zA-Z0-9._]*", |lex| Symbol::Label(lex.slice()))]
     Symbol(Symbol<'a>),
     #[regex(r"%[a-zA-Z_][a-zA-Z0-9_]*")]
     MacroParameter(&'a str),

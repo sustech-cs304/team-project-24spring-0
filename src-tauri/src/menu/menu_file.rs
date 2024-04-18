@@ -8,7 +8,7 @@ use tauri::{
 use super::display_alert_dialog;
 use crate::{
     io::file_io,
-    modules::riscv::basic::parser::parser::RISCVParser,
+    modules::riscv::basic::interface::parser::{RISCVExtension, RISCVParser},
     storage::rope_store,
     types::{
         menu_types,
@@ -147,7 +147,7 @@ fn new_tab(event: &WindowMenuEvent, file_path: &Path) -> Option<String> {
             let tab_map = event.window().state::<TabMap>();
             let tab = Tab {
                 text: Box::new(content),
-                parser: Box::new(RISCVParser::new()),
+                parser: Box::new(RISCVParser::new(&vec![RISCVExtension::RV32I])),
                 //assembler: Box::new(Default::default()),
                 //simulator: Box::new(Default::default()),
             };

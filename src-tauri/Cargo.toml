@@ -22,6 +22,7 @@ ropey = "1.6.1"
 logos = "0.14.0"
 lazy_static = "1.4.0"
 strum = { version = "0.26", features = ["derive"] }
+strum_macros = "0.26"
 ux = { git = "https://github.com/kjetilkjeka/uX.git", rev = "1081930" }
 derive_builder = "0.11.2"
 

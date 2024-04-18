@@ -1,7 +1,7 @@
 use crate::modules::riscv::basic::interface::parser::*;
 
 pub fn test_parser() {
-    let mut p = RISCVParser::new();
+    let mut p = RISCVParser::new(&vec![RISCVExtension::RV32I]);
     let rope = ropey::Rope::from_str(
         "
         a:
@@ -12,7 +12,7 @@ pub fn test_parser() {
         .byte 0x1\n \
         .text\n \
         beq a1, a2, bb\n \
-        ",
+",
     );
     let res = p.parse(rope.to_string());
     match res {
