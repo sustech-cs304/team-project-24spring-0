@@ -107,7 +107,7 @@ macro_rules! test_store_mem {
 
 #[test]
 pub fn test() {
-    let mut parser = RISCVParser::new();
+    let mut parser = RISCVParser::new(&vec![RISCVExtension::RV32I]);
 
     let expect = expect_helper!(Add, reg!(), reg!(), reg!());
     test!(expect, "add a0, a0, a0", parser);

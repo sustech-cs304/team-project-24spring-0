@@ -12,6 +12,7 @@ static VALID_REG_NAME: [&'static str; 65] = [
 
 #[test]
 pub fn test() {
+    let mut parser = RISCVParser::new(&vec![RISCVExtension::RV32I]);
     for i in 0..VALID_REG_NAME.len() {
         for j in 0..VALID_REG_NAME.len() {
             for k in 0..VALID_REG_NAME.len() {
@@ -34,7 +35,7 @@ pub fn test() {
                     })],
                 };
 
-                let res = RISCVParser::new()
+                let res = parser
                     .parse(format!(
                         "add {}, {}, {}",
                         VALID_REG_NAME[i], VALID_REG_NAME[j], VALID_REG_NAME[k]
