@@ -1,13 +1,14 @@
 use super::super::interface::parser::*;
 use super::label::LabelData;
-use super::lexer::{LexerIter, RISCVOpTokenTrait, RISCVToken, Symbol};
+use super::lexer::{LexerIter, RISCVOpToken, RISCVToken, Symbol};
 use super::oplist::{RISCVExpectImm, RISCVExpectToken, RISCVOpdSetAim, RISCVOpdSetAimOpd};
 use super::r#macro::MacroData;
 use crate::utility::ptr::Ptr;
 use logos::Logos;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap};
 
 pub struct RISCVParser {
+    symbol_list: HashMap<&'static str, Symbol<'static>>,
     macro_list: BTreeMap<String, MacroData>,
     label_list: BTreeMap<String, LabelData>,
 }
@@ -19,13 +20,15 @@ impl Parser<RISCV> for RISCVParser {
         let status_ptr = Ptr::new(&_status);
         let status = status_ptr.as_mut();
 
-        while let Some(token) = status.iter.next()? {
+        while let Some(token) = status.iter.next(&self.symbol_list)? {
             self.parse_token(status_ptr, token)?;
         }
         self.dispose_label_list()?;
         Ok(_status.result)
     }
 }
+
+pub type RISCVSymbolList = Vec<&'static Vec<(&'static str, Symbol<'static>)>>;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
 pub(super) enum RISCVDataType {
@@ -155,10 +158,23 @@ macro_rules! load_data_helper_string {
 }
 
 impl RISCVParser {
-    pub fn new() -> Self {
-        RISCVParser {
+    pub fn new(ext: &Vec<RISCVExtension>) -> Self {
+        let mut res = RISCVParser {
+            symbol_list: HashMap::new(),
             macro_list: BTreeMap::new(),
             label_list: BTreeMap::new(),
+        };
+        for ext in ext {
+            res.import_extension(ext.get_symbol_parser());
+        }
+        res
+    }
+
+    pub fn import_extension(&mut self, symbol_list: &RISCVSymbolList) {
+        for &set in symbol_list {
+            for (key, value) in set {
+                self.symbol_list.insert(key, *value);
+            }
         }
     }
 
@@ -259,7 +275,7 @@ impl RISCVParser {
     fn parse_op(
         &mut self,
         status_ptr: Ptr<RISCVParserStatus>,
-        op: &dyn RISCVOpTokenTrait,
+        op: RISCVOpToken,
     ) -> Result<(), Vec<ParserError>> {
         let status = status_ptr.as_mut();
 
@@ -269,7 +285,7 @@ impl RISCVParser {
                 .get_error("operator in data segment".to_string()));
         }
 
-        let token_sets = op.get_opd_set();
+        let token_sets = (op.get_opd_set)(op.val);
         let token_set_len = token_sets.len();
 
         if token_set_len == 0 {
@@ -291,7 +307,7 @@ impl RISCVParser {
             }
         }
 
-        while let Some(token) = status.iter.next()? {
+        while let Some(token) = status.iter.next(&self.symbol_list)? {
             if matches!(token, RISCVToken::Newline) {
                 term_by = 1;
                 break;
@@ -451,7 +467,7 @@ impl RISCVParser {
             RISCVToken::Symbol(symbol) => match symbol {
                 Symbol::Label(value) => {
                     let pos = status.iter.pos();
-                    let next_token = status.iter.next()?;
+                    let next_token = status.iter.next(&self.symbol_list)?;
                     if status.label_def.is_some()
                         || next_token.is_none()
                         || !matches!(next_token.unwrap(), RISCVToken::Colon)
@@ -476,13 +492,13 @@ impl RISCVParser {
                     Ok(())
                 }
                 Symbol::Op(op) => self.parse_op(status_ptr, op),
-                Symbol::Reg(_) => Err(status.iter.get_error("unexpected symbol".to_string())),
+                Symbol::Reg(_) => Err(status.iter.get_error("unexpected register".to_string())),
             },
             RISCVToken::MacroParameter(_) | RISCVToken::Csr(_) => {
                 Err(status.iter.get_error("unexpected symbol".to_string()))
             }
             RISCVToken::Align => {
-                let next_token = status.iter.next()?;
+                let next_token = status.iter.next(&self.symbol_list)?;
                 match next_token {
                     Some(RISCVToken::ImmediateInt(val)) => {
                         if val >= 0 && val <= 3 {
@@ -531,7 +547,7 @@ impl RISCVParser {
             RISCVToken::MacroDef => Ok(()),
             RISCVToken::Macro => Err(status.iter.get_error("missing macro name".to_string())),
             RISCVToken::Section => {
-                let next_token = status.iter.next()?;
+                let next_token = status.iter.next(&self.symbol_list)?;
                 match next_token {
                     Some(RISCVToken::Symbol(Symbol::Label(_)))
                     | Some(RISCVToken::ImmediateString(_)) => Ok(()),
@@ -545,7 +561,7 @@ impl RISCVParser {
                         .iter
                         .get_error("invalid directive in text segment".to_string()));
                 }
-                if let Some(RISCVToken::ImmediateInt(val)) = status.iter.next()? {
+                if let Some(RISCVToken::ImmediateInt(val)) = status.iter.next(&self.symbol_list)? {
                     if val < 0 {
                         return Err(status
                             .iter

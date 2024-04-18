@@ -3,7 +3,7 @@ pub mod tab_management {
 
     use crate::{
         io::file_io,
-        modules::riscv::basic::interface::parser::RISCVParser,
+        modules::riscv::basic::interface::parser::{RISCVExtension, RISCVParser},
         storage::rope_store,
         types::middleware_types::{CurTabName, Optional, Tab, TabMap},
     };
@@ -20,7 +20,7 @@ pub mod tab_management {
             Ok(content) => {
                 let tab = Tab {
                     text: Box::new(content),
-                    parser: Box::new(RISCVParser::new()),
+                    parser: Box::new(RISCVParser::new(&vec![RISCVExtension::RV32I])),
                     //assembler: Box::new(Default::default()),
                     //simulator: Box::new(Default::default()),
                 };
