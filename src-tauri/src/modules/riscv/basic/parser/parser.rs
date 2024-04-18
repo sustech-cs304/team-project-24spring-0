@@ -299,7 +299,6 @@ impl RISCVParser {
         let mut stash_opd = Vec::<Option<ParserRISCVInstOpd>>::new();
         let mut stash_label_name = Vec::<String>::new();
         let now_line = status.iter.line();
-        let mut term_by = 0; // 0:no next 1:newline 2:no valid set
 
         for token_set in token_sets {
             if token_set.tokens.is_empty() {
@@ -308,8 +307,8 @@ impl RISCVParser {
         }
 
         while let Some(token) = status.iter.next(&self.symbol_list)? {
+            // if newline, break
             if matches!(token, RISCVToken::Newline) {
-                term_by = 1;
                 break;
             }
             let mut rest = token_set_len;
@@ -345,9 +344,8 @@ impl RISCVParser {
                     token_set_state[i] = 2;
                 }
             }
-            // if no valid operand set, return error
+            // if no valid operand set, break
             if rest == 0 {
-                term_by = 2;
                 break;
             }
             // stash operand
@@ -373,78 +371,62 @@ impl RISCVParser {
             }
             token_idx += 1;
         }
-        match term_by {
-            1 => {
-                let mut success_set_idx = None;
-                // find the first success set
-                for idx in 0..token_set_len {
-                    if token_set_state[idx] == 2 {
-                        success_set_idx = Some(idx);
-                        break;
-                    }
+        let mut success_set_idx = None;
+        // find the first success set
+        for idx in 0..token_set_len {
+            if token_set_state[idx] == 2 {
+                success_set_idx = Some(idx);
+                break;
+            }
+        }
+        if let Some(success_set_idx) = success_set_idx {
+            let success_set = &token_sets[success_set_idx];
+            // create label in label_list if not exists
+            for label_name in &stash_label_name {
+                if label_name.is_empty() {
+                    continue;
                 }
-                if let Some(success_set_idx) = success_set_idx {
-                    let success_set = &token_sets[success_set_idx];
-                    // create label in label_list if not exists
-                    for label_name in &stash_label_name {
-                        if label_name.is_empty() {
-                            continue;
-                        }
-                        if !self.label_list.contains_key(label_name) {
-                            self.label_list.insert(
-                                label_name.clone(),
-                                LabelData {
-                                    name: label_name.clone(),
-                                    def: None,
-                                    refs: Vec::new(),
-                                },
-                            );
-                        }
-                    }
-                    // check if a label_def exists
-                    if let Some(label_name) = &status.label_def {
-                        self.label_list.get_mut(label_name).unwrap().def =
-                            Some(ParserRISCVLabel::Text(status.result.text.len()));
-                        status.label_def = None;
-                    }
-                    // add basic instruction to status.result
-                    for aim_basic in &success_set.aim_basics {
-                        // add instruction
-                        Self::load_to_result(&mut status.result, now_line, &stash_opd, aim_basic);
-                        // update label_list if has label
-                        Self::update_label_ref(
-                            &mut status.result,
-                            &mut self.label_list,
-                            aim_basic,
-                            &stash_opd,
-                            &stash_label_name,
-                        );
-                    }
-                    Ok(())
-                } else {
-                    let mut msg = vec!["unmatched operands.\ncandidates are:"];
-                    for opd_set in token_sets {
-                        msg.push("\n");
-                        msg.push(&opd_set.hint);
-                    }
-                    Err(vec![ParserError {
-                        pos: op_char_pos,
-                        msg: msg.concat(),
-                    }])
+                if !self.label_list.contains_key(label_name) {
+                    self.label_list.insert(
+                        label_name.clone(),
+                        LabelData {
+                            name: label_name.clone(),
+                            def: None,
+                            refs: Vec::new(),
+                        },
+                    );
                 }
             }
-            2 => {
-                let mut msg = vec!["unmatched operands.\ncandidates are:"];
-                for opd_set in token_sets {
-                    msg.push("\n");
-                    msg.push(&opd_set.hint);
-                }
-                Err(vec![ParserError {
-                    pos: op_char_pos,
-                    msg: msg.concat(),
-                }])
+            // check if a label_def exists
+            if let Some(label_name) = &status.label_def {
+                self.label_list.get_mut(label_name).unwrap().def =
+                    Some(ParserRISCVLabel::Text(status.result.text.len()));
+                status.label_def = None;
             }
-            _ => Err(status.iter.get_error("too few operands".to_string())),
+            // add basic instruction to status.result
+            for aim_basic in &success_set.aim_basics {
+                // add instruction
+                Self::load_to_result(&mut status.result, now_line, &stash_opd, aim_basic);
+                // update label_list if has label
+                Self::update_label_ref(
+                    &mut status.result,
+                    &mut self.label_list,
+                    aim_basic,
+                    &stash_opd,
+                    &stash_label_name,
+                );
+            }
+            Ok(())
+        } else {
+            let mut msg = vec!["unmatched operands.\ncandidates are:"];
+            for opd_set in token_sets {
+                msg.push("\n");
+                msg.push(&opd_set.hint);
+            }
+            Err(vec![ParserError {
+                pos: op_char_pos,
+                msg: msg.concat(),
+            }])
         }
     }
 

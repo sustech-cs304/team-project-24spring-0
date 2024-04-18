@@ -9,63 +9,84 @@ pub use super::super::super::basic::parser::oplist::RISCVOpdSet;
 use RV32IRegister::*;
 
 // --------------------set-------------------------
-pub fn opd_set_sl_mem(
-    op: ParserRISCVInstOp,
-    name: &str,
-    unit: &str,
-    src: [&str; 5],
-    dst: [&str; 5],
-) -> Vec<RISCVOpdSet> {
+pub fn opd_set_load_mem(op: ParserRISCVInstOp, name: &str, unit: &str) -> Vec<RISCVOpdSet> {
     vec![
         opd_set(
             expect_opd(vec![Reg, Comma, Imm(I12), LParen, Reg, RParen]),
             vec![basic_op_024(op)],
-            format!("{} t1, -0x1(t2) ({} = {}{})", name, dst[0], unit, src[0]),
+            format!("{} t1, -0x1(t2) (t1 = {}mem[t2 + -0x1(i12)])", name, unit),
         ),
         opd_set(
             expect_opd(vec![Reg, Comma, LParen, Reg, RParen]),
             vec![basic_op(op, vec![idx(0), imm_i(0), idx(3)])],
-            format!("{} t1, (t2) ({} = {}{})", name, dst[1], unit, src[1]),
+            format!("{} t1, (t2) (t1 = {}mem[t2])", name, unit),
         ),
         opd_set(
             expect_reg_any(Imm(I12)),
             vec![basic_op(op, vec![idx(0), idx(2), reg(Zero)])],
-            format!("{} t1, -0x1 ({} = {}{})", name, dst[2], unit, src[2]),
+            format!("{} t1, -0x1 (t1 = {}mem[-0x1(i12)])", name, unit),
         ),
         opd_set(
             expect_reg_any(Imm(I32)),
             vec![
                 basic_op(
                     RV32IInstruction::Lui.into(),
-                    vec![reg(A0), idx_handler(2, idx_handler_high)],
+                    vec![idx(0), idx_handler(2, idx_handler_high)],
                 ),
-                basic_op(op, vec![idx(0), idx_handler(2, idx_handler_low), reg(A0)]),
+                basic_op(op, vec![idx(0), idx_handler(2, idx_handler_low), idx(0)]),
             ],
             format!(
-                "{} t1, 0x100000 (a0 = 0x100000[12:31](i32); {} = {}{})",
-                name, dst[3], unit, src[3]
+                "{} t1, 0x100000 (t1 = 0x100000[12:31](i32); t1 = {}mem[t1 + 0x100000[0:11](i32)])",
+                name, unit
             ),
         ),
         opd_set(
             expect_reg_any(Lbl),
-            vec![basic_op(op, vec![idx(0)])],
-            format!("{} t1, label ({} = {}{})", name, dst[4], unit, src[4]),
+            vec![basic_op_02(op)],
+            format!(
+                "{} t1, label (t1 = pc + delta[12:31]; t1 = {}mem[t1 + delte[0:11]])",
+                name, unit
+            ),
         ),
     ]
 }
-const SL_MEM_REG: [&str; 5] = ["t1", "t1", "t1", "t1", "t1"];
-const SL_MEM_MEM: [&str; 5] = [
-    "mem[t2 + -0x1(i12)]",
-    "mem[t2]",
-    "mem[-0x1(i12)]",
-    "mem[a0 + 0x100000[0:11](i32)]",
-    "mem[label]",
-];
-pub fn opd_set_load_mem(op: ParserRISCVInstOp, name: &str, unit: &str) -> Vec<RISCVOpdSet> {
-    opd_set_sl_mem(op, name, unit, SL_MEM_MEM, SL_MEM_REG)
-}
 pub fn opd_set_store_mem(op: ParserRISCVInstOp, name: &str, unit: &str) -> Vec<RISCVOpdSet> {
-    opd_set_sl_mem(op, name, unit, SL_MEM_REG, SL_MEM_MEM)
+    vec![
+        opd_set(
+            expect_opd(vec![Reg, Comma, Imm(I12), LParen, Reg, RParen]),
+            vec![basic_op_024(op)],
+            format!("{} t1, -0x1(t2) (mem[t2 + -0x1(i12)] = {}t1)", name, unit),
+        ),
+        opd_set(
+            expect_opd(vec![Reg, Comma, LParen, Reg, RParen]),
+            vec![basic_op(op, vec![idx(0), imm_i(0), idx(3)])],
+            format!("{} t1, (t2) (mem[t2] = {}t1)", name, unit),
+        ),
+        opd_set(
+            expect_reg_any(Imm(I12)),
+            vec![basic_op(op, vec![idx(0), idx(2), reg(Zero)])],
+            format!("{} t1, -0x1 (mem[-0x1(i12)] = {}t1)", name, unit),
+        ),
+        opd_set(
+            expect_opd(vec![Reg, Comma, Imm(I32), Comma, Reg]),
+            vec![
+                basic_op(
+                    RV32IInstruction::Lui.into(),
+                    vec![idx(4), idx_handler(2, idx_handler_high)],
+                ),
+                basic_op(op, vec![idx(0), idx_handler(2, idx_handler_low), idx(4)]),
+            ],
+            format!(
+                "{} t1, 0x100000, t2 (t2 = 0x100000[12:31](i32); mem[t2 + 0x100000[0:11](i32)] = {}t1)",
+                name, unit
+            ),
+        ),
+        opd_set(
+            expect_opd(vec![Reg, Comma, Lbl, Comma, Reg]),
+            vec![basic_op_024(op)],
+            format!("{} t1, label, t2 (t2 = pc + delta[12:31]; mem[t2 + delte[0:11]] = {}t1)", name, unit),
+        ),
+    ]
 }
 
 lazy_static! {
@@ -525,7 +546,7 @@ lazy_static! {
                         expect_opd(vec![Lbl]),
                         vec![basic_op(
                             RV32IInstruction::Jal.into(),
-                            vec![reg(Ra), idx(0)],
+                            vec![reg(Zero), idx(0)],
                         )],
                         "b label (ra = pc + 4; pc = label)".to_string(),
                     )],

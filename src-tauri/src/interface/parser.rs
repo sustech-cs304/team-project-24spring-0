@@ -10,8 +10,8 @@ where
 // in crate::modules::[instruction_set]::basic::interface::parser
 pub trait ParserInstSet
 where
-    Self::Operator: Clone + std::fmt::Debug,
-    Self::Operand: Clone + std::fmt::Debug,
+    Self::Operator: Clone + std::fmt::Debug + PartialEq + Eq,
+    Self::Operand: Clone + std::fmt::Debug + PartialEq + Eq,
 {
     type Operator;
     type Operand;
@@ -20,7 +20,7 @@ where
 #[derive(Serialize, Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Pos(pub usize, pub usize);
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ParserResult<IS>
 where
     IS: ParserInstSet,
@@ -35,13 +35,13 @@ pub struct ParserError {
     pub msg: String,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ParserResultData {
     Data(Vec<u8>),
     Align(u8),
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ParserResultText<IS>
 where
     IS: ParserInstSet,
@@ -50,7 +50,7 @@ where
     Align(u8),
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ParserInst<IS>
 where
     IS: ParserInstSet,
