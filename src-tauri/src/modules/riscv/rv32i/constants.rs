@@ -156,7 +156,3 @@ impl From<RV32IRegister> for &'static str {
         unreachable!();
     }
 }
-
-impl ParserRISCVRegisterTrait for RV32IRegister {}
-
-impl ParserRISCVInstOpTrait for RV32IInstruction {}
