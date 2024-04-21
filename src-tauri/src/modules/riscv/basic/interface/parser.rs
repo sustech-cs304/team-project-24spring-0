@@ -1,6 +1,9 @@
 use super::super::parser::parser::RISCVSymbolList;
 use crate::utility::any::AnyU8;
 
+pub use super::super::super::rv32i::constants::{
+    get_32u_high, get_32u_low, RISCVCsr, RISCVImmediate,
+};
 pub use super::super::parser::parser::RISCVParser;
 pub use crate::interface::parser::*;
 
@@ -20,9 +23,13 @@ pub struct ParserRISCVInstOp(AnyU8, &'static str);
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct ParserRISCVRegister(AnyU8, &'static str);
 
-pub type ParserRISCVImmediate = super::super::super::rv32i::constants::RISCVImmediate;
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ParserRISCVImmediate {
+    Imm(RISCVImmediate),
+    Lbl((ParserRISCVLabel, ParserRISCVLabelHandler)),
+}
 
-pub type ParserRISCVCsr = super::super::super::rv32i::constants::RISCVCsr;
+pub type ParserRISCVCsr = RISCVCsr;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ParserRISCVInstOpd {
@@ -36,6 +43,14 @@ pub enum ParserRISCVLabel {
     Text(usize),          // ParserResult<RISCV>::text[usize]
     Data((usize, usize)), // ParserResult<RISCV>::data[usize][usize]
     Unknown(Pos),         // the label position in the code (mustn't exist in the output)
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ParserRISCVLabelHandler {
+    Low,
+    High,
+    DeltaHigh,
+    DeltaMinusOneLow,
 }
 
 pub trait ParserRISCVInstOpTrait:

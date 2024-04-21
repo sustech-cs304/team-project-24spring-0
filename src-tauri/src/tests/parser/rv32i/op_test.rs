@@ -17,7 +17,10 @@ macro_rules! reg {
 
 macro_rules! imm {
     () => {
-        Imm(0)
+        Imm(ParserRISCVImmediate::Imm(0))
+    };
+    ($imm:expr) => {
+        Imm(ParserRISCVImmediate::Imm($imm))
     };
 }
 
@@ -51,7 +54,7 @@ macro_rules! test_load_mem {
     ($inst:expr, $name:expr, $parser:expr) => {
         let expect = expect_helper!($inst, reg!(), imm!(), reg!());
         test!(expect, concat!($name, " a0, 0(a0)"), $parser);
-        let expect = expect_helper!($inst, reg!(), Imm(0), reg!());
+        let expect = expect_helper!($inst, reg!(), imm!(0), reg!());
         test!(expect, concat!($name, " a0, (a0)"), $parser);
         let expect = expect_helper!($inst, reg!(), imm!(), reg!(Zero));
         test!(expect, concat!($name, " a0, 0"), $parser);
@@ -61,12 +64,12 @@ macro_rules! test_load_mem {
                 ParserResultText::Text(ParserInst::<RISCV> {
                     line: 0,
                     op: Lui.into(),
-                    opd: vec![reg!(), Imm(0x1000)],
+                    opd: vec![reg!(), imm!(0x1000)],
                 }),
                 ParserResultText::Text(ParserInst::<RISCV> {
                     line: 0,
                     op: $inst.into(),
-                    opd: vec![reg!(), Imm(-1), reg!()],
+                    opd: vec![reg!(), imm!(-1), reg!()],
                 }),
             ],
         };
@@ -80,7 +83,7 @@ macro_rules! test_store_mem {
     ($inst:expr, $name:expr, $parser:expr) => {
         let expect = expect_helper!($inst, reg!(), imm!(), reg!());
         test!(expect, concat!($name, " a0, 0(a0)"), $parser);
-        let expect = expect_helper!($inst, reg!(), Imm(0), reg!());
+        let expect = expect_helper!($inst, reg!(), imm!(0), reg!());
         test!(expect, concat!($name, " a0, (a0)"), $parser);
         let expect = expect_helper!($inst, reg!(), imm!(), reg!(Zero));
         test!(expect, concat!($name, " a0, 0"), $parser);
@@ -90,12 +93,12 @@ macro_rules! test_store_mem {
                 ParserResultText::Text(ParserInst::<RISCV> {
                     line: 0,
                     op: Lui.into(),
-                    opd: vec![reg!(A1), Imm(0x1000)],
+                    opd: vec![reg!(A1), imm!(0x1000)],
                 }),
                 ParserResultText::Text(ParserInst::<RISCV> {
                     line: 0,
                     op: $inst.into(),
-                    opd: vec![reg!(A0), Imm(-1), reg!(A1)],
+                    opd: vec![reg!(A0), imm!(-1), reg!(A1)],
                 }),
             ],
         };
@@ -270,6 +273,6 @@ pub fn test() {
     let expect = expect_helper!(Jal, reg!(Ra), lbl!());
     test!(expect, "a: j a", parser);
 
-    let expect = expect_helper!(Addi, reg!(Zero), reg!(Zero), Imm(0));
+    let expect = expect_helper!(Addi, reg!(Zero), reg!(Zero), imm!(0));
     test!(expect, "nop", parser);
 }

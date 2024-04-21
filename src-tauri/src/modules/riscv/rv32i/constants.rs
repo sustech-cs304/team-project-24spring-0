@@ -1,4 +1,3 @@
-use super::super::basic::interface::parser::{ParserRISCVInstOpTrait, ParserRISCVRegisterTrait};
 use lazy_static::lazy_static;
 use strum::{EnumIter, EnumString, IntoEnumIterator};
 use strum_macros::Display;
@@ -155,4 +154,11 @@ impl From<RV32IRegister> for &'static str {
         }
         unreachable!();
     }
+}
+
+pub fn get_32u_low(i: RISCVImmediate) -> RISCVImmediate {
+    (i & 0x7ff) | -(i & 0x800)
+}
+pub fn get_32u_high(i: RISCVImmediate) -> RISCVImmediate {
+    (i >> 12) + ((i & 0x800) >> 11)
 }

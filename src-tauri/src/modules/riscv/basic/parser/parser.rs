@@ -355,7 +355,9 @@ impl RISCVParser {
                     stash_label_name.push(String::new());
                 }
                 RISCVToken::ImmediateInt(val) => {
-                    stash_opd.push(Some(ParserRISCVInstOpd::Imm(val as ParserRISCVImmediate)));
+                    stash_opd.push(Some(ParserRISCVInstOpd::Imm(ParserRISCVImmediate::Imm(
+                        val as RISCVImmediate,
+                    ))));
                     stash_label_name.push(String::new());
                 }
                 RISCVToken::Symbol(Symbol::Label(lbl)) => {

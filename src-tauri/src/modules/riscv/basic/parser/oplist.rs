@@ -1,6 +1,6 @@
 use super::super::interface::parser::{
-    ParserRISCVImmediate, ParserRISCVInstOp, ParserRISCVInstOpd, ParserRISCVRegister,
-    ParserRISCVRegisterTrait,
+    get_32u_high, get_32u_low, ParserRISCVImmediate, ParserRISCVInstOp, ParserRISCVInstOpd,
+    ParserRISCVLabelHandler, ParserRISCVRegister, ParserRISCVRegisterTrait, RISCVImmediate,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -57,8 +57,8 @@ pub fn reg<T: ParserRISCVRegisterTrait + 'static>(reg: T) -> RISCVOpdSetAimOpd {
     RISCVOpdSetAimOpd::Val(ParserRISCVInstOpd::Reg(ParserRISCVRegister::from(reg)))
 }
 // --------------------imm-------------------------
-pub fn imm_i(imm: i128) -> RISCVOpdSetAimOpd {
-    RISCVOpdSetAimOpd::Val(ParserRISCVInstOpd::Imm(imm as ParserRISCVImmediate))
+pub fn imm(imm: RISCVImmediate) -> RISCVOpdSetAimOpd {
+    RISCVOpdSetAimOpd::Val(ParserRISCVInstOpd::Imm(ParserRISCVImmediate::Imm(imm)))
 }
 // --------------------idx-------------------------
 pub fn idx(idx: usize) -> RISCVOpdSetAimOpd {
@@ -71,17 +71,57 @@ pub fn idx_handler(
     RISCVOpdSetAimOpd::Idx(RISCVOpdSetAimOpdIdx { idx, handler })
 }
 // used with idx_handler_high, i = u20 << 12 + i12, get the i12 imm
-pub fn idx_handler_low(opd: ParserRISCVInstOpd) -> ParserRISCVInstOpd {
-    if let ParserRISCVInstOpd::Imm(i) = opd {
-        ParserRISCVInstOpd::Imm((i & 0x7ff) | -(i & 0x800))
+pub fn idx_handler_imm_low(opd: ParserRISCVInstOpd) -> ParserRISCVInstOpd {
+    if let ParserRISCVInstOpd::Imm(ParserRISCVImmediate::Imm(i)) = opd {
+        ParserRISCVInstOpd::Imm(ParserRISCVImmediate::Imm(get_32u_low(i)))
     } else {
         opd
     }
 }
 // used with idx_handler_low, i = u20 << 12 + i12, get the u20 imm
-pub fn idx_handler_high(opd: ParserRISCVInstOpd) -> ParserRISCVInstOpd {
-    if let ParserRISCVInstOpd::Imm(i) = opd {
-        ParserRISCVInstOpd::Imm((i >> 12) + ((i & 0x800) >> 11))
+pub fn idx_handler_imm_high(opd: ParserRISCVInstOpd) -> ParserRISCVInstOpd {
+    if let ParserRISCVInstOpd::Imm(ParserRISCVImmediate::Imm(i)) = opd {
+        ParserRISCVInstOpd::Imm(ParserRISCVImmediate::Imm(get_32u_high(i)))
+    } else {
+        opd
+    }
+}
+pub fn idx_handler_lbl_low(opd: ParserRISCVInstOpd) -> ParserRISCVInstOpd {
+    if let ParserRISCVInstOpd::Lbl(lbl) = opd {
+        ParserRISCVInstOpd::Imm(ParserRISCVImmediate::Lbl((
+            lbl,
+            ParserRISCVLabelHandler::Low,
+        )))
+    } else {
+        opd
+    }
+}
+pub fn idx_handler_lbl_high(opd: ParserRISCVInstOpd) -> ParserRISCVInstOpd {
+    if let ParserRISCVInstOpd::Lbl(lbl) = opd {
+        ParserRISCVInstOpd::Imm(ParserRISCVImmediate::Lbl((
+            lbl,
+            ParserRISCVLabelHandler::High,
+        )))
+    } else {
+        opd
+    }
+}
+pub fn idx_handler_lbl_last_delta_low(opd: ParserRISCVInstOpd) -> ParserRISCVInstOpd {
+    if let ParserRISCVInstOpd::Lbl(lbl) = opd {
+        ParserRISCVInstOpd::Imm(ParserRISCVImmediate::Lbl((
+            lbl,
+            ParserRISCVLabelHandler::DeltaMinusOneLow,
+        )))
+    } else {
+        opd
+    }
+}
+pub fn idx_handler_lbl_delta_high(opd: ParserRISCVInstOpd) -> ParserRISCVInstOpd {
+    if let ParserRISCVInstOpd::Lbl(lbl) = opd {
+        ParserRISCVInstOpd::Imm(ParserRISCVImmediate::Lbl((
+            lbl,
+            ParserRISCVLabelHandler::DeltaHigh,
+        )))
     } else {
         opd
     }
@@ -151,8 +191,14 @@ pub fn hint_csr(name: &str, op: &str, last_opd: &str) -> String {
         name, last_opd, op, last_opd
     )
 }
-pub fn hint_set_comparison(op: &str, last_opd: &str, signed: &str) -> String {
-    format!("t1 = (t2 {} {}){}", op, last_opd, signed)
+pub fn hint_set_comparison(name: &str, op: &str, last_opd: &str, signed: &str) -> String {
+    format!(
+        "{} t1, t2, {} (t1 = (t2 {} {}){})",
+        name, last_opd, op, last_opd, signed
+    )
+}
+pub fn hint_set_comparison_zero(name: &str, op: &str, signed: &str) -> String {
+    format!("{} t1, t2 (t1 = (t2 {} 0){})", name, op, signed)
 }
 // --------------------set-------------------------
 pub fn opd_set(
