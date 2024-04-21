@@ -153,6 +153,7 @@ pub fn basic_op(op: ParserRISCVInstOp, opds: Vec<RISCVOpdSetAimOpd>) -> RISCVOpd
 pub fn basic_op_02(op: ParserRISCVInstOp) -> RISCVOpdSetAim {
     basic_op(op, vec![idx(0), idx(2)])
 }
+#[allow(dead_code)]
 // basic_op op idx(2) idx(0)
 pub fn basic_op_20(op: ParserRISCVInstOp) -> RISCVOpdSetAim {
     basic_op(op, vec![idx(2), idx(0)])

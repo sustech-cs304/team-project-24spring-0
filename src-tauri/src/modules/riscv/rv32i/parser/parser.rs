@@ -4,7 +4,7 @@ use super::super::super::basic::interface::parser::{
 use super::super::super::basic::parser::lexer::Symbol;
 use super::super::super::basic::parser::parser::RISCVSymbolList;
 use super::super::super::rv32i::constants::{
-    RV32IInstruction, RV32IRegister, RV32I_REGISTER_VALID_NAME,
+    RISCVCsr, RV32IInstruction, RV32IRegister, RV32I_REGISTER_VALID_NAME,
 };
 use super::lexer::RV32IOpToken;
 use lazy_static::lazy_static;
@@ -36,6 +36,11 @@ lazy_static! {
                     Symbol::Reg(RV32IRegister::from_str(reg).unwrap().into()),
                 )
             })
+            .collect()
+    };
+    pub static ref CSR_TOKEN: Vec<(&'static str, Symbol<'static>)> = {
+        RISCVCsr::iter()
+            .map(|csr| (csr.into(), Symbol::Csr(csr.into())))
             .collect()
     };
 }

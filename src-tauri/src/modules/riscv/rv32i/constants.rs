@@ -126,7 +126,9 @@ pub enum RV32IInstruction {
 
 pub type RISCVImmediate = i32;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(
+    Clone, Copy, Debug, PartialEq, Eq, Hash, EnumIter, EnumString, strum_macros::IntoStaticStr,
+)]
 pub enum RISCVCsr {}
 
 pub static RV32I_REGISTER_VALID_NAME: [&'static str; 65] = [

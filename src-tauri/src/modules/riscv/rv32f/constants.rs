@@ -1,4 +1,3 @@
-use super::super::basic::interface::parser::{ParserRISCVInstOpTrait, ParserRISCVRegisterTrait};
 use lazy_static::lazy_static;
 use strum::{EnumIter, EnumString, IntoEnumIterator};
 use strum_macros::Display;
