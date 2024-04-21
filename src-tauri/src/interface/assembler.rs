@@ -6,12 +6,12 @@ pub trait Assembler<IN, OUT, SET, ERR>: Send + Sync {
     fn update_setting(&mut self, settings: &SET) -> Result<bool, String>;
 }
 
-pub struct Instruction{
+pub struct Instruction {
     pub op: RV32IInstruction,
-    pub ins: Vec<Operand>
+    pub ins: Vec<Operand>,
 }
 
-pub enum Operand{
+pub enum Operand {
     Reg(RV32IRegister),
-    Operator(RISCVImmediate)
+    Operator(RISCVImmediate),
 }
