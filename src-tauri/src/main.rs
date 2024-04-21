@@ -11,7 +11,7 @@ mod tests;
 mod types;
 mod utility;
 
-use modules::riscv;
+use modules::riscv::middleware::*;
 use types::middleware_types;
 
 fn main() {
@@ -34,13 +34,16 @@ fn main() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
-            riscv::middleware::tab_management::create_tab,
-            riscv::middleware::tab_management::close_tab,
-            riscv::middleware::tab_management::change_current_tab,
-            riscv::middleware::tab_management::update_tab,
-            riscv::middleware::tab_management::read_tab,
-            riscv::middleware::tab_management::write_tab,
-            riscv::middleware::frontend_api::assemble,
+            tab_management::create_tab,
+            tab_management::close_tab,
+            tab_management::change_current_tab,
+            tab_management::update_tab,
+            tab_management::read_tab,
+            tab_management::write_tab,
+            frontend_api::assemble,
+            frontend_api::debug,
+            frontend_api::setBreakPoint,
+            frontend_api::removeBreakPoint,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

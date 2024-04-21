@@ -1,12 +1,12 @@
 pub mod tab_management {
-    use tauri::State;
-
     use crate::{
         io::file_io,
         modules::riscv::basic::interface::parser::{RISCVExtension, RISCVParser},
         storage::rope_store,
+        types::assembler_types::AssemblerConfig,
         types::middleware_types::{CurTabName, Optional, Tab, TabMap},
     };
+    use tauri::State;
 
     #[tauri::command]
     pub fn create_tab(tab_map: State<TabMap>, filepath: &str) -> Optional {
@@ -114,16 +114,18 @@ pub mod tab_management {
 }
 
 pub mod frontend_api {
-    use crate::{
-        types::middleware_types::{AssembleResult, CurTabName, TabMap},
-        utility::state_helper::state::get_current_tab,
+    use crate::types::{
+        assembler_types::AssemblerConfig,
+        middleware_types::{AssembleResult, CurTabName, SyscallDataType, TabMap},
     };
+    use std::any::Any;
     use tauri::State;
 
     #[tauri::command]
     pub fn assemble(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> AssembleResult {
-        let tab_ptr = get_current_tab(cur_tab_name, tab_map);
-        let tab = tab_ptr.as_mut();
+        let name = cur_tab_name.name.lock().unwrap().clone();
+        let mut lock = tab_map.tabs.lock().unwrap();
+        let tab = lock.get_mut(&name).unwrap();
         match tab.parser.parse(tab.text.to_string()) {
             Ok(ir) => AssembleResult {
                 success: true,
@@ -133,6 +135,97 @@ pub mod frontend_api {
                 success: false,
                 error: e,
             },
+        }
+    }
+
+    #[tauri::command]
+    pub fn dump(tab_map: State<TabMap>) -> bool {
+        todo!("Implement dump")
+    }
+
+    #[tauri::command]
+    pub fn debug(tab_map: State<TabMap>) -> bool {
+        todo!("Implement debug")
+    }
+
+    #[tauri::command]
+    #[allow(non_snake_case)]
+    pub fn setBreakPoint(tab_map: State<TabMap>) -> bool {
+        todo!("Implement setBreakPoint")
+    }
+
+    #[tauri::command]
+    #[allow(non_snake_case)]
+    pub fn removeBreakPoint(tab_map: State<TabMap>) {
+        todo!("Implement removeBreakPoint")
+    }
+
+    #[tauri::command]
+    #[allow(non_snake_case)]
+    pub fn syscallInput(
+        cur_name: State<CurTabName>,
+        tab_map: State<TabMap>,
+        inType: &str,
+        val: &dyn Any,
+    ) -> bool {
+        let name = cur_name.name.lock().unwrap().clone();
+        let mut lock = tab_map.tabs.lock().unwrap();
+        let tab = lock.get_mut(&name).unwrap();
+        let val = match inType {
+            "Int" => val.downcast_ref::<i32>().map(|&v| SyscallDataType::Int(v)),
+            "Float" => val
+                .downcast_ref::<f32>()
+                .map(|&v| SyscallDataType::Float(v)),
+            "Double" => val
+                .downcast_ref::<f64>()
+                .map(|&v| SyscallDataType::Double(v)),
+            "String" => val
+                .downcast_ref::<String>()
+                .map(|v| SyscallDataType::String(v.as_bytes().to_vec())),
+            "Char" => val.downcast_ref::<u8>().map(|&v| SyscallDataType::Char(v)),
+            "Long" => val.downcast_ref::<i64>().map(|&v| SyscallDataType::Long(v)),
+            _ => None,
+        };
+        match val {
+            Some(v) => {
+                //TODO
+                //tab.parser.syscall_input_request(v);
+                true
+            }
+            None => false,
+        }
+    }
+
+    #[tauri::command]
+    pub fn updateAssemblerSettings(
+        cur_tab_name: State<CurTabName>,
+        tab_map: State<TabMap>,
+        settings: &AssemblerConfig,
+    ) -> bool {
+        todo!("foo");
+    }
+}
+
+pub mod backend_api {
+    use crate::{
+        types::middleware_types::{SyscallDataType, SyscallRequest},
+        utility::syscall_helper::syscall_type_to_string,
+    };
+    use tauri::Window;
+
+    #[tauri::command]
+    pub fn syscall_input_request(win: Window, pathname: &str, acquire_type: SyscallDataType) {
+        loop {
+            match win.emit(
+                "syscall_request",
+                SyscallRequest {
+                    path: pathname.to_string(),
+                    syscall: syscall_type_to_string(&acquire_type),
+                },
+            ) {
+                Ok(_) => break,
+                Err(_) => continue,
+            }
         }
     }
 }

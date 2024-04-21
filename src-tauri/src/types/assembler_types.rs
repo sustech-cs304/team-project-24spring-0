@@ -1,0 +1,18 @@
+pub struct AssemblerConfig {
+    memory_map_limit_address: usize,
+    kernel_space_high_address: usize,
+    mmio_base_address: usize,
+    kernel_space_base_address: usize,
+    user_space_high_address: usize,
+    data_segment_limit_address: usize,
+    stack_base_address: usize,
+    stack_pointer_sp: usize,
+    stack_limit_address: usize,
+    heap_base_address: usize,
+    dot_data_base_address: usize,
+    global_pointer_gp: usize,
+    data_segment_base_address: usize,
+    dot_extern_base_address: usize,
+    text_limit_address: usize,
+    dot_text_base_address: usize,
+}
