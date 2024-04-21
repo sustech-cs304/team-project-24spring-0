@@ -77,8 +77,7 @@ impl ImmediateFormatter for SInstructionBuilder {
         let imm: u32 = imm.into();
         let imm11_5: u7 = ((imm >> 5) & 0b1111111).try_into().unwrap();
         let imm4_0: u5 = (imm & 0b1111).try_into().unwrap();
-        self.imm11_5(imm11_5)
-            .imm4_0(imm4_0)
+        self.imm11_5(imm11_5).imm4_0(imm4_0)
     }
 }
 
@@ -124,7 +123,14 @@ impl Into<PackedInstruction> for BInstruction {
         all_into_scope!(self, imm12 imm10_5 rs2 rs1 funct3 imm4_1 imm11 opcode);
         all_into! { u32, imm12 imm10_5 rs2 rs1 funct3 imm4_1 imm11 opcode }
         PackedInstruction(
-            (imm12 << 31) + (imm10_5 << 25) + (rs2 << 20) + (rs1 << 15) + (funct3 << 12) + (imm4_1 << 8) + (imm11 << 7) + opcode,
+            (imm12 << 31)
+                + (imm10_5 << 25)
+                + (rs2 << 20)
+                + (rs1 << 15)
+                + (funct3 << 12)
+                + (imm4_1 << 8)
+                + (imm11 << 7)
+                + opcode,
         )
     }
 }
