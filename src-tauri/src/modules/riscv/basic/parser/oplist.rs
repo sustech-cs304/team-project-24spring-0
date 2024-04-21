@@ -1,6 +1,6 @@
 use super::super::interface::parser::{
     get_32u_high, get_32u_low, ParserRISCVImmediate, ParserRISCVInstOp, ParserRISCVInstOpd,
-    ParserRISCVLabelHandler, ParserRISCVRegister, ParserRISCVRegisterTrait, RISCVImmediate,
+    ParserRISCVLabelHandler, ParserRISCVRegister, RISCVImmediate,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -53,7 +53,10 @@ pub use RISCVExpectImm::*;
 pub use RISCVExpectToken::*;
 
 // --------------------reg-------------------------
-pub fn reg<T: ParserRISCVRegisterTrait + 'static>(reg: T) -> RISCVOpdSetAimOpd {
+pub fn reg<T>(reg: T) -> RISCVOpdSetAimOpd
+where
+    ParserRISCVRegister: From<T>,
+{
     RISCVOpdSetAimOpd::Val(ParserRISCVInstOpd::Reg(ParserRISCVRegister::from(reg)))
 }
 // --------------------imm-------------------------

@@ -1,5 +1,4 @@
 use crate::modules::riscv::basic::interface::parser::*;
-use crate::modules::riscv::rv32i::constants::*;
 
 use ParserRISCVInstOpd::*;
 use ParserRISCVLabel::*;
