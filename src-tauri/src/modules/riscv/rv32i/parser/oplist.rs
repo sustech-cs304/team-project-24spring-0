@@ -916,10 +916,7 @@ lazy_static! {
                     RV32IOpToken::Sgt,
                     vec![opd_set(
                         expect_reg_reg_reg(),
-                        vec![basic_op(
-                            RV32IInstruction::Slt.into(),
-                            vec![idx(0), idx(4), idx(2)],
-                        )],
+                        vec![basic_op_042(RV32IInstruction::Slt.into())],
                         hint_set_comparison("sgt", ">", "t3", " (signed)"),
                     )],
                 ),
@@ -927,10 +924,7 @@ lazy_static! {
                     RV32IOpToken::Sgtu,
                     vec![opd_set(
                         expect_reg_reg_reg(),
-                        vec![basic_op(
-                            RV32IInstruction::Sltu.into(),
-                            vec![idx(0), idx(4), idx(2)],
-                        )],
+                        vec![basic_op_042(RV32IInstruction::Sltu.into())],
                         hint_set_comparison("sgtu", ">", "t3", " (unsigned)"),
                     )],
                 ),

@@ -231,6 +231,14 @@ impl RISCVParser {
                                 .unwrap()
                                 .refs
                                 .push(Ptr::new(lbl));
+                        } else if let ParserRISCVInstOpd::Imm(ParserRISCVImmediate::Lbl((lbl, _))) =
+                            &inst.opd[basic_opd_idx]
+                        {
+                            label_list
+                                .get_mut(&stash_label_name[stash_opd_idx.idx])
+                                .unwrap()
+                                .refs
+                                .push(Ptr::new(lbl));
                         }
                     }
                 }
