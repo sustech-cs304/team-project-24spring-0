@@ -18,7 +18,7 @@ pub fn opd_set_load_mem(op: ParserRISCVInstOp, name: &str, unit: &str) -> Vec<RI
         ),
         opd_set(
             expect_opd(vec![Reg, Comma, LParen, Reg, RParen]),
-            vec![basic_op(op, vec![idx(0), imm_i(0), idx(3)])],
+            vec![basic_op(op, vec![idx(0), imm(0), idx(3)])],
             format!("{} t1, (t2) (t1 = {}mem[t2])", name, unit),
         ),
         opd_set(
@@ -31,9 +31,12 @@ pub fn opd_set_load_mem(op: ParserRISCVInstOp, name: &str, unit: &str) -> Vec<RI
             vec![
                 basic_op(
                     RV32IInstruction::Lui.into(),
-                    vec![idx(0), idx_handler(2, idx_handler_high)],
+                    vec![idx(0), idx_handler(2, idx_handler_imm_high)],
                 ),
-                basic_op(op, vec![idx(0), idx_handler(2, idx_handler_low), idx(0)]),
+                basic_op(
+                    op,
+                    vec![idx(0), idx_handler(2, idx_handler_imm_low), idx(0)],
+                ),
             ],
             format!(
                 "{} t1, 0x100000 (t1 = 0x100000[12:31](i32); t1 = {}mem[t1 + 0x100000[0:11](i32)])",
@@ -42,9 +45,22 @@ pub fn opd_set_load_mem(op: ParserRISCVInstOp, name: &str, unit: &str) -> Vec<RI
         ),
         opd_set(
             expect_reg_any(Lbl),
-            vec![basic_op_02(op)],
+            vec![
+                basic_op(
+                    RV32IInstruction::Auipc.into(),
+                    vec![idx(0), idx_handler(2, idx_handler_lbl_delta_high)],
+                ),
+                basic_op(
+                    op,
+                    vec![
+                        idx(0),
+                        idx_handler(2, idx_handler_lbl_last_delta_low),
+                        idx(0),
+                    ],
+                ),
+            ],
             format!(
-                "{} t1, label (t1 = pc + delta[12:31]; t1 = {}mem[t1 + delte[0:11]])",
+                "{} t1, label (t1 = pc + delta[12:31]; t1 = {}mem[t1 + delta[0:11]])",
                 name, unit
             ),
         ),
@@ -59,7 +75,7 @@ pub fn opd_set_store_mem(op: ParserRISCVInstOp, name: &str, unit: &str) -> Vec<R
         ),
         opd_set(
             expect_opd(vec![Reg, Comma, LParen, Reg, RParen]),
-            vec![basic_op(op, vec![idx(0), imm_i(0), idx(3)])],
+            vec![basic_op(op, vec![idx(0), imm(0), idx(3)])],
             format!("{} t1, (t2) (mem[t2] = {}t1)", name, unit),
         ),
         opd_set(
@@ -72,9 +88,9 @@ pub fn opd_set_store_mem(op: ParserRISCVInstOp, name: &str, unit: &str) -> Vec<R
             vec![
                 basic_op(
                     RV32IInstruction::Lui.into(),
-                    vec![idx(4), idx_handler(2, idx_handler_high)],
+                    vec![idx(4), idx_handler(2, idx_handler_imm_high)],
                 ),
-                basic_op(op, vec![idx(0), idx_handler(2, idx_handler_low), idx(4)]),
+                basic_op(op, vec![idx(0), idx_handler(2, idx_handler_imm_low), idx(4)]),
             ],
             format!(
                 "{} t1, 0x100000, t2 (t2 = 0x100000[12:31](i32); mem[t2 + 0x100000[0:11](i32)] = {}t1)",
@@ -83,8 +99,14 @@ pub fn opd_set_store_mem(op: ParserRISCVInstOp, name: &str, unit: &str) -> Vec<R
         ),
         opd_set(
             expect_opd(vec![Reg, Comma, Lbl, Comma, Reg]),
-            vec![basic_op_024(op)],
-            format!("{} t1, label, t2 (t2 = pc + delta[12:31]; mem[t2 + delte[0:11]] = {}t1)", name, unit),
+            vec![
+                basic_op(
+                    RV32IInstruction::Auipc.into(),
+                    vec![idx(4), idx_handler(2, idx_handler_lbl_delta_high)],
+                ),
+                basic_op(op, vec![idx(0), idx_handler(2, idx_handler_lbl_last_delta_low), idx(4)]),
+            ],
+            format!("{} t1, label, t2 (t2 = pc + delta[12:31]; mem[t2 + delta[0:11]] = {}t1)", name, unit),
         ),
     ]
 }
@@ -117,7 +139,10 @@ lazy_static! {
                         ),
                         opd_set(
                             expect_reg_reg_any(Lbl),
-                            vec![basic_op_024(RV32IInstruction::Addi.into())],
+                            vec![basic_op(
+                                RV32IInstruction::Addi.into(),
+                                vec![idx(0), idx(2), idx_handler(4, idx_handler_lbl_low)],
+                            )],
                             hint_reg_reg_any("addi", "label[0:11]", "+"),
                         ),
                     ],
@@ -133,9 +158,9 @@ lazy_static! {
                 (
                     RV32IOpToken::Andi,
                     vec![opd_set(
-                        expect_reg_reg_any(Imm(U12)),
+                        expect_reg_reg_any(Imm(I12)),
                         vec![basic_op_024(RV32IInstruction::Andi.into())],
-                        hint_reg_reg_any("andi", "0x1(u12)", "&"),
+                        hint_reg_reg_any("andi", "-0x1(i12)", "&"),
                     )],
                 ),
                 (
@@ -273,12 +298,12 @@ lazy_static! {
                                 RV32IInstruction::Jal.into(),
                                 vec![reg(Ra), idx(0)],
                             )],
-                            "jal label (ra = pc + 4; pc = label)".to_string(),
+                            "jal label (ra = pc + 4; pc += delta(i20))".to_string(),
                         ),
                         opd_set(
                             expect_reg_any(Lbl),
                             vec![basic_op_02(RV32IInstruction::Jal.into())],
-                            "jal t1, label (t1 = pc + 4; pc = label)".to_string(),
+                            "jal t1, label (t1 = pc + 4; pc += delta(i20))".to_string(),
                         ),
                     ],
                 ),
@@ -294,7 +319,7 @@ lazy_static! {
                             expect_opd(vec![Reg]),
                             vec![basic_op(
                                 RV32IInstruction::Jalr.into(),
-                                vec![reg(Ra), idx(0), imm_i(0)],
+                                vec![reg(Ra), idx(0), imm(0)],
                             )],
                             "jalr t0 (ra = pc + 4; pc = t0)".to_string(),
                         ),
@@ -339,8 +364,11 @@ lazy_static! {
                         ),
                         opd_set(
                             expect_reg_any(Lbl),
-                            vec![basic_op_02(RV32IInstruction::Lui.into())],
-                            "lui t1, label (t1 = label)".to_string(),
+                            vec![basic_op(
+                                RV32IInstruction::Lui.into(),
+                                vec![idx(0), idx_handler(2, idx_handler_lbl_high)],
+                            )],
+                            "lui t1, label (t1 = label[12:31])".to_string(),
                         ),
                     ],
                 ),
@@ -363,9 +391,9 @@ lazy_static! {
                 (
                     RV32IOpToken::Ori,
                     vec![opd_set(
-                        expect_reg_reg_any(Imm(U12)),
+                        expect_reg_reg_any(Imm(I12)),
                         vec![basic_op_024(RV32IInstruction::Ori.into())],
-                        hint_reg_reg_any("ori", "0x1(u12)", "|"),
+                        hint_reg_reg_any("ori", "-0x1(i12)", "|"),
                     )],
                 ),
                 (RV32IOpToken::Rem, vec![]),
@@ -399,7 +427,7 @@ lazy_static! {
                     vec![opd_set(
                         expect_reg_reg_reg(),
                         vec![basic_op_024(RV32IInstruction::Slt.into())],
-                        hint_set_comparison("<", "t3", " (signed)"),
+                        hint_set_comparison("slt", "<", "t3", " (signed)"),
                     )],
                 ),
                 (
@@ -407,7 +435,7 @@ lazy_static! {
                     vec![opd_set(
                         expect_reg_reg_any(Imm(I12)),
                         vec![basic_op_024(RV32IInstruction::Slti.into())],
-                        hint_set_comparison("<", "-0x1(i12)", " (signed)"),
+                        hint_set_comparison("slti", "<", "-0x1(i12)", " (signed)"),
                     )],
                 ),
                 (
@@ -415,7 +443,7 @@ lazy_static! {
                     vec![opd_set(
                         expect_reg_reg_any(Imm(U12)),
                         vec![basic_op_024(RV32IInstruction::Sltiu.into())],
-                        hint_set_comparison("<", "0x1(u12)", " (unsigned)"),
+                        hint_set_comparison("sltiu", "<", "0x1(u12)", " (unsigned)"),
                     )],
                 ),
                 (
@@ -423,7 +451,7 @@ lazy_static! {
                     vec![opd_set(
                         expect_reg_reg_reg(),
                         vec![basic_op_024(RV32IInstruction::Sltu.into())],
-                        hint_set_comparison("<", "t3", " (unsigned)"),
+                        hint_set_comparison("sltu", "<", "t3", " (unsigned)"),
                     )],
                 ),
                 (
@@ -483,9 +511,9 @@ lazy_static! {
                 (
                     RV32IOpToken::Xori,
                     vec![opd_set(
-                        expect_reg_reg_any(Imm(U12)),
+                        expect_reg_reg_any(Imm(I12)),
                         vec![basic_op_024(RV32IInstruction::Xori.into())],
-                        hint_reg_reg_any("xori", "0x1(u12)", "^"),
+                        hint_reg_reg_any("xori", "-0x1(i12)", "^"),
                     )],
                 ),
                 (
@@ -496,7 +524,7 @@ lazy_static! {
                             RV32IInstruction::Jal.into(),
                             vec![reg(Zero), idx(0)],
                         )],
-                        "b label (ra = pc + 4; pc = label)".to_string(),
+                        "b label (pc += delta(i20))".to_string(),
                     )],
                 ),
                 (
@@ -597,60 +625,398 @@ lazy_static! {
                         hint_branch_zero("bnez", "!=", ""),
                     )],
                 ),
-                (RV32IOpToken::Call, vec![]),
-                (RV32IOpToken::Csrc, vec![]),
-                (RV32IOpToken::Csrci, vec![]),
-                (RV32IOpToken::Csrr, vec![]),
-                (RV32IOpToken::Csrs, vec![]),
-                (RV32IOpToken::Csrsi, vec![]),
-                (RV32IOpToken::Csrw, vec![]),
-                (RV32IOpToken::Csrwi, vec![]),
+                (
+                    RV32IOpToken::Call,
+                    vec![opd_set(
+                        expect_opd(vec![Lbl]),
+                        vec![
+                            basic_op(
+                                RV32IInstruction::Auipc.into(),
+                                vec![reg(T1), idx_handler(0, idx_handler_lbl_delta_high)],
+                            ),
+                            basic_op(
+                                RV32IInstruction::Jalr.into(),
+                                vec![
+                                    reg(Ra),
+                                    reg(T1),
+                                    idx_handler(0, idx_handler_lbl_last_delta_low),
+                                ],
+                            ),
+                        ],
+                        "call label (t1 = pc + delta[12:31]; ra = pc + 4; pc = t1 + delta[0:11])"
+                            .to_string(),
+                    )],
+                ),
+                (
+                    RV32IOpToken::Csrc,
+                    vec![opd_set(
+                        expect_opd(vec![Reg, Comma, Csr]),
+                        vec![basic_op(
+                            RV32IInstruction::Csrrc.into(),
+                            vec![reg(Zero), idx(2), idx(0)],
+                        )],
+                        "csrc t1, csr (csr &= ~ t1)".to_string(),
+                    )],
+                ),
+                (
+                    RV32IOpToken::Csrci,
+                    vec![opd_set(
+                        expect_opd(vec![Csr, Comma, Imm(U5)]),
+                        vec![basic_op(
+                            RV32IInstruction::Csrrci.into(),
+                            vec![reg(Zero), idx(0), idx(2)],
+                        )],
+                        "csrci csr, 0x1(u5) (csr &= ~ 0x1(u5))".to_string(),
+                    )],
+                ),
+                (
+                    RV32IOpToken::Csrr,
+                    vec![opd_set(
+                        expect_opd(vec![Reg, Comma, Csr]),
+                        vec![basic_op(
+                            RV32IInstruction::Csrrs.into(),
+                            vec![idx(0), idx(2), reg(Zero)],
+                        )],
+                        "csrr t1, csr (t1 = csr)".to_string(),
+                    )],
+                ),
+                (
+                    RV32IOpToken::Csrs,
+                    vec![opd_set(
+                        expect_opd(vec![Reg, Comma, Csr]),
+                        vec![basic_op(
+                            RV32IInstruction::Csrrs.into(),
+                            vec![reg(Zero), idx(2), idx(0)],
+                        )],
+                        "csrs t1, csr (csr |= t1)".to_string(),
+                    )],
+                ),
+                (
+                    RV32IOpToken::Csrsi,
+                    vec![opd_set(
+                        expect_opd(vec![Csr, Comma, Imm(U5)]),
+                        vec![basic_op(
+                            RV32IInstruction::Csrrsi.into(),
+                            vec![reg(Zero), idx(0), idx(2)],
+                        )],
+                        "csrsi csr, 0x1(u5) (csr |= 0x1(u5))".to_string(),
+                    )],
+                ),
+                (
+                    RV32IOpToken::Csrw,
+                    vec![opd_set(
+                        expect_opd(vec![Reg, Comma, Csr]),
+                        vec![basic_op(
+                            RV32IInstruction::Csrrw.into(),
+                            vec![reg(Zero), idx(2), idx(0)],
+                        )],
+                        "csrw t1, csr (csr = t1)".to_string(),
+                    )],
+                ),
+                (
+                    RV32IOpToken::Csrwi,
+                    vec![opd_set(
+                        expect_opd(vec![Csr, Comma, Imm(U5)]),
+                        vec![basic_op(
+                            RV32IInstruction::Csrrwi.into(),
+                            vec![reg(Zero), idx(0), idx(2)],
+                        )],
+                        "csrwi csr, 0x1(u5) (csr = 0x1(u5))".to_string(),
+                    )],
+                ),
                 (
                     RV32IOpToken::J,
                     vec![opd_set(
                         expect_opd(vec![Lbl]),
                         vec![basic_op(
                             RV32IInstruction::Jal.into(),
-                            vec![reg(Ra), idx(0)],
+                            vec![reg(Zero), idx(0)],
                         )],
-                        "j label (ra = pc + 4; pc = label)".to_string(),
+                        "j label (pc += delta(i20))".to_string(),
                     )],
                 ),
-                (RV32IOpToken::Jr, vec![]),
-                (RV32IOpToken::La, vec![]),
-                (RV32IOpToken::Li, vec![]),
-                (RV32IOpToken::Mv, vec![]),
-                (RV32IOpToken::Neg, vec![]),
+                (
+                    RV32IOpToken::Jr,
+                    vec![
+                        opd_set(
+                            expect_opd(vec![Reg]),
+                            vec![basic_op(
+                                RV32IInstruction::Jalr.into(),
+                                vec![reg(Zero), idx(0), imm(0)],
+                            )],
+                            "jr t0 (pc = t0)".to_string(),
+                        ),
+                        opd_set(
+                            expect_reg_any(Imm(I12)),
+                            vec![basic_op(
+                                RV32IInstruction::Jalr.into(),
+                                vec![reg(Zero), idx(0), idx(2)],
+                            )],
+                            "jr -0x1 (pc = t1 + -0x1(i12))".to_string(),
+                        ),
+                    ],
+                ),
+                (
+                    RV32IOpToken::La,
+                    vec![opd_set(
+                        expect_reg_any(Lbl),
+                        vec![
+                            basic_op(
+                                RV32IInstruction::Auipc.into(),
+                                vec![idx(0), idx_handler(2, idx_handler_lbl_delta_high)],
+                            ),
+                            basic_op(
+                                RV32IInstruction::Addi.into(),
+                                vec![
+                                    idx(0),
+                                    idx(0),
+                                    idx_handler(2, idx_handler_lbl_last_delta_low),
+                                ],
+                            ),
+                        ],
+                        "la t1, label (t1 = label[12:31]; t1 = t1 + label[0:11])".to_string(),
+                    )],
+                ),
+                (
+                    RV32IOpToken::Li,
+                    vec![
+                        opd_set(
+                            expect_reg_any(Imm(I12)),
+                            vec![basic_op(
+                                RV32IInstruction::Addi.into(),
+                                vec![idx(0), reg(Zero), idx(2)],
+                            )],
+                            "li t1, -0x1 (t1 = -0x1(i12))".to_string(),
+                        ),
+                        opd_set(
+                            expect_reg_any(Imm(I32)),
+                            vec![
+                                basic_op(
+                                    RV32IInstruction::Lui.into(),
+                                    vec![idx(0), idx_handler(2, idx_handler_imm_high)],
+                                ),
+                                basic_op(
+                                    RV32IInstruction::Addi.into(),
+                                    vec![idx(0), idx(0), idx_handler(2, idx_handler_imm_low)],
+                                ),
+                            ],
+                            "li t1, 0x100000 (t1 = 0x100000[12:31](i32); t1 = t1 + 0x100000[0:11](i32))".to_string(),
+                        )
+                    ],
+                ),
+                (
+                    RV32IOpToken::Mv,
+                    vec![
+                    opd_set(
+                        expect_reg_reg(),
+                        vec![basic_op(
+                            RV32IInstruction::Add.into(),
+                            vec![idx(0), reg(Zero), idx(2)],
+                        )],
+                        "mv t1, t2 (t1 = t2)".to_string(),
+                    )],
+                ),
+                (
+                    RV32IOpToken::Neg,
+                    vec![
+                    opd_set(
+                        expect_reg_reg(),
+                        vec![basic_op(
+                            RV32IInstruction::Sub.into(),
+                            vec![idx(0), reg(Zero), idx(2)],
+                        )],
+                        "neg t1, t2 (t1 = -t2)".to_string(),
+                    )],
+                ),
                 (
                     RV32IOpToken::Nop,
                     vec![opd_set(
                         expect_opd(vec![]),
                         vec![basic_op(
                             RV32IInstruction::Addi.into(),
-                            vec![reg(Zero), reg(Zero), imm_i(0)],
+                            vec![reg(Zero), reg(Zero), imm(0)],
                         )],
                         "nop".to_string(),
                     )],
                 ),
-                (RV32IOpToken::Not, vec![]),
+                (
+                    RV32IOpToken::Not,
+                    vec![opd_set(
+                        expect_reg_reg(),
+                        vec![basic_op(
+                            RV32IInstruction::Xori.into(),
+                            vec![idx(0), idx(2), imm(-1)],
+                        )],
+                        "not t1, t2 (t1 = ~t2)".to_string(),
+                    )],
+                ),
                 (RV32IOpToken::Rdcycle, vec![]),
                 (RV32IOpToken::Rdcycleh, vec![]),
                 (RV32IOpToken::Rdinstret, vec![]),
                 (RV32IOpToken::Rdinstreth, vec![]),
                 (RV32IOpToken::Rdtime, vec![]),
                 (RV32IOpToken::Rdtimeh, vec![]),
-                (RV32IOpToken::Ret, vec![]),
-                (RV32IOpToken::Seqz, vec![]),
-                (RV32IOpToken::SextB, vec![]),
-                (RV32IOpToken::SextH, vec![]),
-                (RV32IOpToken::Sgt, vec![]),
-                (RV32IOpToken::Sgtu, vec![]),
-                (RV32IOpToken::Sgtz, vec![]),
-                (RV32IOpToken::Sltz, vec![]),
-                (RV32IOpToken::Snez, vec![]),
-                (RV32IOpToken::Tail, vec![]),
-                (RV32IOpToken::ZextB, vec![]),
-                (RV32IOpToken::ZextH, vec![]),
+                (
+                    RV32IOpToken::Ret,
+                    vec![opd_set(
+                        expect_opd(vec![]),
+                        vec![basic_op(
+                            RV32IInstruction::Jalr.into(),
+                            vec![reg(Zero), reg(Ra), imm(0)],
+                        )],
+                        "ret".to_string(),
+                    )],
+                ),
+                (
+                    RV32IOpToken::Seqz,
+                    vec![opd_set(
+                        expect_reg_reg(),
+                        vec![basic_op(
+                            RV32IInstruction::Sltiu.into(),
+                            vec![idx(0), idx(2), imm(1)],
+                        )],
+                        hint_set_comparison_zero("seqz", "==", ""),
+                    )],
+                ),
+                (
+                    RV32IOpToken::SextB,
+                    vec![opd_set(
+                        expect_reg_reg(),
+                        vec![
+                            basic_op(
+                                RV32IInstruction::Slli.into(),
+                                vec![idx(0), idx(2), imm(24)],
+                            ),
+                            basic_op(
+                                RV32IInstruction::Srai.into(),
+                                vec![idx(0), idx(0), imm(24)],
+                            ),
+                        ],
+                        "sext.b t1, t2 (t1 = (i8)t2[0:7])".to_string(),
+                    )],
+                ),
+                (
+                    RV32IOpToken::SextH,
+                    vec![opd_set(
+                        expect_reg_reg(),
+                        vec![
+                            basic_op(
+                                RV32IInstruction::Slli.into(),
+                                vec![idx(0), idx(2), imm(16)],
+                            ),
+                            basic_op(
+                                RV32IInstruction::Srai.into(),
+                                vec![idx(0), idx(0), imm(16)],
+                            ),
+                        ],
+                        "sext.h t1, t2 (t1 = (i16)t2[0:15])".to_string(),
+                    )],
+                ),
+                (
+                    RV32IOpToken::Sgt,
+                    vec![opd_set(
+                        expect_reg_reg_reg(),
+                        vec![basic_op_042(RV32IInstruction::Slt.into())],
+                        hint_set_comparison("sgt", ">", "t3", " (signed)"),
+                    )],
+                ),
+                (
+                    RV32IOpToken::Sgtu,
+                    vec![opd_set(
+                        expect_reg_reg_reg(),
+                        vec![basic_op_042(RV32IInstruction::Sltu.into())],
+                        hint_set_comparison("sgtu", ">", "t3", " (unsigned)"),
+                    )],
+                ),
+                (
+                    RV32IOpToken::Sgtz,
+                    vec![opd_set(
+                        expect_reg_reg(),
+                        vec![basic_op(
+                            RV32IInstruction::Slt.into(),
+                            vec![idx(0), reg(Zero), idx(2)],
+                        )],
+                        hint_set_comparison_zero("sgtz", ">", " (signed)"),
+                    )],
+                ),
+                (
+                    RV32IOpToken::Sltz,
+                    vec![opd_set(
+                        expect_reg_reg(),
+                        vec![basic_op(
+                            RV32IInstruction::Slt.into(),
+                            vec![idx(0), idx(2), reg(Zero)],
+                        )],
+                        hint_set_comparison_zero("sltz", "<", " (signed)"),
+                    )],
+                ),
+                (
+                    RV32IOpToken::Snez,
+                    vec![opd_set(
+                        expect_reg_reg(),
+                        vec![basic_op(
+                            RV32IInstruction::Sltu.into(),
+                            vec![idx(0), reg(Zero), idx(2)],
+                        )],
+                        hint_set_comparison_zero("snez", "!=", ""),
+                    )],
+                ),
+                (
+                    RV32IOpToken::Tail,
+                    vec![opd_set(
+                        expect_opd(vec![Lbl]),
+                        vec![
+                            basic_op(
+                                RV32IInstruction::Auipc.into(),
+                                vec![reg(T1), idx_handler(0, idx_handler_lbl_delta_high)],
+                            ),
+                            basic_op(
+                                RV32IInstruction::Jalr.into(),
+                                vec![
+                                    reg(Zero),
+                                    reg(T1),
+                                    idx_handler(0, idx_handler_lbl_last_delta_low),
+                                ],
+                            ),
+                        ],
+                        "tail label (t1 = pc + delta[12:31]; pc = t1 + delta[0:11])"
+                            .to_string(),
+                    )],
+                ),
+                (
+                    RV32IOpToken::ZextB,
+                    vec![opd_set(
+                        expect_reg_reg(),
+                        vec![
+                            basic_op(
+                                RV32IInstruction::Slli.into(),
+                                vec![idx(0), idx(2), imm(24)],
+                            ),
+                            basic_op(
+                                RV32IInstruction::Srli.into(),
+                                vec![idx(0), idx(0), imm(24)],
+                            ),
+                        ],
+                        "sext.b t1, t2 (t1 = (u8)t2[0:7])".to_string(),
+                    )],
+                ),
+                (
+                    RV32IOpToken::ZextH,
+                    vec![opd_set(
+                        expect_reg_reg(),
+                        vec![
+                            basic_op(
+                                RV32IInstruction::Slli.into(),
+                                vec![idx(0), idx(2), imm(16)],
+                            ),
+                            basic_op(
+                                RV32IInstruction::Srli.into(),
+                                vec![idx(0), idx(0), imm(16)],
+                            ),
+                        ],
+                        "sext.h t1, t2 (t1 = (u16)t2[0:15])".to_string(),
+                    )],
+                ),
             ];
             op_def.iter_mut().for_each(|(op, opd_set)| {
                 op_list[std::mem::transmute::<_, u8>(*op) as usize] = std::mem::take(opd_set);

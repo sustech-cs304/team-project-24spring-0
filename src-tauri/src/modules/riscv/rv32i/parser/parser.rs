@@ -1,10 +1,10 @@
 use super::super::super::basic::interface::parser::{
-    ParserRISCVInstOpTrait, ParserRISCVRegisterTrait,
+    ParserRISCVCsr, ParserRISCVInstOp, ParserRISCVRegister,
 };
 use super::super::super::basic::parser::lexer::Symbol;
 use super::super::super::basic::parser::parser::RISCVSymbolList;
 use super::super::super::rv32i::constants::{
-    RV32IInstruction, RV32IRegister, RV32I_REGISTER_VALID_NAME,
+    RV32ICsr, RV32IInstruction, RV32IRegister, RV32I_REGISTER_VALID_NAME,
 };
 use super::lexer::RV32IOpToken;
 use lazy_static::lazy_static;
@@ -38,8 +38,27 @@ lazy_static! {
             })
             .collect()
     };
+    pub static ref CSR_TOKEN: Vec<(&'static str, Symbol<'static>)> = {
+        RV32ICsr::iter()
+            .map(|csr| (csr.into(), Symbol::Csr(csr.into())))
+            .collect()
+    };
 }
 
-impl ParserRISCVRegisterTrait for RV32IRegister {}
+impl From<RV32IRegister> for ParserRISCVRegister {
+    fn from(reg: RV32IRegister) -> Self {
+        ParserRISCVRegister::RV32I(reg)
+    }
+}
 
-impl ParserRISCVInstOpTrait for RV32IInstruction {}
+impl From<RV32IInstruction> for ParserRISCVInstOp {
+    fn from(inst: RV32IInstruction) -> Self {
+        ParserRISCVInstOp::RV32I(inst)
+    }
+}
+
+impl From<RV32ICsr> for ParserRISCVCsr {
+    fn from(csr: RV32ICsr) -> Self {
+        ParserRISCVCsr::RV32I(csr)
+    }
+}

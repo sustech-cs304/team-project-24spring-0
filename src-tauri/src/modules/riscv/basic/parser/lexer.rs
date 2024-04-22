@@ -17,6 +17,7 @@ pub enum Symbol<'a> {
     Label(&'a str),
     Op(RISCVOpToken),
     Reg(ParserRISCVRegister),
+    Csr(ParserRISCVCsr),
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -103,7 +104,6 @@ pub enum RISCVToken<'a> {
     Symbol(Symbol<'a>),
     #[regex(r"%[a-zA-Z_][a-zA-Z0-9_]*")]
     MacroParameter(&'a str),
-    Csr(ParserRISCVCsr),
     #[token(".align", priority = 10)]
     Align,
     #[token(".ascii", priority = 10)]

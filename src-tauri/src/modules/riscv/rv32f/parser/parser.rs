@@ -1,10 +1,10 @@
 use super::super::super::basic::interface::parser::{
-    ParserRISCVInstOpTrait, ParserRISCVRegisterTrait,
+    ParserRISCVCsr, ParserRISCVInstOp, ParserRISCVRegister,
 };
 use super::super::super::basic::parser::lexer::Symbol;
 use super::super::super::basic::parser::parser::RISCVSymbolList;
 use super::super::super::rv32f::constants::{
-    RV32FInstruction, RV32FRegister, RV32F_REGISTER_VALID_NAME,
+    RV32FCsr, RV32FInstruction, RV32FRegister, RV32F_REGISTER_VALID_NAME,
 };
 use super::lexer::RV32FOpToken;
 use lazy_static::lazy_static;
@@ -40,6 +40,20 @@ lazy_static! {
     };
 }
 
-impl ParserRISCVRegisterTrait for RV32FRegister {}
+impl From<RV32FRegister> for ParserRISCVRegister {
+    fn from(reg: RV32FRegister) -> Self {
+        ParserRISCVRegister::RV32F(reg)
+    }
+}
 
-impl ParserRISCVInstOpTrait for RV32FInstruction {}
+impl From<RV32FInstruction> for ParserRISCVInstOp {
+    fn from(inst: RV32FInstruction) -> Self {
+        ParserRISCVInstOp::RV32F(inst)
+    }
+}
+
+impl From<RV32FCsr> for ParserRISCVCsr {
+    fn from(csr: RV32FCsr) -> Self {
+        ParserRISCVCsr::RV32F(csr)
+    }
+}

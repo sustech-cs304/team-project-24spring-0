@@ -1,4 +1,3 @@
-use super::super::basic::interface::parser::{ParserRISCVInstOpTrait, ParserRISCVRegisterTrait};
 use lazy_static::lazy_static;
 use strum::{EnumIter, EnumString, IntoEnumIterator};
 use strum_macros::Display;
@@ -129,6 +128,11 @@ pub enum RV32FInstruction {
     // FsqrtD,
     // FsubD,
 }
+
+#[derive(
+    Clone, Copy, Debug, PartialEq, Eq, Hash, EnumIter, EnumString, strum_macros::IntoStaticStr,
+)]
+pub enum RV32FCsr {}
 
 pub static RV32F_REGISTER_VALID_NAME: [&'static str; 64] = [
     "f0", "f1", "f2", "f3", "f4", "f5", "f6", "f7", "f8", "f9", "f10", "f11", "f12", "f13", "f14",
