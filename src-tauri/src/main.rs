@@ -1,7 +1,5 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
-
-mod assembler;
 mod interface;
 mod io;
 mod menu;
@@ -12,7 +10,13 @@ mod types;
 mod utility;
 
 use modules::riscv::middleware::*;
+use once_cell::sync::Lazy;
+use std::sync::{Arc, Mutex};
+use tauri::{AppHandle, Manager};
 use types::middleware_types;
+
+static APP_HANDLE: Lazy<Arc<Mutex<Option<AppHandle>>>> = Lazy::new(|| Arc::new(Mutex::new(None)));
+mod assembler;
 
 fn main() {
     tauri::Builder::default()
@@ -25,12 +29,9 @@ fn main() {
             name: Default::default(),
         })
         .setup(|app| {
-            //let tab_map = app.state::<middleware_types::TabMap>();
-            //tab_map
-            //.tabs
-            //.lock()
-            //.unwrap()
-            //.insert("foo", middleware_types::Tab::new("foo"));
+            let app_handle = app.app_handle();
+            let mut global_handle = APP_HANDLE.lock().unwrap();
+            *global_handle = Some(app_handle);
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![

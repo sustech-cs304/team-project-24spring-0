@@ -1987,6 +1987,7 @@ dependencies = [
  "derive_builder",
  "lazy_static",
  "logos",
+ "once_cell",
  "ropey",
  "serde",
  "serde_json",

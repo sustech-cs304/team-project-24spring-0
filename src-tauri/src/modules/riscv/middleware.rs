@@ -3,7 +3,6 @@ pub mod tab_management {
         io::file_io,
         modules::riscv::basic::interface::parser::{RISCVExtension, RISCVParser},
         storage::rope_store,
-        types::assembler_types::AssemblerConfig,
         types::middleware_types::{CurTabName, Optional, Tab, TabMap},
     };
     use tauri::State;
@@ -207,25 +206,30 @@ pub mod frontend_api {
 }
 
 pub mod backend_api {
+    use tauri::Manager;
+
     use crate::{
         types::middleware_types::{SyscallDataType, SyscallRequest},
         utility::syscall_helper::syscall_type_to_string,
+        APP_HANDLE,
     };
-    use tauri::Window;
 
-    #[tauri::command]
-    pub fn syscall_input_request(win: Window, pathname: &str, acquire_type: SyscallDataType) {
-        loop {
-            match win.emit(
-                "syscall_request",
-                SyscallRequest {
-                    path: pathname.to_string(),
-                    syscall: syscall_type_to_string(&acquire_type),
-                },
-            ) {
-                Ok(_) => break,
-                Err(_) => continue,
+    pub fn syscall_input_request(pathname: &str, acquire_type: SyscallDataType) {
+        if let Some(app_handle) = APP_HANDLE.lock().unwrap().as_ref() {
+            loop {
+                match app_handle.emit_all(
+                    "syscall_request",
+                    SyscallRequest {
+                        path: pathname.to_string(),
+                        syscall: syscall_type_to_string(&acquire_type),
+                    },
+                ) {
+                    Ok(_) => break,
+                    Err(_) => continue,
+                }
             }
+        } else {
+            eprintln!("AppHandle is not initialized!");
         }
     }
 }
