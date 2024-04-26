@@ -1,15 +1,18 @@
-use super::super::super::basic::interface::parser::{
-    ParserRISCVCsr, ParserRISCVInstOp, ParserRISCVRegister,
-};
-use super::super::super::basic::parser::lexer::Symbol;
-use super::super::super::basic::parser::parser::RISCVSymbolList;
-use super::super::super::rv32f::constants::{
-    RV32FCsr, RV32FInstruction, RV32FRegister, RV32F_REGISTER_VALID_NAME,
-};
-use super::lexer::RV32FOpToken;
-use lazy_static::lazy_static;
 use std::str::FromStr;
+
+use lazy_static::lazy_static;
 use strum::IntoEnumIterator;
+
+use super::{
+    super::super::{
+        basic::{
+            interface::parser::{ParserRISCVCsr, ParserRISCVInstOp, ParserRISCVRegister},
+            parser::{lexer::Symbol, parser::RISCVSymbolList},
+        },
+        rv32f::constants::{RV32FCsr, RV32FInstruction, RV32FRegister, RV32F_REGISTER_VALID_NAME},
+    },
+    lexer::RV32FOpToken,
+};
 
 lazy_static! {
     pub static ref RV32F_SYMBOL_LIST: RISCVSymbolList = vec![&OP_TOKEN, &REG_TOKEN];

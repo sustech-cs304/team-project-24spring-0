@@ -9,9 +9,10 @@ mod tests;
 mod types;
 mod utility;
 
+use std::sync::{Arc, Mutex};
+
 use modules::riscv::middleware::*;
 use once_cell::sync::Lazy;
-use std::sync::{Arc, Mutex};
 use tauri::{AppHandle, Manager};
 use types::middleware_types;
 

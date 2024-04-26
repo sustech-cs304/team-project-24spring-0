@@ -1,6 +1,7 @@
 pub mod state {
-    use crate::types::middleware_types::CurTabName;
     use tauri::State;
+
+    use crate::types::middleware_types::CurTabName;
 
     pub fn get_current_tab_name(cur_tab_name: State<CurTabName>) -> String {
         cur_tab_name.name.lock().unwrap().clone()
@@ -13,8 +14,9 @@ pub mod state {
 }
 
 pub mod event {
-    use crate::types::middleware_types::CurTabName;
     use tauri::{Manager, WindowMenuEvent};
+
+    use crate::types::middleware_types::CurTabName;
 
     pub fn get_current_tab_name(event: &WindowMenuEvent) -> String {
         event

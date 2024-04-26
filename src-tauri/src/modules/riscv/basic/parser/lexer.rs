@@ -1,9 +1,12 @@
-use super::super::interface::parser::{ParserRISCVCsr, ParserRISCVRegister};
-use super::oplist::RISCVOpdSet;
-use crate::interface::parser::{ParserError, Pos};
+use std::{collections::HashMap, fmt::Display};
+
 use logos::Logos;
-use std::collections::HashMap;
-use std::fmt::Display;
+
+use super::{
+    super::interface::parser::{ParserRISCVCsr, ParserRISCVRegister},
+    oplist::RISCVOpdSet,
+};
+use crate::interface::parser::{ParserError, Pos};
 
 #[derive(Debug, PartialEq, Clone, Default)]
 pub enum LexingError {

@@ -1,7 +1,9 @@
 mod menu_file;
 
-use tauri::api::dialog::{MessageDialogBuilder, MessageDialogButtons, MessageDialogKind};
-use tauri::{Menu, WindowMenuEvent};
+use tauri::{
+    api::dialog::{MessageDialogBuilder, MessageDialogButtons, MessageDialogKind},
+    Menu, WindowMenuEvent,
+};
 
 fn display_alert_dialog(kind: MessageDialogKind, title: &str, msg: &str, handler: fn(bool)) {
     let dialog = MessageDialogBuilder::new(title, msg)

@@ -1,3 +1,8 @@
+use std::{collections::HashMap, sync::Mutex};
+
+use serde::Serialize;
+use strum_macros::{Display, EnumMessage};
+
 use crate::{
     interface::{
         assembler::Assembler,
@@ -7,9 +12,6 @@ use crate::{
     },
     modules::riscv::basic::interface::parser::RISCV,
 };
-use serde::Serialize;
-use std::{collections::HashMap, sync::Mutex};
-use strum_macros::{Display, EnumMessage};
 
 pub struct Tab {
     pub text: Box<dyn MFile<String>>,

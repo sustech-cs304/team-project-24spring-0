@@ -1,3 +1,10 @@
+use std::path::Path;
+
+use tauri::{
+    api::dialog::{FileDialogBuilder, MessageDialogKind},
+    CustomMenuItem, Manager, Menu, Submenu, WindowMenuEvent,
+};
+
 use super::display_alert_dialog;
 use crate::{
     io::file_io,
@@ -8,11 +15,6 @@ use crate::{
         middleware_types::{Tab, TabMap},
     },
     utility::state_helper::event::{get_current_tab_name, set_current_tab_name},
-};
-use std::path::Path;
-use tauri::{
-    api::dialog::{FileDialogBuilder, MessageDialogKind},
-    CustomMenuItem, Manager, Menu, Submenu, WindowMenuEvent,
 };
 
 pub fn new() -> Submenu {

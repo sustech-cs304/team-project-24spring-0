@@ -1,11 +1,12 @@
 pub mod tab_management {
+    use tauri::State;
+
     use crate::{
         io::file_io,
         modules::riscv::basic::interface::parser::{RISCVExtension, RISCVParser},
         storage::rope_store,
         types::middleware_types::{CurTabName, Optional, Tab, TabMap},
     };
-    use tauri::State;
 
     #[tauri::command]
     pub fn create_tab(tab_map: State<TabMap>, filepath: &str) -> Optional {
@@ -113,11 +114,13 @@ pub mod tab_management {
 }
 
 pub mod frontend_api {
+    use std::any::Any;
+
+    use tauri::State;
+
     use crate::types::middleware_types::{
         AssembleResult, AssemblerConfig, CurTabName, SyscallDataType, TabMap,
     };
-    use std::any::Any;
-    use tauri::State;
 
     #[tauri::command]
     pub fn assemble(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> AssembleResult {
