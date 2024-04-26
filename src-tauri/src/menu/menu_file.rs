@@ -1,9 +1,10 @@
+use std::fmt::format;
 use std::path::Path;
 
 use tauri::api::dialog::{FileDialogBuilder, MessageDialogKind};
 use tauri::{CustomMenuItem, Manager, Menu, Submenu, WindowMenuEvent};
 
-use super::display_alert_dialog;
+use super::{display_alert_dialog, display_confirm_dialog};
 use crate::io::file_io;
 use crate::modules::riscv::basic::interface::parser::{RISCVExtension, RISCVParser};
 use crate::storage::rope_store;
@@ -142,7 +143,26 @@ fn close_handler(event: WindowMenuEvent) {
 
 fn exit_handler(event: WindowMenuEvent) {
     event.window().close().unwrap();
-    todo!("check all dirty file before exit");
+    let tab_map = event.window().state::<TabMap>();
+    let lock = tab_map.tabs.lock().unwrap();
+    for (name, tab) in lock.iter() {
+        if tab.text.is_dirty() {
+            display_confirm_dialog(
+                MessageDialogKind::Warning,
+                "Warning",
+                format!(
+                    "File {} is modified but not save, are you sure to exit",
+                    name.as_str()
+                )
+                .as_str(),
+                |save| {
+                    if save {
+                    } else {
+                    }
+                },
+            )
+        }
+    }
 }
 
 fn new_tab(event: &WindowMenuEvent, file_path: &Path) -> Option<String> {

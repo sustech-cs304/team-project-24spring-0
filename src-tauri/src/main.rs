@@ -1,9 +1,14 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
+#![cfg_attr(
+    debug_assertions,
+    allow(unused_variables, unused_macros, unused_imports, dead_code)
+)]
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 mod interface;
 mod io;
 mod menu;
 mod modules;
+mod remote;
 mod storage;
 mod tests;
 mod types;
