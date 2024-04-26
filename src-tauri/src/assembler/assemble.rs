@@ -9,10 +9,7 @@ impl RiscVAssembler {
         unimplemented!()
     }
 
-    fn update_setting<IN, OUT, SET, ERR>(
-        &mut self,
-        settings: &SET,
-    ) -> Result<bool, String> {
+    fn update_setting<IN, OUT, SET, ERR>(&mut self, settings: &SET) -> Result<bool, String> {
         unimplemented!()
     }
 }

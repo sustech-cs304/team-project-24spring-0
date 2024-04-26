@@ -71,9 +71,7 @@ impl ParserInstSet for RISCV {
 impl RISCVExtension {
     pub fn get_symbol_parser(&self) -> &RISCVSymbolList {
         match self {
-            RISCVExtension::RV32I => {
-                &super::super::super::rv32i::parser::parser::RV32I_SYMBOL_LIST
-            }
+            RISCVExtension::RV32I => &super::super::super::rv32i::parser::parser::RV32I_SYMBOL_LIST,
         }
     }
 }

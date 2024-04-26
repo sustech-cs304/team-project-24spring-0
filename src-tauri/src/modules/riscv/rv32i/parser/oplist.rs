@@ -8,11 +8,7 @@ use super::super::constants::{RV32IInstruction, RV32IRegister};
 use super::lexer::RV32IOpToken;
 
 // --------------------set-------------------------
-pub fn opd_set_load_mem(
-    op: ParserRISCVInstOp,
-    name: &str,
-    unit: &str,
-) -> Vec<RISCVOpdSet> {
+pub fn opd_set_load_mem(op: ParserRISCVInstOp, name: &str, unit: &str) -> Vec<RISCVOpdSet> {
     vec![
         opd_set(
             expect_opd(vec![Reg, Comma, Imm(I12), LParen, Reg, RParen]),
@@ -69,11 +65,7 @@ pub fn opd_set_load_mem(
         ),
     ]
 }
-pub fn opd_set_store_mem(
-    op: ParserRISCVInstOp,
-    name: &str,
-    unit: &str,
-) -> Vec<RISCVOpdSet> {
+pub fn opd_set_store_mem(op: ParserRISCVInstOp, name: &str, unit: &str) -> Vec<RISCVOpdSet> {
     vec![
         opd_set(
             expect_opd(vec![Reg, Comma, Imm(I12), LParen, Reg, RParen]),
@@ -1026,8 +1018,7 @@ lazy_static! {
                 ),
             ];
             op_def.iter_mut().for_each(|(op, opd_set)| {
-                op_list[std::mem::transmute::<_, u8>(*op) as usize] =
-                    std::mem::take(opd_set);
+                op_list[std::mem::transmute::<_, u8>(*op) as usize] = std::mem::take(opd_set);
             });
             op_list
         }

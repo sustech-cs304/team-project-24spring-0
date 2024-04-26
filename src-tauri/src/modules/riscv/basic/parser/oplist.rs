@@ -1,7 +1,6 @@
 use super::super::interface::parser::{
-    get_32u_high, get_32u_low, ParserRISCVImmediate, ParserRISCVInstOp,
-    ParserRISCVInstOpd, ParserRISCVLabelHandler, ParserRISCVRegister,
-    RISCVImmediate,
+    get_32u_high, get_32u_low, ParserRISCVImmediate, ParserRISCVInstOp, ParserRISCVInstOpd,
+    ParserRISCVLabelHandler, ParserRISCVRegister, RISCVImmediate,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -110,9 +109,7 @@ pub fn idx_handler_lbl_high(opd: ParserRISCVInstOpd) -> ParserRISCVInstOpd {
         opd
     }
 }
-pub fn idx_handler_lbl_last_delta_low(
-    opd: ParserRISCVInstOpd,
-) -> ParserRISCVInstOpd {
+pub fn idx_handler_lbl_last_delta_low(opd: ParserRISCVInstOpd) -> ParserRISCVInstOpd {
     if let ParserRISCVInstOpd::Lbl(lbl) = opd {
         ParserRISCVInstOpd::Imm(ParserRISCVImmediate::Lbl((
             lbl,
@@ -152,10 +149,7 @@ pub fn expect_csr(last_opd: RISCVExpectToken) -> Vec<RISCVExpectToken> {
     expect_opd(vec![Reg, Comma, Csr, Comma, last_opd])
 }
 // --------------------basic-------------------------
-pub fn basic_op(
-    op: ParserRISCVInstOp,
-    opds: Vec<RISCVOpdSetAimOpd>,
-) -> RISCVOpdSetAim {
+pub fn basic_op(op: ParserRISCVInstOp, opds: Vec<RISCVOpdSetAimOpd>) -> RISCVOpdSetAim {
     RISCVOpdSetAim { op, opds }
 }
 // basic_op op idx(0) idx(2)
@@ -201,12 +195,7 @@ pub fn hint_csr(name: &str, op: &str, last_opd: &str) -> String {
         name, last_opd, op, last_opd
     )
 }
-pub fn hint_set_comparison(
-    name: &str,
-    op: &str,
-    last_opd: &str,
-    signed: &str,
-) -> String {
+pub fn hint_set_comparison(name: &str, op: &str, last_opd: &str, signed: &str) -> String {
     format!(
         "{} t1, t2, {} (t1 = (t2 {} {}){})",
         name, last_opd, op, last_opd, signed

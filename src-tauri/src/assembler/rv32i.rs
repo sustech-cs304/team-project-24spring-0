@@ -1,8 +1,8 @@
 use ux::{u1, u10, u12, u20, u3, u4, u5, u6, u7};
 
 use crate::assembler::basic::{
-    BOpcode, IOpcode, ImmediateFormatter, JOpcode, Opcode, PackedInstruction,
-    ROpcode, SOpcode, UOpcode,
+    BOpcode, IOpcode, ImmediateFormatter, JOpcode, Opcode, PackedInstruction, ROpcode, SOpcode,
+    UOpcode,
 };
 
 pub struct Register(u5);
@@ -53,11 +53,7 @@ pub struct RV32I {}
 
 macro_rules! rinstimpl {
     ($name:ident, $func_name:ident, $funct7:literal, $funct3:literal, $rs2name:ident) => {
-        pub fn $func_name(
-            $rs2name: Register,
-            rs1: Register,
-            rd: Register,
-        ) -> PackedInstruction {
+        pub fn $func_name($rs2name: Register, rs1: Register, rd: Register) -> PackedInstruction {
             ROpcode::$name
                 .builder()
                 .funct7(($funct7 as u32).try_into().unwrap())
@@ -74,11 +70,7 @@ macro_rules! rinstimpl {
 
 macro_rules! iinstimpl {
     ($name:ident, $func_name:ident, $funct3:literal) => {
-        pub fn $func_name(
-            imm: Immediate12,
-            rs1: Register,
-            rd: Register,
-        ) -> PackedInstruction {
+        pub fn $func_name(imm: Immediate12, rs1: Register, rd: Register) -> PackedInstruction {
             IOpcode::$name
                 .builder()
                 .imm(imm.into())
@@ -108,11 +100,7 @@ macro_rules! uinstimpl {
 
 macro_rules! sinstimpl {
     ($name:ident, $func_name:ident, $funct3:literal) => {
-        pub fn $func_name(
-            imm: Immediate12,
-            rs2: Register,
-            rs1: Register,
-        ) -> PackedInstruction {
+        pub fn $func_name(imm: Immediate12, rs2: Register, rs1: Register) -> PackedInstruction {
             SOpcode::$name
                 .builder()
                 .immediate(imm.into())
@@ -128,11 +116,7 @@ macro_rules! sinstimpl {
 
 macro_rules! binstimpl {
     ($name:ident, $func_name:ident, $funct3:literal) => {
-        pub fn $func_name(
-            imm: Immediate12,
-            rs2: Register,
-            rs1: Register,
-        ) -> PackedInstruction {
+        pub fn $func_name(imm: Immediate12, rs2: Register, rs1: Register) -> PackedInstruction {
             BOpcode::$name
                 .builder()
                 .immediate(imm.into())

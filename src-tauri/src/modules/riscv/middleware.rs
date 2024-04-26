@@ -2,9 +2,7 @@ pub mod tab_management {
     use tauri::State;
 
     use crate::io::file_io;
-    use crate::modules::riscv::basic::interface::parser::{
-        RISCVExtension, RISCVParser,
-    };
+    use crate::modules::riscv::basic::interface::parser::{RISCVExtension, RISCVParser};
     use crate::storage::rope_store;
     use crate::types::middleware_types::{CurTabName, Optional, Tab, TabMap};
 
@@ -68,11 +66,7 @@ pub mod tab_management {
     }
 
     #[tauri::command]
-    pub fn update_tab(
-        tab_map: State<TabMap>,
-        filepath: &str,
-        data: &str,
-    ) -> Optional {
+    pub fn update_tab(tab_map: State<TabMap>, filepath: &str, data: &str) -> Optional {
         match tab_map.tabs.lock().unwrap().get_mut(filepath) {
             Some(tab) => {
                 tab.text = Box::new(rope_store::Text::from_str(data).unwrap());
@@ -127,10 +121,7 @@ pub mod frontend_api {
     };
 
     #[tauri::command]
-    pub fn assemble(
-        cur_tab_name: State<CurTabName>,
-        tab_map: State<TabMap>,
-    ) -> AssembleResult {
+    pub fn assemble(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> AssembleResult {
         let name = cur_tab_name.name.lock().unwrap().clone();
         let mut lock = tab_map.tabs.lock().unwrap();
         let tab = lock.get_mut(&name).unwrap();

@@ -26,10 +26,7 @@ impl MFile<String> for Text {
     }
 
     fn save(&mut self) -> Option<String> {
-        match file_io::write_file(
-            self.path.as_path(),
-            &self.data.as_ref().to_string(),
-        ) {
+        match file_io::write_file(self.path.as_path(), &self.data.as_ref().to_string()) {
             Some(e) => Some(e),
             None => {
                 self.dirty = false;

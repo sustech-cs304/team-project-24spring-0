@@ -5,9 +5,7 @@ use logos::Logos;
 use super::super::interface::parser::*;
 use super::label::LabelData;
 use super::lexer::{LexerIter, RISCVOpToken, RISCVToken, Symbol};
-use super::oplist::{
-    RISCVExpectImm, RISCVExpectToken, RISCVOpdSetAim, RISCVOpdSetAimOpd,
-};
+use super::oplist::{RISCVExpectImm, RISCVExpectToken, RISCVOpdSetAim, RISCVOpdSetAimOpd};
 use super::r#macro::MacroData;
 use crate::utility::ptr::Ptr;
 
@@ -18,10 +16,7 @@ pub struct RISCVParser {
 }
 
 impl Parser<RISCV> for RISCVParser {
-    fn parse(
-        &mut self,
-        code_str: String,
-    ) -> Result<ParserResult<RISCV>, Vec<ParserError>> {
+    fn parse(&mut self, code_str: String) -> Result<ParserResult<RISCV>, Vec<ParserError>> {
         self.init();
         let mut _status = RISCVParserStatus::new(&code_str);
         let status_ptr = Ptr::new(&_status);
@@ -98,9 +93,7 @@ macro_rules! load_data_helper {
             $status.data_seg_size += $vec.len();
             let label_pos: ParserRISCVLabel;
             let now_len = $status.result.data.len();
-            if let Some(ParserResultData::Data(chunk)) =
-                $status.result.data.last_mut()
-            {
+            if let Some(ParserResultData::Data(chunk)) = $status.result.data.last_mut() {
                 if chunk.len() < DATA_CHUNK_RECOMMEND_SIZE {
                     label_pos = ParserRISCVLabel::Data((now_len - 1, chunk.len()));
                     chunk.extend($vec);
@@ -233,20 +226,15 @@ impl RISCVParser {
         if let ParserResultText::Text(inst) = result.text.last_mut().unwrap() {
             for (basic_opd_idx, aim_opd) in aim_basic.opds.iter().enumerate() {
                 if let RISCVOpdSetAimOpd::Idx(stash_opd_idx) = aim_opd {
-                    if let Some(ParserRISCVInstOpd::Lbl(_)) =
-                        stash_opd[stash_opd_idx.idx]
-                    {
-                        if let ParserRISCVInstOpd::Lbl(lbl) =
-                            &inst.opd[basic_opd_idx]
-                        {
+                    if let Some(ParserRISCVInstOpd::Lbl(_)) = stash_opd[stash_opd_idx.idx] {
+                        if let ParserRISCVInstOpd::Lbl(lbl) = &inst.opd[basic_opd_idx] {
                             label_list
                                 .get_mut(&stash_label_name[stash_opd_idx.idx])
                                 .unwrap()
                                 .refs
                                 .push(Ptr::new(lbl));
-                        } else if let ParserRISCVInstOpd::Imm(
-                            ParserRISCVImmediate::Lbl((lbl, _)),
-                        ) = &inst.opd[basic_opd_idx]
+                        } else if let ParserRISCVInstOpd::Imm(ParserRISCVImmediate::Lbl((lbl, _))) =
+                            &inst.opd[basic_opd_idx]
                         {
                             label_list
                                 .get_mut(&stash_label_name[stash_opd_idx.idx])
@@ -363,29 +351,17 @@ impl RISCVParser {
                     Comma => type_fit = matches!(token, RISCVToken::Comma),
                     LParen => type_fit = matches!(token, RISCVToken::LParen),
                     RParen => type_fit = matches!(token, RISCVToken::RParen),
-                    Reg => {
-                        type_fit =
-                            matches!(token, RISCVToken::Symbol(Symbol::Reg(_)))
-                    }
-                    Csr => {
-                        type_fit =
-                            matches!(token, RISCVToken::Symbol(Symbol::Csr(_)))
-                    }
+                    Reg => type_fit = matches!(token, RISCVToken::Symbol(Symbol::Reg(_))),
+                    Csr => type_fit = matches!(token, RISCVToken::Symbol(Symbol::Csr(_))),
                     Imm(imm_t) => match imm_t {
                         U4 => type_fit = Self::in_bound_int(&token, 0, 0xf),
                         U5 => type_fit = Self::in_bound_int(&token, 0, 0x1f),
                         U12 => type_fit = Self::in_bound_int(&token, 0, 0xfff),
                         U20 => type_fit = Self::in_bound_int(&token, 0, 0xf_ffff),
                         I12 => type_fit = Self::in_bound_int(&token, -0x800, 0x7ff),
-                        I32 => {
-                            type_fit =
-                                Self::in_bound_int(&token, -0x8000_0000, 0x7fff_ffff)
-                        }
+                        I32 => type_fit = Self::in_bound_int(&token, -0x8000_0000, 0x7fff_ffff),
                     },
-                    Lbl => {
-                        type_fit =
-                            matches!(token, RISCVToken::Symbol(Symbol::Label(_)))
-                    }
+                    Lbl => type_fit = matches!(token, RISCVToken::Symbol(Symbol::Label(_))),
                 }
                 if !type_fit {
                     token_set_state[i] = 0;
@@ -406,15 +382,15 @@ impl RISCVParser {
                     stash_label_name.push(String::new());
                 }
                 RISCVToken::ImmediateInt(val) => {
-                    stash_opd.push(Some(ParserRISCVInstOpd::Imm(
-                        ParserRISCVImmediate::Imm(val as RISCVImmediate),
-                    )));
+                    stash_opd.push(Some(ParserRISCVInstOpd::Imm(ParserRISCVImmediate::Imm(
+                        val as RISCVImmediate,
+                    ))));
                     stash_label_name.push(String::new());
                 }
                 RISCVToken::Symbol(Symbol::Label(lbl)) => {
-                    stash_opd.push(Some(ParserRISCVInstOpd::Lbl(
-                        ParserRISCVLabel::Unknown(status_ptr.as_ref().iter.pos()),
-                    )));
+                    stash_opd.push(Some(ParserRISCVInstOpd::Lbl(ParserRISCVLabel::Unknown(
+                        status_ptr.as_ref().iter.pos(),
+                    ))));
                     stash_label_name.push(lbl.to_string());
                 }
                 RISCVToken::Symbol(Symbol::Csr(_)) => {
@@ -463,12 +439,7 @@ impl RISCVParser {
             // add basic instruction to status.result
             for aim_basic in &success_set.aim_basics {
                 // add instruction
-                Self::load_to_result(
-                    &mut status.result,
-                    now_line,
-                    &stash_opd,
-                    aim_basic,
-                );
+                Self::load_to_result(&mut status.result, now_line, &stash_opd, aim_basic);
                 // update label_list if has label
                 Self::update_label_ref(
                     &mut status.result,
@@ -499,10 +470,7 @@ impl RISCVParser {
     ) -> Result<(), Vec<ParserError>> {
         let status = status_ptr.as_mut();
         match token {
-            RISCVToken::Comma
-            | RISCVToken::Colon
-            | RISCVToken::LParen
-            | RISCVToken::RParen => {
+            RISCVToken::Comma | RISCVToken::Colon | RISCVToken::LParen | RISCVToken::RParen => {
                 Err(status.iter.get_error("unexpected character".to_string()))
             }
             RISCVToken::Newline => Ok(()),
@@ -539,12 +507,8 @@ impl RISCVParser {
                     Ok(())
                 }
                 Symbol::Op(op) => self.parse_op(status_ptr, op),
-                Symbol::Reg(_) => {
-                    Err(status.iter.get_error("unexpected register".to_string()))
-                }
-                Symbol::Csr(_) => {
-                    Err(status.iter.get_error("unexpected csr".to_string()))
-                }
+                Symbol::Reg(_) => Err(status.iter.get_error("unexpected register".to_string())),
+                Symbol::Csr(_) => Err(status.iter.get_error("unexpected csr".to_string())),
             },
             RISCVToken::MacroParameter(_) => {
                 Err(status.iter.get_error("unexpected symbol".to_string()))
@@ -555,15 +519,9 @@ impl RISCVParser {
                     Some(RISCVToken::ImmediateInt(val)) => {
                         if val >= 0 && val <= 3 {
                             if status.segment == RISCVSegment::Text {
-                                status
-                                    .result
-                                    .text
-                                    .push(ParserResultText::Align(val as u8));
+                                status.result.text.push(ParserResultText::Align(val as u8));
                             } else {
-                                status
-                                    .result
-                                    .data
-                                    .push(ParserResultData::Align(val as u8));
+                                status.result.data.push(ParserResultData::Align(val as u8));
                             }
                             Ok(())
                         } else {
@@ -574,8 +532,7 @@ impl RISCVParser {
                         }
                     }
                     _ => Err(status.iter.get_error(
-                        ".align requires 0(byte), 1(half), 2(word), or 3(double)"
-                            .to_string(),
+                        ".align requires 0(byte), 1(half), 2(word), or 3(double)".to_string(),
                     )),
                 }
             }
@@ -604,40 +561,31 @@ impl RISCVParser {
                 .iter
                 .get_error("not implemented directive".to_string())),
             RISCVToken::MacroDef => Ok(()),
-            RISCVToken::Macro => {
-                Err(status.iter.get_error("missing macro name".to_string()))
-            }
+            RISCVToken::Macro => Err(status.iter.get_error("missing macro name".to_string())),
             RISCVToken::Section => {
                 let next_token = status.iter.next(&self.symbol_list)?;
                 match next_token {
                     Some(RISCVToken::Symbol(Symbol::Label(_)))
                     | Some(RISCVToken::ImmediateString(_)) => Ok(()),
-                    Some(_) => Err(status
-                        .iter
-                        .get_error("invalid section name".to_string())),
-                    None => Err(status
-                        .iter
-                        .get_error("missing section name".to_string())),
+                    Some(_) => Err(status.iter.get_error("invalid section name".to_string())),
+                    None => Err(status.iter.get_error("missing section name".to_string())),
                 }
             }
             RISCVToken::Space => {
                 if status.segment == RISCVSegment::Text {
-                    return Err(status.iter.get_error(
-                        "invalid directive in text segment".to_string(),
-                    ));
+                    return Err(status
+                        .iter
+                        .get_error("invalid directive in text segment".to_string()));
                 }
-                if let Some(RISCVToken::ImmediateInt(val)) =
-                    status.iter.next(&self.symbol_list)?
-                {
+                if let Some(RISCVToken::ImmediateInt(val)) = status.iter.next(&self.symbol_list)? {
                     if val < 0 {
-                        return Err(status.iter.get_error(
-                            ".space requires a non-negative integer".to_string(),
-                        ));
-                    } else if ((MAX_DATA_SIZE - status.data_seg_size) as i128) < val
-                    {
-                        return Err(status.iter.get_error(
-                            "data segment size exceed max limit 0xfffff".to_string(),
-                        ));
+                        return Err(status
+                            .iter
+                            .get_error(".space requires a non-negative integer".to_string()));
+                    } else if ((MAX_DATA_SIZE - status.data_seg_size) as i128) < val {
+                        return Err(status
+                            .iter
+                            .get_error("data segment size exceed max limit 0xfffff".to_string()));
                     } else {
                         status
                             .result
@@ -647,9 +595,9 @@ impl RISCVParser {
                         return Ok(());
                     }
                 } else {
-                    Err(status.iter.get_error(
-                        ".space requires a non-negative integer".to_string(),
-                    ))
+                    Err(status
+                        .iter
+                        .get_error(".space requires a non-negative integer".to_string()))
                 }
             }
             RISCVToken::String => Self::set_data_seg(status, RISCVDataType::Asciz),

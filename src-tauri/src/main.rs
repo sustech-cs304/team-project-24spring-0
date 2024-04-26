@@ -16,8 +16,7 @@ use once_cell::sync::Lazy;
 use tauri::{AppHandle, Manager};
 use types::middleware_types;
 
-static APP_HANDLE: Lazy<Arc<Mutex<Option<AppHandle>>>> =
-    Lazy::new(|| Arc::new(Mutex::new(None)));
+static APP_HANDLE: Lazy<Arc<Mutex<Option<AppHandle>>>> = Lazy::new(|| Arc::new(Mutex::new(None)));
 mod assembler;
 
 fn main() {

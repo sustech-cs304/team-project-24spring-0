@@ -9,9 +9,7 @@ use crate::modules::riscv::basic::interface::parser::{RISCVExtension, RISCVParse
 use crate::storage::rope_store;
 use crate::types::menu_types;
 use crate::types::middleware_types::{Tab, TabMap};
-use crate::utility::state_helper::event::{
-    get_current_tab_name, set_current_tab_name,
-};
+use crate::utility::state_helper::event::{get_current_tab_name, set_current_tab_name};
 
 pub fn new() -> Submenu {
     Submenu::new(
@@ -59,8 +57,7 @@ fn open_handler(event: WindowMenuEvent) {
         Some(file_path) => match new_tab(&event, file_path.as_path()) {
             Some(err) => display_alert_dialog(
                 MessageDialogKind::Info,
-                format!("Failed to open {:?}", file_path.file_name().unwrap())
-                    .as_str(),
+                format!("Failed to open {:?}", file_path.file_name().unwrap()).as_str(),
                 err.as_str(),
                 |_| {},
             ),
@@ -118,21 +115,19 @@ fn save_as_handler(event: WindowMenuEvent) {
     };
     let picker = tauri::api::dialog::FileDialogBuilder::new();
     picker.save_file(move |file_path| match file_path {
-        Some(file_path) => {
-            match file_io::write_file(file_path.as_path(), &content) {
-                Some(err) => {
-                    display_alert_dialog(
-                        MessageDialogKind::Info,
-                        "Failed to save file",
-                        err.as_str(),
-                        |_| {},
-                    );
-                }
-                None => {
-                    event.window().emit("front_file_save_as", true).unwrap();
-                }
+        Some(file_path) => match file_io::write_file(file_path.as_path(), &content) {
+            Some(err) => {
+                display_alert_dialog(
+                    MessageDialogKind::Info,
+                    "Failed to save file",
+                    err.as_str(),
+                    |_| {},
+                );
             }
-        }
+            None => {
+                event.window().emit("front_file_save_as", true).unwrap();
+            }
+        },
         _ => {}
     });
 }

@@ -3,9 +3,7 @@ use strum::EnumIter;
 use super::super::super::basic::parser::lexer::RISCVOpToken;
 use super::oplist::OP_LIST;
 
-#[derive(
-    Clone, Copy, Debug, PartialEq, Eq, Hash, EnumIter, strum_macros::IntoStaticStr,
-)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, EnumIter, strum_macros::IntoStaticStr)]
 #[strum(serialize_all = "snake_case")]
 pub enum RV32IOpToken {
     Add,

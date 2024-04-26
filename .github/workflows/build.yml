@@ -1,9 +1,10 @@
 name: Moras CI
 
 on:
-  push:
-    branches-ignore:
+  pull_request:
+    branches:
       - "main"
+    types: [opened, synchronize, reopened, ready_for_review]
   merge_group:
     type: ["checks_requested"]
 

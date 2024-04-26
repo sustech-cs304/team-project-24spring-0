@@ -1,28 +1,16 @@
 mod menu_file;
 
-use tauri::api::dialog::{
-    MessageDialogBuilder, MessageDialogButtons, MessageDialogKind,
-};
+use tauri::api::dialog::{MessageDialogBuilder, MessageDialogButtons, MessageDialogKind};
 use tauri::{Menu, WindowMenuEvent};
 
-fn display_alert_dialog(
-    kind: MessageDialogKind,
-    title: &str,
-    msg: &str,
-    handler: fn(bool),
-) {
+fn display_alert_dialog(kind: MessageDialogKind, title: &str, msg: &str, handler: fn(bool)) {
     let dialog = MessageDialogBuilder::new(title, msg)
         .kind(kind)
         .buttons(MessageDialogButtons::Ok);
     dialog.show(handler);
 }
 
-fn display_confirm_dialog(
-    kind: MessageDialogKind,
-    title: &str,
-    msg: &str,
-    handler: fn(bool),
-) {
+fn display_confirm_dialog(kind: MessageDialogKind, title: &str, msg: &str, handler: fn(bool)) {
     let dialog = tauri::api::dialog::MessageDialogBuilder::new(title, msg)
         .buttons(MessageDialogButtons::OkCancel);
     dialog.show(handler);
