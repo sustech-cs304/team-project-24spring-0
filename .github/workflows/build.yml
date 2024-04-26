@@ -17,6 +17,8 @@ jobs:
 
       - uses: actions/checkout@v4
 
+      - uses: dtolnay/rust-toolchain@nightly
+
       - name: Format check
         working-directory: ./src-tauri
         run: cargo fmt -- --check

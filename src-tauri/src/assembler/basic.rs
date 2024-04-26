@@ -203,13 +203,13 @@ pub enum ROpcode {
 
 #[repr(u8)]
 pub enum IOpcode {
-    JALR = 0b1100111,        //Jalr
-    Load = 0b0000011,        // Lb, Lbu, Lh, Lhu, Lw
-    ALUImm = 0b0010011,      /* Addi, Andi, Ori, Slli, Slti, Sltiu, Srai, Srli,
-                              * Xori */
-    FENCE = 0b0001111,       // Fence, FenceI
+    JALR = 0b1100111, //Jalr
+    Load = 0b0000011, // Lb, Lbu, Lh, Lhu, Lw
+    ALUImm = 0b0010011, /* Addi, Andi, Ori, Slli, Slti, Sltiu, Srai, Srli,
+                       * Xori */
+    FENCE = 0b0001111, // Fence, FenceI
     Environment = 0b1110011, /* Csrrc, Csrrci, Csrrs, Csrrsi, Csrrw, Csrrwi.
-                              * Ebreak, Ecall */
+                        * Ebreak, Ecall */
 }
 
 #[repr(u8)]
