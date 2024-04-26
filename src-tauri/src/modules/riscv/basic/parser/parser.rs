@@ -268,30 +268,14 @@ impl RISCVParser {
     ) -> Result<(), Vec<ParserError>> {
         match status.segment {
             RISCVSegment::Data(data_type) => match data_type {
-                RISCVDataType::Byte => {
-                    load_data_helper_int!(label_list, status, data, i8, u8)
-                }
-                RISCVDataType::Half => {
-                    load_data_helper_int!(label_list, status, data, i16, u16)
-                }
-                RISCVDataType::Word => {
-                    load_data_helper_int!(label_list, status, data, i32, u32)
-                }
-                RISCVDataType::Dword => {
-                    load_data_helper_int!(label_list, status, data, i64, u64)
-                }
-                RISCVDataType::Float => {
-                    load_data_helper_float!(label_list, status, data, f32)
-                }
-                RISCVDataType::Double => {
-                    load_data_helper_float!(label_list, status, data, f64)
-                }
-                RISCVDataType::Ascii => {
-                    load_data_helper_string!(label_list, status, data, false)
-                }
-                RISCVDataType::Asciz => {
-                    load_data_helper_string!(label_list, status, data, true)
-                }
+                RISCVDataType::Byte => load_data_helper_int!(label_list, status, data, i8, u8),
+                RISCVDataType::Half => load_data_helper_int!(label_list, status, data, i16, u16),
+                RISCVDataType::Word => load_data_helper_int!(label_list, status, data, i32, u32),
+                RISCVDataType::Dword => load_data_helper_int!(label_list, status, data, i64, u64),
+                RISCVDataType::Float => load_data_helper_float!(label_list, status, data, f32),
+                RISCVDataType::Double => load_data_helper_float!(label_list, status, data, f64),
+                RISCVDataType::Ascii => load_data_helper_string!(label_list, status, data, false),
+                RISCVDataType::Asciz => load_data_helper_string!(label_list, status, data, true),
             },
             _ => Err(status
                 .iter
