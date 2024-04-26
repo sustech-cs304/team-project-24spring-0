@@ -1,8 +1,7 @@
+pub use super::super::super::rv32f::constants::*;
+pub use super::super::super::rv32i::constants::*;
+pub use super::super::parser::parser::RISCVParser;
 use super::super::parser::parser::RISCVSymbolList;
-pub use super::super::{
-    super::{rv32f::constants::*, rv32i::constants::*},
-    parser::parser::RISCVParser,
-};
 pub use crate::interface::parser::*;
 
 pub const MAX_DATA_SIZE: usize = 0xf_ffff;
@@ -50,7 +49,8 @@ pub enum ParserRISCVInstOpd {
 pub enum ParserRISCVLabel {
     Text(usize),          // ParserResult<RISCV>::text[usize]
     Data((usize, usize)), // ParserResult<RISCV>::data[usize][usize]
-    Unknown(Pos),         // the label position in the code (mustn't exist in the output)
+    Unknown(Pos),         /* the label position in the code (mustn't exist in
+                           * the output) */
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -71,7 +71,9 @@ impl ParserInstSet for RISCV {
 impl RISCVExtension {
     pub fn get_symbol_parser(&self) -> &RISCVSymbolList {
         match self {
-            RISCVExtension::RV32I => &super::super::super::rv32i::parser::parser::RV32I_SYMBOL_LIST,
+            RISCVExtension::RV32I => {
+                &super::super::super::rv32i::parser::parser::RV32I_SYMBOL_LIST
+            }
         }
     }
 }

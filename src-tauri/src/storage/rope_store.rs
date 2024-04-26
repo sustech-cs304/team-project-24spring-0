@@ -2,7 +2,8 @@ use std::path::{Path, PathBuf};
 
 use ropey::Rope;
 
-use crate::{interface::storage::MFile, io::file_io};
+use crate::interface::storage::MFile;
+use crate::io::file_io;
 
 pub struct Text {
     data: Box<Rope>,
@@ -25,7 +26,10 @@ impl MFile<String> for Text {
     }
 
     fn save(&mut self) -> Option<String> {
-        match file_io::write_file(self.path.as_path(), &self.data.as_ref().to_string()) {
+        match file_io::write_file(
+            self.path.as_path(),
+            &self.data.as_ref().to_string(),
+        ) {
             Some(e) => Some(e),
             None => {
                 self.dirty = false;

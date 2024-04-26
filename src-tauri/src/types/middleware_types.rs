@@ -1,17 +1,14 @@
-use std::{collections::HashMap, sync::Mutex};
+use std::collections::HashMap;
+use std::sync::Mutex;
 
 use serde::Serialize;
 use strum_macros::{Display, EnumMessage};
 
-use crate::{
-    interface::{
-        assembler::Assembler,
-        parser::{Parser, ParserError},
-        simulator::Simulator,
-        storage::MFile,
-    },
-    modules::riscv::basic::interface::parser::RISCV,
-};
+use crate::interface::assembler::Assembler;
+use crate::interface::parser::{Parser, ParserError};
+use crate::interface::simulator::Simulator;
+use crate::interface::storage::MFile;
+use crate::modules::riscv::basic::interface::parser::RISCV;
 
 pub struct Tab {
     pub text: Box<dyn MFile<String>>,

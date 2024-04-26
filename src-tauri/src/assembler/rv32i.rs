@@ -1,8 +1,8 @@
 use ux::{u1, u10, u12, u20, u3, u4, u5, u6, u7};
 
 use crate::assembler::basic::{
-    BOpcode, IOpcode, ImmediateFormatter, JOpcode, Opcode, PackedInstruction, ROpcode, SOpcode,
-    UOpcode,
+    BOpcode, IOpcode, ImmediateFormatter, JOpcode, Opcode, PackedInstruction,
+    ROpcode, SOpcode, UOpcode,
 };
 
 pub struct Register(u5);
@@ -53,7 +53,11 @@ pub struct RV32I {}
 
 macro_rules! rinstimpl {
     ($name:ident, $func_name:ident, $funct7:literal, $funct3:literal, $rs2name:ident) => {
-        pub fn $func_name($rs2name: Register, rs1: Register, rd: Register) -> PackedInstruction {
+        pub fn $func_name(
+            $rs2name: Register,
+            rs1: Register,
+            rd: Register,
+        ) -> PackedInstruction {
             ROpcode::$name
                 .builder()
                 .funct7(($funct7 as u32).try_into().unwrap())
@@ -70,7 +74,11 @@ macro_rules! rinstimpl {
 
 macro_rules! iinstimpl {
     ($name:ident, $func_name:ident, $funct3:literal) => {
-        pub fn $func_name(imm: Immediate12, rs1: Register, rd: Register) -> PackedInstruction {
+        pub fn $func_name(
+            imm: Immediate12,
+            rs1: Register,
+            rd: Register,
+        ) -> PackedInstruction {
             IOpcode::$name
                 .builder()
                 .imm(imm.into())
@@ -100,7 +108,11 @@ macro_rules! uinstimpl {
 
 macro_rules! sinstimpl {
     ($name:ident, $func_name:ident, $funct3:literal) => {
-        pub fn $func_name(imm: Immediate12, rs2: Register, rs1: Register) -> PackedInstruction {
+        pub fn $func_name(
+            imm: Immediate12,
+            rs2: Register,
+            rs1: Register,
+        ) -> PackedInstruction {
             SOpcode::$name
                 .builder()
                 .immediate(imm.into())
@@ -116,7 +128,11 @@ macro_rules! sinstimpl {
 
 macro_rules! binstimpl {
     ($name:ident, $func_name:ident, $funct3:literal) => {
-        pub fn $func_name(imm: Immediate12, rs2: Register, rs1: Register) -> PackedInstruction {
+        pub fn $func_name(
+            imm: Immediate12,
+            rs2: Register,
+            rs1: Register,
+        ) -> PackedInstruction {
             BOpcode::$name
                 .builder()
                 .immediate(imm.into())
@@ -189,8 +205,8 @@ impl RV32I {
     // rinstimpl!(ALUReg, or, 0b0000000, 0b110, rs2);
     // rinstimpl!(ALUReg, and, 0b0000000, 0b111, rs2);
     //
-    // pub fn fence(fm: u5, pred: u4, succ: u3, rs1: Register, rd: Register) -> PackedInstruction {
-    //     let fm: u32 = fm.into();
+    // pub fn fence(fm: u5, pred: u4, succ: u3, rs1: Register, rd: Register) ->
+    // PackedInstruction {     let fm: u32 = fm.into();
     //     let pred: u32 = pred.into();
     //     let succ: u32 = succ.into();
     //     let imm: u32 = (fm << 7) | (pred << 3) | succ;
@@ -238,39 +254,39 @@ impl RV32I {
 //     fn test_beq() {
 //         assert_eq!(
 //             0b00101010001000011000010111100011,
-//             Into::<u32>::into(RV32I::beq(0b101010101010.into(), 0x2.into(), 0x3.into()))
-//         );
+//             Into::<u32>::into(RV32I::beq(0b101010101010.into(), 0x2.into(),
+// 0x3.into()))         );
 //     }
 //
 //     #[test]
 //     fn test_lb() {
 //         assert_eq!(
 //             0b10101010101000010000000110000011,
-//             Into::<u32>::into(RV32I::lb(0xAAA.into(), 0x2.into(), 0x3.into()))
-//         );
+//             Into::<u32>::into(RV32I::lb(0xAAA.into(), 0x2.into(),
+// 0x3.into()))         );
 //     }
 //
 //     #[test]
 //     fn test_sb() {
 //         assert_eq!(
 //             0b10101010001000011000010100100011,
-//             Into::<u32>::into(RV32I::sb(0xAAA.into(), 0x2.into(), 0x3.into()))
-//         )
+//             Into::<u32>::into(RV32I::sb(0xAAA.into(), 0x2.into(),
+// 0x3.into()))         )
 //     }
 //
 //     #[test]
 //     fn test_addi() {
 //         assert_eq!(
 //             0b01111010101000010000000110010011,
-//             Into::<u32>::into(RV32I::addi(0x7AA.into(), 0x2.into(), 0x3.into()))
-//         );
+//             Into::<u32>::into(RV32I::addi(0x7AA.into(), 0x2.into(),
+// 0x3.into()))         );
 //     }
 //
 //     #[test]
 //     fn test_slli() {
 //         assert_eq!(
 //             0b101000010001000110010011,
-//             Into::<u32>::into(RV32I::slli(0xA.into(), 0x2.into(), 0x3.into()))
-//         );
+//             Into::<u32>::into(RV32I::slli(0xA.into(), 0x2.into(),
+// 0x3.into()))         );
 //     }
 // }

@@ -71,7 +71,15 @@ pub enum RV32FRegister {
 }
 
 #[derive(
-    Clone, Copy, Debug, PartialEq, Eq, Hash, EnumIter, EnumString, strum_macros::IntoStaticStr,
+    Clone,
+    Copy,
+    Debug,
+    PartialEq,
+    Eq,
+    Hash,
+    EnumIter,
+    EnumString,
+    strum_macros::IntoStaticStr,
 )]
 #[strum(serialize_all = "snake_case")]
 pub enum RV32FInstruction {
@@ -130,16 +138,25 @@ pub enum RV32FInstruction {
 }
 
 #[derive(
-    Clone, Copy, Debug, PartialEq, Eq, Hash, EnumIter, EnumString, strum_macros::IntoStaticStr,
+    Clone,
+    Copy,
+    Debug,
+    PartialEq,
+    Eq,
+    Hash,
+    EnumIter,
+    EnumString,
+    strum_macros::IntoStaticStr,
 )]
 pub enum RV32FCsr {}
 
 pub static RV32F_REGISTER_VALID_NAME: [&'static str; 64] = [
-    "f0", "f1", "f2", "f3", "f4", "f5", "f6", "f7", "f8", "f9", "f10", "f11", "f12", "f13", "f14",
-    "f15", "f16", "f17", "f18", "f19", "f20", "f21", "f22", "f23", "f24", "f25", "f26", "f27",
-    "f28", "f29", "f30", "f31", "ft0", "ft1", "ft2", "ft3", "ft4", "ft5", "ft6", "ft7", "ft8",
-    "ft9", "ft10", "ft11", "ft12", "ft13", "ft14", "ft15", "ft16", "ft17", "ft18", "ft19", "ft20",
-    "ft21", "ft22", "ft23", "ft24", "ft25", "ft26", "ft27", "ft28", "ft29", "ft30", "ft31",
+    "f0", "f1", "f2", "f3", "f4", "f5", "f6", "f7", "f8", "f9", "f10", "f11", "f12",
+    "f13", "f14", "f15", "f16", "f17", "f18", "f19", "f20", "f21", "f22", "f23",
+    "f24", "f25", "f26", "f27", "f28", "f29", "f30", "f31", "ft0", "ft1", "ft2",
+    "ft3", "ft4", "ft5", "ft6", "ft7", "ft8", "ft9", "ft10", "ft11", "ft12", "ft13",
+    "ft14", "ft15", "ft16", "ft17", "ft18", "ft19", "ft20", "ft21", "ft22", "ft23",
+    "ft24", "ft25", "ft26", "ft27", "ft28", "ft29", "ft30", "ft31",
 ];
 
 lazy_static! {

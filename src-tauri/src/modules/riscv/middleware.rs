@@ -1,12 +1,12 @@
 pub mod tab_management {
     use tauri::State;
 
-    use crate::{
-        io::file_io,
-        modules::riscv::basic::interface::parser::{RISCVExtension, RISCVParser},
-        storage::rope_store,
-        types::middleware_types::{CurTabName, Optional, Tab, TabMap},
+    use crate::io::file_io;
+    use crate::modules::riscv::basic::interface::parser::{
+        RISCVExtension, RISCVParser,
     };
+    use crate::storage::rope_store;
+    use crate::types::middleware_types::{CurTabName, Optional, Tab, TabMap};
 
     #[tauri::command]
     pub fn create_tab(tab_map: State<TabMap>, filepath: &str) -> Optional {
@@ -68,7 +68,11 @@ pub mod tab_management {
     }
 
     #[tauri::command]
-    pub fn update_tab(tab_map: State<TabMap>, filepath: &str, data: &str) -> Optional {
+    pub fn update_tab(
+        tab_map: State<TabMap>,
+        filepath: &str,
+        data: &str,
+    ) -> Optional {
         match tab_map.tabs.lock().unwrap().get_mut(filepath) {
             Some(tab) => {
                 tab.text = Box::new(rope_store::Text::from_str(data).unwrap());
@@ -123,7 +127,10 @@ pub mod frontend_api {
     };
 
     #[tauri::command]
-    pub fn assemble(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> AssembleResult {
+    pub fn assemble(
+        cur_tab_name: State<CurTabName>,
+        tab_map: State<TabMap>,
+    ) -> AssembleResult {
         let name = cur_tab_name.name.lock().unwrap().clone();
         let mut lock = tab_map.tabs.lock().unwrap();
         let tab = lock.get_mut(&name).unwrap();
@@ -211,10 +218,8 @@ pub mod frontend_api {
 pub mod backend_api {
     use tauri::Manager;
 
-    use crate::{
-        types::middleware_types::{SyscallDataType, SyscallRequest},
-        APP_HANDLE,
-    };
+    use crate::types::middleware_types::{SyscallDataType, SyscallRequest};
+    use crate::APP_HANDLE;
 
     pub fn syscall_input_request(pathname: &str, acquire_type: SyscallDataType) {
         if let Some(app_handle) = APP_HANDLE.lock().unwrap().as_ref() {

@@ -1,11 +1,10 @@
-use std::{collections::HashMap, fmt::Display};
+use std::collections::HashMap;
+use std::fmt::Display;
 
 use logos::Logos;
 
-use super::{
-    super::interface::parser::{ParserRISCVCsr, ParserRISCVRegister},
-    oplist::RISCVOpdSet,
-};
+use super::super::interface::parser::{ParserRISCVCsr, ParserRISCVRegister};
+use super::oplist::RISCVOpdSet;
 use crate::interface::parser::{ParserError, Pos};
 
 #[derive(Debug, PartialEq, Clone, Default)]
