@@ -113,9 +113,8 @@ pub mod tab_management {
 }
 
 pub mod frontend_api {
-    use crate::types::{
-        assembler_types::AssemblerConfig,
-        middleware_types::{AssembleResult, CurTabName, SyscallDataType, TabMap},
+    use crate::types::middleware_types::{
+        AssembleResult, AssemblerConfig, CurTabName, SyscallDataType, TabMap,
     };
     use std::any::Any;
     use tauri::State;
@@ -196,6 +195,7 @@ pub mod frontend_api {
     }
 
     #[tauri::command]
+    #[allow(non_snake_case)]
     pub fn updateAssemblerSettings(
         cur_tab_name: State<CurTabName>,
         tab_map: State<TabMap>,
@@ -210,7 +210,6 @@ pub mod backend_api {
 
     use crate::{
         types::middleware_types::{SyscallDataType, SyscallRequest},
-        utility::syscall_helper::syscall_type_to_string,
         APP_HANDLE,
     };
 
@@ -221,7 +220,7 @@ pub mod backend_api {
                     "syscall_request",
                     SyscallRequest {
                         path: pathname.to_string(),
-                        syscall: syscall_type_to_string(&acquire_type),
+                        syscall: acquire_type.to_string(),
                     },
                 ) {
                     Ok(_) => break,

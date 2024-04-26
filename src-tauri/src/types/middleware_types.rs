@@ -1,10 +1,15 @@
-use crate::interface::parser::ParserError;
-use crate::interface::{
-    assembler::Assembler, parser::Parser, simulator::Simulator, storage::MFile,
+use crate::{
+    interface::{
+        assembler::Assembler,
+        parser::{Parser, ParserError},
+        simulator::Simulator,
+        storage::MFile,
+    },
+    modules::riscv::basic::interface::parser::RISCV,
 };
-use crate::modules::riscv::basic::interface::parser::RISCV;
 use serde::Serialize;
 use std::{collections::HashMap, sync::Mutex};
+use strum_macros::{Display, EnumMessage};
 
 pub struct Tab {
     pub text: Box<dyn MFile<String>>,
@@ -39,11 +44,38 @@ pub struct SyscallRequest {
     pub syscall: String,
 }
 
+#[derive(Clone, Serialize)]
+pub struct AssemblerConfig {
+    memory_map_limit_address: usize,
+    kernel_space_high_address: usize,
+    mmio_base_address: usize,
+    kernel_space_base_address: usize,
+    user_space_high_address: usize,
+    data_segment_limit_address: usize,
+    stack_base_address: usize,
+    stack_pointer_sp: usize,
+    stack_limit_address: usize,
+    heap_base_address: usize,
+    dot_data_base_address: usize,
+    global_pointer_gp: usize,
+    data_segment_base_address: usize,
+    dot_extern_base_address: usize,
+    text_limit_address: usize,
+    dot_text_base_address: usize,
+}
+
+#[derive(EnumMessage, Display)]
 pub enum SyscallDataType {
+    #[strum(message = "Char")]
     Char(u8),
+    #[strum(message = "String")]
     String(Vec<u8>),
+    #[strum(message = "Int")]
     Int(i32),
+    #[strum(message = "Long")]
     Long(i64),
+    #[strum(message = "Float")]
     Float(f32),
+    #[strum(message = "Double")]
     Double(f64),
 }

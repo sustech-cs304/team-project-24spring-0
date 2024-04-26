@@ -1,6 +1,5 @@
 pub mod state {
-    use super::super::ptr::Ptr;
-    use crate::types::middleware_types::{CurTabName, Tab, TabMap};
+    use crate::types::middleware_types::CurTabName;
     use tauri::State;
 
     pub fn get_current_tab_name(cur_tab_name: State<CurTabName>) -> String {
@@ -14,8 +13,7 @@ pub mod state {
 }
 
 pub mod event {
-    use crate::types::middleware_types::{CurTabName, Tab, TabMap};
-    use std::{collections::HashMap, sync::MutexGuard};
+    use crate::types::middleware_types::CurTabName;
     use tauri::{Manager, WindowMenuEvent};
 
     pub fn get_current_tab_name(event: &WindowMenuEvent) -> String {
