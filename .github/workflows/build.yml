@@ -17,7 +17,12 @@ jobs:
 
       - uses: actions/checkout@v4
 
-      - uses: dtolnay/rust-toolchain@nightly
+      - name: Rust nightly with rustfmt
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+          components: rustfmt
 
       - name: Format check
         working-directory: ./src-tauri
