@@ -1,8 +1,9 @@
+use lazy_static::lazy_static;
+
 use super::super::super::basic::interface::parser::ParserRISCVInstOp;
 use super::super::super::basic::parser::oplist::*;
 use super::super::constants::{RV32IInstruction, RV32IRegister};
 use super::lexer::RV32IOpToken;
-use lazy_static::lazy_static;
 
 pub use super::super::super::basic::parser::oplist::RISCVOpdSet;
 
