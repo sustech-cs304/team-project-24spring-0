@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use lazy_static::lazy_static;
+use once_cell::sync::Lazy;
 use strum::IntoEnumIterator;
 
 use super::super::super::basic::interface::parser::{
@@ -13,34 +13,32 @@ use super::super::super::rv32f::constants::{
 };
 use super::lexer::RV32FOpToken;
 
-lazy_static! {
-    pub static ref RV32F_SYMBOL_LIST: RISCVSymbolList = vec![&OP_TOKEN, &REG_TOKEN];
-}
+pub static RV32F_SYMBOL_LIST: Lazy<RISCVSymbolList> = Lazy::new(|| vec![&OP_TOKEN, &REG_TOKEN]);
 
-lazy_static! {
-    pub static ref OP_TOKEN_STASH: Vec<(String, Symbol<'static>)> = {
-        RV32FOpToken::iter()
-            .map(|op| (op.name(), Symbol::Op((op).into())))
-            .collect()
-    };
-    pub static ref OP_TOKEN: Vec<(&'static str, Symbol<'static>)> = {
-        OP_TOKEN_STASH
-            .iter()
-            .map(|op| (op.0.as_str(), op.1))
-            .collect()
-    };
-    pub static ref REG_TOKEN: Vec<(&'static str, Symbol<'static>)> = {
-        RV32F_REGISTER_VALID_NAME
-            .iter()
-            .map(|reg| {
-                (
-                    *reg,
-                    Symbol::Reg(RV32FRegister::from_str(reg).unwrap().into()),
-                )
-            })
-            .collect()
-    };
-}
+pub static OP_TOKEN: Lazy<Vec<(&'static str, Symbol<'static>)>> = Lazy::new(|| {
+    OP_TOKEN_STASH
+        .iter()
+        .map(|op| (op.0.as_str(), op.1))
+        .collect()
+});
+
+pub static REG_TOKEN: Lazy<Vec<(&'static str, Symbol<'static>)>> = Lazy::new(|| {
+    RV32F_REGISTER_VALID_NAME
+        .iter()
+        .map(|reg| {
+            (
+                *reg,
+                Symbol::Reg(RV32FRegister::from_str(reg).unwrap().into()),
+            )
+        })
+        .collect()
+});
+
+static OP_TOKEN_STASH: Lazy<Vec<(String, Symbol<'static>)>> = Lazy::new(|| {
+    RV32FOpToken::iter()
+        .map(|op| (op.name(), Symbol::Op((op).into())))
+        .collect()
+});
 
 impl From<RV32FRegister> for ParserRISCVRegister {
     fn from(reg: RV32FRegister) -> Self {

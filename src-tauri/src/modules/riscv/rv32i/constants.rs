@@ -1,4 +1,4 @@
-use lazy_static::lazy_static;
+use once_cell::sync::Lazy;
 use strum::{EnumIter, EnumString, IntoEnumIterator};
 use strum_macros::Display;
 
@@ -139,13 +139,11 @@ pub static RV32I_REGISTER_VALID_NAME: [&'static str; 65] = [
     "x25", "x26", "x27", "x28", "x29", "x30", "x31",
 ];
 
-lazy_static! {
-    pub static ref RV32I_REGISTER_DEFAULT_NAME: Vec<(RV32IRegister, String)> = {
-        RV32IRegister::iter()
-            .map(|reg| (reg, reg.to_string()))
-            .collect()
-    };
-}
+pub static RV32I_REGISTER_DEFAULT_NAME: Lazy<Vec<(RV32IRegister, String)>> = Lazy::new(|| {
+    RV32IRegister::iter()
+        .map(|reg| (reg, reg.to_string()))
+        .collect()
+});
 
 impl From<RV32IRegister> for &'static str {
     fn from(value: RV32IRegister) -> Self {

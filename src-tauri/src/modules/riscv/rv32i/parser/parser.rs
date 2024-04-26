@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use lazy_static::lazy_static;
+use once_cell::sync::Lazy;
 use strum::IntoEnumIterator;
 
 use super::super::super::basic::interface::parser::{
@@ -13,39 +13,38 @@ use super::super::super::rv32i::constants::{
 };
 use super::lexer::RV32IOpToken;
 
-lazy_static! {
-    pub static ref RV32I_SYMBOL_LIST: RISCVSymbolList = vec![&OP_TOKEN, &REG_TOKEN];
-}
+pub static RV32I_SYMBOL_LIST: Lazy<RISCVSymbolList> = Lazy::new(|| vec![&OP_TOKEN, &REG_TOKEN]);
 
-lazy_static! {
-    pub static ref OP_TOKEN_STASH: Vec<(String, Symbol<'static>)> = {
-        RV32IOpToken::iter()
-            .map(|op| (op.name(), Symbol::Op((op).into())))
-            .collect()
-    };
-    pub static ref OP_TOKEN: Vec<(&'static str, Symbol<'static>)> = {
-        OP_TOKEN_STASH
-            .iter()
-            .map(|op| (op.0.as_str(), op.1))
-            .collect()
-    };
-    pub static ref REG_TOKEN: Vec<(&'static str, Symbol<'static>)> = {
-        RV32I_REGISTER_VALID_NAME
-            .iter()
-            .map(|reg| {
-                (
-                    *reg,
-                    Symbol::Reg(RV32IRegister::from_str(reg).unwrap().into()),
-                )
-            })
-            .collect()
-    };
-    pub static ref CSR_TOKEN: Vec<(&'static str, Symbol<'static>)> = {
-        RV32ICsr::iter()
-            .map(|csr| (csr.into(), Symbol::Csr(csr.into())))
-            .collect()
-    };
-}
+pub static OP_TOKEN: Lazy<Vec<(&'static str, Symbol<'static>)>> = Lazy::new(|| {
+    OP_TOKEN_STASH
+        .iter()
+        .map(|op| (op.0.as_str(), op.1))
+        .collect()
+});
+
+pub static REG_TOKEN: Lazy<Vec<(&'static str, Symbol<'static>)>> = Lazy::new(|| {
+    RV32I_REGISTER_VALID_NAME
+        .iter()
+        .map(|reg| {
+            (
+                *reg,
+                Symbol::Reg(RV32IRegister::from_str(reg).unwrap().into()),
+            )
+        })
+        .collect()
+});
+
+pub static CSR_TOKEN: Lazy<Vec<(&'static str, Symbol<'static>)>> = Lazy::new(|| {
+    RV32ICsr::iter()
+        .map(|csr| (csr.into(), Symbol::Csr(csr.into())))
+        .collect()
+});
+
+static OP_TOKEN_STASH: Lazy<Vec<(String, Symbol<'static>)>> = Lazy::new(|| {
+    RV32IOpToken::iter()
+        .map(|op| (op.name(), Symbol::Op((op).into())))
+        .collect()
+});
 
 impl From<RV32IRegister> for ParserRISCVRegister {
     fn from(reg: RV32IRegister) -> Self {
