@@ -1,11 +1,13 @@
 use lazy_static::lazy_static;
-use RV32FRegister::*;
 
 use super::super::super::basic::interface::parser::ParserRISCVInstOp;
-pub use super::super::super::basic::parser::oplist::RISCVOpdSet;
 use super::super::super::basic::parser::oplist::*;
 use super::super::constants::{RV32FInstruction, RV32FRegister};
 use super::lexer::RV32FOpToken;
+
+pub use super::super::super::basic::parser::oplist::RISCVOpdSet;
+
+use RV32FRegister::*;
 
 lazy_static! {
     pub static ref OP_LIST: [Vec<RISCVOpdSet>; u8::MAX as usize] = {

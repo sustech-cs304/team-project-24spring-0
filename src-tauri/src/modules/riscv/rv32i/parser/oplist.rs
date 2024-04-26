@@ -1,11 +1,13 @@
 use lazy_static::lazy_static;
-use RV32IRegister::*;
 
 use super::super::super::basic::interface::parser::ParserRISCVInstOp;
-pub use super::super::super::basic::parser::oplist::RISCVOpdSet;
 use super::super::super::basic::parser::oplist::*;
 use super::super::constants::{RV32IInstruction, RV32IRegister};
 use super::lexer::RV32IOpToken;
+
+pub use super::super::super::basic::parser::oplist::RISCVOpdSet;
+
+use RV32IRegister::*;
 
 // --------------------set-------------------------
 pub fn opd_set_load_mem(op: ParserRISCVInstOp, name: &str, unit: &str) -> Vec<RISCVOpdSet> {
