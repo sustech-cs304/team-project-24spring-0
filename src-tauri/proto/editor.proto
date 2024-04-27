@@ -3,17 +3,25 @@ package editor;
 
 service Editor {
     rpc Authorize(AuthorizeRequest) returns (AuthorizeReply);
+    rpc Disconnect(DisconnectRequest) returns (DisconnectReply);
     rpc SetCursor(SetCursorRequest) returns (SetCursorReply);
     rpc UpdateContent(UpdateContentRequest) returns (UpdateContentReply);
 }
 
 message AuthorizeRequest{
-    string passwd = 1;
+    string password = 1;
 }
 
 message AuthorizeReply{
     bool success = 1;
     string file = 2;
+}
+
+message DisconnectRequest{
+}
+
+message DisconnectReply{
+    bool success = 1;
 }
 
 message SetCursorRequest{

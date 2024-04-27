@@ -1,4 +1,3 @@
-use std::fmt::format;
 use std::path::Path;
 
 use tauri::api::dialog::{FileDialogBuilder, MessageDialogKind};
@@ -134,7 +133,8 @@ fn save_as_handler(event: WindowMenuEvent) {
 }
 
 fn share_handler(event: &WindowMenuEvent) {
-    todo!("Share file with socket");
+    //TODO
+    //event
 }
 
 fn close_handler(event: &WindowMenuEvent) {
@@ -156,7 +156,7 @@ fn exit_handler(event: &WindowMenuEvent) {
                 )
                 .as_str(),
                 |save| {
-                    if save {
+                    if save { //TODO
                     } else {
                     }
                 },

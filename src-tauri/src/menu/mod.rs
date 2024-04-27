@@ -1,5 +1,6 @@
 mod file;
 mod setting;
+mod test;
 
 use tauri::api::dialog::{MessageDialogBuilder, MessageDialogButtons, MessageDialogKind};
 use tauri::{Menu, WindowMenuEvent};
@@ -40,4 +41,4 @@ macro_rules! create_menu {
     };
 }
 
-create_menu!(file, setting);
+create_menu!(file, setting, test);
