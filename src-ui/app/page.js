@@ -15,14 +15,16 @@ export default function Home() {
     useEffect(() => {
         const unListenedFileOpen = listen('front_file_open', (event) => {
             // setOutput(prevOutput => prevOutput + '\nEvent received:\n' + JSON.stringify(event.payload));
-
+            
             state.addFile(
                 {
                     fileName: event.payload["file_path"],
                     code: event.payload["content"],
+                    original: event.payload["content"],
+                    runLines: ["r1"],
                 }
             );
-            return event.payload;
+            // return event.payload;
         });
 
 

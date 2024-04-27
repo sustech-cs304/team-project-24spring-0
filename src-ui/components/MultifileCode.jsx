@@ -8,6 +8,10 @@ export default function MultifileCode() {
     const state = useFileStore();
     const files = useFileStore(state => state.files);
 
+    const deleteFile = (fileName) => {
+        state.deleteFile(fileName);
+    }
+
     return (
         <Tabs size="small" aria-label="Files">
             {files.map(file => (
@@ -15,10 +19,13 @@ export default function MultifileCode() {
                     <div className="h-full w-full relative">
                         <Code fileName={file.fileName}/>
                         <div className='absolute right-4 top-2 flex-row gap-2'>
-                            <Button color="danger" size="sm">Delete</Button>
+                            <Button color="danger" size="sm" onClick={() => deleteFile(file.fileName)}>Delete</Button>
                         </div>
                     </div>
                 </Tab>
+                // <Tab key={file.fileName} title={file.fileName + (file.code!=file.original?' *':"")} className="h-full">
+                //     <Code fileName={file.fileName}/>
+                // </Tab>
             ))}
         </Tabs>
     );
