@@ -32,19 +32,19 @@ pub fn event_handler(event: WindowMenuEvent) {
             open_handler(event);
         }
         "save" => {
-            save_handler(event);
+            save_handler(&event);
         }
         "save_as" => {
             save_as_handler(event);
         }
         "share" => {
-            share_handler(event);
+            share_handler(&event);
         }
         "close" => {
-            close_handler(event);
+            close_handler(&event);
         }
         "exit" => {
-            exit_handler(event);
+            exit_handler(&event);
         }
         _ => {
             println!("Unknown file menu item {}", event.menu_item_id());
@@ -84,7 +84,7 @@ fn open_handler(event: WindowMenuEvent) {
     });
 }
 
-fn save_handler<'a>(event: WindowMenuEvent) {
+fn save_handler(event: &WindowMenuEvent) {
     let name = get_current_tab_name(&event);
     let tab_map = event.window().state::<TabMap>();
     let mut lock = tab_map.tabs.lock().unwrap();
@@ -133,15 +133,15 @@ fn save_as_handler(event: WindowMenuEvent) {
     });
 }
 
-fn share_handler(event: WindowMenuEvent) {
+fn share_handler(event: &WindowMenuEvent) {
     todo!("Share file with socket");
 }
 
-fn close_handler(event: WindowMenuEvent) {
+fn close_handler(event: &WindowMenuEvent) {
     //TODO: check if the file is dirty
 }
 
-fn exit_handler(event: WindowMenuEvent) {
+fn exit_handler(event: &WindowMenuEvent) {
     event.window().close().unwrap();
     let tab_map = event.window().state::<TabMap>();
     let lock = tab_map.tabs.lock().unwrap();

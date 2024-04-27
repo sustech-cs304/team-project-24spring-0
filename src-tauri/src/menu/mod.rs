@@ -1,4 +1,5 @@
-mod menu_file;
+mod file;
+mod setting;
 
 use tauri::api::dialog::{MessageDialogBuilder, MessageDialogButtons, MessageDialogKind};
 use tauri::{Menu, WindowMenuEvent};
@@ -27,8 +28,9 @@ macro_rules! create_menu {
 
         pub fn event_handler(event: WindowMenuEvent) {
             $(
-                if event.menu_item_id().starts_with(stringify!($module).strip_prefix("menu_").unwrap()) {
+                if event.menu_item_id().starts_with(stringify!($module)) {
                     $module::event_handler(event);
+                    return;
                 }
             )+
                 else {
@@ -38,4 +40,4 @@ macro_rules! create_menu {
     };
 }
 
-create_menu!(menu_file);
+create_menu!(file, setting);
