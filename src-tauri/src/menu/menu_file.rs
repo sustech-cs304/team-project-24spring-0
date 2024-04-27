@@ -1,21 +1,15 @@
 use std::path::Path;
 
-use tauri::{
-    api::dialog::{FileDialogBuilder, MessageDialogKind},
-    CustomMenuItem, Manager, Menu, Submenu, WindowMenuEvent,
-};
+use tauri::api::dialog::{FileDialogBuilder, MessageDialogKind};
+use tauri::{CustomMenuItem, Manager, Menu, Submenu, WindowMenuEvent};
 
 use super::display_alert_dialog;
-use crate::{
-    io::file_io,
-    modules::riscv::basic::interface::parser::{RISCVExtension, RISCVParser},
-    storage::rope_store,
-    types::{
-        menu_types,
-        middleware_types::{Tab, TabMap},
-    },
-    utility::state_helper::event::{get_current_tab, get_current_tab_name, set_current_tab_name},
-};
+use crate::io::file_io;
+use crate::modules::riscv::basic::interface::parser::{RISCVExtension, RISCVParser};
+use crate::storage::rope_store;
+use crate::types::menu_types;
+use crate::types::middleware_types::{Tab, TabMap};
+use crate::utility::state_helper::event::{get_current_tab_name, set_current_tab_name};
 
 pub fn new() -> Submenu {
     Submenu::new(
@@ -68,7 +62,11 @@ fn open_handler(event: WindowMenuEvent) {
                 |_| {},
             ),
             _ => {
-                let content = get_current_tab(&event).as_ref().text.to_string();
+                let name = get_current_tab_name(&event);
+                let tab_map = event.window().state::<TabMap>();
+                let lock = tab_map.tabs.lock().unwrap();
+                let tab = lock.get(&name).unwrap();
+                let content = tab.text.to_string();
                 event
                     .window()
                     .emit(
@@ -86,8 +84,10 @@ fn open_handler(event: WindowMenuEvent) {
 }
 
 fn save_handler<'a>(event: WindowMenuEvent) {
-    let tab_ptr = get_current_tab(&event);
-    let tab = tab_ptr.as_mut();
+    let name = get_current_tab_name(&event);
+    let tab_map = event.window().state::<TabMap>();
+    let mut lock = tab_map.tabs.lock().unwrap();
+    let tab = lock.get_mut(&name).unwrap();
     match tab.text.save() {
         Some(err) => {
             display_alert_dialog(
@@ -106,9 +106,13 @@ fn save_handler<'a>(event: WindowMenuEvent) {
 }
 
 fn save_as_handler(event: WindowMenuEvent) {
-    let tab_ptr = get_current_tab(&event);
-    let tab = tab_ptr.as_ref();
-    let content = tab.text.to_string();
+    let content = {
+        let name = get_current_tab_name(&event);
+        let tab_map = event.window().state::<TabMap>();
+        let lock = tab_map.tabs.lock().unwrap();
+        let tab = lock.get(&name).unwrap();
+        tab.text.to_string()
+    };
     let picker = tauri::api::dialog::FileDialogBuilder::new();
     picker.save_file(move |file_path| match file_path {
         Some(file_path) => match file_io::write_file(file_path.as_path(), &content) {

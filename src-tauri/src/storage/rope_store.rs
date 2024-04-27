@@ -1,8 +1,9 @@
+use std::path::{Path, PathBuf};
+
 use ropey::Rope;
 
 use crate::interface::storage::MFile;
 use crate::io::file_io;
-use std::path::{Path, PathBuf};
 
 pub struct Text {
     data: Box<Rope>,

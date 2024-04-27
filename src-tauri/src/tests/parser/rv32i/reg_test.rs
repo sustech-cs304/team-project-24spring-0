@@ -1,6 +1,6 @@
-use crate::modules::riscv::basic::interface::parser::*;
-use crate::modules::riscv::rv32i::constants::*;
 use std::str::FromStr;
+
+use crate::modules::riscv::basic::interface::parser::*;
 
 static VALID_REG_NAME: [&'static str; 65] = [
     "zero", "ra", "sp", "gp", "tp", "t0", "t1", "t2", "s0", "s1", "a0", "a1", "a2", "a3", "a4",

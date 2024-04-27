@@ -1,9 +1,11 @@
+use std::collections::HashMap;
+use std::fmt::Display;
+
+use logos::Logos;
+
 use super::super::interface::parser::{ParserRISCVCsr, ParserRISCVRegister};
 use super::oplist::RISCVOpdSet;
 use crate::interface::parser::{ParserError, Pos};
-use logos::Logos;
-use std::collections::HashMap;
-use std::fmt::Display;
 
 #[derive(Debug, PartialEq, Clone, Default)]
 pub enum LexingError {
@@ -17,6 +19,7 @@ pub enum Symbol<'a> {
     Label(&'a str),
     Op(RISCVOpToken),
     Reg(ParserRISCVRegister),
+    Csr(ParserRISCVCsr),
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -103,7 +106,6 @@ pub enum RISCVToken<'a> {
     Symbol(Symbol<'a>),
     #[regex(r"%[a-zA-Z_][a-zA-Z0-9_]*")]
     MacroParameter(&'a str),
-    Csr(ParserRISCVCsr),
     #[token(".align", priority = 10)]
     Align,
     #[token(".ascii", priority = 10)]
