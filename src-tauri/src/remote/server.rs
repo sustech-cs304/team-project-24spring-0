@@ -1,41 +1,53 @@
 use tonic::transport::Server;
 use tonic::{Request, Response, Status};
 
-use hello_world::greeter_server::{Greeter, GreeterServer};
-use hello_world::{HelloReply, HelloRequest};
+use editor_rpc::editor_server::{Editor, EditorServer};
+use editor_rpc::{AuthorizeReply, AuthorizeRequest, SetCursorReply, SetCursorRequest};
 
-pub mod hello_world {
-    tonic::include_proto!("foo");
+pub mod editor_rpc {
+    tonic::include_proto!("editor");
 }
 
 #[derive(Debug, Default)]
-pub struct MyGreeter {}
+pub struct ServerImpl {}
 
 #[tonic::async_trait]
-impl Greeter for MyGreeter {
-    async fn say_hello(
+impl Editor for ServerImpl {
+    async fn authorize(
         &self,
-        request: Request<HelloRequest>,
-    ) -> Result<Response<HelloReply>, Status> {
-        println!("Got a request: {:?}", request);
+        request: Request<AuthorizeRequest>,
+    ) -> Result<Response<AuthorizeReply>, Status> {
+        Ok(Response::new(AuthorizeReply {
+            success: true,
+            file: "foo".to_string(),
+        }))
+    }
 
-        let reply = hello_world::HelloReply {
-            message: format!("Hello {}!", request.into_inner().name),
-        };
+    async fn set_cursor(
+        &self,
+        request: Request<editor_rpc::SetCursorRequest>,
+    ) -> Result<Response<editor_rpc::SetCursorReply>, Status> {
+        Ok(Response::new(editor_rpc::SetCursorReply { success: true }))
+    }
 
-        Ok(Response::new(reply))
+    async fn update_content(
+        &self,
+        request: Request<editor_rpc::UpdateContentRequest>,
+    ) -> Result<Response<editor_rpc::UpdateContentReply>, Status> {
+        Ok(Response::new(editor_rpc::UpdateContentReply {
+            success: true,
+            content: "foo".to_string(),
+        }))
     }
 }
 
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let addr = "[::1]:50051".parse()?;
-    let greeter = MyGreeter::default();
+async fn foo(addr: &str, port: u16) -> Result<(), Box<dyn std::error::Error>> {
+    let addr = format!("{}:{}", addr, port).parse()?;
+    let handler = ServerImpl::default();
 
     Server::builder()
-        .add_service(GreeterServer::new(greeter))
+        .add_service(EditorServer::new(handler))
         .serve(addr)
         .await?;
-
     Ok(())
 }

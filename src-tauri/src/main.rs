@@ -49,8 +49,10 @@ fn main() {
             tab_management::write_tab,
             frontend_api::assemble,
             frontend_api::debug,
-            frontend_api::setBreakPoint,
-            frontend_api::removeBreakPoint,
+            frontend_api::set_breakpoint,
+            frontend_api::remove_breakpoint,
+            //frontend_api::syscall_input,
+            frontend_api::update_assembler_settings,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

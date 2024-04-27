@@ -1,0 +1,37 @@
+syntax = "proto3";
+package editor;
+
+service Editor {
+    rpc Authorize(AuthorizeRequest) returns (AuthorizeReply);
+    rpc SetCursor(SetCursorRequest) returns (SetCursorReply);
+    rpc UpdateContent(UpdateContentRequest) returns (UpdateContentReply);
+}
+
+message AuthorizeRequest{
+    string passwd = 1;
+}
+
+message AuthorizeReply{
+    bool success = 1;
+    string file = 2;
+}
+
+message SetCursorRequest{
+    string file = 1;
+    int32 line = 2;
+    int32 column = 3;
+}
+
+message SetCursorReply{
+    bool success = 1;
+}
+
+message UpdateContentRequest{
+    string file = 1;
+    string content = 2;
+}
+
+message UpdateContentReply{
+    bool success = 1;
+    string content = 2;
+}
