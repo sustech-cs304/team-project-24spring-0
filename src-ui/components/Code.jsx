@@ -22,22 +22,25 @@ export default function Code({fileName}) {
                         </CardBody>
                     </Card>
                 </Tab>
-                    <Tab key="excecute" title="Execute" className="h-full">
+                    <Tab key="excecute" title="Execute" className="h-full w-full">
                     <Card className='h-full'>
                         <CardBody className="h-full flow grid-flow-row gap-4">
-                            <Table aria-label="Example static collection table" disallowEmptySelection selectionMode="single" className='row-span-1' color="success" defaultSelectedKeys={["r1"]}>
+                            <Table aria-label="Example static collection table" className='row-span-1' selectionMode="multiple" color="warning" defaultSelectedKeys={["r1"]}>
                                 <TableHeader>
                                     <TableColumn>Line</TableColumn>
                                     <TableColumn>Code</TableColumn>
+                                    <TableColumn>Run</TableColumn>
                                 </TableHeader>
                                 <TableBody>
                                     <TableRow key="r1">
                                         <TableCell>1</TableCell>
                                         <TableCell>li x1, 0</TableCell>
+                                        <TableCell>←</TableCell>
                                     </TableRow>
                                     <TableRow key="r2" >
                                         <TableCell>2</TableCell>
                                         <TableCell>add x2, x1, x3 </TableCell>
+                                        <TableCell></TableCell>
                                     </TableRow>
                                 </TableBody>
                             </Table>

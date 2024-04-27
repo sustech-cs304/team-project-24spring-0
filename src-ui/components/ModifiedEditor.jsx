@@ -52,7 +52,7 @@ export default function ModifiedEditor({fileName}) {
             language='javascript' 
             className='overflow-hidden h-full'
             value={file.code}
-            onChange={(value) => state.updateFile(fileName, value)}
+            onChange={(value) => {state.updateFile(fileName, value, file.original, ["r1"]);}}
             />
             <div className='absolute right-2 top-0 flex-row gap-2'>
                 <button className='bg-gray-100 rounded-2xl hover:bg-gray-200'>
