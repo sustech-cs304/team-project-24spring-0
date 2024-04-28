@@ -1,13 +1,16 @@
+use std::collections::{BTreeMap, HashMap};
+
+use logos::Logos;
+
 use super::super::interface::parser::*;
 use super::label::LabelData;
-use super::lexer::{LexerIter, RISCVOpTokenTrait, RISCVToken, Symbol};
+use super::lexer::{LexerIter, RISCVOpToken, RISCVToken, Symbol};
 use super::oplist::{RISCVExpectImm, RISCVExpectToken, RISCVOpdSetAim, RISCVOpdSetAimOpd};
 use super::r#macro::MacroData;
 use crate::utility::ptr::Ptr;
-use logos::Logos;
-use std::collections::BTreeMap;
 
 pub struct RISCVParser {
+    symbol_list: HashMap<&'static str, Symbol<'static>>,
     macro_list: BTreeMap<String, MacroData>,
     label_list: BTreeMap<String, LabelData>,
 }
@@ -19,13 +22,15 @@ impl Parser<RISCV> for RISCVParser {
         let status_ptr = Ptr::new(&_status);
         let status = status_ptr.as_mut();
 
-        while let Some(token) = status.iter.next()? {
+        while let Some(token) = status.iter.next(&self.symbol_list)? {
             self.parse_token(status_ptr, token)?;
         }
         self.dispose_label_list()?;
         Ok(_status.result)
     }
 }
+
+pub type RISCVSymbolList = Vec<&'static Vec<(&'static str, Symbol<'static>)>>;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
 pub(super) enum RISCVDataType {
@@ -50,6 +55,7 @@ pub(super) enum RISCVSegment {
 pub(super) struct RISCVParserStatus<'a> {
     segment: RISCVSegment,
     iter: LexerIter<'a>,
+    #[allow(unused)]
     macro_def: Option<MacroData>,
     label_def: Option<String>,
     data_seg_size: usize,
@@ -155,10 +161,23 @@ macro_rules! load_data_helper_string {
 }
 
 impl RISCVParser {
-    pub fn new() -> Self {
-        RISCVParser {
+    pub fn new(ext: &Vec<RISCVExtension>) -> Self {
+        let mut res = RISCVParser {
+            symbol_list: HashMap::new(),
             macro_list: BTreeMap::new(),
             label_list: BTreeMap::new(),
+        };
+        for ext in ext {
+            res.import_extension(ext.get_symbol_parser());
+        }
+        res
+    }
+
+    pub fn import_extension(&mut self, symbol_list: &RISCVSymbolList) {
+        for &set in symbol_list {
+            for (key, value) in set {
+                self.symbol_list.insert(key, *value);
+            }
         }
     }
 
@@ -214,6 +233,14 @@ impl RISCVParser {
                                 .unwrap()
                                 .refs
                                 .push(Ptr::new(lbl));
+                        } else if let ParserRISCVInstOpd::Imm(ParserRISCVImmediate::Lbl((lbl, _))) =
+                            &inst.opd[basic_opd_idx]
+                        {
+                            label_list
+                                .get_mut(&stash_label_name[stash_opd_idx.idx])
+                                .unwrap()
+                                .refs
+                                .push(Ptr::new(lbl));
                         }
                     }
                 }
@@ -259,7 +286,7 @@ impl RISCVParser {
     fn parse_op(
         &mut self,
         status_ptr: Ptr<RISCVParserStatus>,
-        op: &dyn RISCVOpTokenTrait,
+        op: RISCVOpToken,
     ) -> Result<(), Vec<ParserError>> {
         let status = status_ptr.as_mut();
 
@@ -269,7 +296,7 @@ impl RISCVParser {
                 .get_error("operator in data segment".to_string()));
         }
 
-        let token_sets = op.get_opd_set();
+        let token_sets = (op.get_opd_set)(op.val);
         let token_set_len = token_sets.len();
 
         if token_set_len == 0 {
@@ -280,10 +307,9 @@ impl RISCVParser {
         let mut token_set_state = vec![1u8; token_set_len]; // 0:failed, 1:active, 2:success
         let mut token_idx = 0;
         let op_char_pos = status.iter.pos();
-        let mut stash_opd = Vec::<Option<ParserRISCVInstOpd>>::new();
-        let mut stash_label_name = Vec::<String>::new();
+        let mut stash_opd = Vec::<Option<ParserRISCVInstOpd>>::with_capacity(10);
+        let mut stash_label_name = Vec::<String>::with_capacity(10);
         let now_line = status.iter.line();
-        let mut term_by = 0; // 0:no next 1:newline 2:no valid set
 
         for token_set in token_sets {
             if token_set.tokens.is_empty() {
@@ -291,9 +317,9 @@ impl RISCVParser {
             }
         }
 
-        while let Some(token) = status.iter.next()? {
+        while let Some(token) = status.iter.next(&self.symbol_list)? {
+            // if newline, break
             if matches!(token, RISCVToken::Newline) {
-                term_by = 1;
                 break;
             }
             let mut rest = token_set_len;
@@ -310,7 +336,7 @@ impl RISCVParser {
                     LParen => type_fit = matches!(token, RISCVToken::LParen),
                     RParen => type_fit = matches!(token, RISCVToken::RParen),
                     Reg => type_fit = matches!(token, RISCVToken::Symbol(Symbol::Reg(_))),
-                    Csr => type_fit = matches!(token, RISCVToken::Csr(_)),
+                    Csr => type_fit = matches!(token, RISCVToken::Symbol(Symbol::Csr(_))),
                     Imm(imm_t) => match imm_t {
                         U4 => type_fit = Self::in_bound_int(&token, 0, 0xf),
                         U5 => type_fit = Self::in_bound_int(&token, 0, 0x1f),
@@ -329,9 +355,8 @@ impl RISCVParser {
                     token_set_state[i] = 2;
                 }
             }
-            // if no valid operand set, return error
+            // if no valid operand set, break
             if rest == 0 {
-                term_by = 2;
                 break;
             }
             // stash operand
@@ -341,7 +366,9 @@ impl RISCVParser {
                     stash_label_name.push(String::new());
                 }
                 RISCVToken::ImmediateInt(val) => {
-                    stash_opd.push(Some(ParserRISCVInstOpd::Imm(val as ParserRISCVImmediate)));
+                    stash_opd.push(Some(ParserRISCVInstOpd::Imm(ParserRISCVImmediate::Imm(
+                        val as RISCVImmediate,
+                    ))));
                     stash_label_name.push(String::new());
                 }
                 RISCVToken::Symbol(Symbol::Label(lbl)) => {
@@ -350,6 +377,10 @@ impl RISCVParser {
                     ))));
                     stash_label_name.push(lbl.to_string());
                 }
+                RISCVToken::Symbol(Symbol::Csr(_)) => {
+                    // TODO: csr
+                    unimplemented!("csr not implemented")
+                }
                 _ => {
                     stash_opd.push(None);
                     stash_label_name.push(String::new());
@@ -357,78 +388,62 @@ impl RISCVParser {
             }
             token_idx += 1;
         }
-        match term_by {
-            1 => {
-                let mut success_set_idx = None;
-                // find the first success set
-                for idx in 0..token_set_len {
-                    if token_set_state[idx] == 2 {
-                        success_set_idx = Some(idx);
-                        break;
-                    }
+        let mut success_set_idx = None;
+        // find the first success set
+        for idx in 0..token_set_len {
+            if token_set_state[idx] == 2 {
+                success_set_idx = Some(idx);
+                break;
+            }
+        }
+        if let Some(success_set_idx) = success_set_idx {
+            let success_set = &token_sets[success_set_idx];
+            // create label in label_list if not exists
+            for label_name in &stash_label_name {
+                if label_name.is_empty() {
+                    continue;
                 }
-                if let Some(success_set_idx) = success_set_idx {
-                    let success_set = &token_sets[success_set_idx];
-                    // create label in label_list if not exists
-                    for label_name in &stash_label_name {
-                        if label_name.is_empty() {
-                            continue;
-                        }
-                        if !self.label_list.contains_key(label_name) {
-                            self.label_list.insert(
-                                label_name.clone(),
-                                LabelData {
-                                    name: label_name.clone(),
-                                    def: None,
-                                    refs: Vec::new(),
-                                },
-                            );
-                        }
-                    }
-                    // check if a label_def exists
-                    if let Some(label_name) = &status.label_def {
-                        self.label_list.get_mut(label_name).unwrap().def =
-                            Some(ParserRISCVLabel::Text(status.result.text.len()));
-                        status.label_def = None;
-                    }
-                    // add basic instruction to status.result
-                    for aim_basic in &success_set.aim_basics {
-                        // add instruction
-                        Self::load_to_result(&mut status.result, now_line, &stash_opd, aim_basic);
-                        // update label_list if has label
-                        Self::update_label_ref(
-                            &mut status.result,
-                            &mut self.label_list,
-                            aim_basic,
-                            &stash_opd,
-                            &stash_label_name,
-                        );
-                    }
-                    Ok(())
-                } else {
-                    let mut msg = vec!["unmatched operands.\ncandidates are:"];
-                    for opd_set in token_sets {
-                        msg.push("\n");
-                        msg.push(&opd_set.hint);
-                    }
-                    Err(vec![ParserError {
-                        pos: op_char_pos,
-                        msg: msg.concat(),
-                    }])
+                if !self.label_list.contains_key(label_name) {
+                    self.label_list.insert(
+                        label_name.clone(),
+                        LabelData {
+                            name: label_name.clone(),
+                            def: None,
+                            refs: Vec::new(),
+                        },
+                    );
                 }
             }
-            2 => {
-                let mut msg = vec!["unmatched operands.\ncandidates are:"];
-                for opd_set in token_sets {
-                    msg.push("\n");
-                    msg.push(&opd_set.hint);
-                }
-                Err(vec![ParserError {
-                    pos: op_char_pos,
-                    msg: msg.concat(),
-                }])
+            // check if a label_def exists
+            if let Some(label_name) = &status.label_def {
+                self.label_list.get_mut(label_name).unwrap().def =
+                    Some(ParserRISCVLabel::Text(status.result.text.len()));
+                status.label_def = None;
             }
-            _ => Err(status.iter.get_error("too few operands".to_string())),
+            // add basic instruction to status.result
+            for aim_basic in &success_set.aim_basics {
+                // add instruction
+                Self::load_to_result(&mut status.result, now_line, &stash_opd, aim_basic);
+                // update label_list if has label
+                Self::update_label_ref(
+                    &mut status.result,
+                    &mut self.label_list,
+                    aim_basic,
+                    &stash_opd,
+                    &stash_label_name,
+                );
+            }
+            Ok(())
+        } else {
+            let mut msg = vec!["unmatched operands.\ncandidates are:"];
+            for opd_set in token_sets {
+                msg.push("\n");
+                msg.push(&opd_set.hint);
+            }
+            Err(vec![ParserError {
+                pos: op_char_pos,
+                msg: msg.concat(),
+            }])
         }
     }
 
@@ -451,7 +466,7 @@ impl RISCVParser {
             RISCVToken::Symbol(symbol) => match symbol {
                 Symbol::Label(value) => {
                     let pos = status.iter.pos();
-                    let next_token = status.iter.next()?;
+                    let next_token = status.iter.next(&self.symbol_list)?;
                     if status.label_def.is_some()
                         || next_token.is_none()
                         || !matches!(next_token.unwrap(), RISCVToken::Colon)
@@ -476,13 +491,14 @@ impl RISCVParser {
                     Ok(())
                 }
                 Symbol::Op(op) => self.parse_op(status_ptr, op),
-                Symbol::Reg(_) => Err(status.iter.get_error("unexpected symbol".to_string())),
+                Symbol::Reg(_) => Err(status.iter.get_error("unexpected register".to_string())),
+                Symbol::Csr(_) => Err(status.iter.get_error("unexpected csr".to_string())),
             },
-            RISCVToken::MacroParameter(_) | RISCVToken::Csr(_) => {
+            RISCVToken::MacroParameter(_) => {
                 Err(status.iter.get_error("unexpected symbol".to_string()))
             }
             RISCVToken::Align => {
-                let next_token = status.iter.next()?;
+                let next_token = status.iter.next(&self.symbol_list)?;
                 match next_token {
                     Some(RISCVToken::ImmediateInt(val)) => {
                         if val >= 0 && val <= 3 {
@@ -531,7 +547,7 @@ impl RISCVParser {
             RISCVToken::MacroDef => Ok(()),
             RISCVToken::Macro => Err(status.iter.get_error("missing macro name".to_string())),
             RISCVToken::Section => {
-                let next_token = status.iter.next()?;
+                let next_token = status.iter.next(&self.symbol_list)?;
                 match next_token {
                     Some(RISCVToken::Symbol(Symbol::Label(_)))
                     | Some(RISCVToken::ImmediateString(_)) => Ok(()),
@@ -545,7 +561,7 @@ impl RISCVParser {
                         .iter
                         .get_error("invalid directive in text segment".to_string()));
                 }
-                if let Some(RISCVToken::ImmediateInt(val)) = status.iter.next()? {
+                if let Some(RISCVToken::ImmediateInt(val)) = status.iter.next(&self.symbol_list)? {
                     if val < 0 {
                         return Err(status
                             .iter

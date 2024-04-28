@@ -1,5 +1,7 @@
-use crate::utility::any::AnyU8;
+use super::super::parser::parser::RISCVSymbolList;
 
+pub use super::super::super::rv32f::constants::*;
+pub use super::super::super::rv32i::constants::*;
 pub use super::super::parser::parser::RISCVParser;
 pub use crate::interface::parser::*;
 
@@ -9,17 +11,35 @@ pub const DATA_CHUNK_RECOMMEND_SIZE: usize = 0x7ff;
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct RISCV;
 
-#[derive(Clone, Copy, PartialEq, Eq)]
-pub struct ParserRISCVInstOp(AnyU8, &'static str);
+pub enum RISCVExtension {
+    RV32I,
+}
 
-#[derive(Clone, Copy, PartialEq, Eq)]
-pub struct ParserRISCVRegister(AnyU8, &'static str);
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ParserRISCVInstOp {
+    RV32I(RV32IInstruction),
+    RV32F(RV32FInstruction),
+}
 
-pub type ParserRISCVImmediate = super::super::super::rv32i::constants::RISCVImmediate;
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ParserRISCVRegister {
+    RV32I(RV32IRegister),
+    RV32F(RV32FRegister),
+}
 
-pub type ParserRISCVCsr = super::super::super::rv32i::constants::RISCVCsr;
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ParserRISCVImmediate {
+    Imm(RISCVImmediate),
+    Lbl((ParserRISCVLabel, ParserRISCVLabelHandler)),
+}
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ParserRISCVCsr {
+    RV32I(RV32ICsr),
+    RV32F(RV32FCsr),
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ParserRISCVInstOpd {
     Reg(ParserRISCVRegister),
     Imm(ParserRISCVImmediate),
@@ -33,11 +53,12 @@ pub enum ParserRISCVLabel {
     Unknown(Pos),         // the label position in the code (mustn't exist in the output)
 }
 
-pub trait ParserRISCVInstOpTrait: Clone + Copy + std::fmt::Debug + PartialEq + Eq {
-    fn get_name(&self) -> &'static str;
-}
-pub trait ParserRISCVRegisterTrait: Clone + Copy + std::fmt::Debug + PartialEq + Eq {
-    fn get_name(&self) -> &'static str;
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ParserRISCVLabelHandler {
+    Low,
+    High,
+    DeltaHigh,
+    DeltaMinusOneLow,
 }
 
 impl ParserInstSet for RISCV {
@@ -47,58 +68,10 @@ impl ParserInstSet for RISCV {
 
 // ------------------------- Implementations -------------------------
 
-impl<T: ParserRISCVInstOpTrait + std::fmt::Debug + 'static> From<T> for ParserRISCVInstOp {
-    fn from(op: T) -> Self {
-        ParserRISCVInstOp(AnyU8::from(op), op.get_name())
-    }
-}
-
-impl ParserRISCVInstOp {
-    pub fn is<T: ParserRISCVInstOpTrait>(&self) -> bool
-    where
-        T: 'static,
-    {
-        self.0.is::<T>()
-    }
-
-    pub fn to<T: ParserRISCVInstOpTrait>(&self) -> Option<T>
-    where
-        T: 'static,
-    {
-        self.0.to::<T>()
-    }
-}
-
-impl<T: ParserRISCVRegisterTrait + 'static> From<T> for ParserRISCVRegister {
-    fn from(reg: T) -> Self {
-        ParserRISCVRegister(AnyU8::from(reg), reg.get_name())
-    }
-}
-
-impl ParserRISCVRegister {
-    pub fn is<T: ParserRISCVRegisterTrait>(&self) -> bool
-    where
-        T: 'static,
-    {
-        self.0.is::<T>()
-    }
-
-    pub fn to<T: ParserRISCVRegisterTrait>(&self) -> Option<T>
-    where
-        T: 'static,
-    {
-        self.0.to::<T>()
-    }
-}
-
-impl std::fmt::Debug for ParserRISCVInstOp {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(self.1)
-    }
-}
-
-impl std::fmt::Debug for ParserRISCVRegister {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(self.1)
+impl RISCVExtension {
+    pub fn get_symbol_parser(&self) -> &RISCVSymbolList {
+        match self {
+            RISCVExtension::RV32I => &super::super::super::rv32i::parser::parser::RV32I_SYMBOL_LIST,
+        }
     }
 }

@@ -6,7 +6,7 @@
     "distDir": "../src-ui/out"
   },
   "package": {
-    "productName": "backend",
+    "productName": "Moras",
     "version": "0.1.0"
   },
   "tauri": {

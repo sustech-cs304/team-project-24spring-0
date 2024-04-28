@@ -1,19 +1,24 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
-
-mod assembler;
 mod interface;
 mod io;
 mod menu;
 mod modules;
 mod simulator;
 mod storage;
-mod test;
+mod tests;
 mod types;
 mod utility;
 
-use modules::riscv;
+use std::sync::{Arc, Mutex};
+
+use modules::riscv::middleware::*;
+use once_cell::sync::Lazy;
+use tauri::{AppHandle, Manager};
 use types::middleware_types;
+
+static APP_HANDLE: Lazy<Arc<Mutex<Option<AppHandle>>>> = Lazy::new(|| Arc::new(Mutex::new(None)));
+mod assembler;
 
 fn main() {
     tauri::Builder::default()
@@ -26,22 +31,22 @@ fn main() {
             name: Default::default(),
         })
         .setup(|app| {
-            //let tab_map = app.state::<middleware_types::TabMap>();
-            //tab_map
-            //.tabs
-            //.lock()
-            //.unwrap()
-            //.insert("foo", middleware_types::Tab::new("foo"));
+            let app_handle = app.app_handle();
+            let mut global_handle = APP_HANDLE.lock().unwrap();
+            *global_handle = Some(app_handle);
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
-            riscv::middleware::tab_management::create_tab,
-            riscv::middleware::tab_management::close_tab,
-            riscv::middleware::tab_management::change_current_tab,
-            riscv::middleware::tab_management::update_tab,
-            riscv::middleware::tab_management::read_tab,
-            riscv::middleware::tab_management::write_tab,
-            riscv::middleware::frontend_api::assemble,
+            tab_management::create_tab,
+            tab_management::close_tab,
+            tab_management::change_current_tab,
+            tab_management::update_tab,
+            tab_management::read_tab,
+            tab_management::write_tab,
+            frontend_api::assemble,
+            frontend_api::debug,
+            frontend_api::setBreakPoint,
+            frontend_api::removeBreakPoint,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

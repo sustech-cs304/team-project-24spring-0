@@ -1,9 +1,10 @@
 name: Moras CI
 
 on:
-  push:
-    branches-ignore:
+  pull_request:
+    branches:
       - "main"
+    types: [opened, synchronize, reopened, ready_for_review]
   merge_group:
     type: ["checks_requested"]
 
@@ -16,6 +17,13 @@ jobs:
     steps:
 
       - uses: actions/checkout@v4
+
+      - name: Rust nightly with rustfmt
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+          components: rustfmt
 
       - name: Format check
         working-directory: ./src-tauri
