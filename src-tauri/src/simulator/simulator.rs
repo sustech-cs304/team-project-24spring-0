@@ -1,6 +1,7 @@
 use crate::interface::assembler::Instruction;
 use crate::interface::assembler::Operand;
 use crate::interface::simulator::Simulator;
+use crate::types::middleware_types::SyscallDataType;
 use crate::simulator::cpu::CPU;
 
 struct RiscVSimulator {
@@ -11,7 +12,7 @@ struct RiscVSimulator {
     cpu: CPU,
 }
 
-impl<EXR, SYSC, REG, ERR> Simulator<EXR, SYSC, REG, ERR> for RiscVSimulator {
+impl<EXR, REG, ERR> Simulator<EXR, REG, ERR> for RiscVSimulator {
     fn load_inst(&mut self, ir: &EXR) -> Result<bool, ERR> {
         unimplemented!()
     }
@@ -40,7 +41,7 @@ impl<EXR, SYSC, REG, ERR> Simulator<EXR, SYSC, REG, ERR> for RiscVSimulator {
         unimplemented!();
     }
 
-    fn syscall_input(&mut self, input: SYSC) {
+    fn syscall_input(&mut self, input: SyscallDataType) {
         unimplemented!();
     }
 }

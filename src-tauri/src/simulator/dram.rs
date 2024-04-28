@@ -19,7 +19,7 @@ impl Dram {
             8 => Ok(self.load8(addr)),
             16 => Ok(self.load16(addr)),
             32 => Ok(self.load32(addr)),
-            64 => Ok(self.load64(addr)),
+            //64 => Ok(self.load64(addr)),
             _ => Err(()),
         }
     }
@@ -45,18 +45,18 @@ impl Dram {
             | ((self.dram[index + 3] as u32) << 24);
     }
 
-    /// Load 8 bytes from the little-endian dram.
-    fn load64(&self, addr: u32) -> u32 {
-        let index = (addr - DRAM_BASE) as usize;
-        return (self.dram[index] as u32)
-            | ((self.dram[index + 1] as u32) << 8)
-            | ((self.dram[index + 2] as u32) << 16)
-            | ((self.dram[index + 3] as u32) << 24)
-            | ((self.dram[index + 4] as u32) << 32)
-            | ((self.dram[index + 5] as u32) << 40)
-            | ((self.dram[index + 6] as u32) << 48)
-            | ((self.dram[index + 7] as u32) << 56);
-    }
+    // Load 8 bytes from the little-endian dram
+    // fn load64(&self, addr: u32) -> u32 {
+    //     let index = (addr - DRAM_BASE) as usize;
+    //     return (self.dram[index] as u32)
+    //         | ((self.dram[index + 1] as u32) << 8)
+    //         | ((self.dram[index + 2] as u32) << 16)
+    //         | ((self.dram[index + 3] as u32) << 24)
+    //         | ((self.dram[index + 4] as u32) << 32)
+    //         | ((self.dram[index + 5] as u32) << 40)
+    //         | ((self.dram[index + 6] as u32) << 48)
+    //         | ((self.dram[index + 7] as u32) << 56);
+    // }
 
     // Store bytes to the little-endiam dram.
     // pub fn store(&mut self, addr: u64, size: u64, value: u64) -> Result<(), ()> {
