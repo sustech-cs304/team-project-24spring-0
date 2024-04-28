@@ -1,9 +1,7 @@
 use crate::interface::assembler::Instruction;
 use crate::interface::assembler::Operand;
-use crate::simulator::dram::Dram;
 use crate::modules::riscv::rv32i::constants::{RV32IInstruction, RV32IRegister};
-
-
+use crate::simulator::dram::Dram;
 
 pub struct CPU {
     dram: Dram,
@@ -28,8 +26,7 @@ impl CPU {
         Ok(true)
     }
 
-
-    pub fn execute(&mut self, instruction:Instruction) -> Result<(), ()> {
+    pub fn execute(&mut self, instruction: Instruction) -> Result<(), ()> {
         let opcode = instruction.op;
         let mut imm: i32 = 0;
         let mut rd: usize = 0;
@@ -56,30 +53,56 @@ impl CPU {
                 }
             }
         }
-        
+
         match opcode {
             // R-type
-            RV32IInstruction::Add | RV32IInstruction::Sub | RV32IInstruction::Xor | RV32IInstruction::Or | RV32IInstruction::And | RV32IInstruction::Sll | RV32IInstruction::Srl | RV32IInstruction::Sra | RV32IInstruction::Slt | RV32IInstruction::Sltu => {
+            RV32IInstruction::Add
+            | RV32IInstruction::Sub
+            | RV32IInstruction::Xor
+            | RV32IInstruction::Or
+            | RV32IInstruction::And
+            | RV32IInstruction::Sll
+            | RV32IInstruction::Srl
+            | RV32IInstruction::Sra
+            | RV32IInstruction::Slt
+            | RV32IInstruction::Sltu => {
                 rd = temp0.unwrap();
                 rs1 = temp1.unwrap();
                 rs2 = temp2.unwrap();
             }
             // B-type
-            RV32IInstruction::Beq | RV32IInstruction::Bne | RV32IInstruction::Blt | RV32IInstruction::Bge | RV32IInstruction::Bltu | RV32IInstruction::Bgeu => {
+            RV32IInstruction::Beq
+            | RV32IInstruction::Bne
+            | RV32IInstruction::Blt
+            | RV32IInstruction::Bge
+            | RV32IInstruction::Bltu
+            | RV32IInstruction::Bgeu => {
                 rs1 = temp0.unwrap();
                 rs2 = temp1.unwrap();
                 imm = imm_temp.unwrap();
             }
-            
+
             // I-type
-            RV32IInstruction::Addi | RV32IInstruction::Slti | RV32IInstruction::Sltiu | RV32IInstruction::Xori | RV32IInstruction::Ori | RV32IInstruction::Andi | RV32IInstruction::Slli | RV32IInstruction::Srli | RV32IInstruction::Srai 
-            | RV32IInstruction::Jalr=> {
+            RV32IInstruction::Addi
+            | RV32IInstruction::Slti
+            | RV32IInstruction::Sltiu
+            | RV32IInstruction::Xori
+            | RV32IInstruction::Ori
+            | RV32IInstruction::Andi
+            | RV32IInstruction::Slli
+            | RV32IInstruction::Srli
+            | RV32IInstruction::Srai
+            | RV32IInstruction::Jalr => {
                 rd = temp0.unwrap();
                 rs1 = temp1.unwrap();
                 imm = imm_temp.unwrap();
             }
-            // 
-            RV32IInstruction::Lb | RV32IInstruction::Lh | RV32IInstruction::Lw | RV32IInstruction::Lbu | RV32IInstruction::Lhu => {
+            //
+            RV32IInstruction::Lb
+            | RV32IInstruction::Lh
+            | RV32IInstruction::Lw
+            | RV32IInstruction::Lbu
+            | RV32IInstruction::Lhu => {
                 rd = temp0.unwrap();
                 imm = imm_temp.unwrap();
             }
@@ -98,7 +121,6 @@ impl CPU {
             }
         }
 
-        
         match opcode {
             RV32IInstruction::Add => {
                 self.registers[rd] = self.registers[rs1] + self.registers[rs2];
@@ -122,13 +144,22 @@ impl CPU {
                 self.registers[rd] = self.registers[rs1] >> self.registers[rs2];
             }
             RV32IInstruction::Sra => {
-                self.registers[rd] = ((self.registers[rs1] as i32) >> self.registers[rs2])as u32;
+                self.registers[rd] = ((self.registers[rs1] as i32) >> self.registers[rs2]) as u32;
             }
             RV32IInstruction::Slt => {
-                self.registers[rd] = if (self.registers[rs1] as i32) < (self.registers[rs2] as i32) { 1 } else { 0 };
+                self.registers[rd] = if (self.registers[rs1] as i32) < (self.registers[rs2] as i32)
+                {
+                    1
+                } else {
+                    0
+                };
             }
             RV32IInstruction::Sltu => {
-                self.registers[rd] = if self.registers[rs1] < self.registers[rs2] { 1 } else { 0 };
+                self.registers[rd] = if self.registers[rs1] < self.registers[rs2] {
+                    1
+                } else {
+                    0
+                };
             }
             RV32IInstruction::Beq => {
                 if self.registers[rs1] == self.registers[rs2] {
@@ -166,22 +197,30 @@ impl CPU {
                 self.pc = (self.pc as i32 + imm) as u32;
             }
             RV32IInstruction::Addi => {
-                self.registers[rd] = (self.registers[rs1]as i32).wrapping_add(imm as i32) as u32;
+                self.registers[rd] = (self.registers[rs1] as i32).wrapping_add(imm as i32) as u32;
             }
             RV32IInstruction::Xori => {
-                self.registers[rd] = ((self.registers[rs1]as i32) ^ (imm as i32)) as u32;
+                self.registers[rd] = ((self.registers[rs1] as i32) ^ (imm as i32)) as u32;
             }
             RV32IInstruction::Ori => {
-                self.registers[rd] = ((self.registers[rs1]as i32) | (imm as i32)) as u32;
+                self.registers[rd] = ((self.registers[rs1] as i32) | (imm as i32)) as u32;
             }
             RV32IInstruction::Andi => {
-                self.registers[rd] = ((self.registers[rs1]as i32) & (imm as i32)) as u32;
+                self.registers[rd] = ((self.registers[rs1] as i32) & (imm as i32)) as u32;
             }
             RV32IInstruction::Slti => {
-                self.registers[rd] = if (self.registers[rs1] as i32) < (imm as i32) { 1 } else { 0 };
+                self.registers[rd] = if (self.registers[rs1] as i32) < (imm as i32) {
+                    1
+                } else {
+                    0
+                };
             }
             RV32IInstruction::Sltiu => {
-                self.registers[rd] = if self.registers[rs1] < (imm as u32) { 1 } else { 0 };
+                self.registers[rd] = if self.registers[rs1] < (imm as u32) {
+                    1
+                } else {
+                    0
+                };
             }
             RV32IInstruction::Slli => {
                 let shamt = imm & 0b11111;
@@ -193,8 +232,8 @@ impl CPU {
             }
             RV32IInstruction::Srai => {
                 let shamt = imm & 0b11111;
-                self.registers[rd] = CPU::sign_extend(self.registers[rs1]>>shamt, 32- shamt as u32);
-
+                self.registers[rd] =
+                    CPU::sign_extend(self.registers[rs1] >> shamt, 32 - shamt as u32);
             }
             RV32IInstruction::Lb => {
                 let addr = (self.registers[rs1] as i32 + imm) as u32;
@@ -250,7 +289,7 @@ impl CPU {
     pub fn load(&mut self, addr: u32, size: u32) -> Result<u32, ()> {
         self.dram.load(addr, size)
     }
-    
+
     fn register_name_to_u32(&mut self, register: RV32IRegister) -> u32 {
         match register {
             RV32IRegister::Zero => 0,
@@ -288,4 +327,3 @@ impl CPU {
         }
     }
 }
-

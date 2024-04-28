@@ -1,6 +1,6 @@
-use crate::interface::simulator::Simulator;
 use crate::interface::assembler::Instruction;
 use crate::interface::assembler::Operand;
+use crate::interface::simulator::Simulator;
 use crate::simulator::cpu::CPU;
 
 struct RiscVSimulator {

@@ -58,7 +58,6 @@ impl Dram {
             | ((self.dram[index + 7] as u32) << 56);
     }
 
-
     // Store bytes to the little-endiam dram.
     // pub fn store(&mut self, addr: u64, size: u64, value: u64) -> Result<(), ()> {
     //     match size {
