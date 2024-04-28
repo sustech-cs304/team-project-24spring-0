@@ -1,17 +1,23 @@
 use crate::interface::simulator::Simulator;
-use crate::simulator::cpu::*;
+use crate::interface::assembler::Instruction;
+use crate::interface::assembler::Operand;
+use crate::simulator::cpu::CPU;
 
 struct RiscVSimulator {
-    pub cpu: Cpu,
+    // pc: u32,
+    // memory: Vec<u8>,
+    // registers: [u32; 32],
+    // instructions: Vec<Instruction>,
+    cpu: CPU,
 }
 
 impl<EXR, SYSC, REG, ERR> Simulator<EXR, SYSC, REG, ERR> for RiscVSimulator {
     fn load_inst(&mut self, ir: &EXR) -> Result<bool, ERR> {
-        unimplemented!();
+        unimplemented!()
     }
 
     fn run(&mut self) -> Result<REG, ERR> {
-        unimplemented!();
+        unimplemented!()
     }
 
     fn step(&mut self) -> Result<REG, ERR> {

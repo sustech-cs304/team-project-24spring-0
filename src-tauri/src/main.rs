@@ -2,6 +2,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod assembler;
+mod simulator;
 mod interface;
 mod io;
 mod menu;
