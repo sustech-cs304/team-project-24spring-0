@@ -224,17 +224,29 @@ pub mod frontend_api {
         todo!("Implement removeBreakPoint")
     }
 
+    /// Send a syscall input to current tab's simulator.
+    /// - `cur_tab_name`: State containing the current tab name.
+    /// - `tab_map`: State containing the map of all tabs.
+    /// - `inputType`: Type of the input, should be one of the following:
+    ///    - "Int"
+    ///    - "Float"
+    ///    - "Double"
+    ///    - "String"
+    ///    - "Char"
+    ///    - "Long"
+    /// - `val`: Value of the input as a string.
     #[tauri::command]
+    #[allow(non_snake_case)]
     pub fn syscall_input(
-        cur_name: State<CurTabName>,
+        cur_tab_name: State<CurTabName>,
         tab_map: State<TabMap>,
-        input_type: &str,
+        inputType: &str,
         val: String,
     ) -> bool {
-        let name = cur_name.name.lock().unwrap().clone();
+        let name = cur_tab_name.name.lock().unwrap().clone();
         let mut lock = tab_map.tabs.lock().unwrap();
         let tab = lock.get_mut(&name).unwrap();
-        let val = match input_type {
+        let val = match inputType {
             "Int" => SyscallDataType::Int(val.parse::<i32>().unwrap()),
             "Float" => SyscallDataType::Float(val.parse::<f32>().unwrap()),
             "Double" => SyscallDataType::Double(val.parse::<f64>().unwrap()),
