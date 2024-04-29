@@ -148,29 +148,27 @@ pub mod frontend_api {
     }
 
     #[tauri::command]
-    #[allow(non_snake_case)]
-    pub fn setBreakPoint(tab_map: State<TabMap>) -> bool {
-        todo!("Implement setBreakPoint")
+    pub fn set_breakpoint(tab_map: State<TabMap>, line: usize) -> bool {
+        //todo!("Implement setBreakPoint")
+        true
     }
 
     #[tauri::command]
-    #[allow(non_snake_case)]
-    pub fn removeBreakPoint(tab_map: State<TabMap>) {
+    pub fn remove_breakpoint(tab_map: State<TabMap>) {
         todo!("Implement removeBreakPoint")
     }
 
     #[tauri::command]
-    #[allow(non_snake_case)]
-    pub fn syscallInput(
+    pub fn syscall_input(
         cur_name: State<CurTabName>,
         tab_map: State<TabMap>,
-        inType: &str,
+        input_type: &str,
         val: &dyn Any,
     ) -> bool {
         let name = cur_name.name.lock().unwrap().clone();
         let mut lock = tab_map.tabs.lock().unwrap();
         let tab = lock.get_mut(&name).unwrap();
-        let val = match inType {
+        let val = match input_type {
             "Int" => val.downcast_ref::<i32>().map(|&v| SyscallDataType::Int(v)),
             "Float" => val
                 .downcast_ref::<f32>()
@@ -196,11 +194,10 @@ pub mod frontend_api {
     }
 
     #[tauri::command]
-    #[allow(non_snake_case)]
-    pub fn updateAssemblerSettings(
+    pub fn update_assembler_settings(
         cur_tab_name: State<CurTabName>,
         tab_map: State<TabMap>,
-        settings: &AssemblerConfig,
+        settings: AssemblerConfig,
     ) -> bool {
         todo!("foo");
     }

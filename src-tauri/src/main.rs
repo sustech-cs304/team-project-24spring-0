@@ -1,9 +1,14 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
+#![cfg_attr(
+    debug_assertions,
+    allow(unused_variables, unused_macros, unused_imports, dead_code)
+)]
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 mod interface;
 mod io;
 mod menu;
 mod modules;
+mod remote;
 mod storage;
 mod tests;
 mod types;
@@ -44,8 +49,10 @@ fn main() {
             tab_management::write_tab,
             frontend_api::assemble,
             frontend_api::debug,
-            frontend_api::setBreakPoint,
-            frontend_api::removeBreakPoint,
+            frontend_api::set_breakpoint,
+            frontend_api::remove_breakpoint,
+            //frontend_api::syscall_input,
+            frontend_api::update_assembler_settings,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
