@@ -1,8 +1,3 @@
-use std::path::Path;
-
-use tauri::api::dialog::{FileDialogBuilder, MessageDialogKind};
-use tauri::{CustomMenuItem, Manager, Menu, Submenu, WindowMenuEvent};
-
 use super::{display_alert_dialog, display_confirm_dialog};
 use crate::io::file_io;
 use crate::modules::riscv::basic::interface::parser::{RISCVExtension, RISCVParser};
@@ -10,6 +5,9 @@ use crate::storage::rope_store;
 use crate::types::menu_types;
 use crate::types::middleware_types::{Tab, TabMap};
 use crate::utility::state_helper::event::{get_current_tab_name, set_current_tab_name};
+use std::path::Path;
+use tauri::api::dialog::{FileDialogBuilder, MessageDialogKind};
+use tauri::{CustomMenuItem, Manager, Menu, Submenu, WindowMenuEvent};
 
 pub fn new() -> Submenu {
     Submenu::new(
@@ -50,7 +48,8 @@ pub fn event_handler(event: WindowMenuEvent) {
         }
     }
 }
-
+/// event emit: front_file_open
+/// payload: OpenFile { file_path: String, content: String }
 fn open_handler(event: WindowMenuEvent) {
     let picker = FileDialogBuilder::new();
     picker.pick_file(move |file_path| match file_path {
@@ -83,6 +82,8 @@ fn open_handler(event: WindowMenuEvent) {
     });
 }
 
+/// event emit: front_file_save
+/// payload: String
 fn save_handler(event: &WindowMenuEvent) {
     let name = get_current_tab_name(&event);
     let tab_map = event.window().state::<TabMap>();
@@ -105,6 +106,9 @@ fn save_handler(event: &WindowMenuEvent) {
     }
 }
 
+/// event emit: front_file_save_as
+/// payload: String
+/// FIXME: maybe unused?
 fn save_as_handler(event: WindowMenuEvent) {
     let content = {
         let name = get_current_tab_name(&event);
