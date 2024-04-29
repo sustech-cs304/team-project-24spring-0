@@ -161,20 +161,49 @@ pub mod frontend_api {
     }
 
     /// Placeholder for a function to dump data from all tabs.
+    /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: State containing the map of all tabs.
     /// Returns `bool` indicating whether the dump was successful.
     #[tauri::command]
-    pub fn dump(tab_map: State<TabMap>) -> bool {
+    pub fn dump(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> bool {
         todo!("Implement dump")
     }
 
-    /// Placeholder for a function to start a debug session.
+    /// Run the code in the currently active tab in debug mode.
+    /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: State containing the map of all tabs.
     /// Returns `bool` indicating whether the debug session was successfully
     /// started.
     #[tauri::command]
-    pub fn debug(tab_map: State<TabMap>) -> bool {
+    pub fn debug(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> bool {
         todo!("Implement debug")
+    }
+
+    /// Steps through the code in the currently active tab.
+    /// - `cur_tab_name`: State containing the current tab name.
+    /// - `tab_map`: State containing the map of all tabs.
+    /// Returns `bool` indicating whether the step was successful.
+    #[tauri::command]
+    pub fn step(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> bool {
+        todo!("Implement step")
+    }
+
+    /// Resets the state of the currently active tab's simulator.
+    /// - `cur_tab_name`: State containing the current tab name.
+    /// - `tab_map`: State containing the map of all tabs.
+    /// Returns `bool` indicating whether the reset was successful.
+    #[tauri::command]
+    pub fn reset(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> bool {
+        todo!("Implement reset")
+    }
+
+    /// Undoes the last instruction for current activate tab's simulator.
+    /// - `cur_tab_name`: State containing the current tab name.
+    /// - `tab_map`: State containing the map of all tabs.
+    /// Returns `bool` indicating whether the undo was successful.
+    #[tauri::command]
+    pub fn undo(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> bool {
+        todo!("Implement undo")
     }
 
     /// Sets a breakpoint at a specified line in the code of the current tab.
@@ -187,46 +216,37 @@ pub mod frontend_api {
         true
     }
 
-    /// Placeholder for a function to remove a breakpoint.
+    /// Removes a breakpoint at a specified line in the code of the current tab.
     /// - `tab_map`: State containing the map of all tabs.
+    /// - `line`: Line number at which to remove the breakpoint.
     #[tauri::command]
-    pub fn remove_breakpoint(tab_map: State<TabMap>) {
+    pub fn remove_breakpoint(tab_map: State<TabMap>, line: u64) {
         todo!("Implement removeBreakPoint")
     }
 
-    //#[tauri::command]
-    //pub fn syscall_input(
-    //cur_name: State<CurTabName>,
-    //tab_map: State<TabMap>,
-    //input_type: &str,
-    //val: &dyn Any,
-    //) -> bool {
-    //let name = cur_name.name.lock().unwrap().clone();
-    //let mut lock = tab_map.tabs.lock().unwrap();
-    //let tab = lock.get_mut(&name).unwrap();
-    //let val = match input_type {
-    //"Int" => val.downcast_ref::<i32>().map(|&v| SyscallDataType::Int(v)),
-    //"Float" => val
-    //.downcast_ref::<f32>()
-    //.map(|&v| SyscallDataType::Float(v)),
-    //"Double" => val
-    //.downcast_ref::<f64>()
-    //.map(|&v| SyscallDataType::Double(v)),
-    //"String" => val
-    //.downcast_ref::<String>()
-    //.map(|v| SyscallDataType::String(v.as_bytes().to_vec())),
-    //"Char" => val.downcast_ref::<u8>().map(|&v| SyscallDataType::Char(v)),
-    //"Long" => val.downcast_ref::<i64>().map(|&v| SyscallDataType::Long(v)),
-    //_ => None,
-    //};
-    //match val {
-    //Some(v) => {
-    ////TODO
-    ////tab.parser.syscall_input_request(v);
-    //true
-    //}
-    //None => false,
-    //}
+    #[tauri::command]
+    pub fn syscall_input(
+        cur_name: State<CurTabName>,
+        tab_map: State<TabMap>,
+        input_type: &str,
+        val: String,
+    ) -> bool {
+        let name = cur_name.name.lock().unwrap().clone();
+        let mut lock = tab_map.tabs.lock().unwrap();
+        let tab = lock.get_mut(&name).unwrap();
+        let val = match input_type {
+            "Int" => SyscallDataType::Int(val.parse::<i32>().unwrap()),
+            "Float" => SyscallDataType::Float(val.parse::<f32>().unwrap()),
+            "Double" => SyscallDataType::Double(val.parse::<f64>().unwrap()),
+            "String" => SyscallDataType::String(val.bytes().collect()),
+            "Char" => SyscallDataType::Char(val.bytes().next().unwrap()),
+            "Long" => SyscallDataType::Long(val.parse::<i64>().unwrap()),
+            _ => return false,
+        };
+        //TODO
+        //tab.parser.syscall_input_request(v);
+        true
+    }
 
     /// Updates the assembler settings for the current tab.
     /// - `cur_tab_name`: State containing the current tab name.

@@ -13,7 +13,7 @@ pub fn new() -> Submenu {
     Submenu::new(
         "File",
         Menu::with_items([
-            CustomMenuItem::new("file_open", "Open").into(),
+            CustomMenuItem::new("file_          open", "Open").into(),
             CustomMenuItem::new("file_save", "Save").into(),
             CustomMenuItem::new("file_save_as", "Save As...").into(),
             CustomMenuItem::new("file_share", "Share").into(),
@@ -48,7 +48,8 @@ pub fn event_handler(event: WindowMenuEvent) {
         }
     }
 }
-
+/// event emit: front_file_open
+/// payload: OpenFile { file_path: String, content: String }
 fn open_handler(event: WindowMenuEvent) {
     let picker = FileDialogBuilder::new();
     picker.pick_file(move |file_path| match file_path {
@@ -81,6 +82,8 @@ fn open_handler(event: WindowMenuEvent) {
     });
 }
 
+/// event emit: front_file_save
+/// payload: String
 fn save_handler(event: &WindowMenuEvent) {
     let name = get_current_tab_name(&event);
     let tab_map = event.window().state::<TabMap>();
@@ -103,6 +106,9 @@ fn save_handler(event: &WindowMenuEvent) {
     }
 }
 
+/// event emit: front_file_save_as
+/// payload: String
+/// FIXME: maybe unused?
 fn save_as_handler(event: WindowMenuEvent) {
     let content = {
         let name = get_current_tab_name(&event);

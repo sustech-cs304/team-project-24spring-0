@@ -1,8 +1,4 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
-#![cfg_attr(
-    debug_assertions,
-    allow(unused_variables, unused_macros, unused_imports, dead_code)
-)]
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 mod interface;
 mod io;
@@ -14,10 +10,9 @@ mod tests;
 mod types;
 mod utility;
 
-use std::sync::{Arc, Mutex};
-
-use modules::riscv::middleware::*;
+use modules::riscv::middleware::frontend_api;
 use once_cell::sync::Lazy;
+use std::sync::{Arc, Mutex};
 use tauri::{AppHandle, Manager};
 use types::middleware_types;
 
@@ -49,9 +44,13 @@ fn main() {
             frontend_api::write_tab,
             frontend_api::assembly,
             frontend_api::debug,
+            frontend_api::step,
+            frontend_api::dump,
+            frontend_api::undo,
+            frontend_api::reset,
             frontend_api::set_breakpoint,
             frontend_api::remove_breakpoint,
-            //frontend_api::syscall_input,
+            frontend_api::syscall_input,
             frontend_api::update_assembler_settings,
         ])
         .run(tauri::generate_context!())
