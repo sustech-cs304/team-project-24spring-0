@@ -13,7 +13,7 @@ pub fn new() -> Submenu {
     Submenu::new(
         "File",
         Menu::with_items([
-            CustomMenuItem::new("file_          open", "Open").into(),
+            CustomMenuItem::new("file_open", "Open").into(),
             CustomMenuItem::new("file_save", "Save").into(),
             CustomMenuItem::new("file_save_as", "Save As...").into(),
             CustomMenuItem::new("file_share", "Share").into(),
