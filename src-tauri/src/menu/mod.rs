@@ -1,4 +1,5 @@
 mod file;
+mod help;
 mod setting;
 mod test;
 
@@ -41,4 +42,4 @@ macro_rules! create_menu {
     };
 }
 
-create_menu!(file, setting, test);
+create_menu!(file, setting, help,test);

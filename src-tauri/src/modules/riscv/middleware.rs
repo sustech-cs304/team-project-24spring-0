@@ -13,6 +13,7 @@ pub mod frontend_api {
     /// Creates a new tab with content loaded from a specified file path.
     /// - `tab_map`: Current state of all open tabs.
     /// - `filepath`: Path to the file from which content will be loaded.
+    ///
     /// Returns `Optional` indicating the success or failure of tab creation.
     #[tauri::command]
     pub fn create_tab(tab_map: State<TabMap>, filepath: &str) -> Optional {
@@ -49,6 +50,7 @@ pub mod frontend_api {
     /// - `cur_name`: Current name of the tab in focus.
     /// - `tab_map`: Current state of all open tabs.
     /// - `filepath`: Path to the file associated with the tab to close.
+    ///
     /// Returns `Optional` indicating the success or failure of tab closure.
     #[tauri::command]
     pub fn close_tab(
@@ -73,6 +75,7 @@ pub mod frontend_api {
     /// Changes the current tab to the one specified by the new path.
     /// - `cur_name`: Current name of the tab in focus.
     /// - `newpath`: Path to the file associated with the new tab to focus.
+    ///
     /// Returns `bool` indicating whether the operation was successful.
     #[tauri::command]
     pub fn change_current_tab(cur_name: State<CurTabName>, newpath: &str) -> bool {
@@ -104,6 +107,7 @@ pub mod frontend_api {
 
     /// Reads the content of a tab from the file at the specified path.
     /// - `filepath`: Path to the file to read.
+    ///
     /// Returns `Optional` containing the file content if successful, or an
     /// error message if not.
     #[tauri::command]
@@ -123,6 +127,7 @@ pub mod frontend_api {
     /// Writes data to the tab associated with the given file path.
     /// - `filepath`: Path to the file where data should be written.
     /// - `data`: Content to write to the file.
+    ///
     /// Returns `Optional` indicating the success or failure of the write
     /// operation.
     #[tauri::command]
@@ -142,6 +147,7 @@ pub mod frontend_api {
     /// Assembles the code in the currently active tab.
     /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: State containing the map of all tabs.
+    ///
     /// Returns `AssembleResult` indicating the outcome of the assembly process.
     #[tauri::command]
     pub fn assembly(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> AssembleResult {
@@ -163,6 +169,7 @@ pub mod frontend_api {
     /// Placeholder for a function to dump data from all tabs.
     /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: State containing the map of all tabs.
+    ///
     /// Returns `bool` indicating whether the dump was successful.
     #[tauri::command]
     pub fn dump(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> bool {
@@ -172,6 +179,7 @@ pub mod frontend_api {
     /// Run the code in the currently active tab in debug mode.
     /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: State containing the map of all tabs.
+    ///
     /// Returns `bool` indicating whether the debug session was successfully
     /// started.
     #[tauri::command]
@@ -182,6 +190,7 @@ pub mod frontend_api {
     /// Steps through the code in the currently active tab.
     /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: State containing the map of all tabs.
+    ///
     /// Returns `bool` indicating whether the step was successful.
     #[tauri::command]
     pub fn step(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> bool {
@@ -191,6 +200,7 @@ pub mod frontend_api {
     /// Resets the state of the currently active tab's simulator.
     /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: State containing the map of all tabs.
+    ///
     /// Returns `bool` indicating whether the reset was successful.
     #[tauri::command]
     pub fn reset(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> bool {
@@ -200,6 +210,7 @@ pub mod frontend_api {
     /// Undoes the last instruction for current activate tab's simulator.
     /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: State containing the map of all tabs.
+    ///
     /// Returns `bool` indicating whether the undo was successful.
     #[tauri::command]
     pub fn undo(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> bool {
@@ -209,6 +220,7 @@ pub mod frontend_api {
     /// Sets a breakpoint at a specified line in the code of the current tab.
     /// - `tab_map`: State containing the map of all tabs.
     /// - `line`: Line number at which to set the breakpoint.
+    ///
     /// Returns `bool` indicating whether the breakpoint was successfully set.
     #[tauri::command]
     pub fn set_breakpoint(tab_map: State<TabMap>, line: usize) -> bool {
@@ -219,8 +231,11 @@ pub mod frontend_api {
     /// Removes a breakpoint at a specified line in the code of the current tab.
     /// - `tab_map`: State containing the map of all tabs.
     /// - `line`: Line number at which to remove the breakpoint.
+    ///
+    /// Returns `bool` indicating whether the breakpoint was successfully
+    /// removed.
     #[tauri::command]
-    pub fn remove_breakpoint(tab_map: State<TabMap>, line: u64) {
+    pub fn remove_breakpoint(tab_map: State<TabMap>, line: u64) -> bool {
         todo!("Implement removeBreakPoint")
     }
 
@@ -235,6 +250,8 @@ pub mod frontend_api {
     ///    - "Char"
     ///    - "Long"
     /// - `val`: Value of the input as a string.
+    ///
+    /// Returns `bool` indicating whether the syscall input was successfully
     #[tauri::command]
     #[allow(non_snake_case)]
     pub fn syscall_input(
@@ -264,6 +281,7 @@ pub mod frontend_api {
     /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: State containing the map of all tabs.
     /// - `settings`: New assembler settings to be applied.
+    ///
     /// Returns `bool` indicating whether the settings were successfully
     /// updated.
     #[tauri::command]

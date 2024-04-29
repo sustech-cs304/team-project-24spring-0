@@ -48,6 +48,7 @@ pub fn event_handler(event: WindowMenuEvent) {
         }
     }
 }
+
 /// event emit: front_file_open
 /// payload: OpenFile { file_path: String, content: String }
 fn open_handler(event: WindowMenuEvent) {
