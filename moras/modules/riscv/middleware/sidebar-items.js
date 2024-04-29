@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["backend_api","frontend_api","tab_management"]};
+window.SIDEBAR_ITEMS = {"mod":["backend_api","frontend_api"]};

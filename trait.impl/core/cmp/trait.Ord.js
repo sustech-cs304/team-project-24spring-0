@@ -1,3 +1,3 @@
 (function() {var implementors = {
-"moras":[["impl&lt;T&gt; <a class=\"trait\" href=\"https://doc.rust-lang.org/1.77.2/core/cmp/trait.Ord.html\" title=\"trait core::cmp::Ord\">Ord</a> for <a class=\"struct\" href=\"moras/utility/ptr/struct.Ptr.html\" title=\"struct moras::utility::ptr::Ptr\">Ptr</a>&lt;T&gt;"]]
+"moras":[["impl&lt;T&gt; <a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/core/cmp/trait.Ord.html\" title=\"trait core::cmp::Ord\">Ord</a> for <a class=\"struct\" href=\"moras/utility/ptr/struct.Ptr.html\" title=\"struct moras::utility::ptr::Ptr\">Ptr</a>&lt;T&gt;"]]
 };if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

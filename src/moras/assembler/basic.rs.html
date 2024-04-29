@@ -1,6 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/assembler/basic.rs`."><title>basic.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-5bc39a1768837dd0.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="moras" data-themes="" data-resource-suffix="" data-rustdoc-version="1.77.2 (25ef9e3d8 2024-04-09)" data-channel="1.77.2" data-search-js="search-dd67cee4cfa65049.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-4c98445ec4002617.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-48f368f3872407c8.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
-            <h2>Files</h2></div></nav><div class="sidebar-resizer"></div>
-    <main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../moras/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/assembler/basic.rs`."><title>basic.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-b21aa549bf6d91ff.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="moras" data-themes="" data-resource-suffix="" data-rustdoc-version="1.80.0-nightly (1fffb2a35 2024-04-28)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../moras/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -270,7 +268,7 @@
 </pre></div><pre class="rust"><code><span class="kw">use </span>derive_builder::Builder;
 <span class="kw">use </span>ux::{u1, u10, u12, u20, u3, u4, u5, u6, u7};
 
-<span class="macro">macro_rules! </span>all_into_scope {
+<span class="macro">macro_rules!</span> all_into_scope {
     (<span class="macro-nonterminal">$self</span>:ident, $(<span class="macro-nonterminal">$vars</span>:ident)+) =&gt; {
         $(
             <span class="kw">let </span><span class="macro-nonterminal">$vars </span>= <span class="macro-nonterminal">$self</span>.<span class="macro-nonterminal">$vars</span>;
@@ -278,7 +276,7 @@
     };
 }
 
-<span class="macro">macro_rules! </span>all_into {
+<span class="macro">macro_rules!</span> all_into {
     (<span class="macro-nonterminal">$</span><span class="kw">type</span>:<span class="macro-nonterminal">ty</span>, $(<span class="macro-nonterminal">$vars</span>:ident)+) =&gt; {
         $(
             <span class="kw">let </span><span class="macro-nonterminal">$vars </span>: <span class="macro-nonterminal">$</span><span class="kw">type </span>= <span class="macro-nonterminal">$vars</span>.into();
@@ -304,7 +302,7 @@
 <span class="kw">impl </span>Into&lt;PackedInstruction&gt; <span class="kw">for </span>RInstruction {
     <span class="kw">fn </span>into(<span class="self">self</span>) -&gt; PackedInstruction {
         <span class="macro">all_into_scope!</span>(<span class="self">self</span>, funct7 rs2 rs1 funct3 rd opcode);
-        <span class="macro">all_into! </span>{u32, funct7 rs2 rs1 funct3 rd opcode }
+        <span class="macro">all_into!</span> {u32, funct7 rs2 rs1 funct3 rd opcode }
         PackedInstruction(
             (funct7 &lt;&lt; <span class="number">25</span>) + (rs2 &lt;&lt; <span class="number">20</span>) + (rs1 &lt;&lt; <span class="number">15</span>) + (funct3 &lt;&lt; <span class="number">12</span>) + (rd &lt;&lt; <span class="number">7</span>) + opcode,
         )
@@ -325,7 +323,7 @@
 <span class="kw">impl </span>Into&lt;PackedInstruction&gt; <span class="kw">for </span>IInstruction {
     <span class="kw">fn </span>into(<span class="self">self</span>) -&gt; PackedInstruction {
         <span class="macro">all_into_scope!</span>(<span class="self">self</span>, imm  rs1 funct3 rd opcode);
-        <span class="macro">all_into! </span>{u32, imm  rs1 funct3 rd opcode }
+        <span class="macro">all_into!</span> {u32, imm  rs1 funct3 rd opcode }
         PackedInstruction((imm &lt;&lt; <span class="number">20</span>) + (rs1 &lt;&lt; <span class="number">15</span>) + (funct3 &lt;&lt; <span class="number">12</span>) + (rd &lt;&lt; <span class="number">7</span>) + opcode)
     }
 }
@@ -355,7 +353,7 @@
 <span class="kw">impl </span>Into&lt;PackedInstruction&gt; <span class="kw">for </span>SInstruction {
     <span class="kw">fn </span>into(<span class="self">self</span>) -&gt; PackedInstruction {
         <span class="macro">all_into_scope!</span>(<span class="self">self</span>, imm11_5 rs2 rs1 funct3 imm4_0 opcode);
-        <span class="macro">all_into! </span>{u32, imm11_5 rs2 rs1 funct3 imm4_0 opcode}
+        <span class="macro">all_into!</span> {u32, imm11_5 rs2 rs1 funct3 imm4_0 opcode}
         PackedInstruction(
             (imm11_5 &lt;&lt; <span class="number">25</span>) + (rs2 &lt;&lt; <span class="number">20</span>) + (rs1 &lt;&lt; <span class="number">15</span>) + (funct3 &lt;&lt; <span class="number">12</span>) + (imm4_0 &lt;&lt; <span class="number">7</span>) + opcode,
         )
@@ -393,7 +391,7 @@
 <span class="kw">impl </span>Into&lt;PackedInstruction&gt; <span class="kw">for </span>BInstruction {
     <span class="kw">fn </span>into(<span class="self">self</span>) -&gt; PackedInstruction {
         <span class="macro">all_into_scope!</span>(<span class="self">self</span>, imm12 imm10_5 rs2 rs1 funct3 imm4_1 imm11 opcode);
-        <span class="macro">all_into! </span>{ u32, imm12 imm10_5 rs2 rs1 funct3 imm4_1 imm11 opcode }
+        <span class="macro">all_into!</span> { u32, imm12 imm10_5 rs2 rs1 funct3 imm4_1 imm11 opcode }
         PackedInstruction(
             (imm12 &lt;&lt; <span class="number">31</span>)
                 + (imm10_5 &lt;&lt; <span class="number">25</span>)
@@ -418,7 +416,7 @@
 <span class="kw">impl </span>Into&lt;PackedInstruction&gt; <span class="kw">for </span>UInstruction {
     <span class="kw">fn </span>into(<span class="self">self</span>) -&gt; PackedInstruction {
         <span class="macro">all_into_scope!</span>(<span class="self">self</span>, imm rd opcode);
-        <span class="macro">all_into! </span>{ u32, imm rd opcode }
+        <span class="macro">all_into!</span> { u32, imm rd opcode }
         PackedInstruction((imm &lt;&lt; <span class="number">12</span>) + (rd &lt;&lt; <span class="number">7</span>) + opcode)
     }
 }
@@ -437,7 +435,7 @@
 <span class="kw">impl </span>Into&lt;PackedInstruction&gt; <span class="kw">for </span>JInstruction {
     <span class="kw">fn </span>into(<span class="self">self</span>) -&gt; PackedInstruction {
         <span class="macro">all_into_scope!</span>(<span class="self">self</span>, imm20 imm10_1 imm11 imm19_12 rd opcode);
-        <span class="macro">all_into! </span>{ u32, imm20 imm10_1 imm11 imm19_12 rd opcode }
+        <span class="macro">all_into!</span> { u32, imm20 imm10_1 imm11 imm19_12 rd opcode }
         PackedInstruction(
             (imm20 &lt;&lt; <span class="number">31</span>) + (imm10_1 &lt;&lt; <span class="number">21</span>) + (imm11 &lt;&lt; <span class="number">20</span>) + (imm19_12 &lt;&lt; <span class="number">12</span>) + (rd &lt;&lt; <span class="number">7</span>) + opcode,
         )
@@ -483,7 +481,7 @@
     JAL = <span class="number">0b1101111</span>, <span class="comment">// Jal
 </span>}
 
-<span class="macro">macro_rules! </span>implopcode {
+<span class="macro">macro_rules!</span> implopcode {
     (<span class="macro-nonterminal">$builder</span>:ident, <span class="macro-nonterminal">$opcode</span>:ident) =&gt; {
         <span class="kw">impl </span>Opcode&lt;<span class="macro-nonterminal">$builder</span>&gt; <span class="kw">for </span><span class="macro-nonterminal">$opcode </span>{
             <span class="kw">fn </span>builder(<span class="self">self</span>) -&gt; <span class="macro-nonterminal">$builder </span>{
@@ -503,7 +501,7 @@
 <span class="macro">implopcode!</span>(UInstruction, UOpcode);
 <span class="macro">implopcode!</span>(JInstruction, JOpcode);
 
-<span class="macro">macro_rules! </span>implinto {
+<span class="macro">macro_rules!</span> implinto {
     (<span class="macro-nonterminal">$tr</span>:ident) =&gt; {
         <span class="kw">impl </span>Into&lt;u32&gt; <span class="kw">for </span><span class="macro-nonterminal">$tr </span>{
             <span class="kw">fn </span>into(<span class="self">self</span>) -&gt; u32 {
