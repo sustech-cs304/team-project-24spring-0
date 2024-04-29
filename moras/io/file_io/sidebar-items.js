@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["get_last_modified","get_last_modified_str","read_file","read_file_str","write_file","write_file_str"]};

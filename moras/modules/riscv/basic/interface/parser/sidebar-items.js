@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["DATA_CHUNK_RECOMMEND_SIZE","MAX_DATA_SIZE"],"enum":["ParserRISCVCsr","ParserRISCVImmediate","ParserRISCVInstOp","ParserRISCVInstOpd","ParserRISCVLabel","ParserRISCVLabelHandler","ParserRISCVRegister","RISCVExtension"],"struct":["RISCV"]};

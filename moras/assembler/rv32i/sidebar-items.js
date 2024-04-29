@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"macro":["binstimpl","iinstimpl","rinstimpl","sinstimpl","uinstimpl"],"struct":["Immediate12","Immediate20","RV32I","Register"]};

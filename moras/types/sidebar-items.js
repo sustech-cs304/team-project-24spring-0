@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["menu_types","middleware_types"]};

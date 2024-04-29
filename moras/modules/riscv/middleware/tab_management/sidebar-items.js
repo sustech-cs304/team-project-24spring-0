@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["change_current_tab","close_tab","create_tab","read_tab","update_tab","write_tab"]};

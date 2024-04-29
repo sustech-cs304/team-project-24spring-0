@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["get_current_tab_name","set_current_tab_name"]};
