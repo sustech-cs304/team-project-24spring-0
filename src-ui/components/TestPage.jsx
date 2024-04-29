@@ -15,7 +15,7 @@ export default function TestPage() {
 
     const handleClick = async () => {
         try {
-            const result = await invoke('set_breakpoint', {line: parseInt(inputValue)});
+            const result = await invoke('read_tab', {file   path: inputValue});
             setOutput('===result===\n' + result + '\n===type===\n' + typeof (result));
         } catch (error) {
             setOutput('Error occurred:\n' + error);

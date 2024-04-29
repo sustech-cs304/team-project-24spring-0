@@ -41,13 +41,13 @@ fn main() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
-            tab_management::create_tab,
-            tab_management::close_tab,
-            tab_management::change_current_tab,
-            tab_management::update_tab,
-            tab_management::read_tab,
-            tab_management::write_tab,
-            frontend_api::assemble,
+            frontend_api::create_tab,
+            frontend_api::close_tab,
+            frontend_api::change_current_tab,
+            frontend_api::update_tab,
+            frontend_api::read_tab,
+            frontend_api::write_tab,
+            frontend_api::assembly,
             frontend_api::debug,
             frontend_api::set_breakpoint,
             frontend_api::remove_breakpoint,
