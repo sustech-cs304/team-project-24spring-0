@@ -100,7 +100,7 @@ pub enum RISCVToken<'a> {
     ImmediateInt(i128),
     #[regex(r"-?[0-9]+\.[0-9]+", |lex| lex.slice().parse())]
     ImmediateFloat(f64),
-    #[regex("\"([^\\\\\"]*\\\\.)*\"")]
+    #[regex("\"(?:[^\\\\\"]*(?:\\\\.)*)*\"")]
     ImmediateString(&'a str),
     #[regex(r"[a-zA-Z_][a-zA-Z0-9._]*", |lex| Symbol::Label(lex.slice()))]
     Symbol(Symbol<'a>),
