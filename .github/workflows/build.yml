@@ -57,3 +57,14 @@ jobs:
         working-directory: ./src-tauri
         run: cargo build --release
 
+      - name: Build Rust doc
+        if: github.ref == 'refs/heads/main'
+        working-directory: ./src-tauri
+        run: cargo doc --no-deps
+
+      - name: Deploy Doc
+        if: github.ref == 'refs/heads/main'
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./src-tauri/target/doc/moras
