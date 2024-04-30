@@ -1,3 +1,5 @@
+use std::io::Write;
+
 use super::super::parser::parser::RISCVSymbolList;
 
 pub use super::super::super::rv32f::constants::*;
@@ -74,4 +76,77 @@ impl RISCVExtension {
             RISCVExtension::RV32I => &super::super::super::rv32i::parser::parser::RV32I_SYMBOL_LIST,
         }
     }
+
+    #[allow(dead_code)]
+    pub fn export(&self, folder: &str) -> std::io::Result<()> {
+        match self {
+            RISCVExtension::RV32I => super::super::super::rv32i::parser::parser::export(folder),
+        }
+    }
+}
+
+#[allow(dead_code)]
+pub fn export_pair<T, KFn, VFn, K, W>(
+    pairs: &[T],
+    key_fn: KFn,
+    val_fn: VFn,
+    prefix: [&str; 2],
+    output: &mut std::io::BufWriter<W>,
+) -> std::io::Result<()>
+where
+    KFn: Fn(&T) -> K,
+    VFn: Fn(&T, &mut std::io::BufWriter<W>) -> std::io::Result<()>,
+    K: std::fmt::Display,
+    W: std::io::Write,
+{
+    if pairs.is_empty() {
+        output.write("{}".as_bytes())?;
+    } else {
+        output.write("{\n".as_bytes())?;
+        for data in &pairs[0..pairs.len() - 1] {
+            let key = key_fn(data);
+            output.write(format!("{}\"{}\": ", prefix[1], key).as_bytes())?;
+            val_fn(data, output)?;
+            output.write(",\n".as_bytes())?;
+        }
+        {
+            let data = &pairs[pairs.len() - 1];
+            let key = key_fn(data);
+            output.write(format!("{}\"{}\": ", prefix[1], key).as_bytes())?;
+            val_fn(data, output)?;
+            output.write("\n".as_bytes())?;
+        }
+        output.write(format!("{}}}", prefix[0]).as_bytes())?;
+    }
+    Ok(())
+}
+
+#[allow(dead_code)]
+pub fn export_list<T, F, V, W>(
+    list: &[T],
+    val_fn: F,
+    prefix: [&str; 2],
+    output: &mut std::io::BufWriter<W>,
+) -> std::io::Result<()>
+where
+    F: Fn(&T) -> std::io::Result<V>,
+    V: std::fmt::Display,
+    W: std::io::Write,
+{
+    if list.is_empty() {
+        output.write("[]".as_bytes())?;
+    } else {
+        output.write("[\n".as_bytes())?;
+        for data in &list[0..list.len() - 1] {
+            let val = val_fn(data)?;
+            output.write(format!("{}\"{}\",\n", prefix[1], val).as_bytes())?;
+        }
+        {
+            let data = &list[list.len() - 1];
+            let val = val_fn(data)?;
+            output.write(format!("{}\"{}\"\n", prefix[1], val).as_bytes())?;
+        }
+        output.write(format!("{}]", prefix[0]).as_bytes())?;
+    }
+    Ok(())
 }

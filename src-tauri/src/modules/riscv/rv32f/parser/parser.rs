@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
 use once_cell::sync::Lazy;
-use strum::IntoEnumIterator;
+use strum::VariantArray;
 
 use super::super::super::basic::interface::parser::{
     ParserRISCVCsr, ParserRISCVInstOp, ParserRISCVRegister,
@@ -35,8 +35,9 @@ pub static REG_TOKEN: Lazy<Vec<(&'static str, Symbol<'static>)>> = Lazy::new(|| 
 });
 
 static OP_TOKEN_STASH: Lazy<Vec<(String, Symbol<'static>)>> = Lazy::new(|| {
-    RV32FOpToken::iter()
-        .map(|op| (op.name(), Symbol::Op((op).into())))
+    RV32FOpToken::VARIANTS
+        .iter()
+        .map(|&op| (op.name(), Symbol::Op((op).into())))
         .collect()
 });
 

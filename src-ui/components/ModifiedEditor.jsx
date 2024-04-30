@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import Image from "next/image";
 
 import useFileStore from "@/utils/state";
-import rv32i from "@/../constants/riscv/rv32i.json"
+import rv32i from "@/constants/riscv/rv32i.json"
 
 
 export default function ModifiedEditor({ fileName }) {
@@ -30,7 +30,7 @@ export default function ModifiedEditor({ fileName }) {
                             cases: {
                                 '@register': 'register',
                                 '@operator': 'operator',
-                                '@default': 'symbol'
+                                '@default': 'label'
                             }
                         }],
                         [new RegExp(`(${rv32i.directive.join('|').replace(/\./g, '\\.')})(?=@seperator|$)`), 'directive'],
@@ -38,6 +38,15 @@ export default function ModifiedEditor({ fileName }) {
                     ],
                 }
             });
+
+            // let register_items = rv32i.register.map(register => {
+            //     return {
+            //         label: register,
+            //         kind: monaco.languages.CompletionItemKind.Value,
+            //         detail: `Register ${register}`,
+            //         insertText: register
+            //     }
+            // });
 
             monaco.languages.registerCompletionItemProvider(language_id, {
                 provideCompletionItems: (model, position, context, token) => {
@@ -54,7 +63,7 @@ export default function ModifiedEditor({ fileName }) {
                     { token: 'string', foreground: 'CB926B' },
                     { token: 'register', foreground: '92DBFD' },
                     { token: 'operator', foreground: '41C9B0' },
-                    { token: 'symbol', foreground: '5BACE4' },
+                    { token: 'label', foreground: '5BACE4' },
                     { token: 'directive', foreground: 'C485BF' },
                     { token: 'unknown', foreground: 'EC4D4E' }
                 ],

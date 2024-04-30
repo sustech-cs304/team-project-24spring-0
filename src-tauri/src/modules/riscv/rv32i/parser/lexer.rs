@@ -1,9 +1,9 @@
-use strum::EnumIter;
+use strum_macros::{VariantArray, IntoStaticStr};
 
 use super::super::super::basic::parser::lexer::RISCVOpToken;
 use super::oplist::OP_LIST;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, EnumIter, strum_macros::IntoStaticStr)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, VariantArray, IntoStaticStr)]
 #[strum(serialize_all = "snake_case")]
 pub enum RV32IOpToken {
     Add,
@@ -121,7 +121,7 @@ impl From<RV32IOpToken> for RISCVOpToken {
         unsafe {
             RISCVOpToken {
                 val: *std::mem::transmute::<&_, &u8>(&op),
-                get_opd_set: |v| &OP_LIST[v as usize],
+                get_opd_set_fn: |v| &OP_LIST[v as usize],
             }
         }
     }
