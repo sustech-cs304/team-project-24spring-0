@@ -1,34 +1,39 @@
 import Editor, { useMonaco } from "@monaco-editor/react";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
 
 import useFileStore from "@/utils/state";
 import rv32i from "@/constants/riscv/rv32i.json"
 
-let config_loaded = false;
 const language_id = 'riscv';
+let config_first_loaded = false;
 
 export default function ModifiedEditor({ fileName }) {
     const monaco = useMonaco();
+    const [isConfigLoaded, setConfigLoaded] = useState(config_first_loaded);
     const state = useFileStore();
     const file = useFileStore(state => state.files.find(file => file.fileName === fileName));
     useEffect(() => {
-        if (monaco) {
-            if (!config_loaded) {
-                LoadMonacoConfig(monaco);
-            }
+        if (monaco && !isConfigLoaded) {
+            LoadMonacoConfig(monaco);
+            setConfigLoaded(true);
+            config_first_loaded = true;
         }
     }, [monaco]);
 
     return (
         <div className='h-full relative'>
-            <Editor
-                language={language_id}
-                theme={language_id}
-                className='overflow-hidden h-full'
-                value={file.code}
-                onChange={(value) => state.updateFile(fileName, value)}
-            />
+            {isConfigLoaded ? (
+                <Editor
+                    language={language_id}
+                    theme={language_id}
+                    className='overflow-hidden h-full'
+                    value={file.code}
+                    onChange={(value) => state.updateFile(fileName, value)}
+                />
+            ) : (
+                <div>Loading Editor...</div>
+            )}
             <div className='absolute right-2 top-0 flex-row gap-2'>
                 <button className='bg-gray-100 rounded-2xl hover:bg-gray-200'>
                     <Image src='/icons/run.svg' width={16} height={16} />
@@ -40,102 +45,13 @@ export default function ModifiedEditor({ fileName }) {
 }
 
 function LoadMonacoConfig(monaco) {
-    config_loaded = true;
     monaco.languages.register({ id: language_id });
 
-    let directive = rv32i.directive;
-    let register_map = rv32i.register;
-    let register_key = Object.keys(register_map);
-    let operator_map = rv32i.operator;
-    let operator_key = Object.keys(operator_map);
+    monaco.languages.setMonarchTokensProvider(language_id, getRiscvMonarchTokensProvider());
 
-    monaco.languages.setMonarchTokensProvider(language_id, {
-        seperator: /[,:\s]/,
+    monaco.languages.registerCompletionItemProvider(language_id, getRiscvCompletionProvider());
 
-        register: register_key,
-        operator: operator_key,
-
-        tokenizer: {
-            root: [
-                [/#.*$/, 'comment'],
-                [/(0[xX][0-9a-fA-F]+|\d+)(?=@seperator|$)/, 'number'],
-                [/"(?:[^\\"]*(?:\\.)*)*"/, 'string'],
-                [/[a-zA-Z_][\w.]*(?=@seperator|$)/, {
-                    cases: {
-                        '@register': 'register',
-                        '@operator': 'operator',
-                        '@default': 'label'
-                    }
-                }],
-                [new RegExp(`(${directive.join('|').replace(/\./g, '\\.')})(?=@seperator|$)`), 'directive'],
-                [/[^,:\s][\.\w]*(?=\W|$)/, 'unknown']
-            ],
-        }
-    });
-
-    let directive_items = directive.map(directive => {
-        return {
-            label: directive,
-            kind: monaco.languages.CompletionItemKind.Keyword,
-            detail: directive,
-            range: null,
-            insertText: directive
-        }
-    });
-
-    let register_items = register_key.map(register => {
-        return {
-            label: register,
-            kind: monaco.languages.CompletionItemKind.Value,
-            detail: `Register ${register_map[register]}`,
-            range: null,
-            insertText: register
-        }
-    });
-
-    let operator_items = [];
-    for (let operator of operator_key) {
-        if (operator_map[operator].length === 0) {
-            operator_items.push({
-                label: operator,
-                kind: monaco.languages.CompletionItemKind.Operator,
-                detail: 'unimplemented',
-                range: null,
-                insertText: operator
-            });
-        } else {
-            for (let hint of operator_map[operator]) {
-                operator_items.push({
-                    label: operator,
-                    kind: monaco.languages.CompletionItemKind.Operator,
-                    detail: hint,
-                    range: null,
-                    insertText: operator
-                });
-            }
-        }
-    }
-
-    let all_items = directive_items.concat(register_items).concat(operator_items);
-
-    monaco.languages.registerCompletionItemProvider(language_id, {
-        provideCompletionItems: (model, position, context, token) => {
-            let find = model.findPreviousMatch(/[\w\.]*/, position, true, true, false, false);
-            let range;
-            if (find === null) {
-                range = {
-                    startLineNumber: position.lineNumber,
-                    startColumn: position.column,
-                    endLineNumber: position.lineNumber,
-                    endColumn: position.column
-                };
-            } else {
-                range = find.range;
-            }
-            all_items.forEach(item => item.range = range);
-            return { suggestions: all_items }
-        }
-    });
+    monaco.languages.registerHoverProvider(language_id, getRiscvHoverProvider());
 
     monaco.editor.defineTheme(language_id, {
         base: 'vs-dark',
@@ -163,4 +79,134 @@ function LoadMonacoConfig(monaco) {
             'editorCursor.background': '#A7A7A7'
         }
     });
+}
+
+function getRiscvMonarchTokensProvider() {
+    let directive = rv32i.directive;
+    return {
+        seperator: /[,:\s]/,
+
+        register: Object.keys(rv32i.register),
+        operator: Object.keys(rv32i.operator),
+
+        tokenizer: {
+            root: [
+                [/#.*$/, 'comment'],
+                [/(0[xX][0-9a-fA-F]+|\d+)(?=@seperator|$)/, 'number'],
+                [/"(?:[^\\"]*(?:\\.)*)*"/, 'string'],
+                [/[a-zA-Z_][\w.]*(?=@seperator|$)/, {
+                    cases: {
+                        '@register': 'register',
+                        '@operator': 'operator',
+                        '@default': 'label'
+                    }
+                }],
+                [new RegExp(`(${directive.join('|').replace(/\./g, '\\.')})(?=@seperator|$)`), 'directive'],
+                [/[^,:\s][\.\w]*(?=\W|$)/, 'unknown']
+            ],
+        }
+    };
+}
+
+function getRiscvCompletionProvider() {
+    let directive = rv32i.directive;
+    let register_map = rv32i.register;
+    let register_key = Object.keys(register_map);
+    let operator_map = rv32i.operator;
+    let operator_key = Object.keys(operator_map);
+
+    let directive_items = directive.map(directive => {
+        return {
+            label: directive,
+            kind: monaco.languages.CompletionItemKind.Keyword,
+            detail: directive,
+            sortText: '2' + directive,
+            range: null,
+            insertText: directive
+        }
+    });
+
+    let register_items = register_key.map((register, idx) => {
+        return {
+            label: register,
+            kind: monaco.languages.CompletionItemKind.Value,
+            detail: `Register ${register_map[register]}`,
+            sortText: '1' + String(idx).padStart(2, '0'),
+            range: null,
+            insertText: register
+        }
+    });
+
+    let operator_items = [];
+    for (let operator of operator_key) {
+        if (operator_map[operator].length === 0) {
+            operator_items.push({
+                label: operator,
+                kind: monaco.languages.CompletionItemKind.Function,
+                detail: 'unimplemented',
+                sortText: '3' + operator,
+                range: null,
+                insertText: operator
+            });
+        } else {
+            for (let hint of operator_map[operator]) {
+                operator_items.push({
+                    label: operator,
+                    kind: monaco.languages.CompletionItemKind.Function,
+                    detail: hint,
+                    sortText: '3' + operator,
+                    range: null,
+                    insertText: operator
+                });
+            }
+        }
+    }
+
+    let all_items = directive_items.concat(register_items).concat(operator_items);
+    let items_without_operator = directive_items.concat(register_items);
+
+    return {
+        triggerCharacters: [
+            ...'abcdefghijklmnopqrstuvwxyz',
+            ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+            ...'0123456789',
+            '_', '.'
+        ],
+
+        provideCompletionItems: (model, position, context, token) => {
+            let find = model.findPreviousMatch(/[\w\.]*/, position, true, true, null, false);
+            let range;
+            if (find === null) {
+                range = {
+                    startLineNumber: position.lineNumber,
+                    startColumn: position.column,
+                    endLineNumber: position.lineNumber,
+                    endColumn: position.column
+                };
+            } else {
+                range = find.range;
+            }
+            let prev_range = {
+                startLineNumber: range.startLineNumber,
+                startColumn: 0,
+                endLineNumber: range.startLineNumber,
+                endColumn: range.startColumn - 1
+            }
+            let prev_word = model.findMatches(/[\w\.]+/, prev_range, true, true, null, false, 1);
+            if (prev_word.length > 0) {
+                items_without_operator.forEach(item => item.range = range);
+                return { suggestions: items_without_operator }
+            } else {
+                all_items.forEach(item => item.range = range);
+                return { suggestions: all_items }
+            }
+        }
+    }
+}
+
+function getRiscvHoverProvider() {
+    return {
+        provideHover: (model, position, token) => {
+        }
+    }
 }
