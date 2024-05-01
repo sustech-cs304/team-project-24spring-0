@@ -790,14 +790,8 @@ impl Assembler<RISCV> for RiscVAssembler {
                     let binary_string = format!("{:032b}", line);
                     text_segment.push(binary_string);
                     let hex_string = format!("{:08x}", line);
-                    // println!("{}", hex_string);
                 }
                 ParserResultText::Align(power) => {
-                    // for _ in 0..(MAIN + text_segment.len() as i32 * 4) % 2_i32.pow(*power as u32) {
-                    //     let hex_value = 0x00000000;
-                    //     let binary_string = format!("{:032b}", hex_value);
-                    //     text_segment.push(binary_string);
-                    // }
                 }
             }
         }
