@@ -76,7 +76,7 @@ impl ImmediateFormatter for SInstructionBuilder {
     fn immediate<'a>(&'a mut self, imm: u12) -> &'a mut Self {
         let imm: u32 = imm.into();
         let imm11_5: u7 = ((imm >> 5) & 0b1111111).try_into().unwrap();
-        let imm4_0: u5 = (imm & 0b1111).try_into().unwrap();
+        let imm4_0: u5 = (imm & 0b11111).try_into().unwrap();
         self.imm11_5(imm11_5).imm4_0(imm4_0)
     }
 }
@@ -107,7 +107,7 @@ pub struct BInstruction {
 impl ImmediateFormatter for BInstructionBuilder {
     fn immediate<'a>(&'a mut self, imm: u12) -> &'a mut Self {
         let imm: u32 = imm.into();
-        let imm12: u1 = (imm >> 12).try_into().unwrap();
+        let imm12: u1 = (imm >> 11).try_into().unwrap();
         let imm10_5: u6 = ((imm >> 5) & 0b111111).try_into().unwrap();
         let imm4_1: u4 = ((imm >> 1) & 0b1111).try_into().unwrap();
         let imm11: u1 = ((imm >> 11) & 0b1).try_into().unwrap();

@@ -5,29 +5,53 @@ use crate::assembler::basic::{
     UOpcode,
 };
 
-pub struct Register(u5);
+pub struct Register(pub u5);
+pub struct Fence(u4);
 
 impl Into<u5> for Register {
     fn into(self) -> u5 {
         self.0
     }
 }
-pub struct Immediate12(u12);
-pub struct Immediate20(u20);
+pub struct Immediate12(pub u12);
+pub struct Immediate20(pub u20);
 
 impl From<u32> for Immediate20 {
     fn from(i: u32) -> Self {
-        Self(i.try_into().unwrap())
+        if i > 1048575 {
+            panic!("Value out of range for U12 type");
+        }
+        Immediate20(u20::try_from(i as u32).unwrap())
     }
 }
 impl From<u32> for Immediate12 {
     fn from(i: u32) -> Self {
-        Self(i.try_into().unwrap())
+        if i > 4095 {
+            panic!("Value out of range for U12 type");
+        }
+        Immediate12(u12::try_from(i as u16).unwrap())
     }
 }
 impl From<u32> for Register {
     fn from(i: u32) -> Self {
-        Self(i.try_into().unwrap())
+        if i > 31 {
+            panic!("Value out of range for U5 type");
+        }
+        Register(u5::try_from(i as u8).unwrap())
+    }
+}
+
+impl From<u32> for Fence {
+    fn from(i: u32) -> Self {
+        if i > 15 {
+            panic!("Value out of range for U5 type");
+        }
+        Fence(u4::try_from(i as u8).unwrap())
+    }
+}
+impl Into<u32> for Fence {
+    fn into(self) -> u32 {
+        u32::from(self.0)
     }
 }
 
@@ -131,11 +155,17 @@ macro_rules! binstimpl {
 }
 
 impl RV32I {
-    pub fn fence(fm: u5, pred: u4, succ: u3, rs1: Register, rd: Register) -> PackedInstruction {
+    pub fn fence(
+        fm: Fence,
+        pred: Fence,
+        succ: Fence,
+        rs1: Register,
+        rd: Register,
+    ) -> PackedInstruction {
         let fm: u32 = fm.into();
         let pred: u32 = pred.into();
         let succ: u32 = succ.into();
-        let imm: u32 = (fm << 7) | (pred << 3) | succ;
+        let imm: u32 = (fm << 8) | (pred << 4) | succ;
         IOpcode::FENCE
             .builder()
             .imm(imm.try_into().unwrap())
@@ -236,16 +266,16 @@ mod rv32i_tests {
     #[test]
     fn test_jal() {
         assert_eq!(
-            0b00101010101110101010001001101111,
-            Into::<u32>::into(RV32I::jal(0xAAAAA.into(), 0x4.into()))
+            0x0dc0006f,
+            Into::<u32>::into(RV32I::jal(0xDC.into(), 0x0.into()))
         );
     }
 
     #[test]
     fn test_beq() {
         assert_eq!(
-            0b00101010001000011000010111100011,
-            Into::<u32>::into(RV32I::beq(0b101010101010.into(), 0x2.into(), 0x3.into()))
+            0xf4f740e3,
+            Into::<u32>::into(RV32I::blt(0xF40.into(), 0xF.into(), 0xE.into()))
         );
     }
 
@@ -260,8 +290,8 @@ mod rv32i_tests {
     #[test]
     fn test_sb() {
         assert_eq!(
-            0b10101010001000011000010100100011,
-            Into::<u32>::into(RV32I::sb(0xAAA.into(), 0x2.into(), 0x3.into()))
+            0xfca42e23,
+            Into::<u32>::into(RV32I::sw(0xFDC.into(), 0xA.into(), 0x8.into()))
         )
     }
 
