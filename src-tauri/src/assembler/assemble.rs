@@ -791,8 +791,7 @@ impl Assembler<RISCV> for RiscVAssembler {
                     text_segment.push(binary_string);
                     let hex_string = format!("{:08x}", line);
                 }
-                ParserResultText::Align(power) => {
-                }
+                ParserResultText::Align(power) => {}
             }
         }
         Ok(Memory {
