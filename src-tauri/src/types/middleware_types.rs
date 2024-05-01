@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::sync::Mutex;
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use strum_macros::{Display, EnumMessage};
 
 use crate::interface::assembler::Assembler;
@@ -43,24 +43,24 @@ pub struct SyscallRequest {
     pub syscall: String,
 }
 
-#[derive(Clone, Serialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct AssemblerConfig {
-    memory_map_limit_address: usize,
-    kernel_space_high_address: usize,
-    mmio_base_address: usize,
-    kernel_space_base_address: usize,
-    user_space_high_address: usize,
-    data_segment_limit_address: usize,
-    stack_base_address: usize,
-    stack_pointer_sp: usize,
-    stack_limit_address: usize,
-    heap_base_address: usize,
-    dot_data_base_address: usize,
-    global_pointer_gp: usize,
-    data_segment_base_address: usize,
-    dot_extern_base_address: usize,
-    text_limit_address: usize,
-    dot_text_base_address: usize,
+    memory_map_limit_address: u64,
+    kernel_space_high_address: u64,
+    mmio_base_address: u64,
+    kernel_space_base_address: u64,
+    user_space_high_address: u64,
+    data_segment_limit_address: u64,
+    stack_base_address: u64,
+    stack_pointer_sp: u64,
+    stack_limit_address: u64,
+    heap_base_address: u64,
+    dot_data_base_address: u64,
+    global_pointer_gp: u64,
+    data_segment_base_address: u64,
+    dot_extern_base_address: u64,
+    text_limit_address: u64,
+    dot_text_base_address: u64,
 }
 
 #[derive(EnumMessage, Display)]

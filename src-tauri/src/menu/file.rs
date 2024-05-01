@@ -1,15 +1,13 @@
-use std::path::Path;
-
-use tauri::api::dialog::{FileDialogBuilder, MessageDialogKind};
-use tauri::{CustomMenuItem, Manager, Menu, Submenu, WindowMenuEvent};
-
-use super::display_alert_dialog;
+use super::{display_alert_dialog, display_confirm_dialog};
 use crate::io::file_io;
 use crate::modules::riscv::basic::interface::parser::{RISCVExtension, RISCVParser};
 use crate::storage::rope_store;
 use crate::types::menu_types;
 use crate::types::middleware_types::{Tab, TabMap};
 use crate::utility::state_helper::event::{get_current_tab_name, set_current_tab_name};
+use std::path::Path;
+use tauri::api::dialog::{FileDialogBuilder, MessageDialogKind};
+use tauri::{CustomMenuItem, Manager, Menu, Submenu, WindowMenuEvent};
 
 pub fn new() -> Submenu {
     Submenu::new(
@@ -31,26 +29,27 @@ pub fn event_handler(event: WindowMenuEvent) {
             open_handler(event);
         }
         "save" => {
-            save_handler(event);
+            save_handler(&event);
         }
         "save_as" => {
             save_as_handler(event);
         }
         "share" => {
-            share_handler(event);
+            share_handler(&event);
         }
         "close" => {
-            close_handler(event);
+            close_handler(&event);
         }
         "exit" => {
-            exit_handler(event);
+            exit_handler(&event);
         }
         _ => {
             println!("Unknown file menu item {}", event.menu_item_id());
         }
     }
 }
-
+/// event emit: front_file_open
+/// payload: OpenFile { file_path: String, content: String }
 fn open_handler(event: WindowMenuEvent) {
     let picker = FileDialogBuilder::new();
     picker.pick_file(move |file_path| match file_path {
@@ -83,7 +82,9 @@ fn open_handler(event: WindowMenuEvent) {
     });
 }
 
-fn save_handler<'a>(event: WindowMenuEvent) {
+/// event emit: front_file_save
+/// payload: String
+fn save_handler(event: &WindowMenuEvent) {
     let name = get_current_tab_name(&event);
     let tab_map = event.window().state::<TabMap>();
     let mut lock = tab_map.tabs.lock().unwrap();
@@ -105,6 +106,9 @@ fn save_handler<'a>(event: WindowMenuEvent) {
     }
 }
 
+/// event emit: front_file_save_as
+/// payload: String
+/// FIXME: maybe unused?
 fn save_as_handler(event: WindowMenuEvent) {
     let content = {
         let name = get_current_tab_name(&event);
@@ -132,17 +136,37 @@ fn save_as_handler(event: WindowMenuEvent) {
     });
 }
 
-fn share_handler(event: WindowMenuEvent) {
-    todo!("Share file with socket");
+fn share_handler(event: &WindowMenuEvent) {
+    //TODO
+    //event
 }
 
-fn close_handler(event: WindowMenuEvent) {
+fn close_handler(event: &WindowMenuEvent) {
     //TODO: check if the file is dirty
 }
 
-fn exit_handler(event: WindowMenuEvent) {
+fn exit_handler(event: &WindowMenuEvent) {
     event.window().close().unwrap();
-    todo!("check all dirty file before exit");
+    let tab_map = event.window().state::<TabMap>();
+    let lock = tab_map.tabs.lock().unwrap();
+    for (name, tab) in lock.iter() {
+        if tab.text.is_dirty() {
+            display_confirm_dialog(
+                MessageDialogKind::Warning,
+                "Warning",
+                format!(
+                    "File {} is modified but not save, are you sure to exit",
+                    name.as_str()
+                )
+                .as_str(),
+                |save| {
+                    if save { //TODO
+                    } else {
+                    }
+                },
+            )
+        }
+    }
 }
 
 fn new_tab(event: &WindowMenuEvent, file_path: &Path) -> Option<String> {
