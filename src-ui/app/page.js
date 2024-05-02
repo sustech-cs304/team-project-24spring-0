@@ -31,9 +31,23 @@ export default function Home() {
             // return event.payload;
         });
 
+        const unListenedFileSave = listen('front_file_save', (event) => {
+            const state = useFileStore.getState();
+            const file = state.files.find(file => file.fileName === state.currentFile);
+            state.updateFile(state.currentFile, file.code, file.code, file.runLines);
+        });
+
+        const unListenedFileSaveAs = listen('front_file_save_as', (event) => {
+            const state = useFileStore.getState();
+            const file = state.files.find(file => file.fileName === state.currentFile);
+            state.updateFile(state.currentFile, file.code, file.code, file.runLines);
+        });
+
 
         return () => {
             unListenedFileOpen.then(dispose => dispose());
+            unListenedFileSave.then(dispose => dispose());
+            unListenedFileSaveAs.then(dispose => dispose());
         };
     }, []);
 

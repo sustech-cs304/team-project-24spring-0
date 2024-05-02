@@ -4,13 +4,15 @@ import {Tabs, Tab, Card, CardBody, Textarea} from "@nextui-org/react";
 import {Table, TableHeader, TableBody, TableRow, TableColumn, TableCell} from "@nextui-org/react";
 import TestPage from "@/components/TestPage";
 import useFileStore from "@/utils/state";
+import {invoke} from '@tauri-apps/api/tauri';
 
 
 export default function Code({fileName}) {
     const store = useFileStore();
 
     useEffect(() => {
-        store.changeCurrentFile(fileName);
+        var storeEffect = useFileStore.getState();
+        storeEffect.changeCurrentFile(fileName);
     }, []);
 
     return (
