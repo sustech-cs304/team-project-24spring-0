@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/modules/riscv/middleware.rs`."><title>middleware.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-b21aa549bf6d91ff.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="moras" data-themes="" data-resource-suffix="" data-rustdoc-version="1.80.0-nightly (1fffb2a35 2024-04-28)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../../moras/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/modules/riscv/middleware.rs`."><title>middleware.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-b21aa549bf6d91ff.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="moras" data-themes="" data-resource-suffix="" data-rustdoc-version="1.80.0-nightly (c987ad527 2024-05-01)" data-channel="nightly" data-search-js="search-bf21c90c8c1d92b1.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../static.files/storage-e32f0c247825364d.js"></script><script defer src="../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-09095024cf37855e.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../../../moras/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Type ‘S’ or ‘/’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings">Settings</a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -301,6 +301,55 @@
 <a href="#301" id="301">301</a>
 <a href="#302" id="302">302</a>
 <a href="#303" id="303">303</a>
+<a href="#304" id="304">304</a>
+<a href="#305" id="305">305</a>
+<a href="#306" id="306">306</a>
+<a href="#307" id="307">307</a>
+<a href="#308" id="308">308</a>
+<a href="#309" id="309">309</a>
+<a href="#310" id="310">310</a>
+<a href="#311" id="311">311</a>
+<a href="#312" id="312">312</a>
+<a href="#313" id="313">313</a>
+<a href="#314" id="314">314</a>
+<a href="#315" id="315">315</a>
+<a href="#316" id="316">316</a>
+<a href="#317" id="317">317</a>
+<a href="#318" id="318">318</a>
+<a href="#319" id="319">319</a>
+<a href="#320" id="320">320</a>
+<a href="#321" id="321">321</a>
+<a href="#322" id="322">322</a>
+<a href="#323" id="323">323</a>
+<a href="#324" id="324">324</a>
+<a href="#325" id="325">325</a>
+<a href="#326" id="326">326</a>
+<a href="#327" id="327">327</a>
+<a href="#328" id="328">328</a>
+<a href="#329" id="329">329</a>
+<a href="#330" id="330">330</a>
+<a href="#331" id="331">331</a>
+<a href="#332" id="332">332</a>
+<a href="#333" id="333">333</a>
+<a href="#334" id="334">334</a>
+<a href="#335" id="335">335</a>
+<a href="#336" id="336">336</a>
+<a href="#337" id="337">337</a>
+<a href="#338" id="338">338</a>
+<a href="#339" id="339">339</a>
+<a href="#340" id="340">340</a>
+<a href="#341" id="341">341</a>
+<a href="#342" id="342">342</a>
+<a href="#343" id="343">343</a>
+<a href="#344" id="344">344</a>
+<a href="#345" id="345">345</a>
+<a href="#346" id="346">346</a>
+<a href="#347" id="347">347</a>
+<a href="#348" id="348">348</a>
+<a href="#349" id="349">349</a>
+<a href="#350" id="350">350</a>
+<a href="#351" id="351">351</a>
+<a href="#352" id="352">352</a>
 </pre></div><pre class="rust"><code><span class="doccomment">/// Module providing API functions for the frontend of a Tauri application.
 /// Could be used by `invoke`
 </span><span class="kw">pub mod </span>frontend_api {
@@ -310,12 +359,12 @@
     <span class="kw">use </span><span class="kw">crate</span>::types::middleware_types::{
         AssembleResult, AssemblerConfig, CurTabName, Optional, SyscallDataType, Tab, TabMap,
     };
-    <span class="kw">use </span>std::any::Any;
     <span class="kw">use </span>tauri::State;
 
     <span class="doccomment">/// Creates a new tab with content loaded from a specified file path.
     /// - `tab_map`: Current state of all open tabs.
     /// - `filepath`: Path to the file from which content will be loaded.
+    ///
     /// Returns `Optional` indicating the success or failure of tab creation.
     </span><span class="attr">#[tauri::command]
     </span><span class="kw">pub fn </span>create_tab(tab_map: State&lt;TabMap&gt;, filepath: <span class="kw-2">&amp;</span>str) -&gt; Optional {
@@ -352,19 +401,37 @@
     /// - `cur_name`: Current name of the tab in focus.
     /// - `tab_map`: Current state of all open tabs.
     /// - `filepath`: Path to the file associated with the tab to close.
-    /// Returns `Optional` indicating the success or failure of tab closure.
+    ///
+    /// Returns `Optional` indicating the success or failure of tab close if
+    /// success, return the new tab to focus on, else return error message.
     </span><span class="attr">#[tauri::command]
     </span><span class="kw">pub fn </span>close_tab(
-        cur_name: State&lt;CurTabName&gt;,
+        cur_tab_name: State&lt;CurTabName&gt;,
         tab_map: State&lt;TabMap&gt;,
         filepath: <span class="kw-2">&amp;</span>str,
     ) -&gt; Optional {
-        <span class="kw">if </span><span class="kw-2">*</span>cur_name.name.lock().unwrap() == filepath {}
-
+        <span class="kw">if </span><span class="kw-2">*</span>cur_tab_name.name.lock().unwrap() == filepath {
+            <span class="kw">let </span>lock = tab_map.tabs.lock().unwrap();
+            <span class="kw">if </span>lock.len() == <span class="number">1 </span>{
+                <span class="kw">return </span>Optional {
+                    success: <span class="bool-val">false</span>,
+                    message: <span class="string">"Cannot close last tab"</span>.to_string(),
+                };
+            } <span class="kw">else </span>{
+                <span class="kw">loop </span>{
+                    <span class="kw">let </span><span class="kw-2">mut </span>iter = lock.iter();
+                    <span class="kw">let </span>(new_name, <span class="kw">_</span>) = iter.next().unwrap();
+                    <span class="kw">if </span>new_name != filepath {
+                        <span class="kw-2">*</span>cur_tab_name.name.lock().unwrap() = new_name.clone();
+                        <span class="kw">break</span>;
+                    }
+                }
+            }
+        }
         <span class="kw">match </span>tab_map.tabs.lock().unwrap().remove(filepath) {
             <span class="prelude-val">Some</span>(<span class="kw">_</span>) =&gt; Optional {
                 success: <span class="bool-val">true</span>,
-                message: String::new(),
+                message: cur_tab_name.name.lock().unwrap().clone(),
             },
             <span class="prelude-val">None </span>=&gt; Optional {
                 success: <span class="bool-val">false</span>,
@@ -376,11 +443,24 @@
     <span class="doccomment">/// Changes the current tab to the one specified by the new path.
     /// - `cur_name`: Current name of the tab in focus.
     /// - `newpath`: Path to the file associated with the new tab to focus.
+    /// - `tab_map`: Current state of all open tabs.
+    ///
     /// Returns `bool` indicating whether the operation was successful.
+    /// The only case where it would fail is if the tab with the specified
+    /// path does not exist in opened tabs.
     </span><span class="attr">#[tauri::command]
-    </span><span class="kw">pub fn </span>change_current_tab(cur_name: State&lt;CurTabName&gt;, newpath: <span class="kw-2">&amp;</span>str) -&gt; bool {
-        <span class="kw-2">*</span>cur_name.name.lock().unwrap() = newpath.to_string();
-        <span class="macro">todo!</span>(<span class="string">"Implement change_current_tab"</span>)
+    </span><span class="kw">pub fn </span>change_current_tab(
+        cur_tab_name: State&lt;CurTabName&gt;,
+        tab_map: State&lt;TabMap&gt;,
+        newpath: <span class="kw-2">&amp;</span>str,
+    ) -&gt; bool {
+        <span class="kw">let </span>lock = tab_map.tabs.lock().unwrap();
+        <span class="kw">if </span>lock.contains_key(newpath) {
+            <span class="kw-2">*</span>cur_tab_name.name.lock().unwrap() = newpath.to_string();
+            <span class="bool-val">true
+        </span>} <span class="kw">else </span>{
+            <span class="bool-val">false
+        </span>}
     }
 
     <span class="doccomment">/// Updates the content of the tab associated with the given file path.
@@ -393,6 +473,7 @@
         <span class="kw">match </span>tab_map.tabs.lock().unwrap().get_mut(filepath) {
             <span class="prelude-val">Some</span>(tab) =&gt; {
                 tab.text = Box::new(rope_store::Text::from_str(data).unwrap());
+                tab.text.set_dirty(<span class="bool-val">true</span>);
                 Optional {
                     success: <span class="bool-val">true</span>,
                     message: String::new(),
@@ -407,6 +488,7 @@
 
     <span class="doccomment">/// Reads the content of a tab from the file at the specified path.
     /// - `filepath`: Path to the file to read.
+    ///
     /// Returns `Optional` containing the file content if successful, or an
     /// error message if not.
     </span><span class="attr">#[tauri::command]
@@ -423,9 +505,10 @@
         }
     }
 
-    <span class="doccomment">/// Writes data to the tab associated with the given file path.
+    <span class="doccomment">/// Writes data in specific tab to the file file path.
     /// - `filepath`: Path to the file where data should be written.
     /// - `data`: Content to write to the file.
+    ///
     /// Returns `Optional` indicating the success or failure of the write
     /// operation.
     </span><span class="attr">#[tauri::command]
@@ -445,6 +528,7 @@
     <span class="doccomment">/// Assembles the code in the currently active tab.
     /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: State containing the map of all tabs.
+    ///
     /// Returns `AssembleResult` indicating the outcome of the assembly process.
     </span><span class="attr">#[tauri::command]
     </span><span class="kw">pub fn </span>assembly(cur_tab_name: State&lt;CurTabName&gt;, tab_map: State&lt;TabMap&gt;) -&gt; AssembleResult {
@@ -452,10 +536,13 @@
         <span class="kw">let </span><span class="kw-2">mut </span>lock = tab_map.tabs.lock().unwrap();
         <span class="kw">let </span>tab = lock.get_mut(<span class="kw-2">&amp;</span>name).unwrap();
         <span class="kw">match </span>tab.parser.parse(tab.text.to_string()) {
-            <span class="prelude-val">Ok</span>(ir) =&gt; AssembleResult {
-                success: <span class="bool-val">true</span>,
-                error: Default::default(),
-            },
+            <span class="prelude-val">Ok</span>(ir) =&gt; {
+                <span class="comment">//TODO
+                </span>AssembleResult {
+                    success: <span class="bool-val">true</span>,
+                    error: Default::default(),
+                }
+            }
             <span class="prelude-val">Err</span>(e) =&gt; AssembleResult {
                 success: <span class="bool-val">false</span>,
                 error: e,
@@ -466,6 +553,7 @@
     <span class="doccomment">/// Placeholder for a function to dump data from all tabs.
     /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: State containing the map of all tabs.
+    ///
     /// Returns `bool` indicating whether the dump was successful.
     </span><span class="attr">#[tauri::command]
     </span><span class="kw">pub fn </span>dump(cur_tab_name: State&lt;CurTabName&gt;, tab_map: State&lt;TabMap&gt;) -&gt; bool {
@@ -475,6 +563,7 @@
     <span class="doccomment">/// Run the code in the currently active tab in debug mode.
     /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: State containing the map of all tabs.
+    ///
     /// Returns `bool` indicating whether the debug session was successfully
     /// started.
     </span><span class="attr">#[tauri::command]
@@ -485,6 +574,7 @@
     <span class="doccomment">/// Steps through the code in the currently active tab.
     /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: State containing the map of all tabs.
+    ///
     /// Returns `bool` indicating whether the step was successful.
     </span><span class="attr">#[tauri::command]
     </span><span class="kw">pub fn </span>step(cur_tab_name: State&lt;CurTabName&gt;, tab_map: State&lt;TabMap&gt;) -&gt; bool {
@@ -494,6 +584,7 @@
     <span class="doccomment">/// Resets the state of the currently active tab's simulator.
     /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: State containing the map of all tabs.
+    ///
     /// Returns `bool` indicating whether the reset was successful.
     </span><span class="attr">#[tauri::command]
     </span><span class="kw">pub fn </span>reset(cur_tab_name: State&lt;CurTabName&gt;, tab_map: State&lt;TabMap&gt;) -&gt; bool {
@@ -503,6 +594,7 @@
     <span class="doccomment">/// Undoes the last instruction for current activate tab's simulator.
     /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: State containing the map of all tabs.
+    ///
     /// Returns `bool` indicating whether the undo was successful.
     </span><span class="attr">#[tauri::command]
     </span><span class="kw">pub fn </span>undo(cur_tab_name: State&lt;CurTabName&gt;, tab_map: State&lt;TabMap&gt;) -&gt; bool {
@@ -512,6 +604,7 @@
     <span class="doccomment">/// Sets a breakpoint at a specified line in the code of the current tab.
     /// - `tab_map`: State containing the map of all tabs.
     /// - `line`: Line number at which to set the breakpoint.
+    ///
     /// Returns `bool` indicating whether the breakpoint was successfully set.
     </span><span class="attr">#[tauri::command]
     </span><span class="kw">pub fn </span>set_breakpoint(tab_map: State&lt;TabMap&gt;, line: usize) -&gt; bool {
@@ -522,8 +615,11 @@
     <span class="doccomment">/// Removes a breakpoint at a specified line in the code of the current tab.
     /// - `tab_map`: State containing the map of all tabs.
     /// - `line`: Line number at which to remove the breakpoint.
+    ///
+    /// Returns `bool` indicating whether the breakpoint was successfully
+    /// removed.
     </span><span class="attr">#[tauri::command]
-    </span><span class="kw">pub fn </span>remove_breakpoint(tab_map: State&lt;TabMap&gt;, line: u64) {
+    </span><span class="kw">pub fn </span>remove_breakpoint(tab_map: State&lt;TabMap&gt;, line: u64) -&gt; bool {
         <span class="macro">todo!</span>(<span class="string">"Implement removeBreakPoint"</span>)
     }
 
@@ -538,6 +634,8 @@
     ///    - "Char"
     ///    - "Long"
     /// - `val`: Value of the input as a string.
+    ///
+    /// Returns `bool` indicating whether the syscall input was successfully
     </span><span class="attr">#[tauri::command]
     #[allow(non_snake_case)]
     </span><span class="kw">pub fn </span>syscall_input(
@@ -567,6 +665,7 @@
     /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: State containing the map of all tabs.
     /// - `settings`: New assembler settings to be applied.
+    ///
     /// Returns `bool` indicating whether the settings were successfully
     /// updated.
     </span><span class="attr">#[tauri::command]
@@ -580,10 +679,9 @@
 }
 
 <span class="kw">pub mod </span>backend_api {
-    <span class="kw">use </span>tauri::Manager;
-
     <span class="kw">use </span><span class="kw">crate</span>::types::middleware_types::{SyscallDataType, SyscallRequest};
     <span class="kw">use </span><span class="kw">crate</span>::APP_HANDLE;
+    <span class="kw">use </span>tauri::Manager;
 
     <span class="kw">pub fn </span>syscall_input_request(pathname: <span class="kw-2">&amp;</span>str, acquire_type: SyscallDataType) {
         <span class="kw">if let </span><span class="prelude-val">Some</span>(app_handle) = APP_HANDLE.lock().unwrap().as_ref() {
