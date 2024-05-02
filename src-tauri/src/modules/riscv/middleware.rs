@@ -7,7 +7,6 @@ pub mod frontend_api {
     use crate::types::middleware_types::{
         AssembleResult, AssemblerConfig, CurTabName, Optional, SyscallDataType, Tab, TabMap,
     };
-    use std::any::Any;
     use tauri::State;
 
     /// Creates a new tab with content loaded from a specified file path.
@@ -51,19 +50,36 @@ pub mod frontend_api {
     /// - `tab_map`: Current state of all open tabs.
     /// - `filepath`: Path to the file associated with the tab to close.
     ///
-    /// Returns `Optional` indicating the success or failure of tab closure.
+    /// Returns `Optional` indicating the success or failure of tab close if
+    /// success, return the new tab to focus on, else return error message.
     #[tauri::command]
     pub fn close_tab(
-        cur_name: State<CurTabName>,
+        cur_tab_name: State<CurTabName>,
         tab_map: State<TabMap>,
         filepath: &str,
     ) -> Optional {
-        if *cur_name.name.lock().unwrap() == filepath {}
-
+        if *cur_tab_name.name.lock().unwrap() == filepath {
+            let lock = tab_map.tabs.lock().unwrap();
+            if lock.len() == 1 {
+                return Optional {
+                    success: false,
+                    message: "Cannot close last tab".to_string(),
+                };
+            } else {
+                loop {
+                    let mut iter = lock.iter();
+                    let (new_name, _) = iter.next().unwrap();
+                    if new_name != filepath {
+                        *cur_tab_name.name.lock().unwrap() = new_name.clone();
+                        break;
+                    }
+                }
+            }
+        }
         match tab_map.tabs.lock().unwrap().remove(filepath) {
             Some(_) => Optional {
                 success: true,
-                message: String::new(),
+                message: cur_tab_name.name.lock().unwrap().clone(),
             },
             None => Optional {
                 success: false,
@@ -75,12 +91,24 @@ pub mod frontend_api {
     /// Changes the current tab to the one specified by the new path.
     /// - `cur_name`: Current name of the tab in focus.
     /// - `newpath`: Path to the file associated with the new tab to focus.
+    /// - `tab_map`: Current state of all open tabs.
     ///
     /// Returns `bool` indicating whether the operation was successful.
+    /// The only case where it would fail is if the tab with the specified
+    /// path does not exist in opened tabs.
     #[tauri::command]
-    pub fn change_current_tab(cur_name: State<CurTabName>, newpath: &str) -> bool {
-        *cur_name.name.lock().unwrap() = newpath.to_string();
-        todo!("Implement change_current_tab")
+    pub fn change_current_tab(
+        cur_tab_name: State<CurTabName>,
+        tab_map: State<TabMap>,
+        newpath: &str,
+    ) -> bool {
+        let lock = tab_map.tabs.lock().unwrap();
+        if lock.contains_key(newpath) {
+            *cur_tab_name.name.lock().unwrap() = newpath.to_string();
+            true
+        } else {
+            false
+        }
     }
 
     /// Updates the content of the tab associated with the given file path.
@@ -93,6 +121,7 @@ pub mod frontend_api {
         match tab_map.tabs.lock().unwrap().get_mut(filepath) {
             Some(tab) => {
                 tab.text = Box::new(rope_store::Text::from_str(data).unwrap());
+                tab.text.set_dirty(true);
                 Optional {
                     success: true,
                     message: String::new(),
@@ -124,7 +153,7 @@ pub mod frontend_api {
         }
     }
 
-    /// Writes data to the tab associated with the given file path.
+    /// Writes data in specific tab to the file file path.
     /// - `filepath`: Path to the file where data should be written.
     /// - `data`: Content to write to the file.
     ///
@@ -155,10 +184,13 @@ pub mod frontend_api {
         let mut lock = tab_map.tabs.lock().unwrap();
         let tab = lock.get_mut(&name).unwrap();
         match tab.parser.parse(tab.text.to_string()) {
-            Ok(ir) => AssembleResult {
-                success: true,
-                error: Default::default(),
-            },
+            Ok(ir) => {
+                //TODO
+                AssembleResult {
+                    success: true,
+                    error: Default::default(),
+                }
+            }
             Err(e) => AssembleResult {
                 success: false,
                 error: e,
@@ -295,10 +327,9 @@ pub mod frontend_api {
 }
 
 pub mod backend_api {
-    use tauri::Manager;
-
     use crate::types::middleware_types::{SyscallDataType, SyscallRequest};
     use crate::APP_HANDLE;
+    use tauri::Manager;
 
     pub fn syscall_input_request(pathname: &str, acquire_type: SyscallDataType) {
         if let Some(app_handle) = APP_HANDLE.lock().unwrap().as_ref() {

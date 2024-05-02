@@ -42,4 +42,4 @@ macro_rules! create_menu {
     };
 }
 
-create_menu!(file, setting, help,test);
+create_menu!(file, setting, help, test);
