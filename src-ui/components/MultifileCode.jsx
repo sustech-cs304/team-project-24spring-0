@@ -15,7 +15,7 @@ export default function MultifileCode() {
     return (
         <Tabs size="small" aria-label="Files">
             {files.map(file => (
-                <Tab key={file.fileName} title={file.fileName.split('/').pop() + (file.code!=file.original?' *':"")} className="h-full">
+                <Tab key={file.fileName} title={file.fileName.split('/').pop().split('\\').pop() + (file.code!=file.original?' *':"")} className="h-full">
                     <div className="h-full w-full relative">
                         <Code fileName={file.fileName}/>
                         <div className='absolute right-4 top-2 flex-row gap-2'>
