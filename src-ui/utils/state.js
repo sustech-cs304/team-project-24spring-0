@@ -9,6 +9,7 @@ const useFileStore = create((set) => ({
     deleteFile: (fileName) => set(state => ({ files: state.files.filter(file => file.fileName !== fileName) })),
     updateFile: (fileName, code, original, runLines) => set(state => ({ files: state.files.map(file => file.fileName === fileName ? {fileName, code, original, runLines} : file) })),
     changeCurrentFile: (fileName) => set(state => ({ currentFile: fileName })),
+    setSelectedLines: (fileName, selectedLines) => set(state => ({ files: state.files.map(file => file.fileName === fileName ? {...file, selectedLines} : file) })),
 }))
 
 export default useFileStore;

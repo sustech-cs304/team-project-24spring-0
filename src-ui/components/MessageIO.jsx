@@ -1,7 +1,23 @@
 import {Tabs, Tab, Card, CardBody, Button, Textarea} from "@nextui-org/react";
 import {Table, TableHeader, TableBody, TableRow, TableColumn, TableCell} from "@nextui-org/react";
+import useOutputStore from "@/utils/outputState";
 
 export default function MessageIO() {
+    var outputStore = useOutputStore();
+    var outputs = useOutputStore(state => state.output);
+
+    var generateOutputFromArray = (array) => {
+        var output = '';
+        for (var i = 0; i < array.length; i++) {
+            output += array[i] + '\n';
+        }
+        return output;
+    }
+
+    var handleClearOutput = () => {
+        outputStore.clearOutput();
+    }
+
     return (
         <div className="flex flex-col h-full">
             <Tabs aria-label="Options">
@@ -11,9 +27,10 @@ export default function MessageIO() {
                             <div className='h-full w-full relative'>
                                 <textarea id="message" rows="4"
                                           className="w-8/9 h-full block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                                          placeholder="Output..."></textarea>
+                                          value={outputs.concat('\n')}
+                                          placeholder='Output...'></textarea>
                                 <div className='absolute right-2 top-2 fill-gray-300 hover:fill-gray-500'>
-                                    <button>
+                                    <button onClick={() => handleClearOutput()}>
                                         <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="16" height="16"
                                              viewBox="0 0 30 30">
                                             <path

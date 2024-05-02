@@ -4,11 +4,13 @@ import {Tabs, Tab, Card, CardBody, Textarea} from "@nextui-org/react";
 import {Table, TableHeader, TableBody, TableRow, TableColumn, TableCell} from "@nextui-org/react";
 import TestPage from "@/components/TestPage";
 import useFileStore from "@/utils/state";
+import CodeLineTable from "./CodeLineTable";
 import {invoke} from '@tauri-apps/api/tauri';
 
 
 export default function Code({fileName}) {
     const store = useFileStore();
+
 
     useEffect(() => {
         var storeEffect = useFileStore.getState();
@@ -33,25 +35,7 @@ export default function Code({fileName}) {
                     <Tab key="excecute" title="Execute" className="h-full w-full">
                     <Card className='h-full'>
                         <CardBody className="h-full flow grid-flow-row gap-4">
-                            <Table aria-label="Example static collection table" className='row-span-1' selectionMode="multiple" color="warning" defaultSelectedKeys={["r1"]}>
-                                <TableHeader>
-                                    <TableColumn>Line</TableColumn>
-                                    <TableColumn>Code</TableColumn>
-                                    <TableColumn>Run</TableColumn>
-                                </TableHeader>
-                                <TableBody>
-                                    <TableRow key="r1">
-                                        <TableCell>1</TableCell>
-                                        <TableCell>li x1, 0</TableCell>
-                                        <TableCell>←</TableCell>
-                                    </TableRow>
-                                    <TableRow key="r2" >
-                                        <TableCell>2</TableCell>
-                                        <TableCell>add x2, x1, x3 </TableCell>
-                                        <TableCell></TableCell>
-                                    </TableRow>
-                                </TableBody>
-                            </Table>
+                            <CodeLineTable fileName={fileName}/>
                             <Table aria-label="Example static collection table" className='row-span-1' hideHeader>
                                 <TableHeader>
                                     <TableColumn>1</TableColumn>
