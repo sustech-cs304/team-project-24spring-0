@@ -56,7 +56,7 @@ export default function ModifiedEditor({fileName}) {
             />
             <div className='absolute right-2 top-0 flex-row gap-2'>
                 <button className='bg-gray-100 rounded-2xl hover:bg-gray-200'>
-                    <Image src='/icons/run.svg' width={16} height={16}/>
+                    <Image alt="run icon" src='/icons/run.svg' width={16} height={16}/>
                 </button>
             </div>
         </div>

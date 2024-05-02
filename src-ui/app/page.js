@@ -9,13 +9,17 @@ import { listen } from '@tauri-apps/api/event';
 import useFileStore from "@/utils/state";
 
 export default function Home() {
-    const state = useFileStore();
-    const files = useFileStore((state) => state.files);
 
     useEffect(() => {
         const unListenedFileOpen = listen('front_file_open', (event) => {
             // setOutput(prevOutput => prevOutput + '\nEvent received:\n' + JSON.stringify(event.payload));
-            
+            const state = useFileStore.getState();
+            for (let file of state.files) {
+                if (file.fileName === event.payload["file_path"]) {
+                    return;
+                }
+            }
+
             state.addFile(
                 {
                     fileName: event.payload["file_path"],

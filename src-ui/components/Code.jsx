@@ -3,9 +3,15 @@ import ModifiedEditor from "@/components/ModifiedEditor";
 import {Tabs, Tab, Card, CardBody, Textarea} from "@nextui-org/react";
 import {Table, TableHeader, TableBody, TableRow, TableColumn, TableCell} from "@nextui-org/react";
 import TestPage from "@/components/TestPage";
+import useFileStore from "@/utils/state";
 
 
 export default function Code({fileName}) {
+    const store = useFileStore();
+
+    useEffect(() => {
+        store.changeCurrentFile(fileName);
+    }, []);
 
     return (
         <div className="flex flex-col h-full">
