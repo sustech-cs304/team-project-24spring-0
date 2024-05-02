@@ -7,9 +7,9 @@ export default function MessageIO() {
     var outputs = useOutputStore(state => state.output);
 
     var generateOutputFromArray = (array) => {
-        var output = '';
+        var output = "";
         for (var i = 0; i < array.length; i++) {
-            output += array[i] + '\n';
+            output += array[i] + "\n";
         }
         return output;
     }
@@ -25,9 +25,9 @@ export default function MessageIO() {
                     <Card className='h-full'>
                         <CardBody>
                             <div className='h-full w-full relative'>
-                                <textarea id="message" rows="4"
+                                <textarea id="message" rows="4" readOnly
                                           className="w-8/9 h-full block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                                          value={outputs.concat('\n')}
+                                          value={generateOutputFromArray(outputs)}
                                           placeholder='Output...'></textarea>
                                 <div className='absolute right-2 top-2 fill-gray-300 hover:fill-gray-500'>
                                     <button onClick={() => handleClearOutput()}>

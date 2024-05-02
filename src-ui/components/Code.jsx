@@ -6,16 +6,21 @@ import TestPage from "@/components/TestPage";
 import useFileStore from "@/utils/state";
 import CodeLineTable from "./CodeLineTable";
 import {invoke} from '@tauri-apps/api/tauri';
+import useOutputStore from "@/utils/outputState";
+import {Button} from "@nextui-org/react";
 
 
 export default function Code({fileName}) {
     const store = useFileStore();
 
 
-    useEffect(() => {
-        var storeEffect = useFileStore.getState();
-        storeEffect.changeCurrentFile(fileName);
-    }, []);
+    // useEffect(async () => {
+    //     var storeEffect = useFileStore.getState();
+    //     storeEffect.changeCurrentFile(fileName);
+    //     // const result = await invoke('change_current_tab', {newpath: fileName});
+    //     // const outputStore = useOutputStore.getState();
+    //     // outputStore.addOutput('Tab Change Result: \n' + result.message);
+    // }, []);
 
     return (
         <div className="flex flex-col h-full">

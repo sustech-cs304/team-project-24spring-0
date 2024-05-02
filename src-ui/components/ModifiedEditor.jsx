@@ -1,8 +1,10 @@
 import Editor, {useMonaco} from "@monaco-editor/react";
 import React, {useEffect} from "react";
 import Image from "next/image";
-
+import { invoke } from '@tauri-apps/api/tauri';
+import useOutputStore from "@/utils/outputState";
 import useFileStore from "@/utils/state";
+import { data } from "autoprefixer";
 
 
 export default function ModifiedEditor({fileName}) {
@@ -46,13 +48,25 @@ export default function ModifiedEditor({fileName}) {
         }
     }, [monaco]);
 
+    var handleEditorChange = async (value) => {
+        state.updateFile(fileName, value, file.original, file.assembly, file.runLines);
+        const result = await invoke('update_tab', {filepath: fileName, data: value});
+        console.log('update tab result: ', result);
+        if(!result.success){
+            console.log('Error updating tab');
+            const outputStore = useOutputStore.getState();
+            outputStore.addOutput('Error updating tab: ' + fileName);
+        }
+
+    }
+
     return (
         <div className='h-full relative'>
             <Editor 
             language='javascript' 
             className='overflow-hidden h-full'
             value={file.code}
-            onChange={(value) => {state.updateFile(fileName, value, file.original, ["r1"]);}}
+            onChange={handleEditorChange}
             />
             <div className='absolute right-2 top-0 flex-row gap-2'>
                 <button className='bg-gray-100 rounded-2xl hover:bg-gray-200'>
