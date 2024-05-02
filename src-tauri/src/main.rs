@@ -4,15 +4,15 @@ mod interface;
 mod io;
 mod menu;
 mod modules;
+mod remote;
 mod storage;
 mod tests;
 mod types;
 mod utility;
 
-use std::sync::{Arc, Mutex};
-
-use modules::riscv::middleware::*;
+use modules::riscv::middleware::frontend_api;
 use once_cell::sync::Lazy;
+use std::sync::{Arc, Mutex};
 use tauri::{AppHandle, Manager};
 use types::middleware_types;
 
@@ -36,16 +36,22 @@ fn main() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
-            tab_management::create_tab,
-            tab_management::close_tab,
-            tab_management::change_current_tab,
-            tab_management::update_tab,
-            tab_management::read_tab,
-            tab_management::write_tab,
-            frontend_api::assemble,
+            frontend_api::create_tab,
+            frontend_api::close_tab,
+            frontend_api::change_current_tab,
+            frontend_api::update_tab,
+            frontend_api::read_tab,
+            frontend_api::write_tab,
+            frontend_api::assembly,
             frontend_api::debug,
-            frontend_api::setBreakPoint,
-            frontend_api::removeBreakPoint,
+            frontend_api::step,
+            frontend_api::dump,
+            frontend_api::undo,
+            frontend_api::reset,
+            frontend_api::set_breakpoint,
+            frontend_api::remove_breakpoint,
+            frontend_api::syscall_input,
+            frontend_api::update_assembler_settings,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
