@@ -14,13 +14,12 @@ export default function Code({fileName}) {
     const store = useFileStore();
 
 
-    // useEffect(async () => {
-    //     var storeEffect = useFileStore.getState();
-    //     storeEffect.changeCurrentFile(fileName);
-    //     // const result = await invoke('change_current_tab', {newpath: fileName});
-    //     // const outputStore = useOutputStore.getState();
-    //     // outputStore.addOutput('Tab Change Result: \n' + result.message);
-    // }, []);
+    useEffect(() => {
+        store.changeCurrentFile(fileName);
+        // const result = await invoke('change_current_tab', {newpath: fileName});
+        // const outputStore = useOutputStore.getState();
+        // outputStore.addOutput('Tab Change Result: \n' + result.message);
+    }, []);
 
     return (
         <div className="flex flex-col h-full">
