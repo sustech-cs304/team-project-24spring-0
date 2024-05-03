@@ -120,7 +120,7 @@ pub mod frontend_api {
     pub fn update_tab(tab_map: State<TabMap>, filepath: &str, data: &str) -> Optional {
         match tab_map.tabs.lock().unwrap().get_mut(filepath) {
             Some(tab) => {
-                tab.text = Box::new(rope_store::Text::from_str(data).unwrap());
+                tab.text.update_content(data);
                 tab.text.set_dirty(true);
                 Optional {
                     success: true,
