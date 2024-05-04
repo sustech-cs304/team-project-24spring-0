@@ -6,7 +6,6 @@ use editor_rpc::{
 use std::net::SocketAddr;
 use std::sync::RwLock;
 use tauri::Manager;
-use tokio::runtime::Runtime;
 use tokio::task::JoinHandle;
 use tonic::transport::Server;
 use tonic::{Request, Response, Status};
@@ -23,6 +22,13 @@ pub mod editor_rpc {
 struct ServerImpl {
     pub password: RwLock<String>,
     pub clients: RwLock<Vec<SocketAddr>>,
+}
+
+impl ServerImpl {
+    pub fn change_password(&self, password: String) {
+        let mut lock = self.password.write().unwrap();
+        *lock = password;
+    }
 }
 
 #[tonic::async_trait]
@@ -82,13 +88,6 @@ impl Editor for ServerImpl {
             success: true,
             content: "foo".to_string(),
         }))
-    }
-}
-
-impl ServerImpl {
-    pub fn change_password(&self, password: String) {
-        let mut lock = self.password.write().unwrap();
-        *lock = password;
     }
 }
 

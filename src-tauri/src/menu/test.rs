@@ -1,3 +1,4 @@
+use tauri::api::dialog::ask;
 use tauri::{CustomMenuItem, Menu, Submenu, WindowMenuEvent};
 
 pub fn new() -> Submenu {
@@ -9,11 +10,7 @@ pub fn new() -> Submenu {
 
 pub fn event_handler(event: WindowMenuEvent) {
     match event.menu_item_id().strip_prefix("test_").unwrap() {
-        "foo" => {
-            println!("foo");
-        }
-        _ => {
-            println!("Unknown file menu item {}", event.menu_item_id());
-        }
+        "foo" => {}
+        _ => {}
     }
 }
