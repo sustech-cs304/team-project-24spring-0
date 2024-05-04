@@ -1,4 +1,4 @@
-use strum_macros::{VariantArray, IntoStaticStr};
+use strum_macros::{IntoStaticStr, VariantArray};
 
 use super::super::super::basic::parser::lexer::RISCVOpToken;
 use super::oplist::OP_LIST;

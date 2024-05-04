@@ -33,7 +33,7 @@ pub(super) struct LexerIter<'a> {
 }
 
 impl RISCVOpToken {
-    pub fn get_opd_set(&self)->&'static Vec<RISCVOpdSet>{
+    pub fn get_opd_set(&self) -> &'static Vec<RISCVOpdSet> {
         (self.get_opd_set_fn)(self.val)
     }
 }
