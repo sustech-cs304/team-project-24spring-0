@@ -1,39 +1,30 @@
-import Editor, { useMonaco } from "@monaco-editor/react";
-import React, { useEffect, useState } from "react";
+import Editor from "@monaco-editor/react";
+import React from "react";
 import Image from "next/image";
 
 import useFileStore from "@/utils/state";
 import rv32i from "@/constants/riscv/rv32i.json"
 
 const language_id = 'riscv';
-let config_first_loaded = false;
 
 export default function ModifiedEditor({ fileName }) {
-    const monaco = useMonaco();
-    const [isConfigLoaded, setConfigLoaded] = useState(config_first_loaded);
     const state = useFileStore();
     const file = useFileStore(state => state.files.find(file => file.fileName === fileName));
-    useEffect(() => {
-        if (monaco && !isConfigLoaded) {
-            LoadMonacoConfig(monaco);
-            setConfigLoaded(true);
-            config_first_loaded = true;
-        }
-    }, [monaco]);
 
     return (
         <div className='h-full relative'>
-            {isConfigLoaded ? (
-                <Editor
-                    language={language_id}
-                    theme={language_id}
-                    className='overflow-hidden h-full'
-                    value={file.code}
-                    onChange={(value) => state.updateFile(fileName, value)}
-                />
-            ) : (
-                <div>Loading Editor...</div>
-            )}
+            <Editor
+                language={language_id}
+                theme={language_id}
+                className='overflow-hidden h-full'
+                loading={<div>Loading Editor...</div>}
+                value={file.code}
+                options={
+                    { hover: { enabled: true } }
+                }
+                beforeMount={LoadMonacoConfig}
+                onChange={(value) => state.updateFile(fileName, value)}
+            />
             <div className='absolute right-2 top-0 flex-row gap-2'>
                 <button className='bg-gray-100 rounded-2xl hover:bg-gray-200'>
                     <Image src='/icons/run.svg' width={16} height={16} />
@@ -207,6 +198,48 @@ function getRiscvCompletionProvider() {
 function getRiscvHoverProvider() {
     return {
         provideHover: (model, position, token) => {
+            let c = model.getValueInRange({
+                startLineNumber: position.lineNumber,
+                startColumn: position.column,
+                endLineNumber: position.lineNumber,
+                endColumn: position.column + 1
+            });
+            if (!/[\w\.]*/.test(c)) {
+                return null;
+            }
+            let prev_range = model.findPreviousMatch(/[\w\.]*/, position, true, true, null, false);
+            let next_range = model.findNextMatch(/[\w\.]*/, position, true, true, null, false);
+            let range = {
+                startLineNumber: prev_range.range.startLineNumber,
+                startColumn: prev_range.range.startColumn,
+                endLineNumber: next_range.range.endLineNumber,
+                endColumn: next_range.range.endColumn
+            };
+            let word = model.getValueInRange(range);
+            let register = rv32i.register[word];
+            let operator_list = rv32i.operator[word];
+            let directive = rv32i.directive.includes(word) ? word : undefined;
+            let title, detail;
+            let markdown_string_list = [];
+            if (register !== undefined) {
+                title = `Register: ${word}`;
+                detail = [register];
+            } else if (operator_list !== undefined) {
+                title = `Operator: ${word}`;
+                detail = operator_list;
+            } else if (directive !== undefined) {
+                title = `Directive: ${word}`;
+                detail = [word];
+            }
+            if (title !== undefined) {
+                markdown_string_list.push({ value: `**${title}**` });
+                markdown_string_list.push(...detail.map(d => ({ value: `\`${d}\`` })));
+                console.log(markdown_string_list);
+            }
+            return {
+                contents: markdown_string_list,
+                range: range
+            };
         }
     }
 }
