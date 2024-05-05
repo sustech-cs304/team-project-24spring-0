@@ -4,8 +4,10 @@ use std::str::FromStr;
 use once_cell::sync::Lazy;
 use strum::VariantArray;
 
+#[cfg(debug_assertions)]
+use super::super::super::basic::interface::parser::{export_list, export_pair};
 use super::super::super::basic::interface::parser::{
-    export_list, export_pair, ParserRISCVCsr, ParserRISCVInstOp, ParserRISCVRegister,
+    ParserRISCVCsr, ParserRISCVInstOp, ParserRISCVRegister,
 };
 use super::super::super::basic::parser::lexer::{RISCVOpToken, Symbol};
 use super::super::super::basic::parser::parser::RISCVSymbolList;
