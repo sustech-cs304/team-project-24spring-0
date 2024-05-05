@@ -42,6 +42,7 @@ pub static CSR_TOKEN: Lazy<Vec<(&'static str, Symbol<'static>)>> = Lazy::new(|| 
         .collect()
 });
 
+#[cfg(debug_assertions)]
 #[allow(dead_code)]
 pub fn export(folder: &str) -> std::io::Result<()> {
     let path = format!("{}/rv32i.json", folder);

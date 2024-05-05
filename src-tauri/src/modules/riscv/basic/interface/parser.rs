@@ -77,6 +77,7 @@ impl RISCVExtension {
         }
     }
 
+    #[cfg(debug_assertions)]
     #[allow(dead_code)]
     pub fn export(&self, folder: &str) -> std::io::Result<()> {
         match self {
@@ -85,6 +86,7 @@ impl RISCVExtension {
     }
 }
 
+#[cfg(debug_assertions)]
 #[allow(dead_code)]
 pub fn export_pair<T, KFn, VFn, K, W>(
     pairs: &[T],
@@ -121,6 +123,7 @@ where
     Ok(())
 }
 
+#[cfg(debug_assertions)]
 #[allow(dead_code)]
 pub fn export_list<T, F, V, W>(
     list: &[T],
