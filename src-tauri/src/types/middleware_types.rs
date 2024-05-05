@@ -9,6 +9,7 @@ use crate::interface::parser::{Parser, ParserError};
 use crate::interface::simulator::Simulator;
 use crate::interface::storage::MFile;
 use crate::modules::riscv::basic::interface::parser::RISCV;
+use crate::remote::server::RpcServerImpl;
 
 pub struct Tab {
     pub text: Box<dyn MFile<String>>,
@@ -17,15 +18,17 @@ pub struct Tab {
     //pub simulator: Box<dyn Simulator<i32, i32, i32, i32>>,
 }
 
+#[derive(Default)]
 pub struct TabMap {
     pub tabs: Mutex<HashMap<String, Tab>>,
+    pub rpc_server: Mutex<RpcServerImpl>,
 }
 
 pub struct CurTabName {
     pub name: Mutex<String>,
 }
 
-#[derive(Clone, Serialize)]
+#[derive(Clone, Serialize, Default)]
 pub struct Optional {
     pub success: bool,
     pub message: String,

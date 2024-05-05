@@ -322,7 +322,44 @@ pub mod frontend_api {
         tab_map: State<TabMap>,
         settings: AssemblerConfig,
     ) -> bool {
-        todo!("foo");
+        todo!("Implement updateAssemblerSettings");
+    }
+
+    /// Starts the RPC server for the current tab.
+    /// - `cur_tab_name`: State containing the current tab name.
+    /// - `tab_map`: State containing the map of all tabs.
+    /// - `password`: Password to be used for the RPC server.
+    ///
+    /// Returns `Optional` indicating the success or failure of the RPC server
+    #[tauri::command]
+    pub fn start_rpc_server(
+        cur_tab_name: State<CurTabName>,
+        tab_map: State<TabMap>,
+        port: u16,
+        password: &str,
+    ) -> Optional {
+        todo!("send tab data to rpc server");
+        let mut rpc_lock = tab_map.rpc_server.lock().unwrap();
+        match rpc_lock.start_service() {
+            Ok(()) => {
+                rpc_lock.change_password(password);
+                if let Err(e) = rpc_lock.change_port(port) {
+                    return Optional {
+                        success: false,
+                        message: e.to_string(),
+                    };
+                } else {
+                    return Optional {
+                        success: true,
+                        message: String::new(),
+                    };
+                }
+            }
+            Err(e) => Optional {
+                success: false,
+                message: e.to_string(),
+            },
+        }
     }
 }
 
