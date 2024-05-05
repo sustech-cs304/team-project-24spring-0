@@ -6,7 +6,9 @@ pub mod frontend_api {
     use crate::storage::rope_store;
     use crate::types::middleware_types::{
         AssembleResult, AssemblerConfig, CurTabName, Optional, SyscallDataType, Tab, TabMap,
+        TextPosition,
     };
+    use crate::utility::ptr::Ptr;
     use tauri::State;
 
     /// Creates a new tab with content loaded from a specified file path.
@@ -111,16 +113,39 @@ pub mod frontend_api {
         }
     }
 
-    /// Updates the content of the tab associated with the given file path.
+    /// Sets the cursor position in the tab associated with the given file path.
+    /// This could be useful for live sharing of code.
     /// - `tab_map`: Current state of all open tabs.
     /// - `filepath`: Path to the file associated with the tab to update.
-    /// - `data`: New content to replace the existing content of the tab.
+    /// - `row`: Row number of the cursor.
+    /// - `col`: Column number of the cursor.
+    ///
+    /// Returns `bool` indicating whether the cursor was successfully set.
+    #[tauri::command]
+    pub fn set_cursor(tab_map: State<TabMap>, filepath: &str, row: u64, col: u64) -> bool {
+        todo!("Implement setCursor, need to check whether current file is in shared state");
+    }
+
+    /// Updates the content of the tab associated with the given file path.
+    /// - `cur_tab_name`: State containing the current tab name.
+    /// - `tab_map`: Current state of all open tabs.
+    /// - `row`: Row number where the update should start.
+    /// - `column`: Column number where the update should start.
+    /// - `content`: New content to be inserted.
+    ///
     /// Returns `Optional` indicating the success or failure of the update.
     #[tauri::command]
-    pub fn update_tab(tab_map: State<TabMap>, filepath: &str, data: &str) -> Optional {
-        match tab_map.tabs.lock().unwrap().get_mut(filepath) {
+    pub fn insert_in_current_tab(
+        cur_tab_name: State<CurTabName>,
+        tab_map: State<TabMap>,
+        pos: TextPosition,
+        content: &str,
+    ) -> Optional {
+        let filepath = cur_tab_name.name.lock().unwrap().clone();
+        todo!("implement insert and live shared check");
+        match tab_map.tabs.lock().unwrap().get_mut(&filepath) {
             Some(tab) => {
-                tab.text = Box::new(rope_store::Text::from_str(data).unwrap());
+                tab.text = Box::new(rope_store::Text::from_str(content).unwrap());
                 tab.text.set_dirty(true);
                 Optional {
                     success: true,
@@ -132,6 +157,21 @@ pub mod frontend_api {
                 message: "Tab not found".to_string(),
             },
         }
+    }
+
+    /// Deletes the content from one specific position to another in current tab
+    /// - `cur_tab_name`: State containing the current tab name.
+    /// - `tab_map`: Current state of all open tabs.
+    #[allow(non_snake_case)]
+    #[tauri::command]
+    pub fn delete_in_current_tab(
+        cur_tab_name: State<CurTabName>,
+        tab_map: State<TabMap>,
+        startPos: TextPosition,
+        endPos: TextPosition,
+    ) -> Optional {
+        let filepath = cur_tab_name.name.lock().unwrap().clone();
+        todo!("implement delete and live shared check");
     }
 
     /// Reads the content of a tab from the file at the specified path.
@@ -183,14 +223,12 @@ pub mod frontend_api {
         let name = cur_tab_name.name.lock().unwrap().clone();
         let mut lock = tab_map.tabs.lock().unwrap();
         let tab = lock.get_mut(&name).unwrap();
+        todo!("Implement assembler operation");
         match tab.parser.parse(tab.text.to_string()) {
-            Ok(ir) => {
-                //TODO
-                AssembleResult {
-                    success: true,
-                    error: Default::default(),
-                }
-            }
+            Ok(ir) => AssembleResult {
+                success: true,
+                error: Default::default(),
+            },
             Err(e) => AssembleResult {
                 success: false,
                 error: e,
@@ -208,12 +246,26 @@ pub mod frontend_api {
         todo!("Implement dump")
     }
 
+    /// Run the code in the currently active tab in normal mode(won't stop at
+    /// exist break point).
+    /// - `cur_tab_name`: State containing the current tab name.
+    /// - `tab_map`: State containing the map of all tabs.
+    ///
+    /// Returns `bool` indicating whether the debug session was successfully
+    /// started.
+    /// TODO: return regs and memory status
+    #[tauri::command]
+    pub fn run(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> bool {
+        todo!("Implement debug")
+    }
+
     /// Run the code in the currently active tab in debug mode.
     /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: State containing the map of all tabs.
     ///
     /// Returns `bool` indicating whether the debug session was successfully
     /// started.
+    /// TODO: return regs and memory status
     #[tauri::command]
     pub fn debug(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> bool {
         todo!("Implement debug")
@@ -256,8 +308,7 @@ pub mod frontend_api {
     /// Returns `bool` indicating whether the breakpoint was successfully set.
     #[tauri::command]
     pub fn set_breakpoint(tab_map: State<TabMap>, line: usize) -> bool {
-        //todo!("Implement setBreakPoint")
-        true
+        todo!("Implement setBreakPoint")
     }
 
     /// Removes a breakpoint at a specified line in the code of the current tab.
@@ -304,9 +355,8 @@ pub mod frontend_api {
             "Long" => SyscallDataType::Long(val.parse::<i64>().unwrap()),
             _ => return false,
         };
-        //TODO
+        todo!("call simulator syscall_input with val");
         //tab.parser.syscall_input_request(v);
-        true
     }
 
     /// Updates the assembler settings for the current tab.
@@ -338,9 +388,11 @@ pub mod frontend_api {
         port: u16,
         password: &str,
     ) -> Optional {
-        todo!("send tab data to rpc server");
         let mut rpc_lock = tab_map.rpc_server.lock().unwrap();
-        match rpc_lock.start_service() {
+        match rpc_lock.start_service(
+            cur_tab_name.name.lock().unwrap().clone(),
+            Ptr::new(&tab_map),
+        ) {
             Ok(()) => {
                 rpc_lock.change_password(password);
                 if let Err(e) = rpc_lock.change_port(port) {
@@ -361,29 +413,105 @@ pub mod frontend_api {
             },
         }
     }
+
+    /// Stops the RPC server for the current tab.
+    /// - `tab_map`: State containing the map of all tabs.
+    ///
+    /// Returns `bool` indicating whether the RPC server was successfully stop.
+    #[tauri::command]
+    pub fn stop_rpc_server(tab_map: State<TabMap>) -> bool {
+        let mut rpc_lock = tab_map.rpc_server.lock().unwrap();
+        rpc_lock.stop_service();
+        true
+    }
 }
 
+/// Module providing API functions for the backend of a Tauri application
+/// to emit event to the frontend.
 pub mod backend_api {
-    use crate::types::middleware_types::{SyscallDataType, SyscallRequest};
+    use crate::types::middleware_types::{SyscallDataType, SyscallOutput, SyscallRequest};
     use crate::APP_HANDLE;
     use tauri::Manager;
 
-    pub fn syscall_input_request(pathname: &str, acquire_type: SyscallDataType) {
+    /// Emits a print syscall output event to the frontend.
+    /// - `pathname`: Identifier for the tab to which the output should be sent.
+    /// - `output`: Output to be printed.
+    ///
+    /// Returns `Option` containing an error if the event could not be emitted.
+    ///
+    /// This function will emit a `front_syscall_print` event to the frontend,
+    /// and the payload is a `SyscallOutput` containing the filepath and output
+    /// to be printed.
+    ///
+    /// SyscallOutput:
+    /// - `filepath`: string
+    /// - `data`: string
+    pub fn syscall_output_print(
+        pathname: &str,
+        output: &str,
+    ) -> Option<Box<dyn std::error::Error>> {
         if let Some(app_handle) = APP_HANDLE.lock().unwrap().as_ref() {
-            loop {
-                match app_handle.emit_all(
-                    "syscall_request",
-                    SyscallRequest {
-                        path: pathname.to_string(),
-                        syscall: acquire_type.to_string(),
-                    },
-                ) {
-                    Ok(_) => break,
-                    Err(_) => continue,
-                }
+            if let Ok(_) = app_handle.emit_all(
+                "front_syscall_print",
+                SyscallOutput {
+                    filepath: pathname.to_string(),
+                    data: output.to_string(),
+                },
+            ) {
+                None
+            } else {
+                Some(Box::new(std::io::Error::new(
+                    std::io::ErrorKind::Other,
+                    "Failed to emit syscall output print event!",
+                )))
             }
         } else {
-            eprintln!("AppHandle is not initialized!");
+            Some(Box::new(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "AppHandle is not initialized!",
+            )))
+        }
+    }
+
+    /// Emits a syscall input request event to the frontend.
+    /// - `pathname`: Identifier for the tab to which the request should be
+    ///   sent.
+    /// - `acquire_type`: Type of the input to be acquired.
+    ///
+    /// Returns `Option` containing an error if the event could not be emitted.
+    ///
+    /// This function will emit a `front_syscall_request` event to the frontend,
+    /// and the payload is one of the following string:
+    /// - "Int"
+    /// - "Float"
+    /// - "Double"
+    /// - "String"
+    /// - "Char"
+    /// - "Long"
+    pub fn syscall_input_request(
+        pathname: &str,
+        acquire_type: SyscallDataType,
+    ) -> Option<Box<dyn std::error::Error>> {
+        if let Some(app_handle) = APP_HANDLE.lock().unwrap().as_ref() {
+            if let Ok(_) = app_handle.emit_all(
+                "front_syscall_request",
+                SyscallRequest {
+                    path: pathname.to_string(),
+                    syscall: acquire_type.to_string(),
+                },
+            ) {
+                None
+            } else {
+                Some(Box::new(std::io::Error::new(
+                    std::io::ErrorKind::Other,
+                    "Failed to emit syscall input request event!",
+                )))
+            }
+        } else {
+            Some(Box::new(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "AppHandle is not initialized!",
+            )))
         }
     }
 }

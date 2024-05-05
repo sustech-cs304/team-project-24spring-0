@@ -11,6 +11,7 @@ use crate::interface::storage::MFile;
 use crate::modules::riscv::basic::interface::parser::RISCV;
 use crate::remote::server::RpcServerImpl;
 
+//TODO: add simulator and assembler as member
 pub struct Tab {
     pub text: Box<dyn MFile<String>>,
     pub parser: Box<dyn Parser<RISCV>>,
@@ -35,9 +36,21 @@ pub struct Optional {
 }
 
 #[derive(Clone, Serialize)]
+pub struct TextPosition {
+    pub row: u64,
+    pub column: u64,
+}
+
+#[derive(Clone, Serialize)]
 pub struct AssembleResult {
     pub success: bool,
     pub error: Vec<ParserError>,
+}
+
+#[derive(Clone, Serialize)]
+pub struct SyscallOutput {
+    pub filepath: String,
+    pub data: String,
 }
 
 #[derive(Clone, Serialize)]

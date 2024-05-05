@@ -14,15 +14,11 @@ mod utility;
 
 use modules::riscv::middleware::frontend_api;
 use once_cell::sync::Lazy;
-use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use tauri::{AppHandle, Manager};
 use types::middleware_types;
-use types::middleware_types::Tab;
 
 static APP_HANDLE: Lazy<Arc<Mutex<Option<AppHandle>>>> = Lazy::new(|| Arc::new(Mutex::new(None)));
-static TAB_MAP: Lazy<Arc<Mutex<HashMap<String, Tab>>>> =
-    Lazy::new(|| Arc::new(Mutex::new(Default::default())));
 
 fn main() {
     tauri::Builder::default()
@@ -48,7 +44,9 @@ fn main() {
             frontend_api::update_tab,
             frontend_api::read_tab,
             frontend_api::write_tab,
+            frontend_api::set_cursor,
             frontend_api::assembly,
+            frontend_api::run,
             frontend_api::debug,
             frontend_api::step,
             frontend_api::dump,
@@ -58,6 +56,8 @@ fn main() {
             frontend_api::remove_breakpoint,
             frontend_api::syscall_input,
             frontend_api::update_assembler_settings,
+            frontend_api::start_rpc_server,
+            frontend_api::stop_rpc_server,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

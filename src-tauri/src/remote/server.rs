@@ -1,5 +1,6 @@
 use crate::interface::remote::RpcServer;
-use crate::types::middleware_types::CurTabName;
+use crate::types::middleware_types::{CurTabName, Tab, TabMap};
+use crate::utility::ptr::Ptr;
 use crate::APP_HANDLE;
 use editor_rpc::editor_server::{Editor, EditorServer};
 use editor_rpc::{
@@ -18,21 +19,23 @@ pub mod editor_rpc {
     tonic::include_proto!("editor");
 }
 
-#[derive(Debug, Default)]
+#[derive(Default)]
 struct ServerHandle {
+    cur_tab: Mutex<(String, Option<Ptr<TabMap>>)>,
     password: Mutex<String>,
     clients: Mutex<Vec<SocketAddr>>,
     cursor_pos: Mutex<LinkedList<(SocketAddr, u64, u64)>>,
 }
 
 impl ServerHandle {
-    pub fn change_password(&self, password: &str) {
+    /// Change password for server.
+    fn change_password(&self, password: &str) {
         let mut lock = self.password.lock().unwrap();
         *lock = password.to_string();
     }
 
     /// Update host cursor position.
-    pub fn udpate_host_cursor(&mut self, row: u64, column: u64) {
+    fn udpate_host_cursor(&mut self, row: u64, column: u64) {
         let mut lock = self.cursor_pos.lock().unwrap();
         if let Some((_, pos)) = lock
             .iter_mut()
@@ -136,6 +139,7 @@ impl Editor for Arc<Mutex<ServerHandle>> {
 }
 pub struct RpcServerImpl {
     port: u16,
+    tokio_runtime: tokio::runtime::Runtime,
     server_handle: Option<JoinHandle<()>>,
     shared_handler: Arc<Mutex<ServerHandle>>,
 }
@@ -144,12 +148,22 @@ impl RpcServerImpl {
     fn default() -> Self {
         Self {
             port: 11451,
+            tokio_runtime: tokio::runtime::Builder::new_multi_thread()
+                .worker_threads(4)
+                .enable_all()
+                .build()
+                .unwrap(),
             server_handle: None,
             shared_handler: Arc::new(Mutex::new(Default::default())),
         }
     }
 
-    pub fn start_service(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn start_service(
+        &mut self,
+        cur_tab_name: String,
+        tab_map: Ptr<TabMap>,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        self.shared_handler.lock().unwrap().cur_tab = Mutex::new((cur_tab_name, Some(tab_map)));
         self.start()?;
         Ok(())
     }
@@ -181,9 +195,10 @@ impl Default for RpcServerImpl {
 impl RpcServer for RpcServerImpl {
     fn start(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         let addr = format!("0.0.0.0:{:?}", self.port).parse().unwrap();
+        println!("Server listening on: {:?}", addr);
         let handler = Arc::clone(&self.shared_handler);
 
-        let server_handle = tokio::spawn(async move {
+        let server_handle = self.tokio_runtime.spawn(async move {
             Server::builder()
                 .add_service(EditorServer::new(handler))
                 .serve(addr)
