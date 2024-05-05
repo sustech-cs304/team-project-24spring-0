@@ -1,8 +1,10 @@
-use crate::assembler::rv32i::{Immediate12, Immediate20, Register, RV32I};
+use crate::assembler::riscv::{Immediate12, Immediate20, Register};
+use crate::assembler::rv32i::RV32I;
 use crate::interface::assembler::{AssembleError, Assembler, Instruction, Memory, Operand};
 use crate::interface::parser::{ParserInstSet, ParserResult};
 use crate::modules::riscv::basic::interface::parser::*;
 use crate::modules::riscv::rv32i::constants::*;
+use crate::modules::riscv::rv32f::constants::*;
 use ux::{u12, u20, u5};
 const MAIN: i32 = 0x00400000;
 const DATA: i32 = 0x10010000;
@@ -90,6 +92,14 @@ macro_rules! extract_opds {
             modify_label!(imm, $inst.line, $imm, $start);
         }
     };
+    ($inst:expr, R4, $rd:ident, $rs1:ident, $rs2:ident, $rs3:ident) => {
+        if let [ParserRISCVInstOpd::Reg(rd), ParserRISCVInstOpd::Reg(rs1), ParserRISCVInstOpd::Reg(rs2), ParserRISCVInstOpd::Reg(rs3)] = &$inst[..] {
+            $rd = u32::from(*rd);
+            $rs1 = u32::from(*rs1);
+            $rs2 = u32::from(*rs2);
+            $rs3 = u32::from(*rs3);
+        }
+    };
 }
 
 pub struct RiscVAssembler;
@@ -104,7 +114,7 @@ impl From<ParserRISCVRegister> for u32 {
     fn from(register: ParserRISCVRegister) -> Self {
         match register {
             ParserRISCVRegister::RV32I(rv32i_reg) => u32::from(rv32i_reg),
-            ParserRISCVRegister::RV32F(rv32f_reg) => 0,
+            ParserRISCVRegister::RV32F(rv32f_reg) => u32::from(rv32f_reg),
         }
     }
 }
@@ -148,6 +158,45 @@ impl From<RV32IRegister> for u32 {
     }
 }
 
+impl From<RV32FRegister> for u32 {
+    fn from(register: RV32FRegister) -> Self {
+        match register {
+            RV32FRegister::F0 => 32,
+            RV32FRegister::F1 => 33,
+            RV32FRegister::F2 => 34,
+            RV32FRegister::F3 => 35,
+            RV32FRegister::F4 => 36,
+            RV32FRegister::F5 => 37,
+            RV32FRegister::F6 => 38,
+            RV32FRegister::F7 => 39,
+            RV32FRegister::F8 => 40,
+            RV32FRegister::F9 => 41,
+            RV32FRegister::F10 => 42,
+            RV32FRegister::F11 => 43,
+            RV32FRegister::F12 => 44,
+            RV32FRegister::F13 => 45,
+            RV32FRegister::F14 => 46,
+            RV32FRegister::F15 => 47,
+            RV32FRegister::F16 => 48,
+            RV32FRegister::F17 => 49,
+            RV32FRegister::F18 => 50,
+            RV32FRegister::F19 => 51,
+            RV32FRegister::F20 => 52,
+            RV32FRegister::F21 => 53,
+            RV32FRegister::F22 => 54,
+            RV32FRegister::F23 => 55,
+            RV32FRegister::F24 => 56,
+            RV32FRegister::F25 => 57,
+            RV32FRegister::F26 => 58,
+            RV32FRegister::F27 => 59,
+            RV32FRegister::F28 => 60,
+            RV32FRegister::F29 => 61,
+            RV32FRegister::F30 => 62,
+            RV32FRegister::F31 => 63,
+        }
+    }
+}
+
 impl From<u32> for Operand {
     fn from(opd: u32) -> Self {
         match opd {
@@ -183,6 +232,38 @@ impl From<u32> for Operand {
             29 => Operand::Reg(ParserRISCVRegister::from(RV32IRegister::T4)),
             30 => Operand::Reg(ParserRISCVRegister::from(RV32IRegister::T5)),
             31 => Operand::Reg(ParserRISCVRegister::from(RV32IRegister::T6)),
+            32 => Operand::Reg(ParserRISCVRegister::from(RV32FRegister::F0)),
+            33 => Operand::Reg(ParserRISCVRegister::from(RV32FRegister::F1)),
+            34 => Operand::Reg(ParserRISCVRegister::from(RV32FRegister::F2)),
+            35 => Operand::Reg(ParserRISCVRegister::from(RV32FRegister::F3)),
+            36 => Operand::Reg(ParserRISCVRegister::from(RV32FRegister::F4)),
+            37 => Operand::Reg(ParserRISCVRegister::from(RV32FRegister::F5)),
+            38 => Operand::Reg(ParserRISCVRegister::from(RV32FRegister::F6)),
+            39 => Operand::Reg(ParserRISCVRegister::from(RV32FRegister::F7)),
+            40 => Operand::Reg(ParserRISCVRegister::from(RV32FRegister::F8)),
+            41 => Operand::Reg(ParserRISCVRegister::from(RV32FRegister::F9)),
+            42 => Operand::Reg(ParserRISCVRegister::from(RV32FRegister::F10)),
+            43 => Operand::Reg(ParserRISCVRegister::from(RV32FRegister::F11)),
+            44 => Operand::Reg(ParserRISCVRegister::from(RV32FRegister::F12)),
+            45 => Operand::Reg(ParserRISCVRegister::from(RV32FRegister::F13)),
+            46 => Operand::Reg(ParserRISCVRegister::from(RV32FRegister::F14)),
+            47 => Operand::Reg(ParserRISCVRegister::from(RV32FRegister::F15)),
+            48 => Operand::Reg(ParserRISCVRegister::from(RV32FRegister::F16)),
+            49 => Operand::Reg(ParserRISCVRegister::from(RV32FRegister::F17)),
+            50 => Operand::Reg(ParserRISCVRegister::from(RV32FRegister::F18)),
+            51 => Operand::Reg(ParserRISCVRegister::from(RV32FRegister::F19)),
+            52 => Operand::Reg(ParserRISCVRegister::from(RV32FRegister::F20)),
+            53 => Operand::Reg(ParserRISCVRegister::from(RV32FRegister::F21)),
+            54 => Operand::Reg(ParserRISCVRegister::from(RV32FRegister::F22)),
+            55 => Operand::Reg(ParserRISCVRegister::from(RV32FRegister::F23)),
+            56 => Operand::Reg(ParserRISCVRegister::from(RV32FRegister::F24)),
+            57 => Operand::Reg(ParserRISCVRegister::from(RV32FRegister::F25)),
+            58 => Operand::Reg(ParserRISCVRegister::from(RV32FRegister::F26)),
+            59 => Operand::Reg(ParserRISCVRegister::from(RV32FRegister::F27)),
+            60 => Operand::Reg(ParserRISCVRegister::from(RV32FRegister::F28)),
+            61 => Operand::Reg(ParserRISCVRegister::from(RV32FRegister::F29)),
+            62 => Operand::Reg(ParserRISCVRegister::from(RV32FRegister::F30)),
+            63 => Operand::Reg(ParserRISCVRegister::from(RV32FRegister::F31)),
             _ => panic!("No such register!"),
         }
     }
@@ -324,6 +405,68 @@ impl Assembler<RISCV> for RiscVAssembler {
                 }
                 ParserRISCVInstOp::RV32F(fins) => {
                     result.op = ParserRISCVInstOp::from(fins);
+                    let mut rd: u32 = 0;
+                    let mut rs1: u32 = 0;
+                    let mut rs2: u32 = 0;
+                    let mut rs3: u32 = 0;
+                    let mut imm: i32 = 0;
+                    match fins {
+                        RV32FInstruction::FaddS
+                        | RV32FInstruction::FclassS
+                        | RV32FInstruction::FcvtSW
+                        | RV32FInstruction::FcvtSWu
+                        | RV32FInstruction::FcvtWS
+                        | RV32FInstruction::FcvtWuS
+                        | RV32FInstruction::FdivS
+                        | RV32FInstruction::FeqS
+                        | RV32FInstruction::FleS
+                        | RV32FInstruction::FltS
+                        | RV32FInstruction::FmaxS
+                        | RV32FInstruction::FminS
+                        | RV32FInstruction::FmulS
+                        | RV32FInstruction::FmvSX
+                        | RV32FInstruction::FmvXS
+                        | RV32FInstruction::FsgnjS
+                        | RV32FInstruction::FsgnjnS
+                        | RV32FInstruction::FsgnjxS
+                        | RV32FInstruction::FsqrtS
+                        | RV32FInstruction::FsubS => {
+                            extract_opds!(inst.opd, R, rd, rs1, rs2);
+                            result.ins = Vec::from([
+                                Operand::from(rd),
+                                Operand::from(rs1),
+                                Operand::from(rs2),
+                            ]);
+                        }
+                        RV32FInstruction::FmaddS
+                        | RV32FInstruction::FmsubS
+                        | RV32FInstruction::FnmaddS
+                        | RV32FInstruction::FnmsubS => {
+                            extract_opds!(inst.opd, R4, rd, rs1, rs2, rs3);
+                            result.ins = Vec::from([
+                                Operand::from(rd),
+                                Operand::from(rs1),
+                                Operand::from(rs2),
+                                Operand::from(rs3),
+                            ]);
+                        }
+                        RV32FInstruction::Flw => {
+                            extract_opds!(inst, I, rd, rs1, imm, index);
+                            result.ins = Vec::from([
+                                Operand::from(rd),
+                                Operand::from(rs1),
+                                Operand::from(imm),
+                            ]);
+                        }
+                        RV32FInstruction::Fsw => {
+                            extract_opds!(inst, S, rs1, rs2, imm, index);
+                            result.ins = Vec::from([
+                                Operand::from(imm),
+                                Operand::from(rs1),
+                                Operand::from(rs2),
+                            ]);
+                        }
+                    }
                 }
             },
             ParserResultText::Align(_) => {}

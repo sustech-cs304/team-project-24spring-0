@@ -44,6 +44,27 @@ impl Into<PackedInstruction> for RInstruction {
 
 #[derive(Default, Builder)]
 #[builder(public)]
+pub struct R4Instruction {
+    rs3: u5,
+    rs2: u5,
+    rs1: u5,
+    funct3: u3,
+    rd: u5,
+    opcode: u7,
+}
+
+impl Into<PackedInstruction> for R4Instruction {
+    fn into(self) -> PackedInstruction {
+        all_into_scope!(self, rs3 rs2 rs1 funct3 rd opcode);
+        all_into! {u32, rs3 rs2 rs1 funct3 rd opcode }
+        PackedInstruction(
+            (rs3 << 27) + (rs2 << 20) + (rs1 << 15) + (funct3 << 12) + (rd << 7) + opcode,
+        )
+    }
+}
+
+#[derive(Default, Builder)]
+#[builder(public)]
 pub struct IInstruction {
     // I-type
     imm: u12,
@@ -180,6 +201,15 @@ pub trait Opcode<T>: Sized {
 pub enum ROpcode {
     Shamt = 0b0010011,  // Slli, Srai, Srli
     ALUReg = 0b0110011, // Add, And, Or, Sll, Slt, Sltu, Sra, Srl, Sub, Xor
+    Float = 0b1010011,
+}
+
+#[repr(u8)]
+pub enum R4Opcode {
+    FMA = 0b1000011,
+    FMS = 0b1000111,
+    FNS = 0b1001011,
+    FNA = 0b1001111,
 }
 
 #[repr(u8)]
@@ -189,11 +219,13 @@ pub enum IOpcode {
     ALUImm = 0b0010011,      // Addi, Andi, Ori, Slti, Sltiu, Xori
     FENCE = 0b0001111,       // Fence, FenceI
     Environment = 0b1110011, // Csrrc, Csrrci, Csrrs, Csrrsi, Csrrw, Csrrwi. Ebreak, Ecall
+    Float = 0b0000111,
 }
 
 #[repr(u8)]
 pub enum SOpcode {
     Store = 0b100011, // Sb, Sh, Sw
+    Float = 0b0100111,
 }
 
 #[repr(u8)]
@@ -226,6 +258,7 @@ macro_rules! implopcode {
 }
 
 implopcode!(RInstructionBuilder, ROpcode);
+implopcode!(R4InstructionBuilder, R4Opcode);
 implopcode!(IInstructionBuilder, IOpcode);
 implopcode!(SInstructionBuilder, SOpcode);
 implopcode!(BInstructionBuilder, BOpcode);
