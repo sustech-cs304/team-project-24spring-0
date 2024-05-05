@@ -145,7 +145,7 @@ pub mod frontend_api {
         todo!("implement insert and live shared check");
         match tab_map.tabs.lock().unwrap().get_mut(&filepath) {
             Some(tab) => {
-                tab.text.update_content(data);
+                tab.text.update_content(content);
                 tab.text.set_dirty(true);
                 Optional {
                     success: true,

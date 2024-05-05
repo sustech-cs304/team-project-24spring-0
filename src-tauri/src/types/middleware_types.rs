@@ -1,15 +1,13 @@
-use std::collections::HashMap;
-use std::sync::Mutex;
-
-use serde::{Deserialize, Serialize};
-use strum_macros::{Display, EnumMessage};
-
 use crate::interface::assembler::Assembler;
 use crate::interface::parser::{Parser, ParserError};
 use crate::interface::simulator::Simulator;
 use crate::interface::storage::MFile;
 use crate::modules::riscv::basic::interface::parser::RISCV;
 use crate::remote::server::RpcServerImpl;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::sync::Mutex;
+use strum_macros::{Display, EnumMessage};
 
 //TODO: add simulator and assembler as member
 pub struct Tab {
@@ -35,7 +33,7 @@ pub struct Optional {
     pub message: String,
 }
 
-#[derive(Clone, Serialize)]
+#[derive(Clone, Deserialize)]
 pub struct TextPosition {
     pub row: u64,
     pub column: u64,
