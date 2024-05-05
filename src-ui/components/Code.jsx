@@ -16,9 +16,7 @@ export default function Code({fileName}) {
 
     useEffect(() => {
         store.changeCurrentFile(fileName);
-        // const result = await invoke('change_current_tab', {newpath: fileName});
-        // const outputStore = useOutputStore.getState();
-        // outputStore.addOutput('Tab Change Result: \n' + result.message);
+        invoke('change_current_tab', {newpath: fileName});
     }, []);
 
     return (

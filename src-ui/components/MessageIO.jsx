@@ -26,8 +26,7 @@ export default function MessageIO() {
     var handleAskAI = async () => {
         const fileState = useFileStore.getState();
         if (fileState.files.length === 0) {
-            const outputState = useOutputStore.getState();
-            outputState.addOutput("No files to ask AI about");
+            setAnswer("Please open a file first!");
             return;
         }
         const currentFile = fileState.files.find(file => file.fileName === fileState.currentFile);

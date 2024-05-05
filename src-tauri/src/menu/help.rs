@@ -6,7 +6,6 @@ pub fn new() -> Submenu {
         "Help",
         Menu::with_items([
             CustomMenuItem::new("help_manual", "Manual").into(),
-            CustomMenuItem::new("help_ai", "AI Chat").into(),
         ]),
     )
 }
@@ -14,7 +13,6 @@ pub fn new() -> Submenu {
 pub fn event_handler(event: WindowMenuEvent) {
     match event.menu_item_id().strip_prefix("help_").unwrap() {
         "manual" => manual_handler(&event),
-        "ai" => ai_handler(&event),
         _ => {}
     }
 }
@@ -24,7 +22,7 @@ fn manual_handler(_event: &WindowMenuEvent) {
         let _window = tauri::WindowBuilder::new(
             app_handle,
             "manual", /* the unique window label */
-            tauri::WindowUrl::External("https://tauri.app/".parse().unwrap()),
+            tauri::WindowUrl::External("https://riscv.org/wp-content/uploads/2017/05/riscv-spec-v2.2.pdf".parse().unwrap()),
         )
         .title("Manual")
         .menu(Menu::new())
@@ -33,16 +31,16 @@ fn manual_handler(_event: &WindowMenuEvent) {
     }
 }
 
-fn ai_handler(_event: &WindowMenuEvent) {
-    if let Some(app_handle) = APP_HANDLE.lock().unwrap().as_ref() {
-        let _window = tauri::WindowBuilder::new(
-            app_handle,
-            "ai", /* the unique window label */
-            tauri::WindowUrl::External("https://tauri.app/".parse().unwrap()),
-        )
-        .title("AI Chat")
-        .menu(Menu::new())
-        .build()
-        .unwrap();
-    }
-}
+// fn ai_handler(_event: &WindowMenuEvent) {
+//     if let Some(app_handle) = APP_HANDLE.lock().unwrap().as_ref() {
+//         let _window = tauri::WindowBuilder::new(
+//             app_handle,
+//             "ai", /* the unique window label */
+//             tauri::WindowUrl::External("http://localhost:3000/ai".parse().unwrap()),
+//         )
+//         .title("AI Chat")
+//         .menu(Menu::new())
+//         .build()
+//         .unwrap();
+//     }
+// }
