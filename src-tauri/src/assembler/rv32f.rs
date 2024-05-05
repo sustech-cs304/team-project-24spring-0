@@ -1,12 +1,12 @@
 use crate::assembler::basic::{
-    BOpcode, IOpcode, ImmediateFormatter, JOpcode, Opcode, PackedInstruction, ROpcode, SOpcode,
-    UOpcode, R4Opcode
+    BOpcode, IOpcode, ImmediateFormatter, JOpcode, Opcode, PackedInstruction, R4Opcode, ROpcode,
+    SOpcode, UOpcode,
 };
 use crate::assembler::riscv::*;
 
 pub struct RV32F {}
 
-impl RV32F{
+impl RV32F {
     crate::rinstimpl!(Float, fadds, 0b0000000, 0b010, rs2);
     crate::rinstimpl!(Float, fsubs, 0b0000100, 0b010, rs2);
     crate::rinstimpl!(Float, fmuls, 0b0001000, 0b010, rs2);

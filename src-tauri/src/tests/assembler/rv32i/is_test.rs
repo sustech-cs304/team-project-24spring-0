@@ -1,5 +1,5 @@
-use crate::assembler::rv32i::RV32I;
 use crate::assembler::rv32f::RV32F;
+use crate::assembler::rv32i::RV32I;
 
 #[test]
 fn test_lui() {

@@ -89,7 +89,12 @@ macro_rules! rinstimpl {
 #[macro_export]
 macro_rules! r4instimpl {
     ($name:ident, $func_name:ident, $funct3:literal, $rs2name:ident, $rs3name:ident) => {
-        pub fn $func_name($rs3name: Register, $rs2name: Register, rs1: Register, rd: Register) -> PackedInstruction {
+        pub fn $func_name(
+            $rs3name: Register,
+            $rs2name: Register,
+            rs1: Register,
+            rd: Register,
+        ) -> PackedInstruction {
             R4Opcode::$name
                 .builder()
                 .rs3($rs3name.into())
@@ -170,9 +175,4 @@ macro_rules! binstimpl {
     };
 }
 
-pub use rinstimpl;
-pub use r4instimpl;
-pub use iinstimpl;
-pub use uinstimpl;
-pub use sinstimpl;
-pub use binstimpl;
+pub use {binstimpl, iinstimpl, r4instimpl, rinstimpl, sinstimpl, uinstimpl};
