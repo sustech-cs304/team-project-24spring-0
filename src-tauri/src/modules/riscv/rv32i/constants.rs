@@ -1,8 +1,7 @@
 use once_cell::sync::Lazy;
-use strum::{EnumIter, EnumString, IntoEnumIterator};
-use strum_macros::Display;
+use strum::{Display, EnumString, IntoStaticStr, VariantArray};
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, EnumIter, EnumString, Display)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, VariantArray, EnumString, Display)]
 pub enum RV32IRegister {
     #[strum(to_string = "zero", serialize = "zero", serialize = "x0")]
     Zero,
@@ -70,9 +69,7 @@ pub enum RV32IRegister {
     T6,
 }
 
-#[derive(
-    Clone, Copy, Debug, PartialEq, Eq, Hash, EnumIter, EnumString, strum_macros::IntoStaticStr,
-)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, VariantArray, EnumString, IntoStaticStr)]
 #[strum(serialize_all = "snake_case")]
 pub enum RV32IInstruction {
     Add,
@@ -126,9 +123,7 @@ pub enum RV32IInstruction {
 
 pub type RISCVImmediate = i32;
 
-#[derive(
-    Clone, Copy, Debug, PartialEq, Eq, Hash, EnumIter, EnumString, strum_macros::IntoStaticStr,
-)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, VariantArray, EnumString, IntoStaticStr)]
 pub enum RV32ICsr {}
 
 pub static RV32I_REGISTER_VALID_NAME: [&'static str; 65] = [
@@ -140,8 +135,9 @@ pub static RV32I_REGISTER_VALID_NAME: [&'static str; 65] = [
 ];
 
 pub static RV32I_REGISTER_DEFAULT_NAME: Lazy<Vec<(RV32IRegister, String)>> = Lazy::new(|| {
-    RV32IRegister::iter()
-        .map(|reg| (reg, reg.to_string()))
+    RV32IRegister::VARIANTS
+        .iter()
+        .map(|&reg| (reg, reg.to_string()))
         .collect()
 });
 

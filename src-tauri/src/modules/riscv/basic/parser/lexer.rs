@@ -25,11 +25,17 @@ pub enum Symbol<'a> {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct RISCVOpToken {
     pub val: u8,
-    pub get_opd_set: fn(u8) -> &'static Vec<RISCVOpdSet>,
+    pub get_opd_set_fn: fn(u8) -> &'static Vec<RISCVOpdSet>,
 }
 
 pub(super) struct LexerIter<'a> {
     pub raw: logos::Lexer<'a, RISCVToken<'a>>,
+}
+
+impl RISCVOpToken {
+    pub fn get_opd_set(&self) -> &'static Vec<RISCVOpdSet> {
+        (self.get_opd_set_fn)(self.val)
+    }
 }
 
 impl LexerIter<'_> {
@@ -100,7 +106,7 @@ pub enum RISCVToken<'a> {
     ImmediateInt(i128),
     #[regex(r"-?[0-9]+\.[0-9]+", |lex| lex.slice().parse())]
     ImmediateFloat(f64),
-    #[regex("\"([^\\\\\"]*\\\\.)*\"")]
+    #[regex("\"(?:[^\\\\\"]*(?:\\\\.)*)*\"")]
     ImmediateString(&'a str),
     #[regex(r"[a-zA-Z_][a-zA-Z0-9._]*", |lex| Symbol::Label(lex.slice()))]
     Symbol(Symbol<'a>),

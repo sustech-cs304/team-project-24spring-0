@@ -1,8 +1,7 @@
 use once_cell::sync::Lazy;
-use strum::{EnumIter, EnumString, IntoEnumIterator};
-use strum_macros::Display;
+use strum::{Display, EnumString, IntoStaticStr, VariantArray};
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, EnumIter, EnumString, Display)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, VariantArray, EnumString, Display)]
 pub enum RV32FRegister {
     #[strum(to_string = "f0", serialize = "f0", serialize = "ft0")]
     F0,
@@ -70,9 +69,7 @@ pub enum RV32FRegister {
     F31,
 }
 
-#[derive(
-    Clone, Copy, Debug, PartialEq, Eq, Hash, EnumIter, EnumString, strum_macros::IntoStaticStr,
-)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, VariantArray, EnumString, IntoStaticStr)]
 #[strum(serialize_all = "snake_case")]
 pub enum RV32FInstruction {
     FaddS,
@@ -129,9 +126,7 @@ pub enum RV32FInstruction {
     // FsubD,
 }
 
-#[derive(
-    Clone, Copy, Debug, PartialEq, Eq, Hash, EnumIter, EnumString, strum_macros::IntoStaticStr,
-)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, VariantArray, EnumString, IntoStaticStr)]
 pub enum RV32FCsr {}
 
 pub static RV32F_REGISTER_VALID_NAME: [&'static str; 64] = [
@@ -143,8 +138,9 @@ pub static RV32F_REGISTER_VALID_NAME: [&'static str; 64] = [
 ];
 
 pub static RV32F_REGISTER_DEFAULT_NAME: Lazy<Vec<(RV32FRegister, String)>> = Lazy::new(|| {
-    RV32FRegister::iter()
-        .map(|reg| (reg, reg.to_string()))
+    RV32FRegister::VARIANTS
+        .iter()
+        .map(|&reg| (reg, reg.to_string()))
         .collect()
 });
 
