@@ -1,5 +1,7 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+
+mod assembler;
 mod interface;
 mod io;
 mod menu;
@@ -24,6 +26,7 @@ fn main() {
         .on_menu_event(menu::event_handler)
         .manage(middleware_types::TabMap {
             tabs: Default::default(),
+            rpc_server: Default::default(),
         })
         .manage(middleware_types::CurTabName {
             name: Default::default(),
@@ -38,10 +41,13 @@ fn main() {
             frontend_api::create_tab,
             frontend_api::close_tab,
             frontend_api::change_current_tab,
-            frontend_api::update_tab,
+            frontend_api::insert_in_current_tab,
+            frontend_api::delete_in_current_tab,
             frontend_api::read_tab,
             frontend_api::write_tab,
+            frontend_api::set_cursor,
             frontend_api::assembly,
+            frontend_api::run,
             frontend_api::debug,
             frontend_api::step,
             frontend_api::dump,
@@ -51,6 +57,8 @@ fn main() {
             frontend_api::remove_breakpoint,
             frontend_api::syscall_input,
             frontend_api::update_assembler_settings,
+            frontend_api::start_rpc_server,
+            frontend_api::stop_rpc_server,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

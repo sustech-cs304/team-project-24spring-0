@@ -24,6 +24,9 @@
         "scope": [
           "**"
         ]
+      },
+      "dialog": {
+        "all": true
       }
     },
     "bundle": {

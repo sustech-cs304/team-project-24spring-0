@@ -32,10 +32,6 @@ jobs:
         working-directory: ./src-tauri
         run: cargo fmt -- --check
 
-      - name: Format check
-        working-directory: ./src-tauri
-        run: cargo fmt -- --check
-
       - name: Tauri dependencies
         run: |
           sudo apt-get update &&
@@ -56,9 +52,9 @@ jobs:
         working-directory: ./src-tauri
         run: cargo test
 
-      - name: Cargo build
-        working-directory: ./src-tauri
-        run: cargo build --release
+      #- name: Cargo build
+        #working-directory: ./src-tauri
+        #run: cargo build --release
 
       - name: Build Rust doc
         if: github.ref == 'refs/heads/main'

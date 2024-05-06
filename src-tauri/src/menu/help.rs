@@ -1,5 +1,5 @@
 use crate::APP_HANDLE;
-use tauri::{CustomMenuItem, Menu, Submenu, WindowMenuEvent};
+use tauri::{CustomMenuItem, Manager, Menu, Submenu, WindowMenuEvent};
 
 pub fn new() -> Submenu {
     Submenu::new(
@@ -19,30 +19,26 @@ pub fn event_handler(event: WindowMenuEvent) {
     }
 }
 
-fn manual_handler(_event: &WindowMenuEvent) {
-    if let Some(app_handle) = APP_HANDLE.lock().unwrap().as_ref() {
-        let _window = tauri::WindowBuilder::new(
-            app_handle,
-            "manual", /* the unique window label */
-            tauri::WindowUrl::External("https://tauri.app/".parse().unwrap()),
-        )
-        .title("Manual")
-        .menu(Menu::new())
-        .build()
-        .unwrap();
-    }
+fn manual_handler(event: &WindowMenuEvent) {
+    let _window = tauri::WindowBuilder::new(
+        &event.window().app_handle(),
+        "manual", /* the unique window label */
+        tauri::WindowUrl::External("https://tauri.app/".parse().unwrap()),
+    )
+    .title("Manual")
+    .menu(Menu::new())
+    .build()
+    .unwrap();
 }
 
-fn ai_handler(_event: &WindowMenuEvent) {
-    if let Some(app_handle) = APP_HANDLE.lock().unwrap().as_ref() {
-        let _window = tauri::WindowBuilder::new(
-            app_handle,
-            "ai", /* the unique window label */
-            tauri::WindowUrl::External("https://tauri.app/".parse().unwrap()),
-        )
-        .title("AI Chat")
-        .menu(Menu::new())
-        .build()
-        .unwrap();
-    }
+fn ai_handler(event: &WindowMenuEvent) {
+    let _window = tauri::WindowBuilder::new(
+        &event.window().app_handle(),
+        "ai", /* the unique window label */
+        tauri::WindowUrl::External("https://tauri.app/".parse().unwrap()),
+    )
+    .title("AI Chat")
+    .menu(Menu::new())
+    .build()
+    .unwrap();
 }
