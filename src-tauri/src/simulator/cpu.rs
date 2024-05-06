@@ -1,10 +1,8 @@
-use crate::interface::assembler::Instruction;
-use crate::interface::assembler::Operand;
+use crate::interface::assembler::{Instruction, Operand};
 use crate::modules::riscv::rv32i::constants::{RV32IInstruction, RV32IRegister};
-use crate::simulator::dram::Dram;
 
 pub struct CPU {
-    dram: Dram,
+    pub memory: Vec<u8>,
     pub registers: [u32; 32],
     pub pc: u32,
     pub instructions: Vec<Instruction>,
@@ -13,15 +11,58 @@ pub struct CPU {
 impl CPU {
     pub fn new(mem_size: usize) -> Self {
         CPU {
-            dram: Dram::new(mem_size),
+            memory: vec![0; mem_size * 1024],
             registers: [0; 32],
             pc: 0,
             instructions: Vec::new(),
         }
     }
 
+    pub fn print_registers(&mut self) {
+        let mut output = String::from("");
+        let abi = [
+            "zero", " ra ", " sp ", " gp ", " tp ", " t0 ", " t1 ", " t2 ", " s0 ", " s1 ", " a0 ",
+            " a1 ", " a2 ", " a3 ", " a4 ", " a5 ", " a6 ", " a7 ", " s2 ", " s3 ", " s4 ", " s5 ",
+            " s6 ", " s7 ", " s8 ", " s9 ", " s10", " s11", " t3 ", " t4 ", " t5 ", " t6 ",
+        ];
+        for i in (0..32).step_by(4) {
+            output = format!(
+                "{}\n{}",
+                output,
+                format!(
+                    "x{:02}({})={:>#18x} x{:02}({})={:>#18x} x{:02}({})={:>#18x} x{:02}({})={:>#18x}",
+                    i,
+                    abi[i],
+                    self.registers[i],
+                    i + 1,
+                    abi[i + 1],
+                    self.registers[i + 1],
+                    i + 2,
+                    abi[i + 2],
+                    self.registers[i + 2],
+                    i + 3,
+                    abi[i + 3],
+                    self.registers[i + 3],
+                )
+            );
+        }
+        println!("{}", output);
+    }
+
+    pub fn print_memory(&mut self, rs1: usize, imm: i32) {
+        let index = (self.registers[rs1] + CPU::sign_extend(imm as u32, 12)) as usize;
+        let mut output = String::from("");
+        for i in index..index + 4 {
+            output = format!(
+                "{}\n{}",
+                output,
+                format!("memory[{:>#18x}]={:>#18x}", i, self.memory[i],)
+            );
+        }
+        println!("{}", output);
+    }
+
     fn load_inst(&mut self, ir: Instruction) -> Result<bool, ()> {
-        // TODO: Error handling
         self.instructions.push(ir);
         Ok(true)
     }
@@ -81,34 +122,36 @@ impl CPU {
                 rs2 = temp1.unwrap();
                 imm = imm_temp.unwrap();
             }
-
+            // J-type
+            RV32IInstruction::Jal => {
+                rd = temp0.unwrap();
+                imm = imm_temp.unwrap();
+            }
             // I-type
             RV32IInstruction::Addi
-            | RV32IInstruction::Slti
-            | RV32IInstruction::Sltiu
             | RV32IInstruction::Xori
             | RV32IInstruction::Ori
             | RV32IInstruction::Andi
+            | RV32IInstruction::Slti
+            | RV32IInstruction::Sltiu
             | RV32IInstruction::Slli
             | RV32IInstruction::Srli
             | RV32IInstruction::Srai
-            | RV32IInstruction::Jalr => {
-                rd = temp0.unwrap();
-                rs1 = temp1.unwrap();
-                imm = imm_temp.unwrap();
-            }
-            //
-            RV32IInstruction::Lb
+            | RV32IInstruction::Jalr
+            | RV32IInstruction::Lb
             | RV32IInstruction::Lh
             | RV32IInstruction::Lw
             | RV32IInstruction::Lbu
             | RV32IInstruction::Lhu => {
                 rd = temp0.unwrap();
+                rs1 = temp1.unwrap();
                 imm = imm_temp.unwrap();
             }
-            // J-type
-            RV32IInstruction::Jal => {
-                rd = temp0.unwrap();
+
+            // S-type
+            RV32IInstruction::Sb | RV32IInstruction::Sh | RV32IInstruction::Sw => {
+                rs1 = temp0.unwrap();
+                rs2 = temp1.unwrap();
                 imm = imm_temp.unwrap();
             }
             // U-type
@@ -235,36 +278,68 @@ impl CPU {
                 self.registers[rd] =
                     CPU::sign_extend(self.registers[rs1] >> shamt, 32 - shamt as u32);
             }
-            RV32IInstruction::Lb => {
-                let addr = (self.registers[rs1] as i32 + imm) as u32;
-                let val = self.load(addr, 8)?;
-                self.registers[rd] = val as u32;
-            }
-            RV32IInstruction::Lh => {
-                let addr = (self.registers[rs1] as i32 + imm) as u32;
-                let val = self.load(addr, 16)?;
-                self.registers[rd] = val as u32;
-            }
-            RV32IInstruction::Lw => {
-                let addr = (self.registers[rs1] as i32 + imm) as u32;
-                let val = self.load(addr, 32)?;
-                self.registers[rd] = val as u32;
-            }
-            RV32IInstruction::Lbu => {
-                let addr = (self.registers[rs1] as i32 + imm) as u32;
-                let val = self.load(addr, 8)?;
-                self.registers[rd] = val;
-            }
-            RV32IInstruction::Lhu => {
-                let addr = (self.registers[rs1] as i32 + imm) as u32;
-                let val = self.load(addr, 16)?;
-                self.registers[rd] = val;
-            }
             RV32IInstruction::Jalr => {
                 let t = self.pc;
                 self.pc = ((self.registers[rs1] as i32 + imm) as u32) & !1;
                 // set lsb to 0
                 self.registers[rd] = t + 4;
+            }
+            RV32IInstruction::Lb => {
+                let index = (self.registers[rs1] + CPU::sign_extend(imm as u32, 12)) as usize;
+                self.registers[rd] = CPU::sign_extend(self.memory[index] as u32, 8);
+                self.print_memory(rs1, imm);
+            }
+            RV32IInstruction::Lh => {
+                let index = (self.registers[rs1] + CPU::sign_extend(imm as u32, 12)) as usize;
+                let half_word = self.memory[index] as u32 | (self.memory[index + 1] as u32) << 8;
+                self.registers[rd] = CPU::sign_extend(half_word as u32, 16);
+                self.print_memory(rs1, imm);
+            }
+            RV32IInstruction::Lw => {
+                let index = (self.registers[rs1] + CPU::sign_extend(imm as u32, 12)) as usize;
+
+                self.registers[rd] = self.memory[index] as u32
+                    | ((self.memory[index + 1]) as u32) << 8
+                    | ((self.memory[index + 2]) as u32) << 16
+                    | ((self.memory[index + 3]) as u32) << 24;
+                self.print_memory(rs1, imm);
+            }
+            RV32IInstruction::Lbu => {
+                let index = (self.registers[rs1] + CPU::sign_extend(imm as u32, 12)) as usize;
+                self.registers[rd] = self.memory[index] as u32;
+                self.print_memory(rs1, imm);
+            }
+            RV32IInstruction::Lhu => {
+                let index = (self.registers[rs1] + CPU::sign_extend(imm as u32, 12)) as usize;
+
+                self.registers[rd] =
+                    self.memory[index] as u32 | (self.memory[index + 1] as u32) << 8;
+                self.print_memory(rs1, imm);
+            }
+            RV32IInstruction::Sb => {
+                let index = (self.registers[rs1] + CPU::sign_extend(imm as u32, 12)) as usize;
+                self.memory[index] = (self.registers[rs2] & 0xff) as u8;
+                self.print_memory(rs1, imm);
+            }
+            RV32IInstruction::Sh => {
+                let index = (self.registers[rs1] + CPU::sign_extend(imm as u32, 12)) as usize;
+                self.memory[index] = (self.registers[rs2] & 0xff) as u8;
+                self.memory[index + 1] = ((self.registers[rs2] >> 8) & 0xff) as u8;
+                self.print_memory(rs1, imm);
+            }
+            RV32IInstruction::Sw => {
+                let index = (self.registers[rs1] + CPU::sign_extend(imm as u32, 12)) as usize;
+                self.memory[index] = (self.registers[rs2] & 0xff) as u8;
+                self.memory[index + 1] = (self.registers[rs2] >> 8 & 0xff) as u8;
+                self.memory[index + 2] = (self.registers[rs2] >> 16 & 0xff) as u8;
+                self.memory[index + 3] = (self.registers[rs2] >> 24 & 0xff) as u8;
+                self.print_memory(rs1, imm);
+            }
+            RV32IInstruction::Lui => {
+                self.registers[rd] = (imm << 12) as u32;
+            }
+            RV32IInstruction::Auipc => {
+                self.registers[rd] = (self.pc as i32 + imm << 12) as u32;
             }
             RV32IInstruction::Ecall => {
                 self.registers[rd] = self.pc;
@@ -286,10 +361,13 @@ impl CPU {
         (((data << (32 - size)) as i32) >> (32 - size)) as u32
     }
 
-    pub fn load(&mut self, addr: u32, size: u32) -> Result<u32, ()> {
-        self.dram.load(addr, size)
-    }
+    // pub fn load(&mut self, addr: u32, size: u32) -> Result<u32, ()> {
+    //     self.dram.load(addr, size)
+    // }
 
+    // pub fn store(&mut self, addr: u32, size: u32, value: u32) -> Result<(), ()> {
+    //     self.dram.store(addr, size, value)
+    // }
     fn register_name_to_u32(&mut self, register: RV32IRegister) -> u32 {
         match register {
             RV32IRegister::Zero => 0,

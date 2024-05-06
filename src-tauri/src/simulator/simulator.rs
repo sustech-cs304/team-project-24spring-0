@@ -1,8 +1,7 @@
-use crate::interface::assembler::Instruction;
-use crate::interface::assembler::Operand;
+use crate::interface::assembler::{Instruction, Operand};
 use crate::interface::simulator::Simulator;
-use crate::types::middleware_types::SyscallDataType;
 use crate::simulator::cpu::CPU;
+use crate::types::middleware_types::SyscallDataType;
 
 struct RiscVSimulator {
     // pc: u32,

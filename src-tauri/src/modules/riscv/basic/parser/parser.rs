@@ -296,7 +296,7 @@ impl RISCVParser {
                 .get_error("operator in data segment".to_string()));
         }
 
-        let token_sets = (op.get_opd_set)(op.val);
+        let token_sets = op.get_opd_set();
         let token_set_len = token_sets.len();
 
         if token_set_len == 0 {

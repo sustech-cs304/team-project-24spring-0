@@ -13,6 +13,11 @@ pub struct Text {
 }
 
 impl MFile<String> for Text {
+    fn update_content(&mut self, content: &str) {
+        *self.data = Rope::from_str(&content);
+        self.dirty = true;
+    }
+
     fn is_dirty(&self) -> bool {
         self.dirty
     }
@@ -58,10 +63,10 @@ impl Text {
         Text::from_path(Path::new(file_path))
     }
 
-    pub fn from_str(text: &str) -> Result<Self, String> {
+    pub fn from_str(file_path: &Path, text: &str) -> Result<Self, String> {
         Ok(Text {
             data: Box::new(Rope::from_str(text)),
-            path: PathBuf::new(),
+            path: file_path.to_path_buf(),
             dirty: false,
             last_modified: std::time::SystemTime::now(),
         })

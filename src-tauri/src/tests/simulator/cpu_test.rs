@@ -2,239 +2,504 @@ use crate::interface::assembler::{Instruction, Operand};
 use crate::modules::riscv::rv32i::constants::{RISCVImmediate, RV32IInstruction, RV32IRegister};
 use crate::simulator::cpu;
 
-fn test_cpu() {
+#[test]
+fn test_R() {
     let mut cpu = cpu::CPU::new(16);
-    let add_ins = Instruction {
-        op: RV32IInstruction::Add,
-        ins: vec![
-            Operand::Reg(RV32IRegister::T1),
-            Operand::Reg(RV32IRegister::T2),
-            Operand::Reg(RV32IRegister::T3),
-        ],
-    };
-    cpu.execute(add_ins).unwrap();
-    let sub_ins = Instruction {
-        op: RV32IInstruction::Sub,
-        ins: vec![
-            Operand::Reg(RV32IRegister::T1),
-            Operand::Reg(RV32IRegister::T2),
-            Operand::Reg(RV32IRegister::T3),
-        ],
-    };
-    let xor_ins = Instruction {
-        op: RV32IInstruction::Xor,
-        ins: vec![
-            Operand::Reg(RV32IRegister::A0),
-            Operand::Reg(RV32IRegister::A1),
-            Operand::Reg(RV32IRegister::A2),
-        ],
-    };
-    let or_ins = Instruction {
-        op: RV32IInstruction::Or,
-        ins: vec![
-            Operand::Reg(RV32IRegister::A0),
-            Operand::Reg(RV32IRegister::A1),
-            Operand::Reg(RV32IRegister::A2),
-        ],
-    };
-    let and_ins = Instruction {
-        op: RV32IInstruction::And,
-        ins: vec![
-            Operand::Reg(RV32IRegister::A0),
-            Operand::Reg(RV32IRegister::A1),
-            Operand::Reg(RV32IRegister::A2),
-        ],
-    };
-    let sll_ins = Instruction {
-        op: RV32IInstruction::Sll,
-        ins: vec![
-            Operand::Reg(RV32IRegister::A0),
-            Operand::Reg(RV32IRegister::A1),
-            Operand::Reg(RV32IRegister::A2),
-        ],
-    };
-    let srl_ins = Instruction {
-        op: RV32IInstruction::Srl,
-        ins: vec![
-            Operand::Reg(RV32IRegister::A0),
-            Operand::Reg(RV32IRegister::A1),
-            Operand::Reg(RV32IRegister::A2),
-        ],
-    };
-    let sra_ins = Instruction {
-        op: RV32IInstruction::Sra,
-        ins: vec![
-            Operand::Reg(RV32IRegister::A0),
-            Operand::Reg(RV32IRegister::A1),
-            Operand::Reg(RV32IRegister::A2),
-        ],
-    };
-    let slt_ins = Instruction {
-        op: RV32IInstruction::Slt,
-        ins: vec![
-            Operand::Reg(RV32IRegister::A0),
-            Operand::Reg(RV32IRegister::A1),
-            Operand::Reg(RV32IRegister::A2),
-        ],
-    };
-    let sltu_ins = Instruction {
-        op: RV32IInstruction::Sltu,
-        ins: vec![
-            Operand::Reg(RV32IRegister::A0),
-            Operand::Reg(RV32IRegister::A1),
-            Operand::Reg(RV32IRegister::A2),
-        ],
-    };
-    // B-type
-    let beq_ins = Instruction {
-        op: RV32IInstruction::Beq,
-        ins: vec![
-            Operand::Reg(RV32IRegister::T1),
-            Operand::Reg(RV32IRegister::T2),
-            Operand::Operator(32),
-        ],
-    };
-    let bne_ins = Instruction {
-        op: RV32IInstruction::Bne,
-        ins: vec![
-            Operand::Reg(RV32IRegister::A0),
-            Operand::Reg(RV32IRegister::A1),
-            Operand::Operator(32),
-        ],
-    };
-    let blt_ins = Instruction {
-        op: RV32IInstruction::Blt,
-        ins: vec![
-            Operand::Reg(RV32IRegister::A0),
-            Operand::Reg(RV32IRegister::A1),
-            Operand::Operator(32),
-        ],
-    };
-    let bge_ins = Instruction {
-        op: RV32IInstruction::Bge,
-        ins: vec![
-            Operand::Reg(RV32IRegister::A0),
-            Operand::Reg(RV32IRegister::A1),
-            Operand::Operator(32),
-        ],
-    };
-    let bltu_ins = Instruction {
-        op: RV32IInstruction::Bltu,
-        ins: vec![
-            Operand::Reg(RV32IRegister::A0),
-            Operand::Reg(RV32IRegister::A1),
-            Operand::Operator(32),
-        ],
-    };
-    let bgeu_ins = Instruction {
-        op: RV32IInstruction::Bgeu,
-        ins: vec![
-            Operand::Reg(RV32IRegister::A0),
-            Operand::Reg(RV32IRegister::A1),
-            Operand::Operator(32),
-        ],
-    };
-    // J-type
-    let jal_ins = Instruction {
-        op: RV32IInstruction::Jal,
-        ins: vec![Operand::Reg(RV32IRegister::T1), Operand::Operator(32)],
-    };
-    let jalr_ins = Instruction {
-        op: RV32IInstruction::Jalr,
-        ins: vec![
-            Operand::Reg(RV32IRegister::T1),
-            Operand::Reg(RV32IRegister::T2),
-            Operand::Operator(32),
-        ],
-    };
-    let lui_ins = Instruction {
-        op: RV32IInstruction::Lui,
-        ins: vec![Operand::Reg(RV32IRegister::T1), Operand::Operator(32)],
-    };
-    // I-type
-    let addi_ins = Instruction {
+    cpu.execute(Instruction {
         op: RV32IInstruction::Addi,
         ins: vec![
-            Operand::Reg(RV32IRegister::A0),
-            Operand::Reg(RV32IRegister::A6),
+            Operand::Reg(RV32IRegister::A1),
+            Operand::Reg(RV32IRegister::Zero),
             Operand::Operator(20),
         ],
-    };
-    let xori_ins = Instruction {
-        op: RV32IInstruction::Xori,
-        ins: vec![
-            Operand::Reg(RV32IRegister::A0),
-            Operand::Reg(RV32IRegister::A6),
-            Operand::Operator(20),
-        ],
-    };
-    let ori_ins = Instruction {
-        op: RV32IInstruction::Ori,
-        ins: vec![
-            Operand::Reg(RV32IRegister::A0),
-            Operand::Reg(RV32IRegister::A6),
-            Operand::Operator(20),
-        ],
-    };
-    let andi_ins = Instruction {
-        op: RV32IInstruction::Andi,
+    })
+    .unwrap();
+    cpu.execute(Instruction {
+        op: RV32IInstruction::Addi,
         ins: vec![
             Operand::Reg(RV32IRegister::A2),
-            Operand::Reg(RV32IRegister::A4),
-            Operand::Operator(20),
+            Operand::Reg(RV32IRegister::Zero),
+            Operand::Operator(3),
         ],
-    };
-    let sltiu_ins = Instruction {
-        op: RV32IInstruction::Sltiu,
+    })
+    .unwrap();
+    cpu.execute(Instruction {
+        op: RV32IInstruction::Add,
         ins: vec![
-            Operand::Reg(RV32IRegister::T0),
-            Operand::Reg(RV32IRegister::T1),
-            Operand::Operator(20),
+            Operand::Reg(RV32IRegister::S1),
+            Operand::Reg(RV32IRegister::A1),
+            Operand::Reg(RV32IRegister::A2),
         ],
-    };
-    let slti_ins = Instruction {
-        op: RV32IInstruction::Slti,
+    })
+    .unwrap();
+    cpu.execute(Instruction {
+        op: RV32IInstruction::Sub,
         ins: vec![
-            Operand::Reg(RV32IRegister::T3),
+            Operand::Reg(RV32IRegister::S2),
+            Operand::Reg(RV32IRegister::S1),
+            Operand::Reg(RV32IRegister::A1),
+        ],
+    })
+    .unwrap();
+    cpu.execute(Instruction {
+        op: RV32IInstruction::Xor,
+        ins: vec![
+            Operand::Reg(RV32IRegister::S3),
+            Operand::Reg(RV32IRegister::S2),
+            Operand::Reg(RV32IRegister::S1),
+        ],
+    })
+    .unwrap();
+    cpu.execute(Instruction {
+        op: RV32IInstruction::Or,
+        ins: vec![
+            Operand::Reg(RV32IRegister::S4),
+            Operand::Reg(RV32IRegister::S2),
+            Operand::Reg(RV32IRegister::S1),
+        ],
+    })
+    .unwrap();
+    cpu.execute(Instruction {
+        op: RV32IInstruction::And,
+        ins: vec![
+            Operand::Reg(RV32IRegister::S5),
+            Operand::Reg(RV32IRegister::S2),
+            Operand::Reg(RV32IRegister::S1),
+        ],
+    })
+    .unwrap();
+    cpu.execute(Instruction {
+        op: RV32IInstruction::Sll,
+        ins: vec![
+            Operand::Reg(RV32IRegister::S6),
+            Operand::Reg(RV32IRegister::S2),
+            Operand::Reg(RV32IRegister::S1),
+        ],
+    })
+    .unwrap();
+    cpu.execute(Instruction {
+        op: RV32IInstruction::Srl,
+        ins: vec![
+            Operand::Reg(RV32IRegister::S7),
+            Operand::Reg(RV32IRegister::A1),
+            Operand::Reg(RV32IRegister::A2),
+        ],
+    })
+    .unwrap();
+    cpu.execute(Instruction {
+        op: RV32IInstruction::Sra,
+        ins: vec![
+            Operand::Reg(RV32IRegister::S8),
+            Operand::Reg(RV32IRegister::A1),
+            Operand::Reg(RV32IRegister::A2),
+        ],
+    })
+    .unwrap();
+    cpu.execute(Instruction {
+        op: RV32IInstruction::Slt,
+        ins: vec![
+            Operand::Reg(RV32IRegister::S9),
+            Operand::Reg(RV32IRegister::A2),
+            Operand::Reg(RV32IRegister::A1),
+        ],
+    })
+    .unwrap();
+    cpu.execute(Instruction {
+        op: RV32IInstruction::Sltu,
+        ins: vec![
             Operand::Reg(RV32IRegister::A3),
-            Operand::Operator(20),
+            Operand::Reg(RV32IRegister::A2),
+            Operand::Reg(RV32IRegister::A1),
         ],
-    };
-    let slli_ins = Instruction {
-        op: RV32IInstruction::Slli,
-        ins: vec![
-            Operand::Reg(RV32IRegister::T3),
-            Operand::Reg(RV32IRegister::A3),
-            Operand::Operator(20),
-        ],
-    };
-    let srli_ins = Instruction {
-        op: RV32IInstruction::Srli,
-        ins: vec![
-            Operand::Reg(RV32IRegister::T3),
-            Operand::Reg(RV32IRegister::A3),
-            Operand::Operator(20),
-        ],
-    };
-    let srai_ins = Instruction {
-        op: RV32IInstruction::Srai,
-        ins: vec![
-            Operand::Reg(RV32IRegister::T3),
-            Operand::Reg(RV32IRegister::A3),
-            Operand::Operator(20),
-        ],
-    };
-    // L-type
-    let lb_ins = Instruction {
-        op: RV32IInstruction::Lb,
-        ins: vec![Operand::Reg(RV32IRegister::A0), Operand::Operator(20)],
-    };
-    let lh_ins = Instruction {
-        op: RV32IInstruction::Lh,
-        ins: vec![Operand::Reg(RV32IRegister::A1), Operand::Operator(20)],
-    };
+    })
+    .unwrap();
+    cpu.print_registers();
 }
 
-fn main() {
-    test_cpu();
+#[test]
+fn test_B() {
+    let mut cpu = cpu::CPU::new(16);
+
+    cpu.execute(Instruction {
+        op: RV32IInstruction::Addi,
+        ins: vec![
+            Operand::Reg(RV32IRegister::A1),
+            Operand::Reg(RV32IRegister::Zero),
+            Operand::Operator(19),
+        ],
+    })
+    .unwrap();
+    cpu.execute(Instruction {
+        op: RV32IInstruction::Addi,
+        ins: vec![
+            Operand::Reg(RV32IRegister::A2),
+            Operand::Reg(RV32IRegister::Zero),
+            Operand::Operator(5),
+        ],
+    })
+    .unwrap();
+    cpu.execute(Instruction {
+        op: RV32IInstruction::Addi,
+        ins: vec![
+            Operand::Reg(RV32IRegister::A3),
+            Operand::Reg(RV32IRegister::Zero),
+            Operand::Operator(5),
+        ],
+    })
+    .unwrap();
+
+    cpu.execute(Instruction {
+        op: RV32IInstruction::Beq,
+        ins: vec![
+            Operand::Reg(RV32IRegister::A2),
+            Operand::Reg(RV32IRegister::A1),
+            Operand::Operator(3),
+        ],
+    })
+    .unwrap();
+    cpu.execute(Instruction {
+        op: RV32IInstruction::Bne,
+        ins: vec![
+            Operand::Reg(RV32IRegister::A1),
+            Operand::Reg(RV32IRegister::A1),
+            Operand::Operator(3),
+        ],
+    })
+    .unwrap();
+    cpu.execute(Instruction {
+        op: RV32IInstruction::Blt,
+        ins: vec![
+            Operand::Reg(RV32IRegister::A1),
+            Operand::Reg(RV32IRegister::A2),
+            Operand::Operator(3),
+        ],
+    })
+    .unwrap();
+    cpu.execute(Instruction {
+        op: RV32IInstruction::Bge,
+        ins: vec![
+            Operand::Reg(RV32IRegister::A1),
+            Operand::Reg(RV32IRegister::A2),
+            Operand::Operator(3),
+        ],
+    })
+    .unwrap();
+    cpu.execute(Instruction {
+        op: RV32IInstruction::Bltu,
+        ins: vec![
+            Operand::Reg(RV32IRegister::A1),
+            Operand::Reg(RV32IRegister::A2),
+            Operand::Operator(3),
+        ],
+    })
+    .unwrap();
+    cpu.execute(Instruction {
+        op: RV32IInstruction::Bgeu,
+        ins: vec![
+            Operand::Reg(RV32IRegister::A1),
+            Operand::Reg(RV32IRegister::A2),
+            Operand::Operator(3),
+        ],
+    })
+    .unwrap();
+    cpu.print_registers();
+}
+
+#[test]
+fn test_J() {
+    let mut cpu = cpu::CPU::new(16);
+
+    cpu.execute(Instruction {
+        op: RV32IInstruction::Addi,
+        ins: vec![
+            Operand::Reg(RV32IRegister::A1),
+            Operand::Reg(RV32IRegister::Zero),
+            Operand::Operator(19),
+        ],
+    })
+    .unwrap();
+    cpu.execute(Instruction {
+        op: RV32IInstruction::Addi,
+        ins: vec![
+            Operand::Reg(RV32IRegister::A2),
+            Operand::Reg(RV32IRegister::Zero),
+            Operand::Operator(5),
+        ],
+    })
+    .unwrap();
+    cpu.execute(Instruction {
+        op: RV32IInstruction::Jal,
+        ins: vec![Operand::Reg(RV32IRegister::A3), Operand::Operator(3)],
+    })
+    .unwrap();
+    cpu.print_registers();
+}
+
+#[test]
+fn test_I1() {
+    let mut cpu = cpu::CPU::new(16);
+
+    cpu.execute(Instruction {
+        op: RV32IInstruction::Addi,
+        ins: vec![
+            Operand::Reg(RV32IRegister::A1),
+            Operand::Reg(RV32IRegister::Zero),
+            Operand::Operator(19),
+        ],
+    })
+    .unwrap();
+
+    cpu.execute(Instruction {
+        op: RV32IInstruction::Addi,
+        ins: vec![
+            Operand::Reg(RV32IRegister::S2),
+            Operand::Reg(RV32IRegister::Zero),
+            Operand::Operator(6),
+        ],
+    })
+    .unwrap();
+
+    cpu.execute(Instruction {
+        op: RV32IInstruction::Xori,
+        ins: vec![
+            Operand::Reg(RV32IRegister::A2),
+            Operand::Reg(RV32IRegister::S2),
+            Operand::Operator(6),
+        ],
+    })
+    .unwrap();
+
+    cpu.execute(Instruction {
+        op: RV32IInstruction::Ori,
+        ins: vec![
+            Operand::Reg(RV32IRegister::A3),
+            Operand::Reg(RV32IRegister::S2),
+            Operand::Operator(6),
+        ],
+    })
+    .unwrap();
+
+    cpu.execute(Instruction {
+        op: RV32IInstruction::Andi,
+        ins: vec![
+            Operand::Reg(RV32IRegister::A4),
+            Operand::Reg(RV32IRegister::S2),
+            Operand::Operator(30),
+        ],
+    })
+    .unwrap();
+
+    cpu.execute(Instruction {
+        op: RV32IInstruction::Slti,
+        ins: vec![
+            Operand::Reg(RV32IRegister::A5),
+            Operand::Reg(RV32IRegister::S2),
+            Operand::Operator(45),
+        ],
+    })
+    .unwrap();
+
+    cpu.execute(Instruction {
+        op: RV32IInstruction::Sltiu,
+        ins: vec![
+            Operand::Reg(RV32IRegister::A6),
+            Operand::Reg(RV32IRegister::S2),
+            Operand::Operator(25),
+        ],
+    })
+    .unwrap();
+
+    cpu.execute(Instruction {
+        op: RV32IInstruction::Slli,
+        ins: vec![
+            Operand::Reg(RV32IRegister::A7),
+            Operand::Reg(RV32IRegister::S2),
+            Operand::Operator(15),
+        ],
+    })
+    .unwrap();
+
+    cpu.execute(Instruction {
+        op: RV32IInstruction::Srli,
+        ins: vec![
+            Operand::Reg(RV32IRegister::S8),
+            Operand::Reg(RV32IRegister::S2),
+            Operand::Operator(11),
+        ],
+    })
+    .unwrap();
+
+    cpu.execute(Instruction {
+        op: RV32IInstruction::Srai,
+        ins: vec![
+            Operand::Reg(RV32IRegister::S9),
+            Operand::Reg(RV32IRegister::S2),
+            Operand::Operator(5),
+        ],
+    })
+    .unwrap();
+
+    cpu.execute(Instruction {
+        op: RV32IInstruction::Jalr,
+        ins: vec![
+            Operand::Reg(RV32IRegister::S10),
+            Operand::Reg(RV32IRegister::S2),
+            Operand::Operator(6),
+        ],
+    })
+    .unwrap();
+    cpu.print_registers();
+}
+
+#[test]
+fn test_I2() {
+    let mut cpu = cpu::CPU::new(16);
+
+    cpu.execute(Instruction {
+        op: RV32IInstruction::Addi,
+        ins: vec![
+            Operand::Reg(RV32IRegister::A1),
+            Operand::Reg(RV32IRegister::Zero),
+            Operand::Operator(20),
+        ],
+    })
+    .unwrap();
+
+    cpu.execute(Instruction {
+        op: RV32IInstruction::Sw,
+        ins: vec![
+            Operand::Reg(RV32IRegister::S1),
+            Operand::Reg(RV32IRegister::A1),
+            Operand::Operator(6),
+        ],
+    })
+    .unwrap();
+
+    cpu.execute(Instruction {
+        op: RV32IInstruction::Lb,
+        ins: vec![
+            Operand::Reg(RV32IRegister::A1),
+            Operand::Reg(RV32IRegister::S1),
+            Operand::Operator(6),
+        ],
+    })
+    .unwrap();
+
+    cpu.execute(Instruction {
+        op: RV32IInstruction::Lh,
+        ins: vec![
+            Operand::Reg(RV32IRegister::A2),
+            Operand::Reg(RV32IRegister::S1),
+            Operand::Operator(5),
+        ],
+    })
+    .unwrap();
+
+    cpu.execute(Instruction {
+        op: RV32IInstruction::Lw,
+        ins: vec![
+            Operand::Reg(RV32IRegister::A3),
+            Operand::Reg(RV32IRegister::S1),
+            Operand::Operator(4),
+        ],
+    })
+    .unwrap();
+
+    cpu.execute(Instruction {
+        op: RV32IInstruction::Lbu,
+        ins: vec![
+            Operand::Reg(RV32IRegister::A4),
+            Operand::Reg(RV32IRegister::S1),
+            Operand::Operator(5),
+        ],
+    })
+    .unwrap();
+
+    cpu.execute(Instruction {
+        op: RV32IInstruction::Lhu,
+        ins: vec![
+            Operand::Reg(RV32IRegister::A5),
+            Operand::Reg(RV32IRegister::S1),
+            Operand::Operator(6),
+        ],
+    })
+    .unwrap();
+
+    cpu.print_registers();
+}
+
+#[test]
+fn test_S() {
+    let mut cpu = cpu::CPU::new(16);
+
+    cpu.execute(Instruction {
+        op: RV32IInstruction::Addi,
+        ins: vec![
+            Operand::Reg(RV32IRegister::A1),
+            Operand::Reg(RV32IRegister::Zero),
+            Operand::Operator(19),
+        ],
+    })
+    .unwrap();
+
+    cpu.execute(Instruction {
+        op: RV32IInstruction::Addi,
+        ins: vec![
+            Operand::Reg(RV32IRegister::A3),
+            Operand::Reg(RV32IRegister::Zero),
+            Operand::Operator(5),
+        ],
+    })
+    .unwrap();
+
+    cpu.execute(Instruction {
+        op: RV32IInstruction::Sb,
+        ins: vec![
+            Operand::Reg(RV32IRegister::S1),
+            Operand::Reg(RV32IRegister::A1),
+            Operand::Operator(5),
+        ],
+    })
+    .unwrap();
+
+    cpu.execute(Instruction {
+        op: RV32IInstruction::Sh,
+        ins: vec![
+            Operand::Reg(RV32IRegister::A3),
+            Operand::Reg(RV32IRegister::A1),
+            Operand::Operator(6),
+        ],
+    })
+    .unwrap();
+
+    cpu.execute(Instruction {
+        op: RV32IInstruction::Sw,
+        ins: vec![
+            Operand::Reg(RV32IRegister::S5),
+            Operand::Reg(RV32IRegister::A1),
+            Operand::Operator(6),
+        ],
+    })
+    .unwrap();
+
+    cpu.print_registers();
+}
+
+#[test]
+fn test_U() {
+    let mut cpu = cpu::CPU::new(16);
+
+    cpu.execute(Instruction {
+        op: RV32IInstruction::Lui,
+        ins: vec![Operand::Reg(RV32IRegister::A1), Operand::Operator(19)],
+    })
+    .unwrap();
+
+    cpu.execute(Instruction {
+        op: RV32IInstruction::Auipc,
+        ins: vec![Operand::Reg(RV32IRegister::A2), Operand::Operator(3)],
+    })
+    .unwrap();
+
+    cpu.print_registers();
 }

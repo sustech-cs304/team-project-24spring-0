@@ -24,6 +24,9 @@
         "scope": [
           "**"
         ]
+      },
+      "dialog": {
+        "all": true
       }
     },
     "bundle": {
@@ -70,6 +73,7 @@
         "fullscreen": false,
         "height": 800,
         "resizable": false,
+        "label": "moras",
         "title": "Moras",
         "width": 1280
       }

@@ -6,4 +6,6 @@ pub trait MFile<ERR>: Send + Sync {
     fn to_string(&self) -> String;
 
     fn save(&mut self) -> Option<ERR>;
+
+    fn update_content(&mut self, content: &str);
 }

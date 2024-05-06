@@ -1,0 +1,56 @@
+syntax = "proto3";
+package editor;
+
+service Editor {
+    rpc Authorize(AuthorizeRequest) returns (AuthorizeReply);
+    rpc Disconnect(DisconnectRequest) returns (DisconnectReply);
+    rpc SetCursor(SetCursorRequest) returns (SetCursorReply);
+    rpc GetContent(GetContentRequest) returns (GetContentReply);
+    rpc UpdateContent(UpdateContentRequest) returns (UpdateContentReply);
+}
+
+message AuthorizeRequest{
+    string password = 1;
+}
+
+message AuthorizeReply{
+    bool success = 1;
+    string file = 2;
+}
+
+message DisconnectRequest{
+}
+
+message DisconnectReply{
+    bool success = 1;
+}
+
+message SetCursorRequest{
+    string file = 1;
+    uint64 row = 2;
+    uint64 column = 3;
+}
+
+message SetCursorReply{
+    bool success = 1;
+}
+
+message GetContentRequest{
+    string file = 1;
+    string hash = 2;
+}
+
+message GetContentReply{
+    bool need_update = 1;
+    string content = 2;
+}
+
+message UpdateContentRequest{
+    string file = 1;
+    string content = 2;
+}
+
+message UpdateContentReply{
+    bool success = 1;
+    string content = 2;
+}

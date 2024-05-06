@@ -10,3 +10,6 @@ pub trait Simulator<EXR, REG, ERR>: Send + Sync {
     fn remove_breakpoint(&mut self, line_number: u64) -> Result<bool, ERR>;
     fn syscall_input(&mut self, input: SyscallDataType);
 }
+
+// default
+// new

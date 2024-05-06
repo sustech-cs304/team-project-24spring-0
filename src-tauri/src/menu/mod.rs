@@ -1,18 +1,21 @@
-mod menu_file;
+mod file;
+mod help;
+mod setting;
+mod test;
 
 use tauri::api::dialog::{MessageDialogBuilder, MessageDialogButtons, MessageDialogKind};
 use tauri::{Menu, WindowMenuEvent};
 
-fn display_alert_dialog(kind: MessageDialogKind, title: &str, msg: &str, handler: fn(bool)) {
-    let dialog = MessageDialogBuilder::new(title, msg)
-        .kind(kind)
-        .buttons(MessageDialogButtons::Ok);
-    dialog.show(handler);
-}
-
-fn display_confirm_dialog(kind: MessageDialogKind, title: &str, msg: &str, handler: fn(bool)) {
+fn display_dialog(
+    kind: MessageDialogKind,
+    buttons: MessageDialogButtons,
+    title: &str,
+    msg: &str,
+    handler: impl Fn(bool) + Send + 'static,
+) {
     let dialog = tauri::api::dialog::MessageDialogBuilder::new(title, msg)
-        .buttons(MessageDialogButtons::OkCancel);
+        .kind(kind)
+        .buttons(buttons);
     dialog.show(handler);
 }
 
@@ -27,8 +30,9 @@ macro_rules! create_menu {
 
         pub fn event_handler(event: WindowMenuEvent) {
             $(
-                if event.menu_item_id().starts_with(stringify!($module).strip_prefix("menu_").unwrap()) {
+                if event.menu_item_id().starts_with(stringify!($module)) {
                     $module::event_handler(event);
+                    return;
                 }
             )+
                 else {
@@ -38,4 +42,4 @@ macro_rules! create_menu {
     };
 }
 
-create_menu!(menu_file);
+create_menu!(file, setting, help, test);
