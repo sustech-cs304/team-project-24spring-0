@@ -1,8 +1,8 @@
-use crate::assembler::basic::{
+use crate::modules::riscv::basic::assembler::basic::{
     BOpcode, IOpcode, ImmediateFormatter, JOpcode, Opcode, PackedInstruction, ROpcode, SOpcode,
     UOpcode,
 };
-use crate::assembler::riscv::*;
+use crate::modules::riscv::basic::assembler::riscv::*;
 
 pub struct RV32I {}
 

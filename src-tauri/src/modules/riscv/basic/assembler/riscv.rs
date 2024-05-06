@@ -1,4 +1,4 @@
-use ux::{u1, u10, u12, u20, u3, u4, u5, u6, u7};
+use ux::{u12, u20, u4, u5};
 
 pub struct Register(pub u5);
 pub struct Fence(u4);
@@ -174,5 +174,3 @@ macro_rules! binstimpl {
         }
     };
 }
-
-pub use {binstimpl, iinstimpl, r4instimpl, rinstimpl, sinstimpl, uinstimpl};

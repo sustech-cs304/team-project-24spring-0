@@ -1,10 +1,10 @@
-use crate::assembler::riscv::{Immediate12, Immediate20, Register};
-use crate::assembler::rv32i::RV32I;
-use crate::interface::assembler::{AssembleError, Assembler, Instruction, Memory, Operand};
-use crate::interface::parser::{ParserInstSet, ParserResult};
+use crate::interface::assembler::{
+    Assembler, AssemblyError, Instruction, InstructionSet, Memory, Operand,
+};
+use crate::interface::parser::ParserResult;
+use crate::modules::riscv::basic::assembler::riscv::{Immediate12, Immediate20, Register};
 use crate::modules::riscv::basic::interface::parser::*;
-use crate::modules::riscv::rv32f::constants::*;
-use crate::modules::riscv::rv32i::constants::*;
+use crate::modules::riscv::rv32i::assembler::rv32i::RV32I;
 use ux::{u12, u20, u5};
 const MAIN: i32 = 0x00400000;
 const DATA: i32 = 0x10010000;
@@ -18,7 +18,7 @@ macro_rules! modify_label {
                 $imm = *imm;
             }
             ParserRISCVImmediate::Lbl((label, handler)) => {
-                let mut address: RISCVImmediate = u32::from(*label) as i32;
+                let address: RISCVImmediate = u32::from(*label) as i32;
                 let mut line_addr: RISCVImmediate =
                     u32::from(ParserRISCVLabel::Text($start)) as i32;
                 match handler {
@@ -62,11 +62,11 @@ macro_rules! extract_opds {
     ($inst:expr, J, $rd:ident, $imm:ident, $start:ident, $error:ident) => {
         if let [ParserRISCVInstOpd::Reg(rd), ParserRISCVInstOpd::Lbl(label)] = &$inst.opd[..] {
             $rd = u32::from(*rd);
-            let mut label_addr = u32::from(*label);
+            let label_addr = u32::from(*label);
             let current_pc = u32::from(ParserRISCVLabel::Text($start));
             let jump = label_addr.wrapping_sub(current_pc) as i32;
             if jump > MAX_RELATIVE_OFFSET || jump < MIN_RELATIVE_OFFSET {
-                $error.push(AssembleError{line: $start, msg: "Jump offset exceeds 20-bit signed integer range!".to_string()})
+                $error.push(AssemblyError{line: $start, msg: "Jump offset exceeds 20-bit signed integer range!".to_string()})
             } else {
                 $imm = jump;
             }
@@ -76,11 +76,11 @@ macro_rules! extract_opds {
         if let [ParserRISCVInstOpd::Reg(rd), ParserRISCVInstOpd::Reg(rs1), ParserRISCVInstOpd::Lbl(label)] = &$inst.opd[..] {
             $rd = u32::from(*rd);
             $rs1 = u32::from(*rs1);
-            let mut label_addr = u32::from(*label);
+            let label_addr = u32::from(*label);
             let current_pc = u32::from(ParserRISCVLabel::Text($start));
             let jump = label_addr.wrapping_sub(current_pc) as i32;
             if jump > MAX_RELATIVE_OFFSET || jump < MIN_RELATIVE_OFFSET {
-                $error.push(AssembleError{line: $start, msg: "Branch offset exceeds 20-bit signed integer range!".to_string()})
+                $error.push(AssemblyError{line: $start, msg: "Branch offset exceeds 20-bit signed integer range!".to_string()})
             } else {
                 $imm = jump;
             }
@@ -299,198 +299,199 @@ impl From<ParserRISCVLabel> for u32 {
 impl Assembler<RISCV> for RiscVAssembler {
     fn assemble(
         &mut self,
-        inst: &ParserResultText<RISCV>,
-        index: usize,
-    ) -> Result<Instruction, Vec<AssembleError>> {
-        let mut result = Instruction::new();
-        let mut error: Vec<AssembleError> = Vec::new();
-        match inst {
-            ParserResultText::Text(inst) => match inst.op {
-                ParserRISCVInstOp::RV32I(ins) => {
-                    result.op = ParserRISCVInstOp::from(ins);
-                    let mut rd: u32 = 0;
-                    let mut rs1: u32 = 0;
-                    let mut rs2: u32 = 0;
-                    let mut imm: i32 = 0;
-                    match ins {
-                        RV32IInstruction::Add
-                        | RV32IInstruction::And
-                        | RV32IInstruction::Or
-                        | RV32IInstruction::Sltu
-                        | RV32IInstruction::Sll
-                        | RV32IInstruction::Slt
-                        | RV32IInstruction::Sra
-                        | RV32IInstruction::Srl
-                        | RV32IInstruction::Sub
-                        | RV32IInstruction::Xor => {
-                            extract_opds!(inst.opd, R, rd, rs1, rs2);
-                            result.ins = Vec::from([
-                                Operand::from(rd),
-                                Operand::from(rs1),
-                                Operand::from(rs2),
-                            ]);
+        ast: ParserResult<RISCV>,
+    ) -> Result<Vec<InstructionSet>, Vec<AssemblyError>> {
+        let mut ast = ast;
+        let mut results: Vec<InstructionSet> = Vec::new();
+        let mut error: Vec<AssemblyError> = Vec::new();
+        for (index, element) in ast.text.iter().enumerate() {
+            let mut line = InstructionSet::new();
+            let mut result = Instruction::new();
+            match element {
+                ParserResultText::Text(inst) => {
+                    line.line_number = inst.line as u64;
+                    match inst.op {
+                        ParserRISCVInstOp::RV32I(ins) => {
+                            result.operation = ParserRISCVInstOp::from(ins);
+                            let mut rd: u32 = 0;
+                            let mut rs1: u32 = 0;
+                            let mut rs2: u32 = 0;
+                            let mut imm: i32 = 0;
+                            match ins {
+                                RV32IInstruction::Add
+                                | RV32IInstruction::And
+                                | RV32IInstruction::Or
+                                | RV32IInstruction::Sltu
+                                | RV32IInstruction::Sll
+                                | RV32IInstruction::Slt
+                                | RV32IInstruction::Sra
+                                | RV32IInstruction::Srl
+                                | RV32IInstruction::Sub
+                                | RV32IInstruction::Xor => {
+                                    extract_opds!(inst.opd, R, rd, rs1, rs2);
+                                    result.operands = Vec::from([
+                                        Operand::from(rd),
+                                        Operand::from(rs1),
+                                        Operand::from(rs2),
+                                    ]);
+                                }
+                                RV32IInstruction::Addi
+                                | RV32IInstruction::Andi
+                                | RV32IInstruction::Ori
+                                | RV32IInstruction::Slti
+                                | RV32IInstruction::Sltiu
+                                | RV32IInstruction::Xori
+                                | RV32IInstruction::Slli
+                                | RV32IInstruction::Srai
+                                | RV32IInstruction::Srli
+                                | RV32IInstruction::Jalr
+                                | RV32IInstruction::Lb
+                                | RV32IInstruction::Lbu
+                                | RV32IInstruction::Lh
+                                | RV32IInstruction::Lhu
+                                | RV32IInstruction::Ebreak
+                                | RV32IInstruction::FenceI
+                                | RV32IInstruction::Csrrc
+                                | RV32IInstruction::Csrrci
+                                | RV32IInstruction::Csrrs
+                                | RV32IInstruction::Csrrsi
+                                | RV32IInstruction::Csrrw
+                                | RV32IInstruction::Csrrwi
+                                | RV32IInstruction::Ecall => {
+                                    extract_opds!(inst, I, rd, rs1, imm, index);
+                                    result.operands = Vec::from([
+                                        Operand::from(rd),
+                                        Operand::from(rs1),
+                                        Operand::from(imm),
+                                    ]);
+                                }
+                                RV32IInstruction::Sb
+                                | RV32IInstruction::Sh
+                                | RV32IInstruction::Lw
+                                | RV32IInstruction::Sw => {
+                                    extract_opds!(inst, S, rs1, rs2, imm, index);
+                                    result.operands = Vec::from([
+                                        Operand::from(imm),
+                                        Operand::from(rs1),
+                                        Operand::from(rs2),
+                                    ]);
+                                }
+                                RV32IInstruction::Jal => {
+                                    extract_opds!(inst, J, rd, imm, index, error);
+                                    result.operands =
+                                        Vec::from([Operand::from(rd), Operand::from(imm)]);
+                                }
+                                RV32IInstruction::Beq
+                                | RV32IInstruction::Bge
+                                | RV32IInstruction::Bgeu
+                                | RV32IInstruction::Blt
+                                | RV32IInstruction::Bltu
+                                | RV32IInstruction::Bne => {
+                                    extract_opds!(inst, B, rs1, rs2, imm, index, error);
+                                    result.operands = Vec::from([
+                                        Operand::from(rs1),
+                                        Operand::from(rs2),
+                                        Operand::from(imm),
+                                    ]);
+                                }
+                                RV32IInstruction::Auipc | RV32IInstruction::Lui => {
+                                    extract_opds!(inst, U, rd, imm, index);
+                                    result.operands =
+                                        Vec::from([Operand::from(rd), Operand::from(imm)]);
+                                }
+                                RV32IInstruction::Fence => {
+                                    if let [ParserRISCVInstOpd::Imm(imm1), ParserRISCVInstOpd::Imm(imm2)] =
+                                        inst.opd[..]
+                                    {
+                                        let imm1 = i32::from(imm1);
+                                        let imm2 = i32::from(imm2);
+                                        result.operands =
+                                            Vec::from([Operand::from(imm1), Operand::from(imm2)]);
+                                    }
+                                }
+                            }
                         }
-                        RV32IInstruction::Addi
-                        | RV32IInstruction::Andi
-                        | RV32IInstruction::Ori
-                        | RV32IInstruction::Slti
-                        | RV32IInstruction::Sltiu
-                        | RV32IInstruction::Xori
-                        | RV32IInstruction::Slli
-                        | RV32IInstruction::Srai
-                        | RV32IInstruction::Srli
-                        | RV32IInstruction::Jalr
-                        | RV32IInstruction::Lb
-                        | RV32IInstruction::Lbu
-                        | RV32IInstruction::Lh
-                        | RV32IInstruction::Lhu
-                        | RV32IInstruction::Ebreak
-                        | RV32IInstruction::FenceI
-                        | RV32IInstruction::Csrrc
-                        | RV32IInstruction::Csrrci
-                        | RV32IInstruction::Csrrs
-                        | RV32IInstruction::Csrrsi
-                        | RV32IInstruction::Csrrw
-                        | RV32IInstruction::Csrrwi
-                        | RV32IInstruction::Ecall => {
-                            extract_opds!(inst, I, rd, rs1, imm, index);
-                            result.ins = Vec::from([
-                                Operand::from(rd),
-                                Operand::from(rs1),
-                                Operand::from(imm),
-                            ]);
-                        }
-                        RV32IInstruction::Sb
-                        | RV32IInstruction::Sh
-                        | RV32IInstruction::Lw
-                        | RV32IInstruction::Sw => {
-                            extract_opds!(inst, S, rs1, rs2, imm, index);
-                            result.ins = Vec::from([
-                                Operand::from(imm),
-                                Operand::from(rs1),
-                                Operand::from(rs2),
-                            ]);
-                        }
-                        RV32IInstruction::Jal => {
-                            extract_opds!(inst, J, rd, imm, index, error);
-                            result.ins = Vec::from([Operand::from(rd), Operand::from(imm)]);
-                        }
-                        RV32IInstruction::Beq
-                        | RV32IInstruction::Bge
-                        | RV32IInstruction::Bgeu
-                        | RV32IInstruction::Blt
-                        | RV32IInstruction::Bltu
-                        | RV32IInstruction::Bne => {
-                            extract_opds!(inst, B, rs1, rs2, imm, index, error);
-                            result.ins = Vec::from([
-                                Operand::from(rs1),
-                                Operand::from(rs2),
-                                Operand::from(imm),
-                            ]);
-                        }
-                        RV32IInstruction::Auipc | RV32IInstruction::Lui => {
-                            extract_opds!(inst, U, rd, imm, index);
-                            result.ins = Vec::from([Operand::from(rd), Operand::from(imm)]);
-                        }
-                        RV32IInstruction::Fence => {
-                            if let [ParserRISCVInstOpd::Imm(imm1), ParserRISCVInstOpd::Imm(imm2)] =
-                                inst.opd[..]
-                            {
-                                let imm1 = i32::from(imm1);
-                                let imm2 = i32::from(imm2);
-                                result.ins = Vec::from([Operand::from(imm1), Operand::from(imm2)]);
+                        ParserRISCVInstOp::RV32F(fins) => {
+                            result.operation = ParserRISCVInstOp::from(fins);
+                            let mut rd: u32 = 0;
+                            let mut rs1: u32 = 0;
+                            let mut rs2: u32 = 0;
+                            let mut rs3: u32 = 0;
+                            let mut imm: i32 = 0;
+                            match fins {
+                                RV32FInstruction::FaddS
+                                | RV32FInstruction::FclassS
+                                | RV32FInstruction::FcvtSW
+                                | RV32FInstruction::FcvtSWu
+                                | RV32FInstruction::FcvtWS
+                                | RV32FInstruction::FcvtWuS
+                                | RV32FInstruction::FdivS
+                                | RV32FInstruction::FeqS
+                                | RV32FInstruction::FleS
+                                | RV32FInstruction::FltS
+                                | RV32FInstruction::FmaxS
+                                | RV32FInstruction::FminS
+                                | RV32FInstruction::FmulS
+                                | RV32FInstruction::FmvSX
+                                | RV32FInstruction::FmvXS
+                                | RV32FInstruction::FsgnjS
+                                | RV32FInstruction::FsgnjnS
+                                | RV32FInstruction::FsgnjxS
+                                | RV32FInstruction::FsqrtS
+                                | RV32FInstruction::FsubS => {
+                                    extract_opds!(inst.opd, R, rd, rs1, rs2);
+                                    result.operands = Vec::from([
+                                        Operand::from(rd),
+                                        Operand::from(rs1),
+                                        Operand::from(rs2),
+                                    ]);
+                                }
+                                RV32FInstruction::FmaddS
+                                | RV32FInstruction::FmsubS
+                                | RV32FInstruction::FnmaddS
+                                | RV32FInstruction::FnmsubS => {
+                                    extract_opds!(inst.opd, R4, rd, rs1, rs2, rs3);
+                                    result.operands = Vec::from([
+                                        Operand::from(rd),
+                                        Operand::from(rs1),
+                                        Operand::from(rs2),
+                                        Operand::from(rs3),
+                                    ]);
+                                }
+                                RV32FInstruction::Flw => {
+                                    extract_opds!(inst, I, rd, rs1, imm, index);
+                                    result.operands = Vec::from([
+                                        Operand::from(rd),
+                                        Operand::from(rs1),
+                                        Operand::from(imm),
+                                    ]);
+                                }
+                                RV32FInstruction::Fsw => {
+                                    extract_opds!(inst, S, rs1, rs2, imm, index);
+                                    result.operands = Vec::from([
+                                        Operand::from(imm),
+                                        Operand::from(rs1),
+                                        Operand::from(rs2),
+                                    ]);
+                                }
                             }
                         }
                     }
                 }
-                ParserRISCVInstOp::RV32F(fins) => {
-                    result.op = ParserRISCVInstOp::from(fins);
-                    let mut rd: u32 = 0;
-                    let mut rs1: u32 = 0;
-                    let mut rs2: u32 = 0;
-                    let mut rs3: u32 = 0;
-                    let mut imm: i32 = 0;
-                    match fins {
-                        RV32FInstruction::FaddS
-                        | RV32FInstruction::FclassS
-                        | RV32FInstruction::FcvtSW
-                        | RV32FInstruction::FcvtSWu
-                        | RV32FInstruction::FcvtWS
-                        | RV32FInstruction::FcvtWuS
-                        | RV32FInstruction::FdivS
-                        | RV32FInstruction::FeqS
-                        | RV32FInstruction::FleS
-                        | RV32FInstruction::FltS
-                        | RV32FInstruction::FmaxS
-                        | RV32FInstruction::FminS
-                        | RV32FInstruction::FmulS
-                        | RV32FInstruction::FmvSX
-                        | RV32FInstruction::FmvXS
-                        | RV32FInstruction::FsgnjS
-                        | RV32FInstruction::FsgnjnS
-                        | RV32FInstruction::FsgnjxS
-                        | RV32FInstruction::FsqrtS
-                        | RV32FInstruction::FsubS => {
-                            extract_opds!(inst.opd, R, rd, rs1, rs2);
-                            result.ins = Vec::from([
-                                Operand::from(rd),
-                                Operand::from(rs1),
-                                Operand::from(rs2),
-                            ]);
-                        }
-                        RV32FInstruction::FmaddS
-                        | RV32FInstruction::FmsubS
-                        | RV32FInstruction::FnmaddS
-                        | RV32FInstruction::FnmsubS => {
-                            extract_opds!(inst.opd, R4, rd, rs1, rs2, rs3);
-                            result.ins = Vec::from([
-                                Operand::from(rd),
-                                Operand::from(rs1),
-                                Operand::from(rs2),
-                                Operand::from(rs3),
-                            ]);
-                        }
-                        RV32FInstruction::Flw => {
-                            extract_opds!(inst, I, rd, rs1, imm, index);
-                            result.ins = Vec::from([
-                                Operand::from(rd),
-                                Operand::from(rs1),
-                                Operand::from(imm),
-                            ]);
-                        }
-                        RV32FInstruction::Fsw => {
-                            extract_opds!(inst, S, rs1, rs2, imm, index);
-                            result.ins = Vec::from([
-                                Operand::from(imm),
-                                Operand::from(rs1),
-                                Operand::from(rs2),
-                            ]);
-                        }
-                    }
-                }
-            },
-            ParserResultText::Align(_) => {}
+                ParserResultText::Align(_) => {}
+            }
+            line.instruction = result;
+            results.push(line);
         }
-        // for (index, element) in ast.text.iter().enumerate(){
-        //     match element {
-        //         ParserResultText::Text(inst) => {
-        //         }
-        //         ParserResultText::Align(_) => {}
-        //     }
-        // }
-        Ok(result)
+        Ok(results)
     }
 
-    fn dump(
-        &mut self,
-        ast: Result<ParserResult<RISCV>, Vec<ParserError>>,
-    ) -> Result<Memory, Vec<AssembleError>> {
-        let mut ast = ast.unwrap();
+    fn dump(&mut self, ast: ParserResult<RISCV>) -> Result<Memory, Vec<AssemblyError>> {
         let data = ast.data;
         let text = ast.text;
         let mut data_segment = Vec::new();
         let mut text_segment = Vec::new();
-        let mut error: Vec<AssembleError> = Vec::new();
+        let mut error: Vec<AssemblyError> = Vec::new();
         for element in data {
             match element {
                 ParserResultData::Data(data) => {
@@ -517,7 +518,7 @@ impl Assembler<RISCV> for RiscVAssembler {
                 }
             }
         }
-        let mut remaining_size = 1024 - data_segment.len() % 1024;
+        let remaining_size = 1024 - data_segment.len() % 1024;
         for _ in 0..remaining_size {
             data_segment.push(String::from(format!("{:032b}", 0)));
         }
@@ -932,14 +933,15 @@ impl Assembler<RISCV> for RiscVAssembler {
                     }
                     let binary_string = format!("{:032b}", line);
                     text_segment.push(binary_string);
-                    let hex_string = format!("{:08x}", line);
                 }
                 ParserResultText::Align(power) => {}
             }
         }
+        let data_content = data_segment.join("\n");
+        let text_content = text_segment.join("\n");
         Ok(Memory {
-            data: data_segment,
-            text: text_segment,
+            data: data_content,
+            text: text_content,
         })
     }
 }

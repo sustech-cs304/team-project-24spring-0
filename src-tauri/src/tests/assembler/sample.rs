@@ -1,7 +1,7 @@
-use crate::assembler::assemble::*;
-use crate::interface::assembler::{AssembleError, Assembler, Instruction};
+use crate::interface::assembler::Assembler;
+use crate::modules::riscv::basic::interface::assemble::*;
 use crate::modules::riscv::basic::interface::parser::*;
-
+use std::fs;
 #[test]
 pub fn test_assembler() {
     let mut p = RISCVParser::new(&vec![RISCVExtension::RV32I]);
@@ -90,14 +90,29 @@ L2:
         jalr    ra
 ",
     );
-    let mut q = RiscVAssembler::new();
-    let res = q.dump(p.parse(rope.clone().to_string()));
-    match res {
+    let mut riscv_assembler = RiscVAssembler::new();
+    let parse_result = p.parse(rope.clone().to_string());
+    match parse_result {
         Ok(res) => {
-            println!("{:?}", res.data);
-            println!("Data.length: {}", res.data.len());
-            println!("{:?}", res.text);
-            println!("Text.length: {}", res.text.len());
+            let dump_result = riscv_assembler.dump(res);
+            match dump_result {
+                Ok(res) => {
+                    println!("{:?}", res.data);
+                    println!("Data.length: {}", res.data.len());
+                    println!("{:?}", res.text);
+                    println!("Text.length: {}", res.text.len());
+                    if let Err(e) = fs::write("output.txt", res.text) {
+                        eprintln!("Error writing to file: {}", e);
+                    } else {
+                        println!("String has been written to output.txt successfully!");
+                    }
+                }
+                Err(err) => {
+                    for e in err {
+                        println!("{}", e.to_string());
+                    }
+                }
+            }
         }
         Err(err) => {
             for e in err {
@@ -105,21 +120,17 @@ L2:
             }
         }
     }
-    let mut ast = p.parse(rope.clone().to_string()).unwrap();
-    for (index, element) in ast.text.iter().enumerate() {
-        let res = q.assemble(element, index);
-        match res {
-            Ok(res) => {
-                print!("{:3}: {:?} ", index, res.op);
-                for ins in res.ins {
-                    print!("{}", ins.to_string());
-                }
-                println!();
+    let ast = p.parse(rope.clone().to_string()).unwrap();
+    let assembled_result = riscv_assembler.assemble(ast);
+    match assembled_result {
+        Ok(res) => {
+            for instruction in res {
+                println!("{}", instruction.to_string());
             }
-            Err(err) => {
-                for e in err {
-                    println!("{}", e.to_string());
-                }
+        }
+        Err(err) => {
+            for e in err {
+                println!("{}", e.to_string());
             }
         }
     }

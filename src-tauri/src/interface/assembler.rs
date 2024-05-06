@@ -1,9 +1,6 @@
-use crate::interface::parser::{
-    ParserError, ParserInstSet, ParserResult, ParserResultData, ParserResultText, Pos,
-};
+use crate::interface::parser::{ParserInstSet, ParserResult};
 use crate::modules::riscv::basic::interface::parser::{ParserRISCVInstOp, ParserRISCVRegister};
-use crate::modules::riscv::rv32i::constants::{RISCVImmediate, RV32IInstruction, RV32IRegister};
-use crate::storage::rope_store::Text;
+use crate::modules::riscv::rv32i::constants::{RISCVImmediate, RV32IInstruction};
 
 pub trait Assembler<IS>: Send + Sync
 where
@@ -11,18 +8,19 @@ where
 {
     fn assemble(
         &mut self,
-        inst: &ParserResultText<IS>,
-        index: usize,
-    ) -> Result<Instruction, Vec<AssembleError>>;
-    fn dump(
-        &mut self,
-        ast: Result<ParserResult<IS>, Vec<ParserError>>,
-    ) -> Result<Memory, Vec<AssembleError>>;
+        ast: ParserResult<IS>,
+    ) -> Result<Vec<InstructionSet>, Vec<AssemblyError>>;
+    fn dump(&mut self, ast: ParserResult<IS>) -> Result<Memory, Vec<AssemblyError>>;
+}
+
+pub struct InstructionSet {
+    pub line_number: u64,
+    pub instruction: Instruction,
 }
 
 pub struct Instruction {
-    pub op: ParserRISCVInstOp,
-    pub ins: Vec<Operand>,
+    pub operation: ParserRISCVInstOp,
+    pub operands: Vec<Operand>,
 }
 
 pub enum Operand {
@@ -31,17 +29,17 @@ pub enum Operand {
 }
 
 pub struct Memory {
-    pub data: Vec<String>,
-    pub text: Vec<String>,
+    pub data: String,
+    pub text: String,
 }
 
 #[derive(Debug)]
-pub struct AssembleError {
+pub struct AssemblyError {
     pub line: usize,
     pub msg: String,
 }
 
-impl std::fmt::Display for AssembleError {
+impl std::fmt::Display for AssemblyError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "line:{} {}", self.line, self.msg)
     }
@@ -50,8 +48,17 @@ impl std::fmt::Display for AssembleError {
 impl Instruction {
     pub fn new() -> Self {
         Instruction {
-            op: ParserRISCVInstOp::from(RV32IInstruction::Add),
-            ins: vec![],
+            operation: ParserRISCVInstOp::from(RV32IInstruction::Add),
+            operands: vec![],
+        }
+    }
+}
+
+impl InstructionSet {
+    pub fn new() -> Self {
+        InstructionSet {
+            line_number: 0,
+            instruction: Instruction::new(),
         }
     }
 }
@@ -68,5 +75,15 @@ impl std::fmt::Display for Operand {
                 Ok(())
             }
         }
+    }
+}
+
+impl std::fmt::Display for InstructionSet {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:3} {:?}", self.line_number, self.instruction.operation)?;
+        for ins in &self.instruction.operands {
+            write!(f, "{}", ins.to_string()).expect("panic");
+        }
+        Ok(())
     }
 }

@@ -17,7 +17,6 @@ use tauri::{AppHandle, Manager};
 use types::middleware_types;
 
 static APP_HANDLE: Lazy<Arc<Mutex<Option<AppHandle>>>> = Lazy::new(|| Arc::new(Mutex::new(None)));
-mod assembler;
 
 fn main() {
     tauri::Builder::default()
