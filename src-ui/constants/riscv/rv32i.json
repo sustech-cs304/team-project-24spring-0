@@ -1,0 +1,405 @@
+{
+    "directive": [
+        ".align",
+        ".ascii",
+        ".asciz",
+        ".byte",
+        ".data",
+        ".double",
+        ".dword",
+        ".eqv",
+        ".extern",
+        ".float",
+        ".global",
+        ".half",
+        ".include",
+        ".section",
+        ".space",
+        ".string",
+        ".text",
+        ".word"
+    ],
+    "register": {
+        "zero": "zero",
+        "ra": "ra",
+        "sp": "sp",
+        "gp": "gp",
+        "tp": "tp",
+        "t0": "t0",
+        "t1": "t1",
+        "t2": "t2",
+        "s0": "s0",
+        "s1": "s1",
+        "a0": "a0",
+        "a1": "a1",
+        "a2": "a2",
+        "a3": "a3",
+        "a4": "a4",
+        "a5": "a5",
+        "a6": "a6",
+        "a7": "a7",
+        "s2": "s2",
+        "s3": "s3",
+        "s4": "s4",
+        "s5": "s5",
+        "s6": "s6",
+        "s7": "s7",
+        "s8": "s8",
+        "s9": "s9",
+        "s10": "s10",
+        "s11": "s11",
+        "t3": "t3",
+        "t4": "t4",
+        "t5": "t5",
+        "t6": "t6",
+        "fp": "s0",
+        "x0": "zero",
+        "x1": "ra",
+        "x2": "sp",
+        "x3": "gp",
+        "x4": "tp",
+        "x5": "t0",
+        "x6": "t1",
+        "x7": "t2",
+        "x8": "s0",
+        "x9": "s1",
+        "x10": "a0",
+        "x11": "a1",
+        "x12": "a2",
+        "x13": "a3",
+        "x14": "a4",
+        "x15": "a5",
+        "x16": "a6",
+        "x17": "a7",
+        "x18": "s2",
+        "x19": "s3",
+        "x20": "s4",
+        "x21": "s5",
+        "x22": "s6",
+        "x23": "s7",
+        "x24": "s8",
+        "x25": "s9",
+        "x26": "s10",
+        "x27": "s11",
+        "x28": "t3",
+        "x29": "t4",
+        "x30": "t5",
+        "x31": "t6"
+    },
+    "operator": {
+        "add": [
+            "add t1, t2, t3 (t1 = t2 + t3)"
+        ],
+        "addi": [
+            "addi t1, t2, -0x1(i12) (t1 = t2 + -0x1(i12))",
+            "addi t1, t2, label[0:11] (t1 = t2 + label[0:11])"
+        ],
+        "and": [
+            "and t1, t2, t3 (t1 = t2 & t3)"
+        ],
+        "andi": [
+            "andi t1, t2, -0x1(i12) (t1 = t2 & -0x1(i12))"
+        ],
+        "auipc": [
+            "auipc t1, 0x1000 (t1 = pc + 0x1000(u20))"
+        ],
+        "beq": [
+            "beq t1, t2, label (if t1 == t2 goto label) (signed)"
+        ],
+        "bge": [
+            "bge t1, t2, label (if t1 >= t2 goto label) (signed)"
+        ],
+        "bgeu": [
+            "bgeu t1, t2, label (if t1 >= t2 goto label) (unsigned)"
+        ],
+        "blt": [
+            "blt t1, t2, label (if t1 < t2 goto label) (signed)"
+        ],
+        "bltu": [
+            "bltu t1, t2, label (if t1 < t2 goto label) (unsigned)"
+        ],
+        "bne": [
+            "bne t1, t2, label (if t1 != t2 goto label) (signed)"
+        ],
+        "csrrc": [
+            "csrrc t1, csr, t2 (t1 = csr; csr &= ~t2)"
+        ],
+        "csrrci": [
+            "csrrci t1, csr, 0x1(u5) (t1 = csr; csr &= ~0x1(u5))"
+        ],
+        "csrrs": [
+            "csrrs t1, csr, t2 (t1 = csr; csr |=t2)"
+        ],
+        "csrrsi": [
+            "csrrsi t1, csr, 0x1(u5) (t1 = csr; csr |=0x1(u5))"
+        ],
+        "csrrw": [
+            "csrrw t1, csr, t2 (t1 = csr; csr =t2)"
+        ],
+        "csrrwi": [
+            "csrrwi t1, csr, 0x1(u5) (t1 = csr; csr =0x1(u5))"
+        ],
+        "div": [],
+        "divu": [],
+        "ebreak": [
+            "ebreak"
+        ],
+        "ecall": [
+            "ecall"
+        ],
+        "fence": [
+            "fence 0x1(u4), 0x1(u4)"
+        ],
+        "fence.i": [
+            "fence.i"
+        ],
+        "jal": [
+            "jal label (ra = pc + 4; pc += delta(i20))",
+            "jal t1, label (t1 = pc + 4; pc += delta(i20))"
+        ],
+        "jalr": [
+            "jalr t1, t2, -0x1(i12) (t1 = pc + 4; pc = t2 + -0x1(i12))",
+            "jalr t0 (ra = pc + 4; pc = t0)",
+            "jalr t1, -0x1 (ra = pc + 4; pc = t1 + -0x1(i12))",
+            "jalr t1, -0x1(t2) (t1 = pc + 4; pc = t2 + -0x1(i12))"
+        ],
+        "lb": [
+            "lb t1, -0x1(t2) (t1 = (i8)mem[t2 + -0x1(i12)])",
+            "lb t1, (t2) (t1 = (i8)mem[t2])",
+            "lb t1, -0x1 (t1 = (i8)mem[-0x1(i12)])",
+            "lb t1, 0x100000 (t1 = 0x100000[12:31](i32); t1 = (i8)mem[t1 + 0x100000[0:11](i32)])",
+            "lb t1, label (t1 = pc + delta[12:31]; t1 = (i8)mem[t1 + delta[0:11]])"
+        ],
+        "lbu": [
+            "lbu t1, -0x1(t2) (t1 = (u8)mem[t2 + -0x1(i12)])",
+            "lbu t1, (t2) (t1 = (u8)mem[t2])",
+            "lbu t1, -0x1 (t1 = (u8)mem[-0x1(i12)])",
+            "lbu t1, 0x100000 (t1 = 0x100000[12:31](i32); t1 = (u8)mem[t1 + 0x100000[0:11](i32)])",
+            "lbu t1, label (t1 = pc + delta[12:31]; t1 = (u8)mem[t1 + delta[0:11]])"
+        ],
+        "lh": [
+            "lh t1, -0x1(t2) (t1 = (i16)mem[t2 + -0x1(i12)])",
+            "lh t1, (t2) (t1 = (i16)mem[t2])",
+            "lh t1, -0x1 (t1 = (i16)mem[-0x1(i12)])",
+            "lh t1, 0x100000 (t1 = 0x100000[12:31](i32); t1 = (i16)mem[t1 + 0x100000[0:11](i32)])",
+            "lh t1, label (t1 = pc + delta[12:31]; t1 = (i16)mem[t1 + delta[0:11]])"
+        ],
+        "lhu": [
+            "lhu t1, -0x1(t2) (t1 = (u16)mem[t2 + -0x1(i12)])",
+            "lhu t1, (t2) (t1 = (u16)mem[t2])",
+            "lhu t1, -0x1 (t1 = (u16)mem[-0x1(i12)])",
+            "lhu t1, 0x100000 (t1 = 0x100000[12:31](i32); t1 = (u16)mem[t1 + 0x100000[0:11](i32)])",
+            "lhu t1, label (t1 = pc + delta[12:31]; t1 = (u16)mem[t1 + delta[0:11]])"
+        ],
+        "lui": [
+            "lui t1, 0x1000 (t1 = 0x1000(u20))",
+            "lui t1, label (t1 = label[12:31])"
+        ],
+        "lw": [
+            "lw t1, -0x1(t2) (t1 = mem[t2 + -0x1(i12)])",
+            "lw t1, (t2) (t1 = mem[t2])",
+            "lw t1, -0x1 (t1 = mem[-0x1(i12)])",
+            "lw t1, 0x100000 (t1 = 0x100000[12:31](i32); t1 = mem[t1 + 0x100000[0:11](i32)])",
+            "lw t1, label (t1 = pc + delta[12:31]; t1 = mem[t1 + delta[0:11]])"
+        ],
+        "mul": [],
+        "mulh": [],
+        "mulhsu": [],
+        "mulhu": [],
+        "or": [
+            "or t1, t2, t3 (t1 = t2 | t3)"
+        ],
+        "ori": [
+            "ori t1, t2, -0x1(i12) (t1 = t2 | -0x1(i12))"
+        ],
+        "rem": [],
+        "remu": [],
+        "sb": [
+            "sb t1, -0x1(t2) (mem[t2 + -0x1(i12)] = (u8)t1)",
+            "sb t1, (t2) (mem[t2] = (u8)t1)",
+            "sb t1, -0x1 (mem[-0x1(i12)] = (u8)t1)",
+            "sb t1, 0x100000, t2 (t2 = 0x100000[12:31](i32); mem[t2 + 0x100000[0:11](i32)] = (u8)t1)",
+            "sb t1, label, t2 (t2 = pc + delta[12:31]; mem[t2 + delta[0:11]] = (u8)t1)"
+        ],
+        "sh": [
+            "sh t1, -0x1(t2) (mem[t2 + -0x1(i12)] = (u16)t1)",
+            "sh t1, (t2) (mem[t2] = (u16)t1)",
+            "sh t1, -0x1 (mem[-0x1(i12)] = (u16)t1)",
+            "sh t1, 0x100000, t2 (t2 = 0x100000[12:31](i32); mem[t2 + 0x100000[0:11](i32)] = (u16)t1)",
+            "sh t1, label, t2 (t2 = pc + delta[12:31]; mem[t2 + delta[0:11]] = (u16)t1)"
+        ],
+        "sll": [
+            "sll t1, t2, << (t1 = t2 t3[0:4] <<)"
+        ],
+        "slli": [
+            "slli t1, t2, << (t1 = t2 0x1(u5) <<)"
+        ],
+        "slt": [
+            "slt t1, t2, t3 (t1 = (t2 < t3) (signed))"
+        ],
+        "slti": [
+            "slti t1, t2, -0x1(i12) (t1 = (t2 < -0x1(i12)) (signed))"
+        ],
+        "sltiu": [
+            "sltiu t1, t2, 0x1(u12) (t1 = (t2 < 0x1(u12)) (unsigned))"
+        ],
+        "sltu": [
+            "sltu t1, t2, t3 (t1 = (t2 < t3) (unsigned))"
+        ],
+        "sra": [
+            "sra t1, t2, >> (t1 = t2 t3[0:4] >>)"
+        ],
+        "srai": [
+            "srai t1, t2, >> (t1 = t2 0x1(u5) >>)"
+        ],
+        "srl": [
+            "srl t1, t2, >> (t1 = t2 t3[0:4] >>)"
+        ],
+        "srli": [
+            "srli t1, t2, >> (t1 = t2 0x1(u5) >>)"
+        ],
+        "sub": [
+            "sub t1, t2, t3 (t1 = t2 - t3)"
+        ],
+        "sw": [
+            "sw t1, -0x1(t2) (mem[t2 + -0x1(i12)] = t1)",
+            "sw t1, (t2) (mem[t2] = t1)",
+            "sw t1, -0x1 (mem[-0x1(i12)] = t1)",
+            "sw t1, 0x100000, t2 (t2 = 0x100000[12:31](i32); mem[t2 + 0x100000[0:11](i32)] = t1)",
+            "sw t1, label, t2 (t2 = pc + delta[12:31]; mem[t2 + delta[0:11]] = t1)"
+        ],
+        "uret": [],
+        "wfi": [],
+        "xor": [
+            "xor t1, t2, t3 (t1 = t2 ^ t3)"
+        ],
+        "xori": [
+            "xori t1, t2, -0x1(i12) (t1 = t2 ^ -0x1(i12))"
+        ],
+        "b": [
+            "b label (pc += delta(i20))"
+        ],
+        "beqz": [
+            "beqz t1, label (if t1 == 0 goto label)"
+        ],
+        "bgez": [
+            "bgez t1, label (if t1 >= 0 goto label) (signed)"
+        ],
+        "bgt": [
+            "bgt t1, t2, label (if t1 > t2 goto label) (signed)"
+        ],
+        "bgtu": [
+            "bgtu t1, t2, label (if t1 > t2 goto label) (unsigned)"
+        ],
+        "bgtz": [
+            "bgtz t1, label (if t1 > 0 goto label) (signed)"
+        ],
+        "ble": [
+            "ble t1, t2, label (if t1 <= t2 goto label) (signed)"
+        ],
+        "bleu": [
+            "bleu t1, t2, label (if t1 <= t2 goto label) (unsigned)"
+        ],
+        "blez": [
+            "blez t1, label (if t1 <= 0 goto label) (signed)"
+        ],
+        "bltz": [
+            "bltz t1, label (if t1 < 0 goto label) (signed)"
+        ],
+        "bnez": [
+            "bnez t1, label (if t1 != 0 goto label)"
+        ],
+        "call": [
+            "call label (t1 = pc + delta[12:31]; ra = pc + 4; pc = t1 + delta[0:11])"
+        ],
+        "csrc": [
+            "csrc t1, csr (csr &= ~ t1)"
+        ],
+        "csrci": [
+            "csrci csr, 0x1(u5) (csr &= ~ 0x1(u5))"
+        ],
+        "csrr": [
+            "csrr t1, csr (t1 = csr)"
+        ],
+        "csrs": [
+            "csrs t1, csr (csr |= t1)"
+        ],
+        "csrsi": [
+            "csrsi csr, 0x1(u5) (csr |= 0x1(u5))"
+        ],
+        "csrw": [
+            "csrw t1, csr (csr = t1)"
+        ],
+        "csrwi": [
+            "csrwi csr, 0x1(u5) (csr = 0x1(u5))"
+        ],
+        "j": [
+            "j label (pc += delta(i20))"
+        ],
+        "jr": [
+            "jr t0 (pc = t0)",
+            "jr -0x1 (pc = t1 + -0x1(i12))"
+        ],
+        "la": [
+            "la t1, label (t1 = label[12:31]; t1 = t1 + label[0:11])"
+        ],
+        "li": [
+            "li t1, -0x1 (t1 = -0x1(i12))",
+            "li t1, 0x100000 (t1 = 0x100000[12:31](i32); t1 = t1 + 0x100000[0:11](i32))"
+        ],
+        "mv": [
+            "mv t1, t2 (t1 = t2)"
+        ],
+        "neg": [
+            "neg t1, t2 (t1 = -t2)"
+        ],
+        "nop": [
+            "nop"
+        ],
+        "not": [
+            "not t1, t2 (t1 = ~t2)"
+        ],
+        "rdcycle": [],
+        "rdcycleh": [],
+        "rdinstret": [],
+        "rdinstreth": [],
+        "rdtime": [],
+        "rdtimeh": [],
+        "ret": [
+            "ret"
+        ],
+        "seqz": [
+            "seqz t1, t2 (t1 = (t2 == 0))"
+        ],
+        "sext.b": [
+            "sext.b t1, t2 (t1 = (i8)t2[0:7])"
+        ],
+        "sext.h": [
+            "sext.h t1, t2 (t1 = (i16)t2[0:15])"
+        ],
+        "sgt": [
+            "sgt t1, t2, t3 (t1 = (t2 > t3) (signed))"
+        ],
+        "sgtu": [
+            "sgtu t1, t2, t3 (t1 = (t2 > t3) (unsigned))"
+        ],
+        "sgtz": [
+            "sgtz t1, t2 (t1 = (t2 > 0) (signed))"
+        ],
+        "sltz": [
+            "sltz t1, t2 (t1 = (t2 < 0) (signed))"
+        ],
+        "snez": [
+            "snez t1, t2 (t1 = (t2 != 0))"
+        ],
+        "tail": [
+            "tail label (t1 = pc + delta[12:31]; pc = t1 + delta[0:11])"
+        ],
+        "zext.b": [
+            "sext.b t1, t2 (t1 = (u8)t2[0:7])"
+        ],
+        "zext.h": [
+            "sext.h t1, t2 (t1 = (u16)t2[0:15])"
+        ]
+    }
+}
