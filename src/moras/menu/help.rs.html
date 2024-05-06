@@ -42,12 +42,8 @@
 <a href="#42" id="42">42</a>
 <a href="#43" id="43">43</a>
 <a href="#44" id="44">44</a>
-<a href="#45" id="45">45</a>
-<a href="#46" id="46">46</a>
-<a href="#47" id="47">47</a>
-<a href="#48" id="48">48</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::APP_HANDLE;
-<span class="kw">use </span>tauri::{CustomMenuItem, Menu, Submenu, WindowMenuEvent};
+<span class="kw">use </span>tauri::{CustomMenuItem, Manager, Menu, Submenu, WindowMenuEvent};
 
 <span class="kw">pub fn </span>new() -&gt; Submenu {
     Submenu::new(
@@ -67,31 +63,27 @@
     }
 }
 
-<span class="kw">fn </span>manual_handler(_event: <span class="kw-2">&amp;</span>WindowMenuEvent) {
-    <span class="kw">if let </span><span class="prelude-val">Some</span>(app_handle) = APP_HANDLE.lock().unwrap().as_ref() {
-        <span class="kw">let </span>_window = tauri::WindowBuilder::new(
-            app_handle,
-            <span class="string">"manual"</span>, <span class="comment">/* the unique window label */
-            </span>tauri::WindowUrl::External(<span class="string">"https://tauri.app/"</span>.parse().unwrap()),
-        )
-        .title(<span class="string">"Manual"</span>)
-        .menu(Menu::new())
-        .build()
-        .unwrap();
-    }
+<span class="kw">fn </span>manual_handler(event: <span class="kw-2">&amp;</span>WindowMenuEvent) {
+    <span class="kw">let </span>_window = tauri::WindowBuilder::new(
+        <span class="kw-2">&amp;</span>event.window().app_handle(),
+        <span class="string">"manual"</span>, <span class="comment">/* the unique window label */
+        </span>tauri::WindowUrl::External(<span class="string">"https://tauri.app/"</span>.parse().unwrap()),
+    )
+    .title(<span class="string">"Manual"</span>)
+    .menu(Menu::new())
+    .build()
+    .unwrap();
 }
 
-<span class="kw">fn </span>ai_handler(_event: <span class="kw-2">&amp;</span>WindowMenuEvent) {
-    <span class="kw">if let </span><span class="prelude-val">Some</span>(app_handle) = APP_HANDLE.lock().unwrap().as_ref() {
-        <span class="kw">let </span>_window = tauri::WindowBuilder::new(
-            app_handle,
-            <span class="string">"ai"</span>, <span class="comment">/* the unique window label */
-            </span>tauri::WindowUrl::External(<span class="string">"https://tauri.app/"</span>.parse().unwrap()),
-        )
-        .title(<span class="string">"AI Chat"</span>)
-        .menu(Menu::new())
-        .build()
-        .unwrap();
-    }
+<span class="kw">fn </span>ai_handler(event: <span class="kw-2">&amp;</span>WindowMenuEvent) {
+    <span class="kw">let </span>_window = tauri::WindowBuilder::new(
+        <span class="kw-2">&amp;</span>event.window().app_handle(),
+        <span class="string">"ai"</span>, <span class="comment">/* the unique window label */
+        </span>tauri::WindowUrl::External(<span class="string">"https://tauri.app/"</span>.parse().unwrap()),
+    )
+    .title(<span class="string">"AI Chat"</span>)
+    .menu(Menu::new())
+    .build()
+    .unwrap();
 }
 </code></pre></div></section></main></body></html>

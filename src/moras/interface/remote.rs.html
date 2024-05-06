@@ -6,10 +6,12 @@
 <a href="#6" id="6">6</a>
 <a href="#7" id="7">7</a>
 <a href="#8" id="8">8</a>
+<a href="#9" id="9">9</a>
 </pre></div><pre class="rust"><code><span class="kw">pub trait </span>RpcServer {
     <span class="kw">fn </span>start(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>std::error::Error&gt;&gt;;
     <span class="kw">fn </span>stop(<span class="kw-2">&amp;mut </span><span class="self">self</span>);
 }
+
 <span class="kw">pub trait </span>RpcClient {
     <span class="kw">async fn </span>connect(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>std::error::Error&gt;&gt;;
     <span class="kw">fn </span>disconnect(<span class="kw-2">&amp;mut </span><span class="self">self</span>);

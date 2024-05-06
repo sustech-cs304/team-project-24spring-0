@@ -78,43 +78,71 @@
 <a href="#78" id="78">78</a>
 <a href="#79" id="79">79</a>
 <a href="#80" id="80">80</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>std::collections::HashMap;
-<span class="kw">use </span>std::sync::Mutex;
-
-<span class="kw">use </span>serde::{Deserialize, Serialize};
-<span class="kw">use </span>strum_macros::{Display, EnumMessage};
-
-<span class="kw">use </span><span class="kw">crate</span>::interface::assembler::Assembler;
+<a href="#81" id="81">81</a>
+<a href="#82" id="82">82</a>
+<a href="#83" id="83">83</a>
+<a href="#84" id="84">84</a>
+<a href="#85" id="85">85</a>
+<a href="#86" id="86">86</a>
+<a href="#87" id="87">87</a>
+<a href="#88" id="88">88</a>
+<a href="#89" id="89">89</a>
+<a href="#90" id="90">90</a>
+<a href="#91" id="91">91</a>
+<a href="#92" id="92">92</a>
+<a href="#93" id="93">93</a>
+<a href="#94" id="94">94</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::interface::assembler::Assembler;
 <span class="kw">use </span><span class="kw">crate</span>::interface::parser::{Parser, ParserError};
 <span class="kw">use </span><span class="kw">crate</span>::interface::simulator::Simulator;
 <span class="kw">use </span><span class="kw">crate</span>::interface::storage::MFile;
 <span class="kw">use </span><span class="kw">crate</span>::modules::riscv::basic::interface::parser::RISCV;
+<span class="kw">use </span><span class="kw">crate</span>::remote::server::RpcServerImpl;
+<span class="kw">use </span>serde::{Deserialize, Serialize};
+<span class="kw">use </span>std::collections::HashMap;
+<span class="kw">use </span>std::sync::Mutex;
+<span class="kw">use </span>strum_macros::{Display, EnumMessage};
 
-<span class="kw">pub struct </span>Tab {
+<span class="comment">//TODO: add simulator and assembler as member
+</span><span class="kw">pub struct </span>Tab {
     <span class="kw">pub </span>text: Box&lt;<span class="kw">dyn </span>MFile&lt;String&gt;&gt;,
     <span class="kw">pub </span>parser: Box&lt;<span class="kw">dyn </span>Parser&lt;RISCV&gt;&gt;,
     <span class="comment">//pub assembler: Box&lt;dyn Assembler&lt;i32, i32, i32, i32&gt;&gt;,
     //pub simulator: Box&lt;dyn Simulator&lt;i32, i32, i32, i32&gt;&gt;,
 </span>}
 
-<span class="kw">pub struct </span>TabMap {
+<span class="attr">#[derive(Default)]
+</span><span class="kw">pub struct </span>TabMap {
     <span class="kw">pub </span>tabs: Mutex&lt;HashMap&lt;String, Tab&gt;&gt;,
+    <span class="kw">pub </span>rpc_server: Mutex&lt;RpcServerImpl&gt;,
 }
 
 <span class="kw">pub struct </span>CurTabName {
     <span class="kw">pub </span>name: Mutex&lt;String&gt;,
 }
 
-<span class="attr">#[derive(Clone, Serialize)]
+<span class="attr">#[derive(Clone, Serialize, Default)]
 </span><span class="kw">pub struct </span>Optional {
     <span class="kw">pub </span>success: bool,
     <span class="kw">pub </span>message: String,
+}
+
+<span class="attr">#[derive(Clone, Deserialize)]
+</span><span class="kw">pub struct </span>TextPosition {
+    <span class="kw">pub </span>row: u64,
+    <span class="kw">pub </span>column: u64,
 }
 
 <span class="attr">#[derive(Clone, Serialize)]
 </span><span class="kw">pub struct </span>AssembleResult {
     <span class="kw">pub </span>success: bool,
     <span class="kw">pub </span>error: Vec&lt;ParserError&gt;,
+}
+
+<span class="attr">#[derive(Clone, Serialize)]
+</span><span class="kw">pub struct </span>SyscallOutput {
+    <span class="kw">pub </span>filepath: String,
+    <span class="kw">pub </span>data: String,
 }
 
 <span class="attr">#[derive(Clone, Serialize)]

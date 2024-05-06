@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["display_alert_dialog","display_confirm_dialog","event_handler","init_menu"],"mod":["file","help","setting","test"]};
+window.SIDEBAR_ITEMS = {"fn":["display_dialog","event_handler","init_menu"],"mod":["file","help","setting","test"]};

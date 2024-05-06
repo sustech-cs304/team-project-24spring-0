@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["SyscallDataType"],"struct":["AssembleResult","AssemblerConfig","CurTabName","Optional","SyscallRequest","Tab","TabMap"]};
+window.SIDEBAR_ITEMS = {"enum":["SyscallDataType"],"struct":["AssembleResult","AssemblerConfig","CurTabName","Optional","SyscallOutput","SyscallRequest","Tab","TabMap","TextPosition"]};

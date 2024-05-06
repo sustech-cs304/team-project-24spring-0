@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["event_handler","new"]};
+window.SIDEBAR_ITEMS = {"fn":["assembler_memory_handler","event_handler","new"]};

@@ -51,16 +51,16 @@
 <span class="kw">use </span>tauri::api::dialog::{MessageDialogBuilder, MessageDialogButtons, MessageDialogKind};
 <span class="kw">use </span>tauri::{Menu, WindowMenuEvent};
 
-<span class="kw">fn </span>display_alert_dialog(kind: MessageDialogKind, title: <span class="kw-2">&amp;</span>str, msg: <span class="kw-2">&amp;</span>str, handler: <span class="kw">fn</span>(bool)) {
-    <span class="kw">let </span>dialog = MessageDialogBuilder::new(title, msg)
-        .kind(kind)
-        .buttons(MessageDialogButtons::Ok);
-    dialog.show(handler);
-}
-
-<span class="kw">fn </span>display_confirm_dialog(kind: MessageDialogKind, title: <span class="kw-2">&amp;</span>str, msg: <span class="kw-2">&amp;</span>str, handler: <span class="kw">fn</span>(bool)) {
+<span class="kw">fn </span>display_dialog(
+    kind: MessageDialogKind,
+    buttons: MessageDialogButtons,
+    title: <span class="kw-2">&amp;</span>str,
+    msg: <span class="kw-2">&amp;</span>str,
+    handler: <span class="kw">impl </span>Fn(bool) + Send + <span class="lifetime">'static</span>,
+) {
     <span class="kw">let </span>dialog = tauri::api::dialog::MessageDialogBuilder::new(title, msg)
-        .buttons(MessageDialogButtons::OkCancel);
+        .kind(kind)
+        .buttons(buttons);
     dialog.show(handler);
 }
 

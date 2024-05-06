@@ -196,15 +196,52 @@
 <a href="#196" id="196">196</a>
 <a href="#197" id="197">197</a>
 <a href="#198" id="198">198</a>
-</pre></div><pre class="rust"><code><span class="kw">use super</span>::{display_alert_dialog, display_confirm_dialog};
+<a href="#199" id="199">199</a>
+<a href="#200" id="200">200</a>
+<a href="#201" id="201">201</a>
+<a href="#202" id="202">202</a>
+<a href="#203" id="203">203</a>
+<a href="#204" id="204">204</a>
+<a href="#205" id="205">205</a>
+<a href="#206" id="206">206</a>
+<a href="#207" id="207">207</a>
+<a href="#208" id="208">208</a>
+<a href="#209" id="209">209</a>
+<a href="#210" id="210">210</a>
+<a href="#211" id="211">211</a>
+<a href="#212" id="212">212</a>
+<a href="#213" id="213">213</a>
+<a href="#214" id="214">214</a>
+<a href="#215" id="215">215</a>
+<a href="#216" id="216">216</a>
+<a href="#217" id="217">217</a>
+<a href="#218" id="218">218</a>
+<a href="#219" id="219">219</a>
+<a href="#220" id="220">220</a>
+<a href="#221" id="221">221</a>
+<a href="#222" id="222">222</a>
+<a href="#223" id="223">223</a>
+<a href="#224" id="224">224</a>
+<a href="#225" id="225">225</a>
+<a href="#226" id="226">226</a>
+<a href="#227" id="227">227</a>
+<a href="#228" id="228">228</a>
+<a href="#229" id="229">229</a>
+<a href="#230" id="230">230</a>
+<a href="#231" id="231">231</a>
+<a href="#232" id="232">232</a>
+<a href="#233" id="233">233</a>
+<a href="#234" id="234">234</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::display_dialog;
 <span class="kw">use </span><span class="kw">crate</span>::io::file_io;
 <span class="kw">use </span><span class="kw">crate</span>::modules::riscv::basic::interface::parser::{RISCVExtension, RISCVParser};
 <span class="kw">use </span><span class="kw">crate</span>::storage::rope_store;
 <span class="kw">use </span><span class="kw">crate</span>::types::menu_types;
 <span class="kw">use </span><span class="kw">crate</span>::types::middleware_types::{Tab, TabMap};
+<span class="kw">use </span><span class="kw">crate</span>::utility::ptr::Ptr;
 <span class="kw">use </span><span class="kw">crate</span>::utility::state_helper::event::{get_current_tab_name, set_current_tab_name};
 <span class="kw">use </span>std::path::Path;
-<span class="kw">use </span>tauri::api::dialog::{FileDialogBuilder, MessageDialogKind};
+<span class="kw">use </span>tauri::api::dialog::{FileDialogBuilder, MessageDialogButtons, MessageDialogKind};
 <span class="kw">use </span>tauri::{CustomMenuItem, Manager, Menu, Submenu, WindowMenuEvent};
 
 <span class="kw">pub fn </span>new() -&gt; Submenu {
@@ -253,13 +290,14 @@
     <span class="kw">let </span>picker = FileDialogBuilder::new();
     picker.pick_file(<span class="kw">move </span>|file_path| <span class="kw">match </span>file_path {
         <span class="prelude-val">Some</span>(file_path) =&gt; <span class="kw">match </span>new_tab(<span class="kw-2">&amp;</span>event, file_path.as_path()) {
-            <span class="prelude-val">Some</span>(err) =&gt; display_alert_dialog(
+            <span class="prelude-val">Some</span>(err) =&gt; display_dialog(
                 MessageDialogKind::Info,
+                MessageDialogButtons::Ok,
                 <span class="macro">format!</span>(<span class="string">"Failed to open {:?}"</span>, file_path.file_name().unwrap()).as_str(),
                 err.as_str(),
                 |<span class="kw">_</span>| {},
             ),
-            <span class="kw">_ </span>=&gt; {
+            <span class="prelude-val">None </span>=&gt; {
                 <span class="kw">let </span>name = get_current_tab_name(<span class="kw-2">&amp;</span>event);
                 <span class="kw">let </span>tab_map = event.window().state::&lt;TabMap&gt;();
                 <span class="kw">let </span>lock = tab_map.tabs.lock().unwrap();
@@ -290,8 +328,9 @@
     <span class="kw">let </span>tab = lock.get_mut(<span class="kw-2">&amp;</span>name).unwrap();
     <span class="kw">match </span>tab.text.save() {
         <span class="prelude-val">Some</span>(err) =&gt; {
-            display_alert_dialog(
+            display_dialog(
                 MessageDialogKind::Info,
+                MessageDialogButtons::Ok,
                 <span class="string">"Failed to save file"</span>,
                 err.as_str(),
                 |<span class="kw">_</span>| {},
@@ -307,7 +346,7 @@
 
 <span class="doccomment">/// event emit: front_file_save_as
 /// payload: String
-/// FIXME: maybe unused?
+/// FIXME: the emit event maybe unused?
 </span><span class="kw">fn </span>save_as_handler(event: WindowMenuEvent) {
     <span class="kw">let </span>content = {
         <span class="kw">let </span>name = get_current_tab_name(<span class="kw-2">&amp;</span>event);
@@ -320,8 +359,9 @@
     picker.save_file(<span class="kw">move </span>|file_path| <span class="kw">match </span>file_path {
         <span class="prelude-val">Some</span>(file_path) =&gt; <span class="kw">match </span>file_io::write_file(file_path.as_path(), <span class="kw-2">&amp;</span>content) {
             <span class="prelude-val">Some</span>(err) =&gt; {
-                display_alert_dialog(
+                display_dialog(
                     MessageDialogKind::Info,
+                    MessageDialogButtons::Ok,
                     <span class="string">"Failed to save file"</span>,
                     err.as_str(),
                     |<span class="kw">_</span>| {},
@@ -336,39 +376,46 @@
 }
 
 <span class="kw">fn </span>share_handler(event: <span class="kw-2">&amp;</span>WindowMenuEvent) {
-    <span class="comment">//TODO
-    //event
-</span>}
+    <span class="kw">let </span>_window = tauri::WindowBuilder::new(
+        <span class="kw-2">&amp;</span>event.window().app_handle(),
+        <span class="string">"live_share"</span>, <span class="comment">/* the unique window label */
+        </span>tauri::WindowUrl::External(<span class="string">"https://tauri.app/"</span>.parse().unwrap()),
+    )
+    .title(<span class="string">"Live Share"</span>)
+    .menu(Menu::new())
+    .build()
+    .unwrap();
+}
 
 <span class="kw">fn </span>close_handler(event: <span class="kw-2">&amp;</span>WindowMenuEvent) {
-    <span class="comment">//TODO: check if the file is dirty
-</span>}
+    <span class="kw">let </span>window = event.window();
+    <span class="kw">let </span>tab_map = window.state::&lt;TabMap&gt;();
+    <span class="kw">let </span>name = get_current_tab_name(event);
+    <span class="kw">let </span><span class="kw-2">mut </span>lock = tab_map.tabs.lock().unwrap();
+    <span class="kw">let </span><span class="kw-2">mut </span>tab = lock.get_mut(<span class="kw-2">&amp;</span>name).unwrap();
+    dirty_close_checker(event, <span class="kw-2">&amp;</span>name, <span class="kw-2">&amp;mut </span>tab);
+}
 
-<span class="kw">fn </span>exit_handler(event: <span class="kw-2">&amp;</span>WindowMenuEvent) {
-    event.window().close().unwrap();
-    <span class="kw">let </span>tab_map = event.window().state::&lt;TabMap&gt;();
-    <span class="kw">let </span>lock = tab_map.tabs.lock().unwrap();
-    <span class="kw">for </span>(name, tab) <span class="kw">in </span>lock.iter() {
-        <span class="kw">if </span>tab.text.is_dirty() {
-            display_confirm_dialog(
-                MessageDialogKind::Warning,
-                <span class="string">"Warning"</span>,
-                <span class="macro">format!</span>(
-                    <span class="string">"File {} is modified but not save, are you sure to exit"</span>,
-                    name.as_str()
-                )
-                .as_str(),
-                |save| {
-                    <span class="kw">if </span>save { <span class="comment">//TODO
-                    </span>} <span class="kw">else </span>{
-                    }
-                },
-            )
-        }
+<span class="doccomment">/// Iterate all tabs, check if each tab is dirty, if so, display a dialog to ask
+/// user to save the file or not. If user choose to save, save the file and then
+/// close the tab. If user choose not to save, close the tab directly.
+///
+/// This function will emit a `front_close_tab` event to the window, and
+/// may emit multiple times if there are multiple dirty tabs need to be closed.
+</span><span class="kw">fn </span>exit_handler(event: <span class="kw-2">&amp;</span>WindowMenuEvent) {
+    <span class="kw">let </span>window = event.window();
+    <span class="kw">let </span>tab_map = window.state::&lt;TabMap&gt;();
+    <span class="kw">let </span><span class="kw-2">mut </span>lock = tab_map.tabs.lock().unwrap();
+    <span class="kw">for </span>(name, tab) <span class="kw">in </span>lock.iter_mut() {
+        dirty_close_checker(event, name, tab);
     }
 }
 
-<span class="kw">fn </span>new_tab(event: <span class="kw-2">&amp;</span>WindowMenuEvent, file_path: <span class="kw-2">&amp;</span>Path) -&gt; <span class="prelude-ty">Option</span>&lt;String&gt; {
+<span class="doccomment">/// Create a new tab with the file in provided file path
+///
+/// Return None if success, Some(err) if failed.
+/// If success, will set the current tab name to the opened file path.
+</span><span class="kw">fn </span>new_tab(event: <span class="kw-2">&amp;</span>WindowMenuEvent, file_path: <span class="kw-2">&amp;</span>Path) -&gt; <span class="prelude-ty">Option</span>&lt;String&gt; {
     <span class="kw">match </span>rope_store::Text::from_path(file_path) {
         <span class="prelude-val">Ok</span>(content) =&gt; {
             <span class="kw">let </span>tab_map = event.window().state::&lt;TabMap&gt;();
@@ -390,8 +437,33 @@
     }
 }
 
-<span class="kw">fn </span>dirty_close_checker(event: <span class="kw-2">&amp;</span>WindowMenuEvent, tab: <span class="kw-2">&amp;mut </span>Tab) -&gt; bool {
-    <span class="kw">if </span>tab.text.is_dirty() {}
-    <span class="bool-val">true
-</span>}
+<span class="doccomment">/// Check if the file is dirty, if so, display a dialog to ask user to save the
+/// file or not. If user choose to save, save the file and then close the tab.
+/// If user choose not to save, close the tab directly.
+///
+/// This function will emit a `front_close_tab` event to the window.
+</span><span class="kw">fn </span>dirty_close_checker(event: <span class="kw-2">&amp;</span>WindowMenuEvent, name: <span class="kw-2">&amp;</span>str, tab: <span class="kw-2">&amp;mut </span>Tab) {
+    <span class="kw">let </span>tab_ptr = Ptr::new(tab);
+    <span class="kw">let </span>event_ptr = Ptr::new(event);
+    <span class="kw">if </span>tab.text.is_dirty() {
+        display_dialog(
+            MessageDialogKind::Warning,
+            MessageDialogButtons::YesNo,
+            <span class="string">"Warning"</span>,
+            <span class="macro">format!</span>(
+                <span class="string">"File {} is modified but not save, are you sure to exit"</span>,
+                name
+            )
+            .as_str(),
+            <span class="kw">move </span>|save| {
+                <span class="kw">if </span>save {
+                    <span class="kw">let </span>tab = tab_ptr.as_mut();
+                    tab.text.save();
+                }
+                <span class="kw">let </span>event = event_ptr.as_ref();
+                <span class="kw">let _ </span>= event.window().emit(<span class="string">"front_close_tab"</span>, <span class="bool-val">true</span>);
+            },
+        )
+    }
+}
 </code></pre></div></section></main></body></html>

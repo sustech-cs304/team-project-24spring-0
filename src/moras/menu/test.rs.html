@@ -17,7 +17,19 @@
 <a href="#17" id="17">17</a>
 <a href="#18" id="18">18</a>
 <a href="#19" id="19">19</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>tauri::{CustomMenuItem, Menu, Submenu, WindowMenuEvent};
+<a href="#20" id="20">20</a>
+<a href="#21" id="21">21</a>
+<a href="#22" id="22">22</a>
+<a href="#23" id="23">23</a>
+<a href="#24" id="24">24</a>
+<a href="#25" id="25">25</a>
+<a href="#26" id="26">26</a>
+<a href="#27" id="27">27</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span>tauri::api::dialog::ask;
+<span class="kw">use </span>tauri::{CustomMenuItem, Manager, Menu, Submenu, WindowMenuEvent};
+
+<span class="kw">use </span><span class="kw">crate</span>::modules::riscv::middleware::frontend_api::start_rpc_server;
+<span class="kw">use </span><span class="kw">crate</span>::types::middleware_types::{CurTabName, TabMap};
 
 <span class="kw">pub fn </span>new() -&gt; Submenu {
     Submenu::new(
@@ -29,11 +41,15 @@
 <span class="kw">pub fn </span>event_handler(event: WindowMenuEvent) {
     <span class="kw">match </span>event.menu_item_id().strip_prefix(<span class="string">"test_"</span>).unwrap() {
         <span class="string">"foo" </span>=&gt; {
-            <span class="macro">println!</span>(<span class="string">"foo"</span>);
+            <span class="kw">let </span>window = event.window();
+            start_rpc_server(
+                window.state::&lt;CurTabName&gt;(),
+                window.state::&lt;TabMap&gt;(),
+                <span class="number">11451</span>,
+                <span class="string">"foo"</span>,
+            );
         }
-        <span class="kw">_ </span>=&gt; {
-            <span class="macro">println!</span>(<span class="string">"Unknown file menu item {}"</span>, event.menu_item_id());
-        }
+        <span class="kw">_ </span>=&gt; {}
     }
 }
 </code></pre></div></section></main></body></html>

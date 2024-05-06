@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["assembly","change_current_tab","close_tab","create_tab","debug","dump","read_tab","remove_breakpoint","reset","set_breakpoint","step","syscall_input","undo","update_assembler_settings","update_tab","write_tab"]};
+window.SIDEBAR_ITEMS = {"fn":["assembly","change_current_tab","close_tab","create_tab","debug","delete_in_current_tab","dump","insert_in_current_tab","read_tab","remove_breakpoint","reset","run","set_breakpoint","set_cursor","start_rpc_server","step","stop_rpc_server","syscall_input","undo","update_assembler_settings","write_tab"]};

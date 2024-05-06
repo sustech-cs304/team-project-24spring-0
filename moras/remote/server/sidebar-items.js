@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["editor_rpc"],"struct":["RpcServerImpl","ServerImpl"]};
+window.SIDEBAR_ITEMS = {"mod":["editor_rpc"],"struct":["RpcServerImpl","ServerHandle"]};

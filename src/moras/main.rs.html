@@ -56,9 +56,18 @@
 <a href="#56" id="56">56</a>
 <a href="#57" id="57">57</a>
 <a href="#58" id="58">58</a>
+<a href="#59" id="59">59</a>
+<a href="#60" id="60">60</a>
+<a href="#61" id="61">61</a>
+<a href="#62" id="62">62</a>
+<a href="#63" id="63">63</a>
+<a href="#64" id="64">64</a>
+<a href="#65" id="65">65</a>
 </pre></div><pre class="rust"><code><span class="comment">// Prevents additional console window on Windows in release, DO NOT REMOVE!!
 </span><span class="attr">#![cfg_attr(not(debug_assertions), windows_subsystem = <span class="string">"windows"</span>)]
-</span><span class="kw">mod </span>interface;
+
+</span><span class="kw">mod </span>assembler;
+<span class="kw">mod </span>interface;
 <span class="kw">mod </span>io;
 <span class="kw">mod </span>menu;
 <span class="kw">mod </span>modules;
@@ -75,7 +84,6 @@
 <span class="kw">use </span>types::middleware_types;
 
 <span class="kw">static </span>APP_HANDLE: Lazy&lt;Arc&lt;Mutex&lt;<span class="prelude-ty">Option</span>&lt;AppHandle&gt;&gt;&gt;&gt; = Lazy::new(|| Arc::new(Mutex::new(<span class="prelude-val">None</span>)));
-<span class="kw">mod </span>assembler;
 
 <span class="kw">fn </span>main() {
     tauri::Builder::default()
@@ -83,6 +91,7 @@
         .on_menu_event(menu::event_handler)
         .manage(middleware_types::TabMap {
             tabs: Default::default(),
+            rpc_server: Default::default(),
         })
         .manage(middleware_types::CurTabName {
             name: Default::default(),
@@ -97,10 +106,13 @@
             frontend_api::create_tab,
             frontend_api::close_tab,
             frontend_api::change_current_tab,
-            frontend_api::update_tab,
+            frontend_api::insert_in_current_tab,
+            frontend_api::delete_in_current_tab,
             frontend_api::read_tab,
             frontend_api::write_tab,
+            frontend_api::set_cursor,
             frontend_api::assembly,
+            frontend_api::run,
             frontend_api::debug,
             frontend_api::step,
             frontend_api::dump,
@@ -110,6 +122,8 @@
             frontend_api::remove_breakpoint,
             frontend_api::syscall_input,
             frontend_api::update_assembler_settings,
+            frontend_api::start_rpc_server,
+            frontend_api::stop_rpc_server,
         ])
         .run(<span class="macro">tauri::generate_context!</span>())
         .expect(<span class="string">"error while running tauri application"</span>);

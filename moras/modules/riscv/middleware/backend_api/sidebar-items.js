@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["syscall_input_request"]};
+window.SIDEBAR_ITEMS = {"fn":["syscall_input_request","syscall_output_print"]};
