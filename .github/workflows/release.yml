@@ -7,7 +7,7 @@ on:
   release:
     types:
       - published
-
+    
 jobs:
   publish-tauri:
     permissions: write-all
