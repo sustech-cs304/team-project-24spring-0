@@ -62,12 +62,12 @@ pub mod frontend_api {
             let lock = tab_map.tabs.lock().unwrap();
             if lock.len() == 1 {
                 return Optional {
-                    success: false,
-                    message: "Cannot close last tab".to_string(),
+                    success: true,
+                    message: "".to_string(),
                 };
             } else {
+                let mut iter = lock.iter();
                 loop {
-                    let mut iter = lock.iter();
                     let (new_name, _) = iter.next().unwrap();
                     if new_name != filepath {
                         *cur_tab_name.name.lock().unwrap() = new_name.clone();

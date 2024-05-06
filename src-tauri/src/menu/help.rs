@@ -4,9 +4,7 @@ use tauri::{CustomMenuItem, Menu, Submenu, WindowMenuEvent};
 pub fn new() -> Submenu {
     Submenu::new(
         "Help",
-        Menu::with_items([
-            CustomMenuItem::new("help_manual", "Manual").into(),
-        ]),
+        Menu::with_items([CustomMenuItem::new("help_manual", "Manual").into()]),
     )
 }
 
@@ -22,7 +20,11 @@ fn manual_handler(_event: &WindowMenuEvent) {
         let _window = tauri::WindowBuilder::new(
             app_handle,
             "manual", /* the unique window label */
-            tauri::WindowUrl::External("https://riscv.org/wp-content/uploads/2017/05/riscv-spec-v2.2.pdf".parse().unwrap()),
+            tauri::WindowUrl::External(
+                "https://riscv.org/wp-content/uploads/2017/05/riscv-spec-v2.2.pdf"
+                    .parse()
+                    .unwrap(),
+            ),
         )
         .title("Manual")
         .menu(Menu::new())
