@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["any","ptr","state_helper"]};
+window.SIDEBAR_ITEMS = {"mod":["ptr","state_helper"]};

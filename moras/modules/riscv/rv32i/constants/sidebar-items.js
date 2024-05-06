@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["RV32ICsr","RV32IInstruction","RV32IRegister"],"fn":["get_32u_high","get_32u_low"],"static":["RV32I_REGISTER_DEFAULT_NAME","RV32I_REGISTER_VALID_NAME"],"struct":["RV32ICsrIter","RV32IInstructionIter","RV32IRegisterIter"],"type":["RISCVImmediate"]};
+window.SIDEBAR_ITEMS = {"enum":["RV32ICsr","RV32IInstruction","RV32IRegister"],"fn":["get_32u_high","get_32u_low"],"static":["RV32I_REGISTER_DEFAULT_NAME","RV32I_REGISTER_VALID_NAME"],"type":["RISCVImmediate"]};

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["RV32IOpToken"],"struct":["RV32IOpTokenIter"]};
+window.SIDEBAR_ITEMS = {"enum":["RV32IOpToken"]};
