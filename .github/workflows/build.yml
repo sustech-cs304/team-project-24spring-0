@@ -2,8 +2,12 @@ name: Moras CI
 
 on:
   push:
-    branches-ignore:
+    branches:
       - "main"
+  pull_request:
+    branches:
+      - "main"
+    types: [opened, synchronize, reopened, ready_for_review]
   merge_group:
     type: ["checks_requested"]
 
@@ -17,6 +21,13 @@ jobs:
 
       - uses: actions/checkout@v4
 
+      - name: Rust nightly with rustfmt
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+          components: rustfmt
+
       - name: Format check
         working-directory: ./src-tauri
         run: cargo fmt -- --check
@@ -24,7 +35,8 @@ jobs:
       - name: Tauri dependencies
         run: |
           sudo apt-get update &&
-          sudo apt-get install -y libgtk-3-dev libayatana-appindicator3-dev libwebkit2gtk-4.0-dev webkit2gtk-driver xvfb
+          sudo apt-get install -y libgtk-3-dev libayatana-appindicator3-dev libwebkit2gtk-4.0-dev webkit2gtk-driver xvfb protobuf-compiler
+
       - name: Cache Cargo packages
         uses: actions/cache@v4
         with:
@@ -43,4 +55,17 @@ jobs:
       #- name: Cargo build
         #working-directory: ./src-tauri
         #run: cargo build --release
+
+      - name: Build Rust doc
+        if: github.ref == 'refs/heads/main'
+        working-directory: ./src-tauri
+        run: |
+          cargo doc --no-deps
+
+      - name: Deploy Doc
+        uses: peaceiris/actions-gh-pages@v4
+        if: github.ref == 'refs/heads/main'
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./src-tauri/target/doc
 
