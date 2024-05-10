@@ -1,7 +1,8 @@
 use crate::interface::assembler::Assembler;
-use crate::modules::riscv::basic::interface::assemble::*;
+use crate::modules::riscv::basic::assembler::assembler::RiscVAssembler;
 use crate::modules::riscv::basic::interface::parser::*;
 use std::fs;
+
 #[test]
 pub fn test_assembler() {
     let mut p = RISCVParser::new(&vec![RISCVExtension::RV32I]);

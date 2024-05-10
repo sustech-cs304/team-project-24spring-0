@@ -1,31 +1,35 @@
 use crate::interface::parser::{ParserInstSet, ParserResult};
-use crate::modules::riscv::basic::interface::parser::{ParserRISCVInstOp, ParserRISCVRegister};
-use crate::modules::riscv::rv32i::constants::{RISCVImmediate, RV32IInstruction};
+use std::fmt::Display;
 
 pub trait Assembler<IS>: Send + Sync
 where
-    IS: ParserInstSet,
+    IS: ParserInstSet + InstructionSetTrait,
 {
     fn assemble(
         &mut self,
         ast: ParserResult<IS>,
-    ) -> Result<Vec<InstructionSet>, Vec<AssemblyError>>;
+    ) -> Result<Vec<InstructionSet<IS>>, Vec<AssemblyError>>;
     fn dump(&mut self, ast: ParserResult<IS>) -> Result<Memory, Vec<AssemblyError>>;
 }
 
-pub struct InstructionSet {
+pub trait InstructionSetTrait {
+    type Register;
+    type Immediate;
+}
+
+pub struct InstructionSet<IS: ParserInstSet + InstructionSetTrait> {
     pub line_number: u64,
-    pub instruction: Instruction,
+    pub instruction: Instruction<IS>,
 }
 
-pub struct Instruction {
-    pub operation: ParserRISCVInstOp,
-    pub operands: Vec<Operand>,
+pub struct Instruction<IS: ParserInstSet + InstructionSetTrait> {
+    pub operation: IS::Operator,
+    pub operands: Vec<Operand<IS>>,
 }
 
-pub enum Operand {
-    Reg(ParserRISCVRegister),
-    Operator(RISCVImmediate),
+pub enum Operand<IS: ParserInstSet + InstructionSetTrait> {
+    Reg(IS::Register),
+    Operator(IS::Immediate),
 }
 
 pub struct Memory {
@@ -39,51 +43,26 @@ pub struct AssemblyError {
     pub msg: String,
 }
 
-impl std::fmt::Display for AssemblyError {
+impl Display for AssemblyError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "line:{} {}", self.line, self.msg)
     }
 }
 
-impl Instruction {
-    pub fn new() -> Self {
+impl<IS: ParserInstSet + InstructionSetTrait> Instruction<IS> {
+    pub fn new(operation: IS::Operator) -> Self {
         Instruction {
-            operation: ParserRISCVInstOp::from(RV32IInstruction::Add),
+            operation,
             operands: vec![],
         }
     }
 }
 
-impl InstructionSet {
-    pub fn new() -> Self {
+impl<IS: ParserInstSet + InstructionSetTrait> InstructionSet<IS> {
+    pub fn new(instruction: Instruction<IS>) -> Self {
         InstructionSet {
             line_number: 0,
-            instruction: Instruction::new(),
+            instruction: instruction,
         }
-    }
-}
-
-impl std::fmt::Display for Operand {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Operand::Reg(reg) => {
-                write!(f, " {:?}", reg)?;
-                Ok(())
-            }
-            Operand::Operator(imm) => {
-                write!(f, " {:?}", imm)?;
-                Ok(())
-            }
-        }
-    }
-}
-
-impl std::fmt::Display for InstructionSet {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:3} {:?}", self.line_number, self.instruction.operation)?;
-        for ins in &self.instruction.operands {
-            write!(f, "{}", ins.to_string()).expect("panic");
-        }
-        Ok(())
     }
 }
