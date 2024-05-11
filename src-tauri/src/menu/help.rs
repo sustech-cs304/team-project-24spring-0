@@ -21,7 +21,7 @@ fn manual_handler(_event: &WindowMenuEvent) {
             app_handle,
             "manual", /* the unique window label */
             tauri::WindowUrl::External(
-                "https://riscv.org/wp-content/uploads/2017/05/riscv-spec-v2.2.pdf"
+                "http://localhost:3000/riscv-spec-v2.2.pdf"
                     .parse()
                     .unwrap(),
             ),
