@@ -48,6 +48,15 @@ export default function ModifiedEditor({fileName}) {
         console.log('Current: line: ', line, 'column: ', column, 'value: ', newInput);
     }
 
+    var handleClickedRun = async () => {
+        var line = editorRef.current.getPosition();
+        var range = new monaco.Range(line.lineNumber, 1, line.lineNumber, 1);
+        var id = { major: 1, minor: 1 };             
+        var text = "FOO";
+        var op = {identifier: id, range: range, text: text, forceMoveMarkers: false};
+        editorRef.current.executeEdits("my-source", [op]);
+    }
+
     return (
         <div className='h-full relative'>
             <Editor 
@@ -63,7 +72,7 @@ export default function ModifiedEditor({fileName}) {
             beforeMount={LoadMonacoConfig}
             />
             <div className='absolute right-2 top-0 flex-row gap-2'>
-                <button className='bg-gray-100 rounded-2xl hover:bg-gray-200'>
+                <button className='bg-gray-100 rounded-2xl hover:bg-gray-200' onClick={handleClickedRun}>
                     <Image alt="run icon" src='/icons/run.svg' width={16} height={16}/>
                 </button>
             </div>
