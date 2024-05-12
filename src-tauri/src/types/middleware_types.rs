@@ -1,15 +1,15 @@
-use std::collections::HashMap;
-use std::sync::Mutex;
-
-use serde::{Deserialize, Serialize};
-use strum_macros::{Display, EnumMessage};
-
 use crate::interface::assembler::Assembler;
 use crate::interface::parser::{Parser, ParserError};
 use crate::interface::simulator::Simulator;
 use crate::interface::storage::MFile;
 use crate::modules::riscv::basic::interface::parser::RISCV;
+use crate::remote::server::RpcServerImpl;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::sync::Mutex;
+use strum_macros::{Display, EnumMessage};
 
+//TODO: add simulator and assembler as member
 pub struct Tab {
     pub text: Box<dyn MFile<String>>,
     pub parser: Box<dyn Parser<RISCV>>,
@@ -17,24 +17,38 @@ pub struct Tab {
     //pub simulator: Box<dyn Simulator<i32, i32, i32, i32>>,
 }
 
+#[derive(Default)]
 pub struct TabMap {
     pub tabs: Mutex<HashMap<String, Tab>>,
+    pub rpc_server: Mutex<RpcServerImpl>,
 }
 
 pub struct CurTabName {
     pub name: Mutex<String>,
 }
 
-#[derive(Clone, Serialize)]
+#[derive(Clone, Serialize, Default)]
 pub struct Optional {
     pub success: bool,
     pub message: String,
+}
+
+#[derive(Clone, Deserialize)]
+pub struct TextPosition {
+    pub row: u64,
+    pub column: u64,
 }
 
 #[derive(Clone, Serialize)]
 pub struct AssembleResult {
     pub success: bool,
     pub error: Vec<ParserError>,
+}
+
+#[derive(Clone, Serialize)]
+pub struct SyscallOutput {
+    pub filepath: String,
+    pub data: String,
 }
 
 #[derive(Clone, Serialize)]

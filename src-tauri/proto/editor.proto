@@ -5,6 +5,7 @@ service Editor {
     rpc Authorize(AuthorizeRequest) returns (AuthorizeReply);
     rpc Disconnect(DisconnectRequest) returns (DisconnectReply);
     rpc SetCursor(SetCursorRequest) returns (SetCursorReply);
+    rpc GetContent(GetContentRequest) returns (GetContentReply);
     rpc UpdateContent(UpdateContentRequest) returns (UpdateContentReply);
 }
 
@@ -26,12 +27,22 @@ message DisconnectReply{
 
 message SetCursorRequest{
     string file = 1;
-    int32 line = 2;
-    int32 column = 3;
+    uint64 row = 2;
+    uint64 column = 3;
 }
 
 message SetCursorReply{
     bool success = 1;
+}
+
+message GetContentRequest{
+    string file = 1;
+    string hash = 2;
+}
+
+message GetContentReply{
+    bool need_update = 1;
+    string content = 2;
 }
 
 message UpdateContentRequest{
