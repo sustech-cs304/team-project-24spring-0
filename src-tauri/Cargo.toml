@@ -24,6 +24,7 @@ ropey = "1.6.1"
 rust-analyzer = "0.0.1"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+sha2 = "0.10.8"
 strum = { version = "0.26", features = ["derive"] }
 strum_macros = "0.26"
 tauri = { version = "1.6.2", features = [ "dialog-all", "fs-read-dir", "fs-create-dir", "fs-exists", "notification-all"] }

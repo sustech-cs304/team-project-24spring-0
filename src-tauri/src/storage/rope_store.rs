@@ -12,7 +12,7 @@ pub struct Text {
     last_modified: std::time::SystemTime,
 }
 
-impl MFile<String> for Text {
+impl MFile<Rope, String> for Text {
     fn update_content(&mut self, content: &str) {
         *self.data = Rope::from_str(&content);
         self.dirty = true;
@@ -40,7 +40,9 @@ impl MFile<String> for Text {
         }
     }
 
-    //https://docs.rs/ropey/latest/ropey/index.html
+    fn get_raw(&mut self) -> &mut Rope {
+        self.data.as_mut()
+    }
 }
 
 impl Text {

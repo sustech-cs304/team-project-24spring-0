@@ -1,4 +1,4 @@
-pub trait MFile<ERR>: Send + Sync {
+pub trait MFile<CON, ERR>: Send + Sync {
     fn is_dirty(&self) -> bool;
 
     fn set_dirty(&mut self, dirty: bool);
@@ -8,4 +8,6 @@ pub trait MFile<ERR>: Send + Sync {
     fn save(&mut self) -> Option<ERR>;
 
     fn update_content(&mut self, content: &str);
+
+    fn get_raw(&mut self) -> &mut CON;
 }

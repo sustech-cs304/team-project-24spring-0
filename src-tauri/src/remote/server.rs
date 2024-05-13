@@ -3,10 +3,13 @@ use crate::types::middleware_types::{CurTabName, Tab, TabMap};
 use crate::utility::ptr::Ptr;
 use crate::APP_HANDLE;
 use editor_rpc::editor_server::{Editor, EditorServer};
+use editor_rpc::OperationType::{Delete, Insert, Replace};
 use editor_rpc::{
     AuthorizeReply, AuthorizeRequest, DisconnectReply, DisconnectRequest, GetContentReply,
-    GetContentRequest, SetCursorReply, SetCursorRequest, UpdateContentReply, UpdateContentRequest,
+    GetContentRequest, OperationType, SetCursorReply, SetCursorRequest, UpdateContentReply,
+    UpdateContentRequest,
 };
+use sha2::{Digest, Sha256};
 use std::collections::LinkedList;
 use std::net::SocketAddr;
 use std::sync::{Arc, Mutex};
@@ -21,7 +24,7 @@ pub mod editor_rpc {
 
 #[derive(Default)]
 struct ServerHandle {
-    cur_tab: Mutex<(String, Option<Ptr<TabMap>>)>,
+    map_state: Mutex<(String, Option<Ptr<TabMap>>)>,
     password: Mutex<String>,
     clients: Mutex<Vec<SocketAddr>>,
     cursor_pos: Mutex<LinkedList<(SocketAddr, u64, u64)>>,
@@ -46,6 +49,43 @@ impl ServerHandle {
             pos.2 = column;
         } else {
             lock.push_back(("127.0.0.1".parse().unwrap(), row, column));
+        }
+    }
+
+    /// Handle logic current tab wht a `&mut Tab` as lambda parameter.
+    /// Only use to bypass the fxxking borrow checker.
+    fn handle_with_cur_tab<F, R>(&self, handle: F) -> Result<R, String>
+    where
+        F: Fn(&mut Tab) -> Result<R, String>,
+    {
+        let map_state_lock = self.map_state.lock().unwrap();
+        match map_state_lock.1 {
+            Some(tab_map_ptr) => {
+                let tab_map = tab_map_ptr.as_ref();
+                let mut tabs_lock = tab_map.tabs.lock().unwrap();
+                let mut tab = tabs_lock.get_mut(&map_state_lock.0).unwrap();
+                handle(&mut tab)
+            }
+            None => Err("TabMap have not been iniitilized".to_string()),
+        }
+    }
+
+    fn handle_rpc_with_cur_tab<F, R>(&self, handle: F) -> Result<tonic::Response<R>, Status>
+    where
+        F: Fn(&mut Tab) -> Result<R, String>,
+    {
+        match self.handle_with_cur_tab(handle) {
+            Ok(success) => Ok(tonic::Response::new(success)),
+            Err(err) => Err(Status::internal(err)),
+        }
+    }
+
+    fn check_ip_authorized(&self, ip: SocketAddr) -> Result<(), Status> {
+        let clients = self.clients.lock().unwrap();
+        if clients.iter().any(|x| *x == ip) {
+            Ok(())
+        } else {
+            Err(Status::unauthenticated("Unauthorized"))
         }
     }
 }
@@ -82,6 +122,7 @@ impl Editor for Arc<Mutex<ServerHandle>> {
         request: Request<DisconnectRequest>,
     ) -> Result<Response<DisconnectReply>, Status> {
         let handler = self.lock().unwrap();
+        let _ = handler.check_ip_authorized(request.remote_addr().unwrap())?;
         let mut clients = handler.clients.lock().unwrap();
         let mut success = false;
         if let Some(pos) = clients
@@ -99,6 +140,7 @@ impl Editor for Arc<Mutex<ServerHandle>> {
         request: Request<SetCursorRequest>,
     ) -> Result<Response<SetCursorReply>, Status> {
         let handler = self.lock().unwrap();
+        let _ = handler.check_ip_authorized(request.remote_addr().unwrap())?;
         let mut cursor_lock = handler.cursor_pos.lock().unwrap();
         if let Some(_) = cursor_lock
             .iter()
@@ -120,23 +162,82 @@ impl Editor for Arc<Mutex<ServerHandle>> {
         &self,
         request: Request<GetContentRequest>,
     ) -> Result<Response<GetContentReply>, Status> {
-        Ok(Response::new(GetContentReply {
-            need_update: true,
-            content: "".to_string(),
-        }))
+        let handler = self.lock().unwrap();
+        let _ = handler.check_ip_authorized(request.remote_addr().unwrap())?;
+        return handler.handle_rpc_with_cur_tab(
+            |tab: &mut Tab| -> Result<GetContentReply, String> {
+                let content = tab.text.to_string();
+                if request.get_ref().hash.as_bytes()
+                    == Sha256::new().chain_update(&content).finalize().as_slice()
+                {
+                    Ok(editor_rpc::GetContentReply {
+                        need_update: false,
+                        content: "".to_string(),
+                    })
+                } else {
+                    Ok(editor_rpc::GetContentReply {
+                        need_update: true,
+                        content,
+                    })
+                }
+            },
+        );
     }
 
     async fn update_content(
         &self,
         request: Request<UpdateContentRequest>,
     ) -> Result<Response<UpdateContentReply>, Status> {
-        todo!("update_content");
-        Ok(Response::new(UpdateContentReply {
-            success: true,
-            content: "foo".to_string(),
-        }))
+        let handler = self.lock().unwrap();
+        let map_state_lock = handler.map_state.lock().unwrap();
+        match map_state_lock.1 {
+            Some(tab_map_ptr) => {
+                let tab_map = tab_map_ptr.as_ref();
+                let mut tabs_lock = tab_map.tabs.lock().unwrap();
+                let tab = tabs_lock.get_mut(&map_state_lock.0).unwrap();
+                let cursor_lock = handler.cursor_pos.lock().unwrap();
+                let request_ref = request.get_ref();
+                let content_position = request_ref.pos.clone().unwrap();
+                let start = content_position.start.unwrap();
+
+                // check cursor position correct
+                for (id, row, col) in &*cursor_lock {
+                    if *id == request.remote_addr().unwrap() {
+                        if start.row != *row || start.col != *col {
+                            return Ok(Response::new(UpdateContentReply {
+                                success: false,
+                                content: "miss matched cursor position".to_string(),
+                            }));
+                        }
+                    }
+                }
+                let raw_rope = tab.text.get_raw();
+                let char_idx = raw_rope.line_to_char(start.row as usize) + start.col as usize;
+                match request_ref.op() {
+                    Insert => {
+                        raw_rope.insert(char_idx, &request_ref.content);
+                    }
+                    Delete => {
+                        todo!("Implement delete content");
+                        //raw_rope.remove(char_idx, char_idx +
+                        // request_ref.content.len());
+                    }
+                    Replace => {
+                        todo!("Implement replace content");
+                        //raw_rope.remove(char_idx, char_idx + request_ref.content.len());
+                        raw_rope.insert(char_idx, &request_ref.content);
+                    }
+                }
+                Ok(Response::new(UpdateContentReply {
+                    success: true,
+                    content: "".to_string(),
+                }))
+            }
+            None => Err(Status::internal("TabMap have not been iniitilized")),
+        }
     }
 }
+
 pub struct RpcServerImpl {
     port: u16,
     tokio_runtime: tokio::runtime::Runtime,
@@ -163,7 +264,7 @@ impl RpcServerImpl {
         cur_tab_name: String,
         tab_map: Ptr<TabMap>,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        self.shared_handler.lock().unwrap().cur_tab = Mutex::new((cur_tab_name, Some(tab_map)));
+        self.shared_handler.lock().unwrap().map_state = Mutex::new((cur_tab_name, Some(tab_map)));
         self.start()?;
         Ok(())
     }

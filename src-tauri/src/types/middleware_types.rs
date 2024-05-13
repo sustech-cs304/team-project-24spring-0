@@ -4,6 +4,7 @@ use crate::interface::simulator::Simulator;
 use crate::interface::storage::MFile;
 use crate::modules::riscv::basic::interface::parser::RISCV;
 use crate::remote::server::RpcServerImpl;
+use ropey::Rope;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Mutex;
@@ -11,7 +12,7 @@ use strum_macros::{Display, EnumMessage};
 
 //TODO: add simulator and assembler as member
 pub struct Tab {
-    pub text: Box<dyn MFile<String>>,
+    pub text: Box<dyn MFile<Rope, String>>,
     pub parser: Box<dyn Parser<RISCV>>,
     //pub assembler: Box<dyn Assembler<i32, i32, i32, i32>>,
     //pub simulator: Box<dyn Simulator<i32, i32, i32, i32>>,
