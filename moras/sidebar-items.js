@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["main"],"macro":["create_menu"],"mod":["assembler","interface","io","menu","modules","remote","storage","tests","types","utility"],"static":["APP_HANDLE"]};
+window.SIDEBAR_ITEMS = {"fn":["main"],"macro":["binstimpl","create_menu","iinstimpl","r4instimpl","rinstimpl","sinstimpl","uinstimpl"],"mod":["interface","io","menu","modules","remote","storage","tests","types","utility"],"static":["APP_HANDLE"]};

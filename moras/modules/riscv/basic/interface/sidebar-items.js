@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["parser"]};
+window.SIDEBAR_ITEMS = {"mod":["assemble","parser"]};

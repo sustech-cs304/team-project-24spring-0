@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"trait":["Assembler"]};
+window.SIDEBAR_ITEMS = {"enum":["Operand"],"struct":["AssemblyError","Instruction","InstructionSet","Memory"],"trait":["Assembler","InstructionSetTrait"]};
