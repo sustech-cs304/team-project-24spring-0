@@ -44,6 +44,27 @@ impl Into<PackedInstruction> for RInstruction {
 
 #[derive(Default, Builder)]
 #[builder(public)]
+pub struct R4Instruction {
+    rs3: u5,
+    rs2: u5,
+    rs1: u5,
+    funct3: u3,
+    rd: u5,
+    opcode: u7,
+}
+
+impl Into<PackedInstruction> for R4Instruction {
+    fn into(self) -> PackedInstruction {
+        all_into_scope!(self, rs3 rs2 rs1 funct3 rd opcode);
+        all_into! {u32, rs3 rs2 rs1 funct3 rd opcode }
+        PackedInstruction(
+            (rs3 << 27) + (rs2 << 20) + (rs1 << 15) + (funct3 << 12) + (rd << 7) + opcode,
+        )
+    }
+}
+
+#[derive(Default, Builder)]
+#[builder(public)]
 pub struct IInstruction {
     // I-type
     imm: u12,
@@ -72,14 +93,12 @@ pub struct SInstruction {
     opcode: u7,
 }
 
-impl ImmediateFormatter for SInstruction {
+impl ImmediateFormatter for SInstructionBuilder {
     fn immediate<'a>(&'a mut self, imm: u12) -> &'a mut Self {
         let imm: u32 = imm.into();
-        let imm11_5 = ((imm >> 5) & 0b1111111).try_into().unwrap();
-        let imm4_0 = (imm & 0b1111).try_into().unwrap();
-        self.imm11_5 = imm11_5;
-        self.imm4_0 = imm4_0;
-        self
+        let imm11_5: u7 = ((imm >> 5) & 0b1111111).try_into().unwrap();
+        let imm4_0: u5 = (imm & 0b11111).try_into().unwrap();
+        self.imm11_5(imm11_5).imm4_0(imm4_0)
     }
 }
 
@@ -106,18 +125,17 @@ pub struct BInstruction {
     opcode: u7,
 }
 
-impl ImmediateFormatter for BInstruction {
+impl ImmediateFormatter for BInstructionBuilder {
     fn immediate<'a>(&'a mut self, imm: u12) -> &'a mut Self {
         let imm: u32 = imm.into();
-        let imm12: u1 = (imm >> 12).try_into().unwrap();
+        let imm12: u1 = (imm >> 11).try_into().unwrap();
         let imm10_5: u6 = ((imm >> 5) & 0b111111).try_into().unwrap();
         let imm4_1: u4 = ((imm >> 1) & 0b1111).try_into().unwrap();
         let imm11: u1 = ((imm >> 11) & 0b1).try_into().unwrap();
-        self.imm12 = imm12;
-        self.imm10_5 = imm10_5;
-        self.imm4_1 = imm4_1;
-        self.imm11 = imm11;
-        self
+        self.imm12(imm12)
+            .imm10_5(imm10_5)
+            .imm4_1(imm4_1)
+            .imm11(imm11)
     }
 }
 
@@ -181,21 +199,33 @@ pub trait Opcode<T>: Sized {
 
 #[repr(u8)]
 pub enum ROpcode {
+    Shamt = 0b0010011,  // Slli, Srai, Srli
     ALUReg = 0b0110011, // Add, And, Or, Sll, Slt, Sltu, Sra, Srl, Sub, Xor
+    Float = 0b1010011,
+}
+
+#[repr(u8)]
+pub enum R4Opcode {
+    FMA = 0b1000011,
+    FMS = 0b1000111,
+    FNS = 0b1001011,
+    FNA = 0b1001111,
 }
 
 #[repr(u8)]
 pub enum IOpcode {
     JALR = 0b1100111,        //Jalr
     Load = 0b0000011,        // Lb, Lbu, Lh, Lhu, Lw
-    ALUImm = 0b0010011,      // Addi, Andi, Ori, Slli, Slti, Sltiu, Srai, Srli, Xori
+    ALUImm = 0b0010011,      // Addi, Andi, Ori, Slti, Sltiu, Xori
     FENCE = 0b0001111,       // Fence, FenceI
     Environment = 0b1110011, // Csrrc, Csrrci, Csrrs, Csrrsi, Csrrw, Csrrwi. Ebreak, Ecall
+    Float = 0b0000111,
 }
 
 #[repr(u8)]
 pub enum SOpcode {
     Store = 0b100011, // Sb, Sh, Sw
+    Float = 0b0100111,
 }
 
 #[repr(u8)]
@@ -219,7 +249,7 @@ macro_rules! implopcode {
         impl Opcode<$builder> for $opcode {
             fn builder(self) -> $builder {
                 $builder {
-                    opcode: (self as u8).try_into().unwrap(),
+                    opcode: Some((self as u8).try_into().unwrap()),
                     ..$builder::default()
                 }
             }
@@ -227,12 +257,13 @@ macro_rules! implopcode {
     };
 }
 
-implopcode!(RInstruction, ROpcode);
-implopcode!(IInstruction, IOpcode);
-implopcode!(SInstruction, SOpcode);
-implopcode!(BInstruction, BOpcode);
-implopcode!(UInstruction, UOpcode);
-implopcode!(JInstruction, JOpcode);
+implopcode!(RInstructionBuilder, ROpcode);
+implopcode!(R4InstructionBuilder, R4Opcode);
+implopcode!(IInstructionBuilder, IOpcode);
+implopcode!(SInstructionBuilder, SOpcode);
+implopcode!(BInstructionBuilder, BOpcode);
+implopcode!(UInstructionBuilder, UOpcode);
+implopcode!(JInstructionBuilder, JOpcode);
 
 macro_rules! implinto {
     ($tr:ident) => {
