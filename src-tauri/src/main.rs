@@ -1,6 +1,16 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
+#![cfg_attr(
+    debug_assertions,
+    allow(dead_code),
+    allow(unused_imports),
+    allow(unused_variables),
+    allow(unused_mut),
+    allow(unused_assignments),
+    allow(unreachable_code),
+    allow(unused_macros)
+)]
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
-
+#![feature(linked_list_cursors)]
 mod assembler;
 mod interface;
 mod io;

@@ -1,4 +1,10 @@
+use std::path::PathBuf;
+
 pub trait MFile<CON, ERR>: Send + Sync {
+    fn get_path(&self) -> PathBuf;
+
+    fn get_path_str(&self) -> String;
+
     fn is_dirty(&self) -> bool;
 
     fn set_dirty(&mut self, dirty: bool);

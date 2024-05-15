@@ -1,5 +1,5 @@
-/// Module providing API functions for the frontend of a Tauri application.
-/// Could be used by `invoke`
+/// This module provides API functions for the frontend. Could be used by
+/// `invoke` in EMCAScript
 pub mod frontend_api {
     use crate::io::file_io;
     use crate::modules::riscv::basic::interface::parser::{RISCVExtension, RISCVParser};
@@ -123,7 +123,13 @@ pub mod frontend_api {
     /// Returns `bool` indicating whether the cursor was successfully set.
     #[tauri::command]
     pub fn set_cursor(tab_map: State<TabMap>, filepath: &str, row: u64, col: u64) -> bool {
-        todo!("Implement setCursor, need to check whether current file is in shared state");
+        let mut server = tab_map.rpc_server.lock().unwrap();
+        if server.is_running() {
+            server.udpate_host_cursor(row, col);
+            true
+        } else {
+            false
+        }
     }
 
     /// Updates the content of the tab associated with the given file path.
@@ -162,6 +168,8 @@ pub mod frontend_api {
     /// Deletes the content from one specific position to another in current tab
     /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: Current state of all open tabs.
+    ///
+    /// Returns `Optional` indicating the success or failure of the delete.
     #[allow(non_snake_case)]
     #[tauri::command]
     pub fn delete_in_current_tab(
@@ -388,6 +396,12 @@ pub mod frontend_api {
         port: u16,
         password: &str,
     ) -> Optional {
+        if tab_map.tabs.lock().unwrap().len() == 0 {
+            return Optional {
+                success: false,
+                message: "No tab had been opened".to_string(),
+            };
+        }
         let mut rpc_lock = tab_map.rpc_server.lock().unwrap();
         match rpc_lock.start_service(
             cur_tab_name.name.lock().unwrap().clone(),
@@ -395,7 +409,7 @@ pub mod frontend_api {
         ) {
             Ok(()) => {
                 rpc_lock.change_password(password);
-                if let Err(e) = rpc_lock.change_port(port) {
+                if let Err(e) = rpc_lock.set_port(port) {
                     return Optional {
                         success: false,
                         message: e.to_string(),
@@ -426,8 +440,9 @@ pub mod frontend_api {
     }
 }
 
-/// Module providing API functions for the backend of a Tauri application
-/// to emit event to the frontend.
+/// This module provides API functions for the backend of a Tauri application
+/// to emit event to the frontend, and the frontend needs to handle the event by
+/// `listen`.
 pub mod backend_api {
     use crate::types::middleware_types::{SyscallDataType, SyscallOutput, SyscallRequest};
     use crate::APP_HANDLE;

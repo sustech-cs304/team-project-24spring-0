@@ -13,6 +13,13 @@ pub struct Text {
 }
 
 impl MFile<Rope, String> for Text {
+    fn get_path(&self) -> PathBuf {
+        self.path.clone()
+    }
+    fn get_path_str(&self) -> String {
+        self.path.to_str().unwrap().to_string()
+    }
+
     fn update_content(&mut self, content: &str) {
         *self.data = Rope::from_str(&content);
         self.dirty = true;

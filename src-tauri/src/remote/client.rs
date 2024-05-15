@@ -1,4 +1,4 @@
-use std::net::{Ipv4Addr, SocketAddr};
+use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 
 use editor_rpc::editor_client::EditorClient;
 use editor_rpc::OperationType::{Delete, Insert, Replace};
@@ -22,9 +22,9 @@ struct RpcClientImpl {
 }
 
 impl RpcClientImpl {
-    pub fn new(addr: SocketAddr, password: &str) -> Self {
+    pub fn new(ip: IpAddr, port: u16, password: &str) -> Self {
         Self {
-            addr,
+            addr: SocketAddr::new(ip, port),
             password: password.to_string(),
             client: None,
         }

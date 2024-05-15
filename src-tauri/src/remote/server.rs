@@ -1,7 +1,7 @@
+use super::{ClientCursor, History};
 use crate::interface::remote::RpcServer;
-use crate::types::middleware_types::{CurTabName, Tab, TabMap};
+use crate::types::middleware_types::{CurTabName, Tab, TabMap, TextPosition};
 use crate::utility::ptr::Ptr;
-use crate::APP_HANDLE;
 use editor_rpc::editor_server::{Editor, EditorServer};
 use editor_rpc::OperationType::{Delete, Insert, Replace};
 use editor_rpc::{
@@ -9,11 +9,11 @@ use editor_rpc::{
     GetContentRequest, OperationType, SetCursorReply, SetCursorRequest, UpdateContentReply,
     UpdateContentRequest,
 };
-use sha2::{Digest, Sha256};
 use std::collections::LinkedList;
+use std::error::Error;
 use std::net::SocketAddr;
-use std::sync::{Arc, Mutex};
-use tauri::Manager;
+use std::sync::{atomic, Arc, Mutex};
+use tauri::utils::debug_eprintln;
 use tokio::task::JoinHandle;
 use tonic::transport::Server;
 use tonic::{Request, Response, Status};
@@ -25,9 +25,11 @@ pub mod editor_rpc {
 #[derive(Default)]
 struct ServerHandle {
     map_state: Mutex<(String, Option<Ptr<TabMap>>)>,
+    version: atomic::AtomicUsize,
     password: Mutex<String>,
     clients: Mutex<Vec<SocketAddr>>,
-    cursor_pos: Mutex<LinkedList<(SocketAddr, u64, u64)>>,
+    cursor_pos: Mutex<LinkedList<ClientCursor>>,
+    history: Mutex<Vec<History>>,
 }
 
 impl ServerHandle {
@@ -38,17 +40,21 @@ impl ServerHandle {
     }
 
     /// Update host cursor position.
-    fn udpate_host_cursor(&mut self, row: u64, column: u64) {
+    fn udpate_host_cursor(&mut self, row: u64, col: u64) {
         let mut lock = self.cursor_pos.lock().unwrap();
         if let Some((_, pos)) = lock
             .iter_mut()
             .enumerate()
-            .find(|(_, x)| x.0 == "127.0.0.1".parse().unwrap())
+            .find(|(_, x)| x.ip == "127.0.0.1".parse().unwrap())
         {
-            pos.1 = row;
-            pos.2 = column;
+            pos.row = row;
+            pos.col = col;
         } else {
-            lock.push_back(("127.0.0.1".parse().unwrap(), row, column));
+            lock.push_back(ClientCursor {
+                ip: "127.0.0.1".parse().unwrap(),
+                row,
+                col,
+            });
         }
     }
 
@@ -82,6 +88,7 @@ impl ServerHandle {
 
     fn check_ip_authorized(&self, ip: SocketAddr) -> Result<(), Status> {
         let clients = self.clients.lock().unwrap();
+        println!("{:?}", clients);
         if clients.iter().any(|x| *x == ip) {
             Ok(())
         } else {
@@ -97,24 +104,34 @@ impl Editor for Arc<Mutex<ServerHandle>> {
         request: Request<AuthorizeRequest>,
     ) -> Result<Response<AuthorizeReply>, Status> {
         let handler = self.lock().unwrap();
-        if request.get_ref().password == handler.password.lock().unwrap().as_str() {
-            let mut file = "Server have not iniitilized".to_string();
-            let mut success = false;
-            if let Some(app_handle) = APP_HANDLE.lock().unwrap().as_ref() {
-                let mut clients = handler.clients.lock().unwrap();
-                clients.push(request.remote_addr().unwrap());
-                let cur_tab_name = app_handle.state::<CurTabName>();
-                let lock = cur_tab_name.name.lock().unwrap();
-                file = lock.clone();
-                success = true;
+        handler.handle_rpc_with_cur_tab(|tab| {
+            if request.get_ref().password == handler.password.lock().unwrap().as_str() {
+                if let Ok(_) = handler.check_ip_authorized(request.remote_addr().unwrap()) {
+                    Ok(AuthorizeReply {
+                        success: true,
+                        file_name: tab.text.get_path_str(),
+                        version: handler.version.load(atomic::Ordering::Relaxed) as u64,
+                        content: tab.text.to_string(),
+                    })
+                } else {
+                    let mut client_lock = handler.clients.lock().unwrap();
+                    client_lock.push(request.remote_addr().unwrap());
+                    Ok(AuthorizeReply {
+                        success: true,
+                        file_name: tab.text.get_path_str(),
+                        version: handler.version.load(atomic::Ordering::Relaxed) as u64,
+                        content: tab.text.to_string(),
+                    })
+                }
+            } else {
+                Ok(AuthorizeReply {
+                    success: false,
+                    file_name: "".to_string(),
+                    version: 0,
+                    content: "".to_string(),
+                })
             }
-            Ok(Response::new(AuthorizeReply { success, file }))
-        } else {
-            Ok(Response::new(AuthorizeReply {
-                success: false,
-                file: "Unauthorized".to_string(),
-            }))
-        }
+        })
     }
 
     async fn disconnect(
@@ -145,15 +162,15 @@ impl Editor for Arc<Mutex<ServerHandle>> {
         if let Some(_) = cursor_lock
             .iter()
             .enumerate()
-            .find(|(_, x)| x.0 == request.remote_addr().unwrap())
+            .find(|(_, x)| x.ip == request.remote_addr().unwrap())
         {
             Ok(Response::new(editor_rpc::SetCursorReply { success: false }))
         } else {
-            cursor_lock.push_back((
-                request.remote_addr().unwrap(),
-                request.get_ref().row,
-                request.get_ref().column,
-            ));
+            cursor_lock.push_back(ClientCursor {
+                ip: request.remote_addr().unwrap(),
+                row: request.get_ref().row,
+                col: request.get_ref().col,
+            });
             Ok(Response::new(editor_rpc::SetCursorReply { success: true }))
         }
     }
@@ -167,18 +184,13 @@ impl Editor for Arc<Mutex<ServerHandle>> {
         return handler.handle_rpc_with_cur_tab(
             |tab: &mut Tab| -> Result<GetContentReply, String> {
                 let content = tab.text.to_string();
-                if request.get_ref().hash.as_bytes()
-                    == Sha256::new().chain_update(&content).finalize().as_slice()
+                if request.get_ref().version
+                    == handler.version.load(atomic::Ordering::Relaxed) as u64
                 {
-                    Ok(editor_rpc::GetContentReply {
-                        need_update: false,
-                        content: "".to_string(),
-                    })
+                    todo!("Implement history");
+                    Ok(editor_rpc::GetContentReply { history: vec![] })
                 } else {
-                    Ok(editor_rpc::GetContentReply {
-                        need_update: true,
-                        content,
-                    })
+                    Ok(editor_rpc::GetContentReply { history: vec![] })
                 }
             },
         );
@@ -201,9 +213,9 @@ impl Editor for Arc<Mutex<ServerHandle>> {
                 let start = content_position.start.unwrap();
 
                 // check cursor position correct
-                for (id, row, col) in &*cursor_lock {
-                    if *id == request.remote_addr().unwrap() {
-                        if start.row != *row || start.col != *col {
+                for cursor in &*cursor_lock {
+                    if cursor.ip == request.remote_addr().unwrap() {
+                        if start.row != cursor.row || start.col != cursor.col {
                             return Ok(Response::new(UpdateContentReply {
                                 success: false,
                                 content: "miss matched cursor position".to_string(),
@@ -211,6 +223,8 @@ impl Editor for Arc<Mutex<ServerHandle>> {
                         }
                     }
                 }
+
+                // handle operation
                 let raw_rope = tab.text.get_raw();
                 let char_idx = raw_rope.line_to_char(start.row as usize) + start.col as usize;
                 match request_ref.op() {
@@ -246,11 +260,11 @@ pub struct RpcServerImpl {
 }
 
 impl RpcServerImpl {
-    fn default() -> Self {
+    fn default(thread_num: usize) -> Self {
         Self {
-            port: 11451,
+            port: 0,
             tokio_runtime: tokio::runtime::Builder::new_multi_thread()
-                .worker_threads(4)
+                .worker_threads(thread_num)
                 .enable_all()
                 .build()
                 .unwrap(),
@@ -259,12 +273,18 @@ impl RpcServerImpl {
         }
     }
 
+    /// Start the service with a tab map.
+    ///
+    /// If the server is already running, return an error.
     pub fn start_service(
         &mut self,
         cur_tab_name: String,
         tab_map: Ptr<TabMap>,
     ) -> Result<(), Box<dyn std::error::Error>> {
         self.shared_handler.lock().unwrap().map_state = Mutex::new((cur_tab_name, Some(tab_map)));
+        if self.is_running() {
+            return Err("Server already running".into());
+        }
         self.start()?;
         Ok(())
     }
@@ -273,30 +293,59 @@ impl RpcServerImpl {
         self.stop();
     }
 
-    pub fn change_port(&mut self, port: u16) -> Result<(), Box<dyn std::error::Error>> {
-        self.stop();
+    /// Set the port for the server.
+    ///
+    /// If the server is already running, return an error.
+    pub fn set_port(&mut self, port: u16) -> Result<(), Box<dyn std::error::Error>> {
+        if self.is_running() {
+            return Err("Server already running".into());
+        }
         self.port = port;
-        self.start()?;
         Ok(())
     }
 
-    pub fn change_password(&mut self, new_password: &str) -> bool {
+    /// Change the password for the server.
+    pub fn change_password(&mut self, new_password: &str) {
         let handler = self.shared_handler.lock().unwrap();
         handler.change_password(new_password);
-        true
+    }
+
+    /// Check if the server is running.
+    pub fn is_running(&self) -> bool {
+        self.server_handle.is_some()
+    }
+
+    /// Get the port of the server.
+    pub fn get_port(&self) -> u16 {
+        self.port
+    }
+
+    /// Update the host cursor position.
+    ///
+    /// - `row`: The row of the cursor.
+    /// - `col`: The column of the cursor.
+    /// TODO:  add out of range check
+    pub fn udpate_host_cursor(&mut self, row: u64, col: u64) {
+        self.shared_handler
+            .lock()
+            .unwrap()
+            .udpate_host_cursor(row, col);
     }
 }
 
 impl Default for RpcServerImpl {
     fn default() -> Self {
-        Self::default()
+        Self::default(8)
     }
 }
 
 impl RpcServer for RpcServerImpl {
-    fn start(&mut self) -> Result<(), Box<dyn std::error::Error>> {
-        let addr = format!("0.0.0.0:{:?}", self.port).parse().unwrap();
-        println!("Server listening on: {:?}", addr);
+    fn start(&mut self) -> Result<(), Box<dyn Error>> {
+        if self.server_handle.is_some() {
+            return Err("Server already running".into());
+        }
+        let addr = format!("0.0.0.0:{}", self.port).parse().unwrap();
+        debug_eprintln!("Server listening on: {}", addr);
         let handler = Arc::clone(&self.shared_handler);
 
         let server_handle = self.tokio_runtime.spawn(async move {

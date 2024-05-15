@@ -1,2 +1,2 @@
-imports_granularity = "module"
+imports_granularity = "Module"
 wrap_comments = true

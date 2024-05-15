@@ -24,7 +24,7 @@ macro_rules! create_menu {
     ($($module:ident),*) => {
         pub fn init_menu() -> Menu {
             Menu::with_items([
-                $(  $module::new().into(), )+
+                $(  $module::new().into(), )*
             ])
         }
 

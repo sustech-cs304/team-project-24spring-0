@@ -158,8 +158,12 @@ fn close_handler(event: &WindowMenuEvent) {
     let tab_map = window.state::<TabMap>();
     let name = get_current_tab_name(event);
     let mut lock = tab_map.tabs.lock().unwrap();
-    let mut tab = lock.get_mut(&name).unwrap();
-    dirty_close_checker(event, &name, &mut tab);
+    match lock.get_mut(&name) {
+        Some(tab) => {
+            dirty_close_checker(event, &name, tab);
+        }
+        None => {}
+    }
 }
 
 /// Iterate all tabs, check if each tab is dirty, if so, display a dialog to ask
@@ -175,6 +179,7 @@ fn exit_handler(event: &WindowMenuEvent) {
     for (name, tab) in lock.iter_mut() {
         dirty_close_checker(event, name, tab);
     }
+    window.app_handle().exit(0);
 }
 
 /// Create a new tab with the file in provided file path

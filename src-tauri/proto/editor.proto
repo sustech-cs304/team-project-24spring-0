@@ -31,7 +31,9 @@ message AuthorizeRequest{
 
 message AuthorizeReply{
     bool success = 1;
-    string file = 2;
+    string fileName = 2;
+    uint64 version = 3;
+    string content = 4;
 }
 
 message DisconnectRequest{
@@ -44,7 +46,7 @@ message DisconnectReply{
 message SetCursorRequest{
     string file = 1;
     uint64 row = 2;
-    uint64 column = 3;
+    uint64 col = 3;
 }
 
 message SetCursorReply{
@@ -52,12 +54,11 @@ message SetCursorReply{
 }
 
 message GetContentRequest{
-    string hash = 1;
+    uint64 version = 1;
 }
 
 message GetContentReply{
-    bool need_update = 1;
-    string content = 2;
+    repeated UpdateContentRequest history = 1;
 }
 
 message UpdateContentRequest{
