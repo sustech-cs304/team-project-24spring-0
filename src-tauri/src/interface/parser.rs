@@ -1,5 +1,3 @@
-use serde::Serialize;
-
 pub trait Parser<IS>: Send + Sync
 where
     IS: ParserInstSet,
@@ -17,7 +15,7 @@ where
     type Operand;
 }
 
-#[derive(Serialize, Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Pos(pub usize, pub usize);
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -29,7 +27,7 @@ where
     pub text: Vec<ParserResultText<IS>>,
 }
 
-#[derive(Serialize, Clone, Debug)]
+#[derive(Clone, Debug)]
 pub struct ParserError {
     pub pos: Pos,
     pub msg: String,

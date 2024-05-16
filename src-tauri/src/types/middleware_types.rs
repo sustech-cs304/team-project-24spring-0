@@ -1,5 +1,5 @@
-use crate::interface::assembler::Assembler;
-use crate::interface::parser::{Parser, ParserError};
+use crate::interface::assembler::{Assembler, InstructionSet as AssemblerResult};
+use crate::interface::parser::{Parser, ParserError, ParserResult};
 use crate::interface::simulator::Simulator;
 use crate::interface::storage::MFile;
 use crate::modules::riscv::basic::interface::parser::RISCV;
@@ -13,8 +13,10 @@ use strum_macros::{Display, EnumMessage};
 pub struct Tab {
     pub text: Box<dyn MFile<String>>,
     pub parser: Box<dyn Parser<RISCV>>,
-    //pub assembler: Box<dyn Assembler<i32, i32, i32, i32>>,
+    pub assembler: Box<dyn Assembler<RISCV>>,
     //pub simulator: Box<dyn Simulator<i32, i32, i32, i32>>,
+    pub parser_result: Option<ParserResult<RISCV>>,
+    pub assemble_result: Option<Vec<AssemblerResult<RISCV>>>,
 }
 
 #[derive(Default)]
@@ -40,9 +42,21 @@ pub struct TextPosition {
 }
 
 #[derive(Clone, Serialize)]
-pub struct AssembleResult {
-    pub success: bool,
-    pub error: Vec<ParserError>,
+pub enum AssembleResult {
+    Success(Vec<AssembleSuccess>),
+    Error(Vec<AssembleError>),
+}
+
+#[derive(Clone, Serialize)]
+pub struct AssembleSuccess {
+    // TODO
+}
+
+#[derive(Clone, Serialize)]
+pub struct AssembleError {
+    pub line: u64,
+    pub column: u64,
+    pub msg: String,
 }
 
 #[derive(Clone, Serialize)]

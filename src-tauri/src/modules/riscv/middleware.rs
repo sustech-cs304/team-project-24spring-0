@@ -2,6 +2,7 @@
 /// Could be used by `invoke`
 pub mod frontend_api {
     use crate::io::file_io;
+    use crate::modules::riscv::basic::interface::assemble::RiscVAssembler;
     use crate::modules::riscv::basic::interface::parser::{RISCVExtension, RISCVParser};
     use crate::storage::rope_store;
     use crate::types::middleware_types::{
@@ -29,6 +30,9 @@ pub mod frontend_api {
                 let tab = Tab {
                     text: Box::new(content),
                     parser: Box::new(RISCVParser::new(&vec![RISCVExtension::RV32I])),
+                    assembler: Box::new(RiscVAssembler::new()),
+                    parser_result: None,
+                    assemble_result: None,
                 };
                 tab_map
                     .tabs
@@ -224,16 +228,6 @@ pub mod frontend_api {
         let mut lock = tab_map.tabs.lock().unwrap();
         let tab = lock.get_mut(&name).unwrap();
         todo!("Implement assembler operation");
-        match tab.parser.parse(tab.text.to_string()) {
-            Ok(ir) => AssembleResult {
-                success: true,
-                error: Default::default(),
-            },
-            Err(e) => AssembleResult {
-                success: false,
-                error: e,
-            },
-        }
     }
 
     /// Placeholder for a function to dump data from all tabs.

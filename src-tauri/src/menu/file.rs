@@ -1,5 +1,6 @@
 use super::display_dialog;
 use crate::io::file_io;
+use crate::modules::riscv::basic::interface::assemble::RiscVAssembler;
 use crate::modules::riscv::basic::interface::parser::{RISCVExtension, RISCVParser};
 use crate::storage::rope_store;
 use crate::types::menu_types;
@@ -188,8 +189,10 @@ fn new_tab(event: &WindowMenuEvent, file_path: &Path) -> Option<String> {
             let tab = Tab {
                 text: Box::new(content),
                 parser: Box::new(RISCVParser::new(&vec![RISCVExtension::RV32I])),
-                //assembler: Box::new(Default::default()),
+                assembler: Box::new(RiscVAssembler::new()),
                 //simulator: Box::new(Default::default()),
+                parser_result: None,
+                assemble_result: None,
             };
             tab_map
                 .tabs
