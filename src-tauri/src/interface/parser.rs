@@ -33,11 +33,7 @@ pub struct ParserError {
     pub msg: String,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum ParserResultData {
-    Data(Vec<u8>),
-    Align(u8),
-}
+pub type ParserResultData = u8;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ParserResultText<IS>
@@ -67,29 +63,16 @@ where
             "ParserResult {\n\
             data:\n",
         )?;
-        for (i, d) in self.data.iter().enumerate() {
-            write!(f, "{:3} {}\n", i + 1, d.to_string())?;
+        f.write_str("     0x")?;
+        for &d in &self.data {
+            write!(f, "{:02x}", d)?;
         }
+        f.write_str("\n")?;
         f.write_str("text:\n")?;
         for (i, t) in self.text.iter().enumerate() {
             write!(f, "{:3} {}\n", i + 1, t.to_string())?;
         }
         Ok(())
-    }
-}
-
-impl std::fmt::Display for ParserResultData {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            ParserResultData::Data(data) => {
-                f.write_str("Data: 0x")?;
-                for d in data {
-                    write!(f, "{:02x}", d)?;
-                }
-                Ok(())
-            }
-            ParserResultData::Align(a) => write!(f, "Align {}", a),
-        }
     }
 }
 

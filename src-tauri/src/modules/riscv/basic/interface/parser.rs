@@ -8,7 +8,6 @@ pub use super::super::parser::parser::RISCVParser;
 pub use crate::interface::parser::*;
 
 pub const MAX_DATA_SIZE: usize = 0xf_ffff;
-pub const DATA_CHUNK_RECOMMEND_SIZE: usize = 0x7ff;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct RISCV;
@@ -50,9 +49,9 @@ pub enum ParserRISCVInstOpd {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ParserRISCVLabel {
-    Text(usize),          // ParserResult<RISCV>::text[usize]
-    Data((usize, usize)), // ParserResult<RISCV>::data[usize][usize]
-    Unknown(Pos),         // the label position in the code (mustn't exist in the output)
+    Text(usize),  // ParserResult<RISCV>::text[usize]
+    Data(usize),  // ParserResult<RISCV>::data[usize]
+    Unknown(Pos), // the label position in the code (mustn't exist in the output)
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

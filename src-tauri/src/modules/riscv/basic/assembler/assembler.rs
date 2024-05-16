@@ -309,30 +309,30 @@ impl Assembler<RISCV> for RiscVAssembler {
         let mut text_segment = Vec::new();
         let mut error: Vec<AssemblyError> = Vec::new();
         for element in data {
-            match element {
-                ParserResultData::Data(data) => {
-                    for chunk in data.chunks(4) {
-                        let mut line = String::new();
-                        for e in chunk.iter().rev() {
-                            line.push_str(&format!("{:08b}", e));
-                        }
-                        data_segment.push(line);
-                    }
-                }
-                ParserResultData::Align(power) => {
-                    for _ in 0..(DATA + data_segment.len() as i32 * 4) % 2_i32.pow(power as u32) {
-                        if let Some(last) = data_segment.last_mut() {
-                            if last.len() < 32 {
-                                last.insert_str(0, "00");
-                            } else {
-                                let mut line = String::new();
-                                line.push_str("00");
-                                data_segment.push(line);
-                            }
-                        }
-                    }
-                }
-            }
+            // match element {
+            //     ParserResultData::Data(data) => {
+            //         for chunk in data.chunks(4) {
+            //             let mut line = String::new();
+            //             for e in chunk.iter().rev() {
+            //                 line.push_str(&format!("{:08b}", e));
+            //             }
+            //             data_segment.push(line);
+            //         }
+            //     }
+            //     ParserResultData::Align(power) => {
+            //         for _ in 0..(DATA + data_segment.len() as i32 * 4) %
+            // 2_i32.pow(power as u32) {             if let
+            // Some(last) = data_segment.last_mut() {               
+            // if last.len() < 32 {                     
+            // last.insert_str(0, "00");                 } else {
+            //                     let mut line = String::new();
+            //                     line.push_str("00");
+            //                     data_segment.push(line);
+            //                 }
+            //             }
+            //         }
+            //     }
+            // }
         }
         let remaining_size = 1024 - data_segment.len() % 1024;
         for _ in 0..remaining_size {
