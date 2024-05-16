@@ -2,12 +2,13 @@
 pub mod client;
 /// Server module for p2p text editor
 pub mod server;
+pub mod utils;
+
+use std::{cmp::Ordering, collections::LinkedList, net::SocketAddr};
+
+use server::editor_rpc::OperationType;
 
 use crate::middleware_types::TextPosition;
-use server::editor_rpc::OperationType;
-use std::cmp::Ordering;
-use std::collections::LinkedList;
-use std::net::SocketAddr;
 
 struct History {
     version: u64,

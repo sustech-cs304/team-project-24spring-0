@@ -1,10 +1,10 @@
 use std::io::Write;
 
 use super::super::parser::parser::RISCVSymbolList;
-
-pub use super::super::super::rv32f::constants::*;
-pub use super::super::super::rv32i::constants::*;
-pub use super::super::parser::parser::RISCVParser;
+pub use super::super::{
+    super::{rv32f::constants::*, rv32i::constants::*},
+    parser::parser::RISCVParser,
+};
 pub use crate::interface::parser::*;
 
 pub const MAX_DATA_SIZE: usize = 0xf_ffff;

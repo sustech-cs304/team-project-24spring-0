@@ -1,8 +1,18 @@
-use crate::modules::riscv::basic::assembler::basic::{
-    BOpcode, IOpcode, ImmediateFormatter, JOpcode, Opcode, PackedInstruction, R4Opcode, ROpcode,
-    SOpcode, UOpcode,
+use crate::modules::riscv::basic::assembler::{
+    basic::{
+        BOpcode,
+        IOpcode,
+        ImmediateFormatter,
+        JOpcode,
+        Opcode,
+        PackedInstruction,
+        R4Opcode,
+        ROpcode,
+        SOpcode,
+        UOpcode,
+    },
+    riscv::*,
 };
-use crate::modules::riscv::basic::assembler::riscv::*;
 
 pub struct RV32F {}
 

@@ -1,10 +1,20 @@
-use crate::interface::assembler::Operand;
-use crate::modules::riscv::basic::assembler::assembler::{DATA, MAIN};
-use crate::modules::riscv::basic::interface::parser::{
-    ParserRISCVImmediate, ParserRISCVLabel, ParserRISCVRegister, DATA_CHUNK_RECOMMEND_SIZE, RISCV,
+use crate::{
+    interface::assembler::Operand,
+    modules::riscv::{
+        basic::{
+            assembler::assembler::{DATA, MAIN},
+            interface::parser::{
+                ParserRISCVImmediate,
+                ParserRISCVLabel,
+                ParserRISCVRegister,
+                DATA_CHUNK_RECOMMEND_SIZE,
+                RISCV,
+            },
+        },
+        rv32f::constants::RV32FRegister,
+        rv32i::constants::RV32IRegister,
+    },
 };
-use crate::modules::riscv::rv32f::constants::RV32FRegister;
-use crate::modules::riscv::rv32i::constants::RV32IRegister;
 
 impl From<u32> for Operand<RISCV> {
     fn from(opd: u32) -> Self {

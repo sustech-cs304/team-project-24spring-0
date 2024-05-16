@@ -1,22 +1,35 @@
-use super::{ClientCursor, History};
-use crate::interface::remote::RpcServer;
-use crate::types::middleware_types::{CurTabName, Tab, TabMap, TextPosition};
-use crate::utility::ptr::Ptr;
-use editor_rpc::editor_server::{Editor, EditorServer};
-use editor_rpc::OperationType::{Delete, Insert, Replace};
+use std::{
+    collections::LinkedList,
+    error::Error,
+    net::SocketAddr,
+    sync::{atomic, Arc, Mutex},
+};
+
 use editor_rpc::{
-    AuthorizeReply, AuthorizeRequest, DisconnectReply, DisconnectRequest, GetContentReply,
-    GetContentRequest, OperationType, SetCursorReply, SetCursorRequest, UpdateContentReply,
+    editor_server::{Editor, EditorServer},
+    AuthorizeReply,
+    AuthorizeRequest,
+    DisconnectReply,
+    DisconnectRequest,
+    GetContentReply,
+    GetContentRequest,
+    OperationType,
+    OperationType::{Delete, Insert, Replace},
+    SetCursorReply,
+    SetCursorRequest,
+    UpdateContentReply,
     UpdateContentRequest,
 };
-use std::collections::LinkedList;
-use std::error::Error;
-use std::net::SocketAddr;
-use std::sync::{atomic, Arc, Mutex};
 use tauri::utils::debug_eprintln;
 use tokio::task::JoinHandle;
-use tonic::transport::Server;
-use tonic::{Request, Response, Status};
+use tonic::{transport::Server, Request, Response, Status};
+
+use super::{ClientCursor, History};
+use crate::{
+    interface::remote::RpcServer,
+    types::middleware_types::{CurTabName, Tab, TabMap, TextPosition},
+    utility::ptr::Ptr,
+};
 
 pub mod editor_rpc {
     tonic::include_proto!("editor");
@@ -253,7 +266,7 @@ impl Editor for Arc<Mutex<ServerHandle>> {
 }
 
 pub struct RpcServerImpl {
-    port: u16,
+    port: u16, //TODO: add mutex or use atomic
     tokio_runtime: tokio::runtime::Runtime,
     server_handle: Option<JoinHandle<()>>,
     shared_handler: Arc<Mutex<ServerHandle>>,

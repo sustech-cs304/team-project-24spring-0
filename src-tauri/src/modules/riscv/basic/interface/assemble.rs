@@ -1,6 +1,9 @@
-use crate::interface::assembler::{InstructionSet, InstructionSetTrait, Operand};
-use crate::modules::riscv::basic::interface::parser::*;
 use std::fmt::Display;
+
+use crate::{
+    interface::assembler::{InstructionSet, InstructionSetTrait, Operand},
+    modules::riscv::basic::interface::parser::*,
+};
 
 impl InstructionSetTrait for RISCV {
     type Register = ParserRISCVRegister;

@@ -1,8 +1,11 @@
+use std::{
+    collections::LinkedList,
+    error::Error,
+    net::{Ipv4Addr, SocketAddrV4, TcpListener},
+    str::FromStr,
+};
+
 use rand::random;
-use std::collections::LinkedList;
-use std::error::Error;
-use std::net::{Ipv4Addr, SocketAddrV4, TcpListener};
-use std::str::FromStr;
 
 pub fn lines(content: &str) -> usize {
     let mut line_count: usize = 0;

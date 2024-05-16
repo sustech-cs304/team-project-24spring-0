@@ -3,8 +3,11 @@ mod help;
 mod setting;
 mod test;
 
-use tauri::api::dialog::{MessageDialogBuilder, MessageDialogButtons, MessageDialogKind};
-use tauri::{Menu, WindowMenuEvent};
+use tauri::{
+    api::dialog::{MessageDialogBuilder, MessageDialogButtons, MessageDialogKind},
+    Menu,
+    WindowMenuEvent,
+};
 
 fn display_dialog(
     kind: MessageDialogKind,

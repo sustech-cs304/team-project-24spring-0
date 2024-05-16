@@ -1,5 +1,6 @@
-use crate::interface::parser::{ParserInstSet, ParserResult};
 use std::fmt::Display;
+
+use crate::interface::parser::{ParserInstSet, ParserResult};
 
 pub trait Assembler<IS>: Send + Sync
 where

@@ -2,11 +2,13 @@ use std::collections::{BTreeMap, HashMap};
 
 use logos::Logos;
 
-use super::super::interface::parser::*;
-use super::label::LabelData;
-use super::lexer::{LexerIter, RISCVOpToken, RISCVToken, Symbol};
-use super::oplist::{RISCVExpectImm, RISCVExpectToken, RISCVOpdSetAim, RISCVOpdSetAimOpd};
-use super::r#macro::MacroData;
+use super::{
+    super::interface::parser::*,
+    label::LabelData,
+    lexer::{LexerIter, RISCVOpToken, RISCVToken, Symbol},
+    oplist::{RISCVExpectImm, RISCVExpectToken, RISCVOpdSetAim, RISCVOpdSetAimOpd},
+    r#macro::MacroData,
+};
 use crate::utility::ptr::Ptr;
 
 pub struct RISCVParser {

@@ -1,5 +1,6 @@
-use crate::APP_HANDLE;
 use tauri::{CustomMenuItem, Manager, Menu, Submenu, WindowMenuEvent};
+
+use crate::APP_HANDLE;
 
 pub fn new() -> Submenu {
     Submenu::new(

@@ -1,15 +1,24 @@
 /// This module provides API functions for the frontend. Could be used by
 /// `invoke` in EMCAScript
 pub mod frontend_api {
-    use crate::io::file_io;
-    use crate::modules::riscv::basic::interface::parser::{RISCVExtension, RISCVParser};
-    use crate::storage::rope_store;
-    use crate::types::middleware_types::{
-        AssembleResult, AssemblerConfig, CurTabName, Optional, SyscallDataType, Tab, TabMap,
-        TextPosition,
-    };
-    use crate::utility::ptr::Ptr;
     use tauri::State;
+
+    use crate::{
+        io::file_io,
+        modules::riscv::basic::interface::parser::{RISCVExtension, RISCVParser},
+        storage::rope_store,
+        types::middleware_types::{
+            AssembleResult,
+            AssemblerConfig,
+            CurTabName,
+            Optional,
+            SyscallDataType,
+            Tab,
+            TabMap,
+            TextPosition,
+        },
+        utility::ptr::Ptr,
+    };
 
     /// Creates a new tab with content loaded from a specified file path.
     /// - `tab_map`: Current state of all open tabs.
@@ -444,9 +453,12 @@ pub mod frontend_api {
 /// to emit event to the frontend, and the frontend needs to handle the event by
 /// `listen`.
 pub mod backend_api {
-    use crate::types::middleware_types::{SyscallDataType, SyscallOutput, SyscallRequest};
-    use crate::APP_HANDLE;
     use tauri::Manager;
+
+    use crate::{
+        types::middleware_types::{SyscallDataType, SyscallOutput, SyscallRequest},
+        APP_HANDLE,
+    };
 
     /// Emits a print syscall output event to the frontend.
     /// - `pathname`: Identifier for the tab to which the output should be sent.

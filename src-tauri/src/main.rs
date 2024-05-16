@@ -11,7 +11,6 @@
 )]
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 #![feature(linked_list_cursors)]
-mod assembler;
 mod interface;
 mod io;
 mod menu;
@@ -22,9 +21,10 @@ mod tests;
 mod types;
 mod utility;
 
+use std::sync::{Arc, Mutex};
+
 use modules::riscv::middleware::frontend_api;
 use once_cell::sync::Lazy;
-use std::sync::{Arc, Mutex};
 use tauri::{AppHandle, Manager};
 use types::middleware_types;
 

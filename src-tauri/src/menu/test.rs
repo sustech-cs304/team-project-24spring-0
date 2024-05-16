@@ -1,8 +1,9 @@
-use tauri::api::dialog::ask;
-use tauri::{CustomMenuItem, Manager, Menu, Submenu, WindowMenuEvent};
+use tauri::{api::dialog::ask, CustomMenuItem, Manager, Menu, Submenu, WindowMenuEvent};
 
-use crate::modules::riscv::middleware::frontend_api::{start_rpc_server, stop_rpc_server};
-use crate::types::middleware_types::{CurTabName, TabMap};
+use crate::{
+    modules::riscv::middleware::frontend_api::{start_rpc_server, stop_rpc_server},
+    types::middleware_types::{CurTabName, TabMap},
+};
 
 pub fn new() -> Submenu {
     Submenu::new(
