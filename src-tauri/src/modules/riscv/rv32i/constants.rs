@@ -1,6 +1,8 @@
 use once_cell::sync::Lazy;
 use strum::{Display, EnumString, IntoStaticStr, VariantArray};
 
+use crate::utility::enum_map::EnumMap;
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, VariantArray, EnumString, Display)]
 pub enum RV32IRegister {
     #[strum(to_string = "zero", serialize = "zero", serialize = "x0")]
@@ -134,21 +136,12 @@ pub static RV32I_REGISTER_VALID_NAME: [&'static str; 65] = [
     "x25", "x26", "x27", "x28", "x29", "x30", "x31",
 ];
 
-pub static RV32I_REGISTER_DEFAULT_NAME: Lazy<Vec<(RV32IRegister, String)>> = Lazy::new(|| {
-    RV32IRegister::VARIANTS
-        .iter()
-        .map(|&reg| (reg, reg.to_string()))
-        .collect()
-});
+pub static RV32I_REGISTER_DEFAULT_NAME: Lazy<EnumMap<RV32IRegister, String>> =
+    Lazy::new(|| EnumMap::new(RV32IRegister::VARIANTS, |&reg| (reg, reg.to_string())));
 
 impl From<RV32IRegister> for &'static str {
     fn from(value: RV32IRegister) -> Self {
-        for reg in RV32I_REGISTER_DEFAULT_NAME.iter() {
-            if reg.0 == value {
-                return reg.1.as_str();
-            }
-        }
-        unreachable!();
+        RV32I_REGISTER_DEFAULT_NAME.get(value)
     }
 }
 
