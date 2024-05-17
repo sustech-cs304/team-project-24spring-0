@@ -5,10 +5,8 @@ pub trait Assembler<IS>: Send + Sync
 where
     IS: ParserInstSet + InstructionSetTrait,
 {
-    fn assemble(
-        &mut self,
-        ast: ParserResult<IS>,
-    ) -> Result<AssembleResult<IS>, Vec<AssemblyError>>;
+    fn assemble(&mut self, ast: ParserResult<IS>)
+        -> Result<AssembleResult<IS>, Vec<AssemblyError>>;
     fn dump(&mut self, ast: ParserResult<IS>) -> Result<Memory, Vec<AssemblyError>>;
 }
 
