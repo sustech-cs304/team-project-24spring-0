@@ -176,7 +176,7 @@ impl Editor for Arc<Mutex<ServerHandle>> {
             let mut cursor_lock = handler.cursor_pos.lock().unwrap();
             success = list_check_and_del::<CursorCMP>(
                 &mut cursor_lock,
-                ClientCursor {
+                &ClientCursor {
                     ip: request.remote_addr().unwrap(),
                     row: 0,
                     col: 0,

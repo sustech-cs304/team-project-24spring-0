@@ -5,6 +5,8 @@ pub mod server;
 /// Utils module for p2p text editor
 pub mod utils;
 
+mod test;
+
 use std::{cmp::Ordering, collections::LinkedList, net::SocketAddr};
 
 use server::editor_rpc::{ContentPosition, OperationType, Pos, UpdateContentRequest};
@@ -31,7 +33,7 @@ struct History {
     modified_content: String,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 struct ClientCursor {
     ip: SocketAddr,
     row: u64,
@@ -94,5 +96,14 @@ impl PartialOrd for CursorCMP {
                 .then(self.0.col.cmp(&other.0.col))
                 .then(self.0.ip.cmp(&other.0.ip)),
         )
+    }
+}
+impl Ord for CursorCMP {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.0
+            .row
+            .cmp(&other.0.row)
+            .then(self.0.col.cmp(&other.0.col))
+            .then(self.0.ip.cmp(&other.0.ip))
     }
 }

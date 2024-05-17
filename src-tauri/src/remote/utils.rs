@@ -1,6 +1,7 @@
 use std::{
     collections::LinkedList,
     error::Error,
+    fmt::Debug,
     net::{Ipv4Addr, SocketAddrV4, TcpListener},
     str::FromStr,
 };
@@ -25,36 +26,42 @@ pub fn get_free_port(ip: Ipv4Addr, try_times: usize) -> Result<u16, Box<dyn Erro
 
 fn list_insert_asc<C>(list: &mut LinkedList<C::Type>, value: C::Type)
 where
-    C: PartialOrd + GetCmpType,
+    C: Ord + GetCmpType,
+    C::Type: Debug,
 {
     let mut cursor = list.cursor_front_mut();
     loop {
         match cursor.current() {
-            Some(current_value) if C::new(current_value) >= C::new(&value) => {
-                cursor.insert_before(value);
-                break;
+            Some(v) => {
+                if C::new(v) > C::new(&value) {
+                    cursor.insert_before(value);
+                    return;
+                }
+                cursor.move_next();
             }
-            Some(_) => cursor.move_next(),
             None => {
-                cursor.insert_after(value);
-                break;
+                cursor.insert_before(value);
+                return;
             }
         }
     }
 }
 
-pub fn list_check_and_del<C>(list: &mut LinkedList<C::Type>, value: C::Type) -> bool
+pub fn list_check_and_del<C>(list: &mut LinkedList<C::Type>, value: &C::Type) -> bool
 where
-    C: Eq + GetCmpType,
+    C: PartialEq + GetCmpType,
+    C::Type: Debug,
 {
     let mut cursor = list.cursor_front_mut();
     loop {
         match cursor.current() {
-            Some(current_value) if C::new(current_value) == C::new(&value) => {
-                cursor.remove_current();
-                return true;
+            Some(v) => {
+                if C::new(v) == C::new(&value) {
+                    cursor.remove_current();
+                    return true;
+                }
+                cursor.move_next();
             }
-            Some(_) => cursor.move_next(),
             None => return false,
         }
     }
@@ -62,15 +69,18 @@ where
 
 fn list_check<C>(list: &mut LinkedList<C::Type>, value: &C::Type) -> bool
 where
-    C: Eq + GetCmpType,
+    C: PartialEq + GetCmpType,
+    C::Type: Debug,
 {
     let mut cursor = list.cursor_front_mut();
     loop {
         match cursor.current() {
-            Some(current_value) if C::new(current_value) == C::new(value) => {
-                return true;
+            Some(v) => {
+                if C::new(v) == C::new(value) {
+                    return true;
+                }
+                cursor.move_next();
             }
-            Some(_) => cursor.move_next(),
             None => return false,
         }
     }
@@ -78,17 +88,9 @@ where
 
 pub fn list_insert_or_replace_asc<C>(list: &mut LinkedList<C::Type>, value: C::Type)
 where
-    C: PartialOrd + Eq + GetCmpType,
+    C: Ord + Eq + GetCmpType,
+    C::Type: Debug,
 {
-    let mut cursor = list.cursor_front_mut();
-    loop {
-        match cursor.current() {
-            Some(current_value) if C::new(current_value) == C::new(&value) => {
-                cursor.remove_current();
-            }
-            Some(_) => cursor.move_next(),
-            None => break,
-        }
-    }
+    list_check_and_del::<C>(list, &value);
     list_insert_asc::<C>(list, value);
 }
