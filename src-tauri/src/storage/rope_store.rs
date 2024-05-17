@@ -40,6 +40,10 @@ impl MFile<String> for Text {
         }
     }
 
+    fn get_path(&self) -> &std::path::PathBuf {
+        &self.path
+    }
+
     //https://docs.rs/ropey/latest/ropey/index.html
 }
 

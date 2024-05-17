@@ -1,5 +1,5 @@
-use crate::interface::assembler::{Assembler, InstructionSet as AssemblerResult};
-use crate::interface::parser::{Parser, ParserError, ParserResult};
+use crate::interface::assembler::{AssembleResult as AssemblerResult, Assembler};
+use crate::interface::parser::{Parser, ParserResult};
 use crate::interface::simulator::Simulator;
 use crate::interface::storage::MFile;
 use crate::modules::riscv::basic::interface::parser::RISCV;
@@ -15,8 +15,8 @@ pub struct Tab {
     pub parser: Box<dyn Parser<RISCV>>,
     pub assembler: Box<dyn Assembler<RISCV>>,
     //pub simulator: Box<dyn Simulator<i32, i32, i32, i32>>,
-    pub parser_result: Option<ParserResult<RISCV>>,
-    pub assemble_result: Option<Vec<AssemblerResult<RISCV>>>,
+    pub parser_result: (Option<ParserResult<RISCV>>, Option<Vec<AssembleError>>),
+    pub assemble_result: (Option<AssemblerResult<RISCV>>, Option<AssembleResult>),
 }
 
 #[derive(Default)]
@@ -43,14 +43,31 @@ pub struct TextPosition {
 
 #[derive(Clone, Serialize)]
 pub enum AssembleResult {
-    Success(Vec<AssembleSuccess>),
+    Success(AssembleSuccess),
+    Error(Vec<AssembleError>),
+}
+
+#[derive(Clone, Serialize)]
+pub enum DumpResult {
+    Success(()),
     Error(Vec<AssembleError>),
 }
 
 #[derive(Clone, Serialize)]
 pub struct AssembleSuccess {
-    // TODO
+    pub data: Vec<AssembleSuccessData>,
+    pub text: Vec<AssembleSuccessText>,
 }
+
+#[derive(Clone, Serialize)]
+pub struct AssembleSuccessText {
+    pub line: u64,
+    pub address: u32,
+    pub code: u32,
+    pub basic: String,
+}
+
+pub type AssembleSuccessData = u32;
 
 #[derive(Clone, Serialize)]
 pub struct AssembleError {

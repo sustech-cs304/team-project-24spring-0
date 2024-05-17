@@ -8,4 +8,6 @@ pub trait MFile<ERR>: Send + Sync {
     fn save(&mut self) -> Option<ERR>;
 
     fn update_content(&mut self, content: &str);
+
+    fn get_path(&self) -> &std::path::PathBuf;
 }

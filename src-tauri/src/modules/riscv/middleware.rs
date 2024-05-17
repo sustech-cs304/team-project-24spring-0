@@ -5,10 +5,7 @@ pub mod frontend_api {
     use crate::modules::riscv::basic::interface::assembler::RiscVAssembler;
     use crate::modules::riscv::basic::interface::parser::{RISCVExtension, RISCVParser};
     use crate::storage::rope_store;
-    use crate::types::middleware_types::{
-        AssembleResult, AssemblerConfig, CurTabName, Optional, SyscallDataType, Tab, TabMap,
-        TextPosition,
-    };
+    use crate::types::middleware_types::*;
     use crate::utility::ptr::Ptr;
     use tauri::State;
 
@@ -31,8 +28,8 @@ pub mod frontend_api {
                     text: Box::new(content),
                     parser: Box::new(RISCVParser::new(&vec![RISCVExtension::RV32I])),
                     assembler: Box::new(RiscVAssembler::new()),
-                    parser_result: None,
-                    assemble_result: None,
+                    parser_result: Default::default(),
+                    assemble_result: Default::default(),
                 };
                 tab_map
                     .tabs
@@ -227,17 +224,115 @@ pub mod frontend_api {
         let name = cur_tab_name.name.lock().unwrap().clone();
         let mut lock = tab_map.tabs.lock().unwrap();
         let tab = lock.get_mut(&name).unwrap();
-        todo!("Implement assembler operation");
+        if tab.parser_result.0.is_none() {
+            if tab.parser_result.1.is_some() {
+                return AssembleResult::Error(tab.parser_result.1.clone().unwrap());
+            }
+            match tab.parser.parse(tab.text.to_string()) {
+                Ok(res) => tab.parser_result.0 = Some(res),
+                Err(mut e) => {
+                    tab.parser_result.1 = Some(
+                        e.iter_mut()
+                            .map(|err| AssembleError {
+                                line: err.pos.0 as u64,
+                                column: err.pos.1 as u64,
+                                msg: std::mem::take(&mut err.msg),
+                            })
+                            .collect(),
+                    );
+                    return AssembleResult::Error(tab.parser_result.1.clone().unwrap());
+                }
+            }
+        }
+        if tab.assemble_result.1.is_none() {
+            match tab.assembler.assemble(tab.parser_result.0.clone().unwrap()) {
+                Ok(res) => {
+                    tab.assemble_result.0 = Some(res.clone());
+                    tab.assemble_result.1 = Some(AssembleResult::Success(AssembleSuccess {
+                        data: res.data,
+                        text: res
+                            .instruction
+                            .iter()
+                            .map(|inst| AssembleSuccessText {
+                                line: inst.line_number + 1,
+                                address: inst.address,
+                                code: inst.code,
+                                basic: Default::default(),
+                            })
+                            .collect(),
+                    }));
+                }
+                Err(mut e) => {
+                    tab.assemble_result.1 = Some(AssembleResult::Error(
+                        e.iter_mut()
+                            .map(|err| AssembleError {
+                                line: err.line as u64,
+                                column: 0,
+                                msg: std::mem::take(&mut err.msg),
+                            })
+                            .collect(),
+                    ));
+                }
+            }
+        }
+        tab.assemble_result.1.clone().unwrap()
     }
 
     /// Placeholder for a function to dump data from all tabs.
     /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: State containing the map of all tabs.
     ///
-    /// Returns `bool` indicating whether the dump was successful.
+    /// Returns `DumpResult` indicating whether the dump was successful.
     #[tauri::command]
-    pub fn dump(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> bool {
-        todo!("Implement dump")
+    pub fn dump(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> DumpResult {
+        let name = cur_tab_name.name.lock().unwrap().clone();
+        let mut lock = tab_map.tabs.lock().unwrap();
+        let tab = lock.get_mut(&name).unwrap();
+        if tab.parser_result.0.is_none() {
+            if tab.parser_result.1.is_some() {
+                return DumpResult::Error(tab.parser_result.1.clone().unwrap());
+            }
+            match tab.parser.parse(tab.text.to_string()) {
+                Ok(res) => tab.parser_result.0 = Some(res),
+                Err(mut e) => {
+                    tab.parser_result.1 = Some(
+                        e.iter_mut()
+                            .map(|err| AssembleError {
+                                line: err.pos.0 as u64,
+                                column: err.pos.1 as u64,
+                                msg: std::mem::take(&mut err.msg),
+                            })
+                            .collect(),
+                    );
+                    return DumpResult::Error(tab.parser_result.1.clone().unwrap());
+                }
+            }
+        }
+        match tab.assembler.dump(tab.parser_result.0.clone().unwrap()) {
+            Ok(mem) => {
+                for (ext, data) in [("text", &mem.text), ("data", &mem.data)] {
+                    if let Some(e) =
+                        file_io::write_file(tab.text.get_path().with_extension(ext).as_path(), data)
+                    {
+                        return DumpResult::Error(vec![AssembleError {
+                            line: 0,
+                            column: 0,
+                            msg: e,
+                        }]);
+                    }
+                }
+                DumpResult::Success(())
+            }
+            Err(mut e) => DumpResult::Error(
+                e.iter_mut()
+                    .map(|err| AssembleError {
+                        line: err.line as u64,
+                        column: 0,
+                        msg: std::mem::take(&mut err.msg),
+                    })
+                    .collect(),
+            ),
+        }
     }
 
     /// Run the code in the currently active tab in normal mode(won't stop at

@@ -1,28 +1,18 @@
-pub trait Parser<IS>: Send + Sync
-where
-    IS: ParserInstSet,
-{
+pub trait Parser<IS: ParserInstSet>: Send + Sync {
     fn parse(&mut self, code: String) -> Result<ParserResult<IS>, Vec<ParserError>>;
 }
 
 // in crate::modules::[instruction_set]::basic::interface::parser
-pub trait ParserInstSet
-where
-    Self::Operator: Clone + std::fmt::Debug + PartialEq + Eq,
-    Self::Operand: Clone + std::fmt::Debug + PartialEq + Eq,
-{
-    type Operator;
-    type Operand;
+pub trait ParserInstSet {
+    type Operator: Clone + std::fmt::Debug + PartialEq + Eq;
+    type Operand: Clone + std::fmt::Debug + PartialEq + Eq;
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Pos(pub usize, pub usize);
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct ParserResult<IS>
-where
-    IS: ParserInstSet,
-{
+pub struct ParserResult<IS: ParserInstSet> {
     pub data: Vec<ParserResultData>,
     pub text: Vec<ParserResultText<IS>>,
 }
@@ -36,28 +26,19 @@ pub struct ParserError {
 pub type ParserResultData = u8;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub enum ParserResultText<IS>
-where
-    IS: ParserInstSet,
-{
+pub enum ParserResultText<IS: ParserInstSet> {
     Text(ParserInst<IS>),
     Align(u8),
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct ParserInst<IS>
-where
-    IS: ParserInstSet,
-{
+pub struct ParserInst<IS: ParserInstSet> {
     pub line: usize,
     pub op: IS::Operator,
     pub opd: Vec<IS::Operand>,
 }
 
-impl<IS> std::fmt::Display for ParserResult<IS>
-where
-    IS: ParserInstSet,
-{
+impl<IS: ParserInstSet> std::fmt::Display for ParserResult<IS> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(
             "ParserResult {\n\
@@ -76,10 +57,7 @@ where
     }
 }
 
-impl<IS> std::fmt::Display for ParserResultText<IS>
-where
-    IS: ParserInstSet,
-{
+impl<IS: ParserInstSet> std::fmt::Display for ParserResultText<IS> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             ParserResultText::Text(inst) => {

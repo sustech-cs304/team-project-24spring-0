@@ -11,15 +11,17 @@ where
 }
 
 pub trait InstructionSetTrait {
-    type Register;
-    type Immediate;
+    type Register: Clone;
+    type Immediate: Clone;
 }
 
+#[derive(Clone)]
 pub struct AssembleResult<IS: ParserInstSet + InstructionSetTrait> {
     pub data: Vec<u32>,
     pub instruction: Vec<InstructionSet<IS>>,
 }
 
+#[derive(Clone)]
 pub struct InstructionSet<IS: ParserInstSet + InstructionSetTrait> {
     pub line_number: u64,
     pub instruction: Instruction<IS>,
@@ -27,11 +29,13 @@ pub struct InstructionSet<IS: ParserInstSet + InstructionSetTrait> {
     pub code: u32,
 }
 
+#[derive(Clone)]
 pub struct Instruction<IS: ParserInstSet + InstructionSetTrait> {
     pub operation: IS::Operator,
     pub operands: Vec<Operand<IS>>,
 }
 
+#[derive(Clone)]
 pub enum Operand<IS: ParserInstSet + InstructionSetTrait> {
     Reg(IS::Register),
     Operator(IS::Immediate),
