@@ -2,7 +2,7 @@
 /// Could be used by `invoke`
 pub mod frontend_api {
     use crate::io::file_io;
-    use crate::modules::riscv::basic::interface::assemble::RiscVAssembler;
+    use crate::modules::riscv::basic::interface::assembler::RiscVAssembler;
     use crate::modules::riscv::basic::interface::parser::{RISCVExtension, RISCVParser};
     use crate::storage::rope_store;
     use crate::types::middleware_types::{

@@ -1,6 +1,6 @@
 use super::display_dialog;
 use crate::io::file_io;
-use crate::modules::riscv::basic::interface::assemble::RiscVAssembler;
+use crate::modules::riscv::basic::interface::assembler::RiscVAssembler;
 use crate::modules::riscv::basic::interface::parser::{RISCVExtension, RISCVParser};
 use crate::storage::rope_store;
 use crate::types::menu_types;
