@@ -125,7 +125,10 @@ L2:
     let assembled_result = riscv_assembler.assemble(ast);
     match assembled_result {
         Ok(res) => {
-            for instruction in res {
+            for data in res.data {
+                println!("0x{:08x}", data);
+            }
+            for instruction in res.instruction {
                 println!("{}", instruction.to_string());
             }
         }

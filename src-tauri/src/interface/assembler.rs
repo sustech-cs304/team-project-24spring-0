@@ -8,7 +8,7 @@ where
     fn assemble(
         &mut self,
         ast: ParserResult<IS>,
-    ) -> Result<Vec<InstructionSet<IS>>, Vec<AssemblyError>>;
+    ) -> Result<AssembleResult<IS>, Vec<AssemblyError>>;
     fn dump(&mut self, ast: ParserResult<IS>) -> Result<Memory, Vec<AssemblyError>>;
 }
 
@@ -17,9 +17,16 @@ pub trait InstructionSetTrait {
     type Immediate;
 }
 
+pub struct AssembleResult<IS: ParserInstSet + InstructionSetTrait> {
+    pub data: Vec<u32>,
+    pub instruction: Vec<InstructionSet<IS>>,
+}
+
 pub struct InstructionSet<IS: ParserInstSet + InstructionSetTrait> {
     pub line_number: u64,
     pub instruction: Instruction<IS>,
+    pub address: u32,
+    pub code: u32,
 }
 
 pub struct Instruction<IS: ParserInstSet + InstructionSetTrait> {
@@ -63,6 +70,8 @@ impl<IS: ParserInstSet + InstructionSetTrait> InstructionSet<IS> {
         InstructionSet {
             line_number: 0,
             instruction: instruction,
+            address: 0,
+            code: 0,
         }
     }
 }
