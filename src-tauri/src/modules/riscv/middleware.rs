@@ -1,7 +1,7 @@
 /// This module provides API functions for the frontend. Could be used by
 /// `invoke` in EMCAScript
 pub mod frontend_api {
-    use tauri::State;
+    use tauri::{utils::debug_eprintln, State};
 
     use crate::{
         io::file_io,
@@ -11,13 +11,16 @@ pub mod frontend_api {
             AssembleResult,
             AssemblerConfig,
             CurTabName,
+            CursorPosition,
             Optional,
             SyscallDataType,
             Tab,
             TabMap,
-            TextPosition,
         },
-        utility::ptr::Ptr,
+        utility::{
+            ptr::Ptr,
+            state_helper::{event::get_current_tab_name, state},
+        },
     };
 
     /// Creates a new tab with content loaded from a specified file path.
@@ -134,7 +137,7 @@ pub mod frontend_api {
     pub fn set_cursor(tab_map: State<TabMap>, filepath: &str, row: u64, col: u64) -> bool {
         let mut server = tab_map.rpc_server.lock().unwrap();
         if server.is_running() {
-            server.udpate_host_cursor(row, col);
+            server.set_host_cursor(row, col);
             true
         } else {
             false
@@ -153,7 +156,7 @@ pub mod frontend_api {
     pub fn insert_in_current_tab(
         cur_tab_name: State<CurTabName>,
         tab_map: State<TabMap>,
-        pos: TextPosition,
+        pos: CursorPosition,
         content: &str,
     ) -> Optional {
         let filepath = cur_tab_name.name.lock().unwrap().clone();
@@ -184,8 +187,8 @@ pub mod frontend_api {
     pub fn delete_in_current_tab(
         cur_tab_name: State<CurTabName>,
         tab_map: State<TabMap>,
-        startPos: TextPosition,
-        endPos: TextPosition,
+        startPos: CursorPosition,
+        endPos: CursorPosition,
     ) -> Optional {
         let filepath = cur_tab_name.name.lock().unwrap().clone();
         todo!("implement delete and live shared check");
@@ -412,28 +415,26 @@ pub mod frontend_api {
             };
         }
         let mut rpc_lock = tab_map.rpc_server.lock().unwrap();
-        match rpc_lock.start_service(
-            cur_tab_name.name.lock().unwrap().clone(),
-            Ptr::new(&tab_map),
-        ) {
-            Ok(()) => {
-                rpc_lock.change_password(password);
-                if let Err(e) = rpc_lock.set_port(port) {
-                    return Optional {
-                        success: false,
-                        message: e.to_string(),
-                    };
-                } else {
-                    return Optional {
-                        success: true,
-                        message: String::new(),
-                    };
-                }
-            }
-            Err(e) => Optional {
+        rpc_lock.stop_service();
+        rpc_lock.change_password(password);
+        if let Err(e) = rpc_lock.set_port(port) {
+            return Optional {
                 success: false,
                 message: e.to_string(),
-            },
+            };
+        } else if let Err(e) = rpc_lock.start_service(
+            state::get_current_tab_name(&cur_tab_name),
+            Ptr::new(&tab_map),
+        ) {
+            return Optional {
+                success: false,
+                message: e.to_string(),
+            };
+        } else {
+            return Optional {
+                success: true,
+                message: String::new(),
+            };
         }
     }
 

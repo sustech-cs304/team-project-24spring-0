@@ -20,7 +20,7 @@ message Pos{
     uint64 col = 2;
 }
 
-message ContentPostion{
+message ContentPosition{
     Pos start = 1;     
     Pos end = 2;
 }
@@ -54,20 +54,23 @@ message SetCursorReply{
 }
 
 message GetContentRequest{
-    uint64 version = 1;
+    bool fullContent = 1;
+    uint64 version = 2;
 }
 
 message GetContentReply{
-    repeated UpdateContentRequest history = 1;
+        repeated UpdateContentRequest history = 1;
+        string fullContent = 2;
 }
 
 message UpdateContentRequest{
-    OperationType op = 1;
-    ContentPostion pos = 2;
-    string content = 3;
+    uint64 version = 1;
+    OperationType op = 2;
+    ContentPosition opRange = 3;
+    string modified_content = 4;
 }
 
 message UpdateContentReply{
     bool success = 1;
-    string content = 2;
+    string message = 2;
 }

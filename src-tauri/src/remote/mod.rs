@@ -2,100 +2,97 @@
 pub mod client;
 /// Server module for p2p text editor
 pub mod server;
+/// Utils module for p2p text editor
 pub mod utils;
 
 use std::{cmp::Ordering, collections::LinkedList, net::SocketAddr};
 
-use server::editor_rpc::OperationType;
+use server::editor_rpc::{ContentPosition, OperationType, Pos, UpdateContentRequest};
 
-use crate::middleware_types::TextPosition;
+use crate::middleware_types::CursorPosition;
 
+pub trait GetCmpType {
+    type Type: Clone;
+
+    fn new(t: &Self::Type) -> Self;
+}
+
+#[derive(Clone)]
+struct OpRange {
+    start: CursorPosition,
+    end: CursorPosition,
+}
+
+#[derive(Clone)]
 struct History {
     version: u64,
     op: OperationType,
-    start: TextPosition,
-    end: TextPosition,
-    content: String,
+    op_range: OpRange,
+    modified_content: String,
 }
 
-#[derive(Eq, PartialOrd)]
+#[derive(Clone)]
 struct ClientCursor {
     ip: SocketAddr,
     row: u64,
     col: u64,
 }
 
-impl Ord for ClientCursor {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.row
-            .cmp(&other.row)
-            .then(self.col.cmp(&other.col))
-            .then(self.ip.cmp(&other.ip))
+struct CursorCMP(ClientCursor);
+
+impl Into<Pos> for CursorPosition {
+    fn into(self) -> Pos {
+        Pos {
+            row: self.row,
+            col: self.col,
+        }
     }
 }
 
-impl PartialEq for ClientCursor {
+impl Into<ContentPosition> for OpRange {
+    fn into(self) -> ContentPosition {
+        ContentPosition {
+            start: Option::Some(self.start.into()),
+            end: Option::Some(self.end.into()),
+        }
+    }
+}
+
+impl Into<UpdateContentRequest> for History {
+    fn into(self) -> UpdateContentRequest {
+        UpdateContentRequest {
+            version: self.version,
+            op: self.op.into(),
+            op_range: Option::Some(self.op_range.into()),
+            modified_content: self.modified_content,
+        }
+    }
+}
+
+impl GetCmpType for CursorCMP {
+    type Type = ClientCursor;
+
+    fn new(t: &Self::Type) -> Self {
+        CursorCMP { 0: t.clone() }
+    }
+}
+
+impl PartialEq for CursorCMP {
     fn eq(&self, other: &Self) -> bool {
-        self.ip == other.ip
+        self.0.ip == other.0.ip
     }
 }
 
-fn list_insert_asc<T>(list: &mut LinkedList<T>, value: T)
-where
-    T: Ord,
-{
-    let mut cursor = list.cursor_front_mut();
-    loop {
-        match cursor.current() {
-            Some(current_value) if *current_value >= value => {
-                cursor.insert_before(value);
-                break;
-            }
-            Some(_) => cursor.move_next(),
-            None => {
-                cursor.insert_after(value);
-                break;
-            }
-        }
-    }
-}
+impl Eq for CursorCMP {}
 
-fn list_check<T>(list: &mut LinkedList<T>, value: &T) -> bool
-where
-    T: Eq,
-{
-    let mut cursor = list.cursor_front_mut();
-    loop {
-        match cursor.current() {
-            Some(current_value) if *current_value == *value => {
-                return true;
-            }
-            Some(_) => cursor.move_next(),
-            None => return false,
-        }
-    }
-}
-
-fn list_insert_or_replace_asc<T>(list: &mut LinkedList<T>, value: T)
-where
-    T: PartialEq + Ord,
-{
-    let mut cursor = list.cursor_front_mut();
-    let mut inserted = false;
-    let mut removed = false;
-    loop {
-        match cursor.current() {
-            Some(current_value) if *current_value >= value => {
-                cursor.insert_before(value);
-                break;
-            }
-            Some(_) => {
-                cursor.move_next();
-            }
-            None => {
-                cursor.insert_after(value);
-                break;
-            }
-        }
+impl PartialOrd for CursorCMP {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Option::Some(
+            self.0
+                .row
+                .cmp(&other.0.row)
+                .then(self.0.col.cmp(&other.0.col))
+                .then(self.0.ip.cmp(&other.0.ip)),
+        )
     }
 }

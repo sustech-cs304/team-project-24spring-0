@@ -40,9 +40,9 @@ pub struct Optional {
 }
 
 #[derive(Clone, Deserialize)]
-pub struct TextPosition {
+pub struct CursorPosition {
     pub row: u64,
-    pub column: u64,
+    pub col: u64,
 }
 
 #[derive(Clone, Serialize)]
