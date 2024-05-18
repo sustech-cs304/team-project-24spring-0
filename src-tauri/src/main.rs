@@ -66,8 +66,9 @@ fn main() {
             frontend_api::remove_breakpoint,
             frontend_api::syscall_input,
             frontend_api::update_assembler_settings,
-            frontend_api::start_rpc_server,
-            frontend_api::stop_rpc_server,
+            frontend_api::start_share_server,
+            frontend_api::stop_share_server,
+            frontend_api::authorize
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
