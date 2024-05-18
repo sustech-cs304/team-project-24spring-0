@@ -7,7 +7,7 @@ pub mod utils;
 
 mod test;
 
-use std::{cmp::Ordering, collections::LinkedList, net::SocketAddr};
+use std::{cmp::Ordering, net::SocketAddr};
 
 use server::editor_rpc::{ContentPosition, OperationType, Pos, UpdateContentRequest};
 

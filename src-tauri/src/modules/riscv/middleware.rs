@@ -1,7 +1,7 @@
 /// This module provides API functions for the frontend. Could be used by
 /// `invoke` in EMCAScript
 pub mod frontend_api {
-    use tauri::{utils::debug_eprintln, State};
+    use tauri::State;
 
     use crate::{
         io::file_io,
@@ -18,10 +18,7 @@ pub mod frontend_api {
             Tab,
             TabMap,
         },
-        utility::{
-            ptr::Ptr,
-            state_helper::{event::get_current_tab_name, state},
-        },
+        utility::{ptr::Ptr, state_helper::state},
     };
 
     /// Creates a new tab with content loaded from a specified file path.

@@ -1,12 +1,8 @@
-use std::{
-    collections::LinkedList,
-    net::{IpAddr, Ipv4Addr, SocketAddr},
-};
+use std::net::{IpAddr, SocketAddr};
 
 use rand::random;
 
-use super::{ClientCursor, CursorCMP, GetCmpType};
-use crate::remote::utils::{list_check_and_del, list_insert_or_replace_asc};
+use super::{ClientCursor, GetCmpType};
 
 fn gen_client_cursor(len: u16, ip: IpAddr) -> Vec<ClientCursor> {
     let mut v: Vec<ClientCursor> = Vec::new();

@@ -1,4 +1,4 @@
-use std::{default, error::Error, path::PathBuf};
+use std::{error::Error, path::PathBuf};
 
 use crate::types::middleware_types::FileOperation;
 
@@ -11,7 +11,7 @@ pub enum FileShareStatus {
 }
 
 pub trait MFile<CON, ERR>: Send + Sync {
-    fn get_path(&self) -> PathBuf;
+    fn get_path(&self) -> &PathBuf;
 
     fn get_path_str(&self) -> String;
 

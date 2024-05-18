@@ -1,15 +1,8 @@
-use std::{
-    net::Ipv4Addr,
-    path::PathBuf,
-    str::FromStr,
-    sync::{Arc, Mutex},
-};
+use std::{net::Ipv4Addr, path::PathBuf, str::FromStr, sync::Mutex};
 
 use once_cell::sync::Lazy;
-use rand::random;
 
 use crate::{
-    interface::remote::RpcClient,
     modules::riscv::basic::interface::parser::{RISCVExtension, RISCVParser},
     remote::{client::RpcClientImpl, server::RpcServerImpl, utils::get_free_port},
     storage::rope_store,

@@ -1,4 +1,7 @@
-use std::path::{Path, PathBuf};
+use std::{
+    path::{Path, PathBuf},
+    time::SystemTime,
+};
 
 use ropey::Rope;
 
@@ -10,14 +13,14 @@ use crate::{
 pub struct Text {
     share_status: FileShareStatus,
     data: Box<Rope>,
-    path: std::path::PathBuf,
+    path: PathBuf,
     dirty: bool,
-    last_modified: std::time::SystemTime,
+    last_modified: SystemTime,
 }
 
 impl MFile<Rope, String> for Text {
-    fn get_path(&self) -> PathBuf {
-        self.path.clone()
+    fn get_path(&self) -> &PathBuf {
+        &self.path
     }
     fn get_path_str(&self) -> String {
         self.path.to_str().unwrap().to_string()
