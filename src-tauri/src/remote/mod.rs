@@ -5,6 +5,7 @@ pub mod server;
 /// Utils module for p2p text editor
 pub mod utils;
 
+#[cfg(test)]
 mod test;
 
 use std::{cmp::Ordering, net::SocketAddr};

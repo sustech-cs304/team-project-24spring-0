@@ -386,7 +386,7 @@ pub mod frontend_api {
     ///
     /// Returns `Optional` indicating the success or failure of the RPC server
     #[tauri::command]
-    pub fn start_rpc_server(
+    pub fn start_share_server(
         cur_tab_name: State<CurTabName>,
         tab_map: State<TabMap>,
         port: u16,
@@ -422,15 +422,39 @@ pub mod frontend_api {
         }
     }
 
-    /// Stops the RPC server for the current tab.
+    /// Authorize and connect to a remote RPC server as client.
+    /// - `cur_tab_name`: State containing the current tab name.
+    /// - `tab_map`: State containing the map of all tabs.
+    /// - `ip`: IPV4 address of the remote server.
+    /// - `port`: Port number of the remote server.
+    /// - `password`: Password to be used for the connection.
+    ///
+    /// Returns `Optional` indicating the success or failure of the connection.
+    #[tauri::command]
+    pub fn authorize(
+        cur_tab_name: State<CurTabName>,
+        tab_map: State<TabMap>,
+        ip: String,
+        port: u16,
+        password: String,
+    ) -> Optional {
+        todo!("Implement authorize as client");
+    }
+
+    /// Stop the share server for the current tab.
     /// - `tab_map`: State containing the map of all tabs.
     ///
-    /// Returns `bool` indicating whether the RPC server was successfully stop.
+    /// Returns `bool` indicating the success or failure, failure means the
+    /// server is not running.
     #[tauri::command]
-    pub fn stop_rpc_server(tab_map: State<TabMap>) -> bool {
-        let mut rpc_lock = tab_map.rpc_server.lock().unwrap();
-        rpc_lock.stop_service();
-        true
+    pub fn stop_share_server(tab_map: State<TabMap>) -> bool {
+        let mut server = tab_map.rpc_server.lock().unwrap();
+        if !server.is_running() {
+            false
+        } else {
+            server.stop_service();
+            true
+        }
     }
 }
 
