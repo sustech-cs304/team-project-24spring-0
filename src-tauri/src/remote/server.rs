@@ -13,14 +13,12 @@ use editor_rpc::{
     DisconnectRequest,
     GetContentReply,
     GetContentRequest,
-    OperationType,
     OperationType::{Delete, Insert, Replace},
     SetCursorReply,
     SetCursorRequest,
     UpdateContentReply,
     UpdateContentRequest,
 };
-use tauri::{api::version, utils::debug_eprintln};
 use tokio::task::JoinHandle;
 use tonic::{transport::Server, Request, Response, Status};
 
@@ -33,7 +31,7 @@ use super::{
 use crate::{
     dprintln,
     interface::remote::RpcServer,
-    types::middleware_types::{CurTabName, CursorPosition, Tab, TabMap},
+    types::middleware_types::{Tab, TabMap},
     utility::ptr::Ptr,
 };
 

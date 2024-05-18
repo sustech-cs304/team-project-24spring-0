@@ -1,5 +1,3 @@
-use super::helper::init_test_server;
-
 static TEST_FILE_CONTENT: &str = r#"
 你说的对，但是《软件工程》是由SUSTech自主研发的一款经典小组合作冒险游戏。
 游戏发生在一个被曾被叫做「SUSTC」的申比世界，在这里，随机组队的你将被授予「祭拜Project」，获得救火之力。

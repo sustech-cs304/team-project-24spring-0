@@ -4,7 +4,7 @@ mod setting;
 mod test;
 
 use tauri::{
-    api::dialog::{MessageDialogBuilder, MessageDialogButtons, MessageDialogKind},
+    api::dialog::{MessageDialogButtons, MessageDialogKind},
     Menu,
     WindowMenuEvent,
 };

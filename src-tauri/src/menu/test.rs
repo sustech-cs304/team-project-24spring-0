@@ -1,4 +1,4 @@
-use tauri::{api::dialog::ask, CustomMenuItem, Manager, Menu, Submenu, WindowMenuEvent};
+use tauri::{CustomMenuItem, Manager, Menu, Submenu, WindowMenuEvent};
 
 use crate::{
     modules::riscv::middleware::frontend_api::{start_rpc_server, stop_rpc_server},

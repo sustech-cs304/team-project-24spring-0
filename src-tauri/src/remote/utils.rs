@@ -3,7 +3,6 @@ use std::{
     error::Error,
     fmt::Debug,
     net::{Ipv4Addr, SocketAddrV4, TcpListener},
-    str::FromStr,
 };
 
 use rand::random;
@@ -11,7 +10,7 @@ use rand::random;
 use super::GetCmpType;
 
 pub fn get_free_port(ip: Ipv4Addr, try_times: usize) -> Result<u16, Box<dyn Error>> {
-    let mut port = random::<u16>();
+    let port = random::<u16>();
     for _ in 0..try_times {
         let addr = SocketAddrV4::new(ip, port);
         match TcpListener::bind(addr) {

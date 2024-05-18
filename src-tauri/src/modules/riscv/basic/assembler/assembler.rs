@@ -2,15 +2,7 @@ use ux::{u12, u20, u5};
 
 use crate::{
     interface::{
-        assembler::{
-            Assembler,
-            AssemblyError,
-            Instruction,
-            InstructionSet,
-            InstructionSetTrait,
-            Memory,
-            Operand,
-        },
+        assembler::{Assembler, AssemblyError, Instruction, InstructionSet, Memory, Operand},
         parser::ParserResult,
     },
     modules::riscv::{
@@ -130,7 +122,7 @@ impl Assembler<RISCV> for RiscVAssembler {
         &mut self,
         ast: ParserResult<RISCV>,
     ) -> Result<Vec<InstructionSet<RISCV>>, Vec<AssemblyError>> {
-        let mut ast = ast;
+        let ast = ast;
         let mut results: Vec<InstructionSet<RISCV>> = Vec::new();
         let mut error: Vec<AssemblyError> = Vec::new();
         for (index, element) in ast.text.iter().enumerate() {

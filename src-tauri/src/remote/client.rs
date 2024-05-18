@@ -1,19 +1,9 @@
 use std::{
     convert::TryFrom,
-    net::{IpAddr, Ipv4Addr, SocketAddr},
+    net::{IpAddr, SocketAddr},
 };
 
-use editor_rpc::{
-    editor_client::EditorClient,
-    AuthorizeReply,
-    AuthorizeRequest,
-    OperationType,
-    OperationType::{Delete, Insert, Replace},
-    SetCursorReply,
-    SetCursorRequest,
-    UpdateContentReply,
-    UpdateContentRequest,
-};
+use editor_rpc::editor_client::EditorClient;
 use tonic::transport::Endpoint;
 
 use crate::interface::remote::RpcClient;
