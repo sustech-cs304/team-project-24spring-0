@@ -16,6 +16,7 @@ mod io;
 mod menu;
 mod modules;
 mod remote;
+mod simulator;
 mod storage;
 mod tests;
 mod types;
