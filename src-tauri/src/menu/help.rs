@@ -21,9 +21,7 @@ fn manual_handler(_event: &WindowMenuEvent) {
         let _window = tauri::WindowBuilder::new(
             app_handle,
             "manual", /* the unique window label */
-            tauri::WindowUrl::External(
-                "http://localhost:3000/riscv-spec-v2.2.pdf".parse().unwrap(),
-            ),
+            tauri::WindowUrl::App("riscv-doc.html".parse().unwrap()),
         )
         .title("Manual")
         .menu(Menu::new())
