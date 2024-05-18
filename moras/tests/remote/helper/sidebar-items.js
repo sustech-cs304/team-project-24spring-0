@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["init_test_client","init_test_server"],"static":["TABMAP","TEST_FILE_NAME","TEST_PASSWD"]};

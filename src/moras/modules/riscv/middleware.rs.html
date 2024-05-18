@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/modules/riscv/middleware.rs`."><title>middleware.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="moras" data-themes="" data-resource-suffix="" data-rustdoc-version="1.80.0-nightly (ab14f944a 2024-05-13)" data-channel="nightly" data-search-js="search-d52510db62a78183.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/modules/riscv/middleware.rs`."><title>middleware.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="moras" data-themes="" data-resource-suffix="" data-rustdoc-version="1.80.0-nightly (1a7397988 2024-05-17)" data-channel="nightly" data-search-js="search-d52510db62a78183.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -515,18 +515,64 @@
 <a href="#515" id="515">515</a>
 <a href="#516" id="516">516</a>
 <a href="#517" id="517">517</a>
-</pre></div><pre class="rust"><code><span class="doccomment">/// Module providing API functions for the frontend of a Tauri application.
-/// Could be used by `invoke`
+<a href="#518" id="518">518</a>
+<a href="#519" id="519">519</a>
+<a href="#520" id="520">520</a>
+<a href="#521" id="521">521</a>
+<a href="#522" id="522">522</a>
+<a href="#523" id="523">523</a>
+<a href="#524" id="524">524</a>
+<a href="#525" id="525">525</a>
+<a href="#526" id="526">526</a>
+<a href="#527" id="527">527</a>
+<a href="#528" id="528">528</a>
+<a href="#529" id="529">529</a>
+<a href="#530" id="530">530</a>
+<a href="#531" id="531">531</a>
+<a href="#532" id="532">532</a>
+<a href="#533" id="533">533</a>
+<a href="#534" id="534">534</a>
+<a href="#535" id="535">535</a>
+<a href="#536" id="536">536</a>
+<a href="#537" id="537">537</a>
+<a href="#538" id="538">538</a>
+<a href="#539" id="539">539</a>
+<a href="#540" id="540">540</a>
+<a href="#541" id="541">541</a>
+<a href="#542" id="542">542</a>
+<a href="#543" id="543">543</a>
+<a href="#544" id="544">544</a>
+<a href="#545" id="545">545</a>
+<a href="#546" id="546">546</a>
+<a href="#547" id="547">547</a>
+<a href="#548" id="548">548</a>
+<a href="#549" id="549">549</a>
+<a href="#550" id="550">550</a>
+<a href="#551" id="551">551</a>
+<a href="#552" id="552">552</a>
+<a href="#553" id="553">553</a>
+</pre></div><pre class="rust"><code><span class="doccomment">/// This module provides API functions for the frontend. Could be used by
+/// `invoke` in EMCAScript
 </span><span class="kw">pub mod </span>frontend_api {
-    <span class="kw">use </span><span class="kw">crate</span>::io::file_io;
-    <span class="kw">use </span><span class="kw">crate</span>::modules::riscv::basic::interface::parser::{RISCVExtension, RISCVParser};
-    <span class="kw">use </span><span class="kw">crate</span>::storage::rope_store;
-    <span class="kw">use </span><span class="kw">crate</span>::types::middleware_types::{
-        AssembleResult, AssemblerConfig, CurTabName, Optional, SyscallDataType, Tab, TabMap,
-        TextPosition,
-    };
-    <span class="kw">use </span><span class="kw">crate</span>::utility::ptr::Ptr;
     <span class="kw">use </span>tauri::State;
+
+    <span class="kw">use crate</span>::{
+        io::file_io,
+        modules::riscv::basic::interface::parser::{RISCVExtension, RISCVParser},
+        storage::rope_store,
+        types::middleware_types::{
+            AssembleResult,
+            AssemblerConfig,
+            CurTabName,
+            CursorPosition,
+            FileOperation,
+            Optional,
+            SyscallDataType,
+            Tab,
+            TabMap,
+        },
+        utility::{ptr::Ptr, state_helper::state},
+    };
 
     <span class="doccomment">/// Creates a new tab with content loaded from a specified file path.
     /// - `tab_map`: Current state of all open tabs.
@@ -640,22 +686,31 @@
     /// Returns `bool` indicating whether the cursor was successfully set.
     </span><span class="attr">#[tauri::command]
     </span><span class="kw">pub fn </span>set_cursor(tab_map: State&lt;TabMap&gt;, filepath: <span class="kw-2">&amp;</span>str, row: u64, col: u64) -&gt; bool {
-        <span class="macro">todo!</span>(<span class="string">"Implement setCursor, need to check whether current file is in shared state"</span>);
+        <span class="kw">let </span><span class="kw-2">mut </span>server = tab_map.rpc_server.lock().unwrap();
+        <span class="kw">if </span>server.is_running() {
+            server.set_host_cursor(row, col);
+            <span class="bool-val">true
+        </span>} <span class="kw">else </span>{
+            <span class="bool-val">false
+        </span>}
     }
 
     <span class="doccomment">/// Updates the content of the tab associated with the given file path.
     /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: Current state of all open tabs.
-    /// - `row`: Row number where the update should start.
-    /// - `column`: Column number where the update should start.
+    /// - `op`: File operation to be performed.
+    /// - `start`: Starting position of the content to be updated.
+    /// - `end`: Ending position of the content to be updated.
     /// - `content`: New content to be inserted.
     ///
     /// Returns `Optional` indicating the success or failure of the update.
     </span><span class="attr">#[tauri::command]
-    </span><span class="kw">pub fn </span>insert_in_current_tab(
+    </span><span class="kw">pub fn </span>modify_current_tab(
         cur_tab_name: State&lt;CurTabName&gt;,
         tab_map: State&lt;TabMap&gt;,
-        pos: TextPosition,
+        op: FileOperation,
+        start: CursorPosition,
+        end: CursorPosition,
         content: <span class="kw-2">&amp;</span>str,
     ) -&gt; Optional {
         <span class="kw">let </span>filepath = cur_tab_name.name.lock().unwrap().clone();
@@ -674,21 +729,6 @@
                 message: <span class="string">"Tab not found"</span>.to_string(),
             },
         }
-    }
-
-    <span class="doccomment">/// Deletes the content from one specific position to another in current tab
-    /// - `cur_tab_name`: State containing the current tab name.
-    /// - `tab_map`: Current state of all open tabs.
-    </span><span class="attr">#[allow(non_snake_case)]
-    #[tauri::command]
-    </span><span class="kw">pub fn </span>delete_in_current_tab(
-        cur_tab_name: State&lt;CurTabName&gt;,
-        tab_map: State&lt;TabMap&gt;,
-        startPos: TextPosition,
-        endPos: TextPosition,
-    ) -&gt; Optional {
-        <span class="kw">let </span>filepath = cur_tab_name.name.lock().unwrap().clone();
-        <span class="macro">todo!</span>(<span class="string">"implement delete and live shared check"</span>);
     }
 
     <span class="doccomment">/// Reads the content of a tab from the file at the specified path.
@@ -899,56 +939,88 @@
     ///
     /// Returns `Optional` indicating the success or failure of the RPC server
     </span><span class="attr">#[tauri::command]
-    </span><span class="kw">pub fn </span>start_rpc_server(
+    </span><span class="kw">pub fn </span>start_share_server(
         cur_tab_name: State&lt;CurTabName&gt;,
         tab_map: State&lt;TabMap&gt;,
         port: u16,
         password: <span class="kw-2">&amp;</span>str,
     ) -&gt; Optional {
+        <span class="kw">if </span>tab_map.tabs.lock().unwrap().len() == <span class="number">0 </span>{
+            <span class="kw">return </span>Optional {
+                success: <span class="bool-val">false</span>,
+                message: <span class="string">"No tab had been opened"</span>.to_string(),
+            };
+        }
         <span class="kw">let </span><span class="kw-2">mut </span>rpc_lock = tab_map.rpc_server.lock().unwrap();
-        <span class="kw">match </span>rpc_lock.start_service(
-            cur_tab_name.name.lock().unwrap().clone(),
-            Ptr::new(<span class="kw-2">&amp;</span>tab_map),
-        ) {
-            <span class="prelude-val">Ok</span>(()) =&gt; {
-                rpc_lock.change_password(password);
-                <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = rpc_lock.change_port(port) {
-                    <span class="kw">return </span>Optional {
-                        success: <span class="bool-val">false</span>,
-                        message: e.to_string(),
-                    };
-                } <span class="kw">else </span>{
-                    <span class="kw">return </span>Optional {
-                        success: <span class="bool-val">true</span>,
-                        message: String::new(),
-                    };
-                }
-            }
-            <span class="prelude-val">Err</span>(e) =&gt; Optional {
+        rpc_lock.stop_service();
+        rpc_lock.change_password(password);
+        <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = rpc_lock.set_port(port) {
+            <span class="kw">return </span>Optional {
                 success: <span class="bool-val">false</span>,
                 message: e.to_string(),
-            },
+            };
+        } <span class="kw">else if let </span><span class="prelude-val">Err</span>(e) = rpc_lock.start_service(
+            state::get_current_tab_name(<span class="kw-2">&amp;</span>cur_tab_name),
+            Ptr::new(<span class="kw-2">&amp;</span>tab_map),
+        ) {
+            <span class="kw">return </span>Optional {
+                success: <span class="bool-val">false</span>,
+                message: e.to_string(),
+            };
+        } <span class="kw">else </span>{
+            <span class="kw">return </span>Optional {
+                success: <span class="bool-val">true</span>,
+                message: String::new(),
+            };
         }
     }
 
-    <span class="doccomment">/// Stops the RPC server for the current tab.
+    <span class="doccomment">/// Authorize and connect to a remote RPC server as client.
+    /// - `cur_tab_name`: State containing the current tab name.
+    /// - `tab_map`: State containing the map of all tabs.
+    /// - `ip`: IPV4 address of the remote server.
+    /// - `port`: Port number of the remote server.
+    /// - `password`: Password to be used for the connection.
+    ///
+    /// Returns `Optional` indicating the success or failure of the connection.
+    </span><span class="attr">#[tauri::command]
+    </span><span class="kw">pub fn </span>authorize(
+        cur_tab_name: State&lt;CurTabName&gt;,
+        tab_map: State&lt;TabMap&gt;,
+        ip: String,
+        port: u16,
+        password: String,
+    ) -&gt; Optional {
+        <span class="macro">todo!</span>(<span class="string">"Implement authorize as client"</span>);
+    }
+
+    <span class="doccomment">/// Stop the share server for the current tab.
     /// - `tab_map`: State containing the map of all tabs.
     ///
-    /// Returns `bool` indicating whether the RPC server was successfully stop.
+    /// Returns `bool` indicating the success or failure, failure means the
+    /// server is not running.
     </span><span class="attr">#[tauri::command]
-    </span><span class="kw">pub fn </span>stop_rpc_server(tab_map: State&lt;TabMap&gt;) -&gt; bool {
-        <span class="kw">let </span><span class="kw-2">mut </span>rpc_lock = tab_map.rpc_server.lock().unwrap();
-        rpc_lock.stop_service();
-        <span class="bool-val">true
-    </span>}
+    </span><span class="kw">pub fn </span>stop_share_server(tab_map: State&lt;TabMap&gt;) -&gt; bool {
+        <span class="kw">let </span><span class="kw-2">mut </span>server = tab_map.rpc_server.lock().unwrap();
+        <span class="kw">if </span>!server.is_running() {
+            <span class="bool-val">false
+        </span>} <span class="kw">else </span>{
+            server.stop_service();
+            <span class="bool-val">true
+        </span>}
+    }
 }
 
-<span class="doccomment">/// Module providing API functions for the backend of a Tauri application
-/// to emit event to the frontend.
+<span class="doccomment">/// This module provides API functions for the backend of a Tauri application
+/// to emit event to the frontend, and the frontend needs to handle the event by
+/// `listen`.
 </span><span class="kw">pub mod </span>backend_api {
-    <span class="kw">use </span><span class="kw">crate</span>::types::middleware_types::{SyscallDataType, SyscallOutput, SyscallRequest};
-    <span class="kw">use </span><span class="kw">crate</span>::APP_HANDLE;
     <span class="kw">use </span>tauri::Manager;
+
+    <span class="kw">use crate</span>::{
+        types::middleware_types::{SyscallDataType, SyscallOutput, SyscallRequest},
+        APP_HANDLE,
+    };
 
     <span class="doccomment">/// Emits a print syscall output event to the frontend.
     /// - `pathname`: Identifier for the tab to which the output should be sent.

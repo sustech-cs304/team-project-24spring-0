@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"trait":["MFile"]};
+window.SIDEBAR_ITEMS = {"enum":["FileShareStatus"],"trait":["MFile"]};

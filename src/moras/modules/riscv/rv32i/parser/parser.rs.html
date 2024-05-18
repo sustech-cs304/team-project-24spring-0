@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/modules/riscv/rv32i/parser/parser.rs`."><title>parser.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../../../../" data-static-root-path="../../../../../../static.files/" data-current-crate="moras" data-themes="" data-resource-suffix="" data-rustdoc-version="1.80.0-nightly (ab14f944a 2024-05-13)" data-channel="nightly" data-search-js="search-d52510db62a78183.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../../../src-files.js"></script><script defer src="../../../../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/modules/riscv/rv32i/parser/parser.rs`."><title>parser.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../../../../" data-static-root-path="../../../../../../static.files/" data-current-crate="moras" data-themes="" data-resource-suffix="" data-rustdoc-version="1.80.0-nightly (1a7397988 2024-05-17)" data-channel="nightly" data-search-js="search-d52510db62a78183.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../../../src-files.js"></script><script defer src="../../../../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -127,23 +127,29 @@
 <a href="#127" id="127">127</a>
 <a href="#128" id="128">128</a>
 <a href="#129" id="129">129</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>std::io::Write;
-<span class="kw">use </span>std::str::FromStr;
+<a href="#130" id="130">130</a>
+<a href="#131" id="131">131</a>
+<a href="#132" id="132">132</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span>std::{io::Write, str::FromStr};
 
 <span class="kw">use </span>once_cell::sync::Lazy;
 <span class="kw">use </span>strum::VariantArray;
 
 <span class="attr">#[cfg(debug_assertions)]
 </span><span class="kw">use </span><span class="kw">super</span>::<span class="kw">super</span>::<span class="kw">super</span>::basic::interface::parser::{export_list, export_pair};
-<span class="kw">use </span><span class="kw">super</span>::<span class="kw">super</span>::<span class="kw">super</span>::basic::interface::parser::{
-    ParserRISCVCsr, ParserRISCVInstOp, ParserRISCVRegister,
+<span class="kw">use super</span>::{
+    <span class="kw">super</span>::<span class="kw">super</span>::{
+        basic::{
+            interface::parser::{ParserRISCVCsr, ParserRISCVInstOp, ParserRISCVRegister},
+            parser::{
+                lexer::{RISCVOpToken, Symbol},
+                parser::RISCVSymbolList,
+            },
+        },
+        rv32i::constants::{RV32ICsr, RV32IInstruction, RV32IRegister, RV32I_REGISTER_VALID_NAME},
+    },
+    lexer::RV32IOpToken,
 };
-<span class="kw">use </span><span class="kw">super</span>::<span class="kw">super</span>::<span class="kw">super</span>::basic::parser::lexer::{RISCVOpToken, Symbol};
-<span class="kw">use </span><span class="kw">super</span>::<span class="kw">super</span>::<span class="kw">super</span>::basic::parser::parser::RISCVSymbolList;
-<span class="kw">use </span><span class="kw">super</span>::<span class="kw">super</span>::<span class="kw">super</span>::rv32i::constants::{
-    RV32ICsr, RV32IInstruction, RV32IRegister, RV32I_REGISTER_VALID_NAME,
-};
-<span class="kw">use </span><span class="kw">super</span>::lexer::RV32IOpToken;
 
 <span class="kw">pub static </span>RV32I_SYMBOL_LIST: Lazy&lt;RISCVSymbolList&gt; = Lazy::new(|| <span class="macro">vec!</span>[<span class="kw-2">&amp;</span>OP_TOKEN, <span class="kw-2">&amp;</span>REG_TOKEN]);
 

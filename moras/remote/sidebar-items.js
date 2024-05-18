@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["client","server"]};
+window.SIDEBAR_ITEMS = {"mod":["client","server","utils"],"struct":["ClientCursor","CursorCMP","History","OpRange"],"trait":["GetCmpType"]};
