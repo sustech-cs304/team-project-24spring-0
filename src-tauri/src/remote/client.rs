@@ -1,31 +1,27 @@
-use std::net::{Ipv4Addr, SocketAddr};
-
-use editor_rpc::editor_client::EditorClient;
-use editor_rpc::{
-    AuthorizeReply, AuthorizeRequest, SetCursorReply, SetCursorRequest, UpdateContentReply,
-    UpdateContentRequest,
+use std::{
+    convert::TryFrom,
+    net::{IpAddr, SocketAddr},
 };
 
-use crate::interface::remote::RpcClient;
-use std::convert::TryFrom;
+use editor_rpc::editor_client::EditorClient;
 use tonic::transport::Endpoint;
 
-use self::editor_rpc::editor_server::Editor;
+use crate::interface::remote::RpcClient;
 
 pub mod editor_rpc {
     tonic::include_proto!("editor");
 }
 
-struct RpcClientImpl {
+pub struct RpcClientImpl {
     addr: SocketAddr,
     password: String,
     client: Option<EditorClient<tonic::transport::Channel>>,
 }
 
 impl RpcClientImpl {
-    pub fn new(addr: SocketAddr, password: &str) -> Self {
+    pub fn new(ip: IpAddr, port: u16, password: &str) -> Self {
         Self {
-            addr,
+            addr: SocketAddr::new(ip, port),
             password: password.to_string(),
             client: None,
         }

@@ -3,8 +3,11 @@ mod help;
 mod setting;
 mod test;
 
-use tauri::api::dialog::{MessageDialogBuilder, MessageDialogButtons, MessageDialogKind};
-use tauri::{Menu, WindowMenuEvent};
+use tauri::{
+    api::dialog::{MessageDialogButtons, MessageDialogKind},
+    Menu,
+    WindowMenuEvent,
+};
 
 fn display_dialog(
     kind: MessageDialogKind,
@@ -24,7 +27,7 @@ macro_rules! create_menu {
     ($($module:ident),*) => {
         pub fn init_menu() -> Menu {
             Menu::with_items([
-                $(  $module::new().into(), )+
+                $(  $module::new().into(), )*
             ])
         }
 

@@ -1,13 +1,14 @@
 use once_cell::sync::Lazy;
-
-use super::super::super::basic::interface::parser::ParserRISCVInstOp;
-use super::super::super::basic::parser::oplist::*;
-use super::super::constants::{RV32FInstruction, RV32FRegister};
-use super::lexer::RV32FOpToken;
+use RV32FRegister::*;
 
 pub use super::super::super::basic::parser::oplist::RISCVOpdSet;
-
-use RV32FRegister::*;
+use super::{
+    super::{
+        super::basic::{interface::parser::ParserRISCVInstOp, parser::oplist::*},
+        constants::{RV32FInstruction, RV32FRegister},
+    },
+    lexer::RV32FOpToken,
+};
 
 pub static OP_LIST: Lazy<[Vec<RISCVOpdSet>; u8::MAX as usize]> = Lazy::new(|| {
     unsafe {

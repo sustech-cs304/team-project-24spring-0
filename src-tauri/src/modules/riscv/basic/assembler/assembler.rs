@@ -1,11 +1,18 @@
-use crate::interface::assembler::{
-    Assembler, AssemblyError, Instruction, InstructionSet, InstructionSetTrait, Memory, Operand,
-};
-use crate::interface::parser::ParserResult;
-use crate::modules::riscv::basic::assembler::riscv::{Immediate12, Immediate20, Register};
-use crate::modules::riscv::basic::interface::parser::*;
-use crate::modules::riscv::rv32i::assembler::rv32i::RV32I;
 use ux::{u12, u20, u5};
+
+use crate::{
+    interface::{
+        assembler::{Assembler, AssemblyError, Instruction, InstructionSet, Memory, Operand},
+        parser::ParserResult,
+    },
+    modules::riscv::{
+        basic::{
+            assembler::riscv::{Immediate12, Immediate20, Register},
+            interface::parser::*,
+        },
+        rv32i::assembler::rv32i::RV32I,
+    },
+};
 pub(crate) const MAIN: i32 = 0x00400000;
 pub(crate) const DATA: i32 = 0x10010000;
 const MAX_RELATIVE_OFFSET: i32 = 0b0111_1111_1111_1111_1111;
@@ -115,7 +122,7 @@ impl Assembler<RISCV> for RiscVAssembler {
         &mut self,
         ast: ParserResult<RISCV>,
     ) -> Result<Vec<InstructionSet<RISCV>>, Vec<AssemblyError>> {
-        let mut ast = ast;
+        let ast = ast;
         let mut results: Vec<InstructionSet<RISCV>> = Vec::new();
         let mut error: Vec<AssemblyError> = Vec::new();
         for (index, element) in ast.text.iter().enumerate() {

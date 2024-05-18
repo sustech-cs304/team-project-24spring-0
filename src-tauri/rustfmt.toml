@@ -1,2 +1,4 @@
-imports_granularity = "module"
+imports_granularity = "Crate"
+imports_layout = "HorizontalVertical"
+group_imports="StdExternalCrate"
 wrap_comments = true
