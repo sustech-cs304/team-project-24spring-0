@@ -1,8 +1,7 @@
-use crate::simulator::bus::*;
-use crate::simulator::dram::*;
+use crate::simulator::{bus::*, dram::*};
 
-/// The `Cpu` struct that contains registers, a program coutner, system bus that connects
-/// peripheral devices, and control and status registers.
+/// The `Cpu` struct that contains registers, a program coutner, system bus that
+/// connects peripheral devices, and control and status registers.
 pub struct Cpu {
     pub regs: [u64; 32],
     pub pc: u64,
@@ -103,7 +102,8 @@ impl Cpu {
             0x13 => {
                 // imm[11:0] = inst[31:20]
                 let imm = ((inst & 0xfff00000) as i32 as i64 >> 20) as u64;
-                // "The shift amount is encoded in the lower 6 bits of the I-immediate field for RV64I."
+                // "The shift amount is encoded in the lower 6 bits of the I-immediate field for
+                // RV64I."
                 let shamt = (imm & 0x3f) as u32;
                 match funct3 {
                     0x0 => {
