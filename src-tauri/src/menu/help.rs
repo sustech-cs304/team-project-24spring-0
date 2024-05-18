@@ -1,5 +1,7 @@
 use tauri::{CustomMenuItem, Manager, Menu, Submenu, WindowMenuEvent};
 
+use crate::APP_HANDLE;
+
 pub fn new() -> Submenu {
     Submenu::new(
         "Help",
@@ -29,17 +31,3 @@ fn manual_handler(_event: &WindowMenuEvent) {
         .unwrap();
     }
 }
-
-// fn ai_handler(_event: &WindowMenuEvent) {
-//     if let Some(app_handle) = APP_HANDLE.lock().unwrap().as_ref() {
-//         let _window = tauri::WindowBuilder::new(
-//             app_handle,
-//             "ai", /* the unique window label */
-//             tauri::WindowUrl::External("http://localhost:3000/ai".parse().unwrap()),
-//         )
-//         .title("AI Chat")
-//         .menu(Menu::new())
-//         .build()
-//         .unwrap();
-//     }
-// }
