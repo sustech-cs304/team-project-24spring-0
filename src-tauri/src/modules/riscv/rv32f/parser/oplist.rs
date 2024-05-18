@@ -9,6 +9,7 @@ use super::{
     },
     lexer::RV32FOpToken,
 };
+use crate::utility::enum_map::build_map_mut_data;
 
 pub static OP_LIST: Lazy<Vec<Vec<RISCVOpdSet>>> = Lazy::new(|| {
     let mut op_def = [

@@ -6,7 +6,8 @@ use strum_macros::{Display, EnumMessage};
 
 use crate::{
     interface::{
-        parser::{Parser, ParserError},
+        assembler::{AssembleResult as AssemblerResult, Assembler},
+        parser::{Parser, ParserResult},
         storage::MFile,
     },
     modules::riscv::basic::interface::parser::RISCV,

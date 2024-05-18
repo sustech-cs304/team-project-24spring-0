@@ -12,7 +12,10 @@ use tauri::{
 use super::display_dialog;
 use crate::{
     io::file_io,
-    modules::riscv::basic::interface::parser::{RISCVExtension, RISCVParser},
+    modules::riscv::basic::interface::{
+        assembler::RiscVAssembler,
+        parser::{RISCVExtension, RISCVParser},
+    },
     storage::rope_store,
     types::{
         menu_types,

@@ -3,7 +3,10 @@ use std::{net::Ipv4Addr, path::PathBuf, str::FromStr, sync::Mutex};
 use once_cell::sync::Lazy;
 
 use crate::{
-    modules::riscv::basic::interface::parser::{RISCVExtension, RISCVParser},
+    modules::riscv::basic::interface::{
+        assembler::RiscVAssembler,
+        parser::{RISCVExtension, RISCVParser},
+    },
     remote::{client::RpcClientImpl, server::RpcServerImpl, utils::get_free_port},
     storage::rope_store,
     types::middleware_types::{Tab, TabMap},
@@ -33,6 +36,10 @@ pub fn init_test_server(content: &str) -> Result<RpcServerImpl, String> {
                 let tab = Tab {
                     text: Box::new(content),
                     parser: Box::new(RISCVParser::new(&vec![RISCVExtension::RV32I])),
+                    assembler: Box::new(RiscVAssembler::new()),
+                    //simulator: Box::new(Default::default()),
+                    parser_result: Default::default(),
+                    assemble_result: Default::default(),
                 };
                 static_tab.insert(TEST_FILE_NAME.to_string(), tab);
             }

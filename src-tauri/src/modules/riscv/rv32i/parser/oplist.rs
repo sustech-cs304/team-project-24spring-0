@@ -9,6 +9,7 @@ use super::{
     },
     lexer::RV32IOpToken,
 };
+use crate::utility::enum_map::build_map_mut_data;
 
 // --------------------set-------------------------
 pub fn opd_set_load_mem(op: ParserRISCVInstOp, name: &str, unit: &str) -> Vec<RISCVOpdSet> {

@@ -2,8 +2,16 @@ use ux::{u12, u20, u5};
 
 use crate::{
     interface::{
-        assembler::{Assembler, AssemblyError, Instruction, InstructionSet, Memory, Operand},
-        parser::ParserResult,
+        assembler::{
+            AssembleResult,
+            Assembler,
+            AssemblyError,
+            Instruction,
+            InstructionSet,
+            Memory,
+            Operand,
+        },
+        parser::{ParserInst, ParserResult},
     },
     modules::riscv::{
         basic::{
