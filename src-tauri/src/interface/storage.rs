@@ -1,4 +1,14 @@
-use std::path::PathBuf;
+use std::{default, error::Error, path::PathBuf};
+
+use crate::types::middleware_types::FileOperation;
+
+#[derive(Default)]
+pub enum FileShareStatus {
+    #[default]
+    Private,
+    Host,
+    Client,
+}
 
 pub trait MFile<CON, ERR>: Send + Sync {
     fn get_path(&self) -> PathBuf;
@@ -16,4 +26,8 @@ pub trait MFile<CON, ERR>: Send + Sync {
     fn update_content(&mut self, content: &str);
 
     fn get_raw(&mut self) -> &mut CON;
+
+    fn handle_modify(&mut self, op: FileOperation) -> Result<(), Box<dyn Error>>;
+
+    fn switch_share_status(&mut self, status: FileShareStatus);
 }

@@ -2124,7 +2124,6 @@ dependencies = [
  "rust-analyzer",
  "serde",
  "serde_json",
- "sha2",
  "strum",
  "strum_macros",
  "tauri",

@@ -98,3 +98,10 @@ pub enum SyscallDataType {
     #[strum(message = "Double")]
     Double(f64),
 }
+
+#[derive(Deserialize)]
+pub enum FileOperation {
+    Insert = 0,
+    Delete = 1,
+    Cover = 2,
+}

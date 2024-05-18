@@ -250,6 +250,14 @@ impl Editor for Arc<Mutex<ServerHandle>> {
                 let content_position = request_ref.op_range.clone().unwrap();
                 let start = content_position.start.unwrap();
 
+                // check version correct(up to date)
+                if request_ref.version != handler.version.load(atomic::Ordering::Relaxed) as u64 {
+                    return Ok(Response::new(UpdateContentReply {
+                        success: false,
+                        message: "Version mismatch".to_string(),
+                    }));
+                }
+
                 // check cursor position correct
                 for cursor in &*cursor_lock {
                     if cursor.ip == request.remote_addr().unwrap()

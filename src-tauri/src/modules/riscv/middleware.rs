@@ -12,6 +12,7 @@ pub mod frontend_api {
             AssemblerConfig,
             CurTabName,
             CursorPosition,
+            FileOperation,
             Optional,
             SyscallDataType,
             Tab,
@@ -147,16 +148,19 @@ pub mod frontend_api {
     /// Updates the content of the tab associated with the given file path.
     /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: Current state of all open tabs.
-    /// - `row`: Row number where the update should start.
-    /// - `column`: Column number where the update should start.
+    /// - `op`: File operation to be performed.
+    /// - `start`: Starting position of the content to be updated.
+    /// - `end`: Ending position of the content to be updated.
     /// - `content`: New content to be inserted.
     ///
     /// Returns `Optional` indicating the success or failure of the update.
     #[tauri::command]
-    pub fn insert_in_current_tab(
+    pub fn modify_current_tab(
         cur_tab_name: State<CurTabName>,
         tab_map: State<TabMap>,
-        pos: CursorPosition,
+        op: FileOperation,
+        start: CursorPosition,
+        end: CursorPosition,
         content: &str,
     ) -> Optional {
         let filepath = cur_tab_name.name.lock().unwrap().clone();
@@ -175,23 +179,6 @@ pub mod frontend_api {
                 message: "Tab not found".to_string(),
             },
         }
-    }
-
-    /// Deletes the content from one specific position to another in current tab
-    /// - `cur_tab_name`: State containing the current tab name.
-    /// - `tab_map`: Current state of all open tabs.
-    ///
-    /// Returns `Optional` indicating the success or failure of the delete.
-    #[allow(non_snake_case)]
-    #[tauri::command]
-    pub fn delete_in_current_tab(
-        cur_tab_name: State<CurTabName>,
-        tab_map: State<TabMap>,
-        startPos: CursorPosition,
-        endPos: CursorPosition,
-    ) -> Optional {
-        let filepath = cur_tab_name.name.lock().unwrap().clone();
-        todo!("implement delete and live shared check");
     }
 
     /// Reads the content of a tab from the file at the specified path.
