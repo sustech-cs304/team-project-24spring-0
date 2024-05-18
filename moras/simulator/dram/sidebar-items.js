@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["DRAM_SIZE"],"struct":["Dram"]};
