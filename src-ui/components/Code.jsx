@@ -1,4 +1,4 @@
-import React, {useEffect} from "react";
+import React, {useEffect, useRef} from "react";
 import ModifiedEditor from "@/components/ModifiedEditor";
 import {Tabs, Tab, Card, CardBody, Textarea} from "@nextui-org/react";
 import {Table, TableHeader, TableBody, TableRow, TableColumn, TableCell} from "@nextui-org/react";
@@ -12,11 +12,16 @@ import {Button} from "@nextui-org/react";
 
 export default function Code({fileName}) {
     const store = useFileStore();
+    const initialized = useRef(false);
 
 
     useEffect(() => {
-        store.changeCurrentFile(fileName);
-        invoke('change_current_tab', {newpath: fileName});
+        if (!initialized.current) {
+            initialized.current = true;
+            store.changeCurrentFile(fileName);
+            invoke('change_current_tab', {newpath: fileName});
+            console.log('changed current file to ' + fileName);
+        }
     }, []);
 
     return (
