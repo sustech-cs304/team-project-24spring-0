@@ -22,15 +22,15 @@ export default function TestPage() {
         }
     };
 
-    // useEffect(() => {
-    //     const unListened = listen('front_file_open', (event) => {
-    //         setOutput(prevOutput => prevOutput + '\nEvent received:\n' + JSON.stringify(event.payload));
-    //     });
+    useEffect(() => {
+        const unListened = listen('front_file_open', (event) => {
+            setOutput(prevOutput => prevOutput + '\nEvent received:\n' + JSON.stringify(event.payload));
+        });
 
-    //     return () => {
-    //         unListened.then(dispose => dispose());
-    //     };
-    // }, []);
+        return () => {
+            unListened.then(dispose => dispose());
+        };
+    }, []);
 
     // useEffect(() => {
     //     const unListened = listen('front_file_open', (event) => {

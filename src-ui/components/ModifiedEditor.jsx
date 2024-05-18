@@ -1,33 +1,79 @@
-import Editor from "@monaco-editor/react";
-import React from "react";
+import Editor, {useMonaco} from "@monaco-editor/react";
+import React, {useEffect, useRef} from "react";
 import Image from "next/image";
-
+import { invoke } from '@tauri-apps/api/tauri';
+import useOutputStore from "@/utils/outputState";
 import useFileStore from "@/utils/state";
 import rv32i from "@/constants/riscv/rv32i.json"
-
 const language_id = 'riscv';
 
-export default function ModifiedEditor({ fileName }) {
+function getDifference(a, b)
+{
+    var i = 0;
+    var j = 0;
+    var result = "";
+
+    while (j < b.length)
+    {
+     if (a[i] != b[j] || i == a.length)
+         result += b[j];
+     else
+         i++;
+     j++;
+    }
+    return result;
+}
+
+
+export default function ModifiedEditor({fileName}) {
+    const monacoRef = useRef(null);
+    const editorRef = useRef(null);
     const state = useFileStore();
     const file = useFileStore(state => state.files.find(file => file.fileName === fileName));
 
+    function handleEditorDidMount(editor, monaco) {
+        // here is the editor instance
+        // you can store it in `useRef` for further usage
+        editorRef.current = editor;
+        monacoRef.current = monaco;
+    }
+    
+
+    var handleEditorChange = async (value) => {
+        let newInput = getDifference(file.code, value);
+        state.updateFile(fileName, value, file.original, file.assembly, file.runLines);
+        let position = editorRef.current.getPosition();
+        let line = position.lineNumber;
+        let column = position.column;
+        console.log('Current: line: ', line, 'column: ', column, 'value: ', newInput);
+    }
+
+    var handleClickedRun = async () => {
+        var line = editorRef.current.getPosition();
+        var range = new monaco.Range(line.lineNumber, 1, line.lineNumber, 1);
+        var id = { major: 1, minor: 1 };             
+        var text = "FOO";
+        var op = {identifier: id, range: range, text: text, forceMoveMarkers: false};
+        editorRef.current.executeEdits("my-source", [op]);
+    }
+
     return (
         <div className='h-full relative'>
-            <Editor
-                language={language_id}
-                theme={language_id}
-                className='overflow-hidden h-full'
-                loading={<div>Loading Editor...</div>}
-                value={file.code}
-                options={
-                    { hover: { enabled: true } }
-                }
-                beforeMount={LoadMonacoConfig}
-                onChange={(value) => state.updateFile(fileName, value)}
+            <Editor 
+            theme={language_id}
+            language={language_id} 
+            className='overflow-hidden h-full'
+            value={file.code}
+            onChange={handleEditorChange}
+            onMount={handleEditorDidMount}
+            options={
+                { hover: { enabled: true } }
+            }
+            beforeMount={LoadMonacoConfig}
             />
             <div className='absolute right-2 top-0 flex-row gap-2'>
-                <button className='bg-gray-100 rounded-2xl hover:bg-gray-200'>
-                    <Image src='/icons/run.svg' width={16} height={16} />
+                <button className='bg-gray-100 rounded-2xl hover:bg-gray-200' onClick={handleClickedRun}>
+                    <Image alt="run icon" src='/icons/run.svg' width={16} height={16}/>
                 </button>
             </div>
         </div>
