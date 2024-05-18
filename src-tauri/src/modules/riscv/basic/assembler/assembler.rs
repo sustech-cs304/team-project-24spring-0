@@ -320,8 +320,9 @@ impl Assembler<RISCV> for RiscVAssembler {
                 ParserResultText::Align(_) => {}
             }
             match process_code(index, element) {
-                Ok(code) => {
-                    line.code = code;
+                Ok(result) => {
+                    line.code = result.code;
+                    line.basic = result.basic;
                 }
                 Err(err) => error.extend(err),
             };
@@ -375,7 +376,7 @@ impl Assembler<RISCV> for RiscVAssembler {
         for (index, element) in text.iter().enumerate() {
             match process_code(index, element) {
                 Ok(line) => {
-                    let binary_string = format!("{:032b}", line);
+                    let binary_string = format!("{:032b}", line.code);
                     text_segment.push(binary_string);
                 }
                 Err(err) => error.extend(err),
@@ -394,11 +395,17 @@ impl Assembler<RISCV> for RiscVAssembler {
     }
 }
 
+pub struct ProcessResult {
+    pub code: u32,
+    pub basic: String,
+}
+
 fn process_code(
     index: usize,
     element: &ParserResultText<RISCV>,
-) -> Result<u32, Vec<AssemblyError>> {
+) -> Result<ProcessResult, Vec<AssemblyError>> {
     let mut line: u32 = 0;
+    let mut basic = String::new();
     let mut error: Vec<AssemblyError> = Vec::new();
     match element {
         ParserResultText::Text(inst) => match inst.op {
@@ -407,6 +414,8 @@ fn process_code(
                 let mut rs1: u32 = 0;
                 let mut rs2: u32 = 0;
                 let mut imm: i32 = 0;
+                let mut pred: i32 = 0;
+                let mut succ: i32 = 0;
                 match ins {
                     RV32IInstruction::Add
                     | RV32IInstruction::And
@@ -469,10 +478,10 @@ fn process_code(
                         if let [ParserRISCVInstOpd::Imm(imm1), ParserRISCVInstOpd::Imm(imm2)] =
                             inst.opd[..]
                         {
-                            let imm1 = i32::from(imm1);
-                            let imm2 = i32::from(imm2);
-                            let imm1u: u32 = imm1 as u32;
-                            let imm2u: u32 = imm2 as u32;
+                            pred = i32::from(imm1);
+                            succ = i32::from(imm2);
+                            let imm1u: u32 = pred as u32;
+                            let imm2u: u32 = succ as u32;
                             line = Into::<u32>::into(RV32I::fence(
                                 0x0.into(),
                                 imm1u.into(),
@@ -498,9 +507,10 @@ fn process_code(
                 } else {
                     Immediate20(u20::try_from((!((-imm) as u32) & 0xFFFFF) + 1).unwrap())
                 };
+                basic = format_instruction(inst.op, rd, rs1, rs2, imm, pred, succ);
                 match ins {
                     RV32IInstruction::Add => {
-                        line = Into::<u32>::into(RV32I::add(rs2.into(), rs1.into(), rd.into()))
+                        line = Into::<u32>::into(RV32I::add(rs2.into(), rs1.into(), rd.into()));
                     }
                     RV32IInstruction::Addi => {
                         line = Into::<u32>::into(RV32I::addi(imm_u12.into(), rs1.into(), rd.into()))
@@ -648,8 +658,113 @@ fn process_code(
         ParserResultText::Align(..) => {}
     }
     if error.is_empty() {
-        Ok(line)
+        Ok(ProcessResult {
+            code: line,
+            basic: basic,
+        })
     } else {
         Err(error)
+    }
+}
+
+fn format_instruction(
+    instruction: ParserRISCVInstOp,
+    rd: u32,
+    rs1: u32,
+    rs2: u32,
+    imm: i32,
+    imm1: i32,
+    imm2: i32,
+) -> String {
+    match instruction {
+        ParserRISCVInstOp::RV32I(ins) => match ins {
+            RV32IInstruction::Add
+            | RV32IInstruction::And
+            | RV32IInstruction::Or
+            | RV32IInstruction::Sltu
+            | RV32IInstruction::Sll
+            | RV32IInstruction::Slt
+            | RV32IInstruction::Sra
+            | RV32IInstruction::Srl
+            | RV32IInstruction::Sub
+            | RV32IInstruction::Xor => format!(
+                "{} x{},x{},x{}",
+                Into::<&'static str>::into(ins),
+                rd,
+                rs1,
+                rs2
+            ),
+            RV32IInstruction::Addi
+            | RV32IInstruction::Andi
+            | RV32IInstruction::Ori
+            | RV32IInstruction::Slti
+            | RV32IInstruction::Sltiu
+            | RV32IInstruction::Xori
+            | RV32IInstruction::Slli
+            | RV32IInstruction::Srai
+            | RV32IInstruction::Srli
+            | RV32IInstruction::Jalr => format!(
+                "{} x{},x{},{}",
+                Into::<&'static str>::into(ins),
+                rd,
+                rs1,
+                imm
+            ),
+            RV32IInstruction::Csrrc
+            | RV32IInstruction::Csrrci
+            | RV32IInstruction::Csrrs
+            | RV32IInstruction::Csrrsi
+            | RV32IInstruction::Csrrw
+            | RV32IInstruction::Csrrwi => format!(
+                "{} x{},{},x{}",
+                Into::<&'static str>::into(ins),
+                rd,
+                imm,
+                rs1
+            ),
+            RV32IInstruction::Lb
+            | RV32IInstruction::Lbu
+            | RV32IInstruction::Lh
+            | RV32IInstruction::Lhu => format!(
+                "{} x{},{}(x{})",
+                Into::<&'static str>::into(ins),
+                rd,
+                imm,
+                rs1
+            ),
+            RV32IInstruction::FenceI | RV32IInstruction::Ebreak | RV32IInstruction::Ecall => {
+                format!("{}", Into::<&'static str>::into(ins))
+            }
+            RV32IInstruction::Sb
+            | RV32IInstruction::Sh
+            | RV32IInstruction::Lw
+            | RV32IInstruction::Sw => format!(
+                "{} x{},{}(x{})",
+                Into::<&'static str>::into(ins),
+                rs2,
+                imm,
+                rs1
+            ),
+            RV32IInstruction::Jal => format!("{} x{},{}", Into::<&'static str>::into(ins), rd, imm),
+            RV32IInstruction::Beq
+            | RV32IInstruction::Bge
+            | RV32IInstruction::Bgeu
+            | RV32IInstruction::Blt
+            | RV32IInstruction::Bltu
+            | RV32IInstruction::Bne => format!(
+                "{} x{},x{},{}",
+                Into::<&'static str>::into(ins),
+                rs1,
+                rs2,
+                imm
+            ),
+            RV32IInstruction::Auipc | RV32IInstruction::Lui => {
+                format!("{} x{},{}", Into::<&'static str>::into(ins), rd, imm)
+            }
+            RV32IInstruction::Fence => {
+                format!("{} {},{}", Into::<&'static str>::into(ins), imm1, imm2)
+            }
+        },
+        ParserRISCVInstOp::RV32F(..) => String::new(),
     }
 }

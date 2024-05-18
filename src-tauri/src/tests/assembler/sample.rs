@@ -116,22 +116,22 @@ L2:
                     }
                 }
             }
-        }
-        Err(err) => {
-            for e in err {
-                println!("{}", e.to_string());
-            }
-        }
-    }
-    let ast = p.parse(rope.clone().to_string()).unwrap();
-    let assembled_result = riscv_assembler.assemble(ast);
-    match assembled_result {
-        Ok(res) => {
-            for data in res.data {
-                println!("0x{:08x}", data);
-            }
-            for instruction in res.instruction {
-                println!("{}", instruction.to_string());
+            let ast = p.parse(rope.clone().to_string()).unwrap();
+            let assembled_result = riscv_assembler.assemble(ast);
+            match assembled_result {
+                Ok(res) => {
+                    for data in res.data {
+                        println!("0x{:08x}", data);
+                    }
+                    for instruction in res.instruction {
+                        println!("{}", instruction.to_string());
+                    }
+                }
+                Err(err) => {
+                    for e in err {
+                        println!("{}", e.to_string());
+                    }
+                }
             }
         }
         Err(err) => {

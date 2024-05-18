@@ -15,8 +15,8 @@ impl Display for InstructionSet<RISCV> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "line_number: {:3}; address:0x{:08x}; code: 0x{:08x}; Instruction: {:?}",
-            self.line_number, self.address, self.code, self.instruction.operation
+            "line_number:{:3}; address:0x{:08x}; code:0x{:08x}; basic:{}; Instruction:{:?}",
+            self.line_number, self.address, self.code, self.basic, self.instruction.operation,
         )?;
         write!(
             f,

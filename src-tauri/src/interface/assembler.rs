@@ -28,6 +28,7 @@ pub struct InstructionSet<IS: ParserInstSet + InstructionSetTrait> {
     pub instruction: Instruction<IS>,
     pub address: u32,
     pub code: u32,
+    pub basic: String,
 }
 
 #[derive(Clone)]
@@ -75,6 +76,7 @@ impl<IS: ParserInstSet + InstructionSetTrait> InstructionSet<IS> {
             instruction: instruction,
             address: 0,
             code: 0,
+            basic: String::new(),
         }
     }
 }
