@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["ai_handler","event_handler","manual_handler","new"]};
+window.SIDEBAR_ITEMS = {"fn":["event_handler","manual_handler","new"]};

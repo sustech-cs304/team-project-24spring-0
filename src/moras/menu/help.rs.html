@@ -29,59 +29,35 @@
 <a href="#29" id="29">29</a>
 <a href="#30" id="30">30</a>
 <a href="#31" id="31">31</a>
-<a href="#32" id="32">32</a>
-<a href="#33" id="33">33</a>
-<a href="#34" id="34">34</a>
-<a href="#35" id="35">35</a>
-<a href="#36" id="36">36</a>
-<a href="#37" id="37">37</a>
-<a href="#38" id="38">38</a>
-<a href="#39" id="39">39</a>
-<a href="#40" id="40">40</a>
-<a href="#41" id="41">41</a>
-<a href="#42" id="42">42</a>
-<a href="#43" id="43">43</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>tauri::{CustomMenuItem, Manager, Menu, Submenu, WindowMenuEvent};
+
+<span class="kw">use </span><span class="kw">crate</span>::APP_HANDLE;
 
 <span class="kw">pub fn </span>new() -&gt; Submenu {
     Submenu::new(
         <span class="string">"Help"</span>,
-        Menu::with_items([
-            CustomMenuItem::new(<span class="string">"help_manual"</span>, <span class="string">"Manual"</span>).into(),
-            CustomMenuItem::new(<span class="string">"help_ai"</span>, <span class="string">"AI Chat"</span>).into(),
-        ]),
+        Menu::with_items([CustomMenuItem::new(<span class="string">"help_manual"</span>, <span class="string">"Manual"</span>).into()]),
     )
 }
 
 <span class="kw">pub fn </span>event_handler(event: WindowMenuEvent) {
     <span class="kw">match </span>event.menu_item_id().strip_prefix(<span class="string">"help_"</span>).unwrap() {
         <span class="string">"manual" </span>=&gt; manual_handler(<span class="kw-2">&amp;</span>event),
-        <span class="string">"ai" </span>=&gt; ai_handler(<span class="kw-2">&amp;</span>event),
         <span class="kw">_ </span>=&gt; {}
     }
 }
 
-<span class="kw">fn </span>manual_handler(event: <span class="kw-2">&amp;</span>WindowMenuEvent) {
-    <span class="kw">let </span>_window = tauri::WindowBuilder::new(
-        <span class="kw-2">&amp;</span>event.window().app_handle(),
-        <span class="string">"manual"</span>, <span class="comment">/* the unique window label */
-        </span>tauri::WindowUrl::External(<span class="string">"https://tauri.app/"</span>.parse().unwrap()),
-    )
-    .title(<span class="string">"Manual"</span>)
-    .menu(Menu::new())
-    .build()
-    .unwrap();
-}
-
-<span class="kw">fn </span>ai_handler(event: <span class="kw-2">&amp;</span>WindowMenuEvent) {
-    <span class="kw">let </span>_window = tauri::WindowBuilder::new(
-        <span class="kw-2">&amp;</span>event.window().app_handle(),
-        <span class="string">"ai"</span>, <span class="comment">/* the unique window label */
-        </span>tauri::WindowUrl::External(<span class="string">"https://tauri.app/"</span>.parse().unwrap()),
-    )
-    .title(<span class="string">"AI Chat"</span>)
-    .menu(Menu::new())
-    .build()
-    .unwrap();
+<span class="kw">fn </span>manual_handler(_event: <span class="kw-2">&amp;</span>WindowMenuEvent) {
+    <span class="kw">if let </span><span class="prelude-val">Some</span>(app_handle) = APP_HANDLE.lock().unwrap().as_ref() {
+        <span class="kw">let </span>_window = tauri::WindowBuilder::new(
+            app_handle,
+            <span class="string">"manual"</span>, <span class="comment">/* the unique window label */
+            </span>tauri::WindowUrl::App(<span class="string">"riscv-doc.html"</span>.parse().unwrap()),
+        )
+        .title(<span class="string">"Manual"</span>)
+        .menu(Menu::new())
+        .build()
+        .unwrap();
+    }
 }
 </code></pre></div></section></main></body></html>

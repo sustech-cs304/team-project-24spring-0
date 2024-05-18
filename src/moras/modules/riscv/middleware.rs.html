@@ -627,12 +627,12 @@
             <span class="kw">let </span>lock = tab_map.tabs.lock().unwrap();
             <span class="kw">if </span>lock.len() == <span class="number">1 </span>{
                 <span class="kw">return </span>Optional {
-                    success: <span class="bool-val">false</span>,
-                    message: <span class="string">"Cannot close last tab"</span>.to_string(),
+                    success: <span class="bool-val">true</span>,
+                    message: <span class="string">""</span>.to_string(),
                 };
             } <span class="kw">else </span>{
+                <span class="kw">let </span><span class="kw-2">mut </span>iter = lock.iter();
                 <span class="kw">loop </span>{
-                    <span class="kw">let </span><span class="kw-2">mut </span>iter = lock.iter();
                     <span class="kw">let </span>(new_name, <span class="kw">_</span>) = iter.next().unwrap();
                     <span class="kw">if </span>new_name != filepath {
                         <span class="kw-2">*</span>cur_tab_name.name.lock().unwrap() = new_name.clone();
