@@ -1,10 +1,10 @@
-use crate::modules::riscv::basic::interface::parser::*;
-
 use ParserRISCVInstOpd::*;
 use ParserRISCVLabel::*;
 use ParserRISCVLabelHandler::*;
 use RV32IInstruction::*;
 use RV32IRegister::*;
+
+use crate::modules::riscv::basic::interface::parser::*;
 
 macro_rules! reg {
     () => {

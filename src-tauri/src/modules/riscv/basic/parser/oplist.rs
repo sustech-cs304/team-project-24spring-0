@@ -1,6 +1,12 @@
 use super::super::interface::parser::{
-    get_32u_high, get_32u_low, ParserRISCVImmediate, ParserRISCVInstOp, ParserRISCVInstOpd,
-    ParserRISCVLabelHandler, ParserRISCVRegister, RISCVImmediate,
+    get_32u_high,
+    get_32u_low,
+    ParserRISCVImmediate,
+    ParserRISCVInstOp,
+    ParserRISCVInstOpd,
+    ParserRISCVLabelHandler,
+    ParserRISCVRegister,
+    RISCVImmediate,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

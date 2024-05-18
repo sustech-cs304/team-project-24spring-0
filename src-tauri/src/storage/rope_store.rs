@@ -1,18 +1,31 @@
-use std::path::{Path, PathBuf};
+use std::{
+    path::{Path, PathBuf},
+    time::SystemTime,
+};
 
 use ropey::Rope;
 
-use crate::interface::storage::MFile;
-use crate::io::file_io;
+use crate::{
+    interface::storage::{FileShareStatus, MFile},
+    io::file_io,
+};
 
 pub struct Text {
+    share_status: FileShareStatus,
     data: Box<Rope>,
-    path: std::path::PathBuf,
+    path: PathBuf,
     dirty: bool,
-    last_modified: std::time::SystemTime,
+    last_modified: SystemTime,
 }
 
-impl MFile<String> for Text {
+impl MFile<Rope, String> for Text {
+    fn get_path(&self) -> &PathBuf {
+        &self.path
+    }
+    fn get_path_str(&self) -> String {
+        self.path.to_str().unwrap().to_string()
+    }
+
     fn update_content(&mut self, content: &str) {
         *self.data = Rope::from_str(&content);
         self.dirty = true;
@@ -40,7 +53,20 @@ impl MFile<String> for Text {
         }
     }
 
-    //https://docs.rs/ropey/latest/ropey/index.html
+    fn get_raw(&mut self) -> &mut Rope {
+        self.data.as_mut()
+    }
+
+    fn handle_modify(
+        &mut self,
+        op: crate::types::middleware_types::FileOperation,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        todo!("handle this");
+    }
+
+    fn switch_share_status(&mut self, status: crate::interface::storage::FileShareStatus) {
+        todo!("perform function change");
+    }
 }
 
 impl Text {
@@ -48,6 +74,7 @@ impl Text {
         match file_io::read_file(file_path) {
             Ok(content) => match file_io::get_last_modified(file_path) {
                 Ok(last_modified) => Ok(Text {
+                    share_status: Default::default(),
                     data: Box::new(Rope::from_str(&content)),
                     path: PathBuf::from(file_path),
                     dirty: false,
@@ -65,6 +92,7 @@ impl Text {
 
     pub fn from_str(file_path: &Path, text: &str) -> Result<Self, String> {
         Ok(Text {
+            share_status: Default::default(),
             data: Box::new(Rope::from_str(text)),
             path: file_path.to_path_buf(),
             dirty: false,

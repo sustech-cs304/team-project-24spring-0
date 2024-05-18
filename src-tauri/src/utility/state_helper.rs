@@ -3,11 +3,11 @@ pub mod state {
 
     use crate::types::middleware_types::CurTabName;
 
-    pub fn get_current_tab_name(cur_tab_name: State<CurTabName>) -> String {
+    pub fn get_current_tab_name(cur_tab_name: &State<CurTabName>) -> String {
         cur_tab_name.name.lock().unwrap().clone()
     }
 
-    pub fn set_current_tab_name(cur_tab_name: State<CurTabName>, new_name: &str) {
+    pub fn set_current_tab_name(cur_tab_name: &State<CurTabName>, new_name: &str) {
         let mut name = cur_tab_name.name.lock().unwrap();
         *name = new_name.to_string();
     }
