@@ -1,5 +1,4 @@
-use crate::modules::riscv::rv32f::assembler::rv32f::RV32F;
-use crate::modules::riscv::rv32i::assembler::rv32i::RV32I;
+use crate::modules::riscv::{rv32f::assembler::rv32f::RV32F, rv32i::assembler::rv32i::RV32I};
 
 #[test]
 fn test_lui() {

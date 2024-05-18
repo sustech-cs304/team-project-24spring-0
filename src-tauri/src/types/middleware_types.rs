@@ -1,17 +1,21 @@
-use crate::interface::assembler::{AssembleResult as AssemblerResult, Assembler};
-use crate::interface::parser::{Parser, ParserResult};
-use crate::interface::simulator::Simulator;
-use crate::interface::storage::MFile;
-use crate::modules::riscv::basic::interface::parser::RISCV;
-use crate::remote::server::RpcServerImpl;
+use std::{collections::HashMap, sync::Mutex};
+
+use ropey::Rope;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::sync::Mutex;
 use strum_macros::{Display, EnumMessage};
+
+use crate::{
+    interface::{
+        parser::{Parser, ParserError},
+        storage::MFile,
+    },
+    modules::riscv::basic::interface::parser::RISCV,
+    remote::server::RpcServerImpl,
+};
 
 //TODO: add simulator and assembler as member
 pub struct Tab {
-    pub text: Box<dyn MFile<String>>,
+    pub text: Box<dyn MFile<Rope, String>>,
     pub parser: Box<dyn Parser<RISCV>>,
     pub assembler: Box<dyn Assembler<RISCV>>,
     //pub simulator: Box<dyn Simulator<i32, i32, i32, i32>>,
@@ -36,9 +40,9 @@ pub struct Optional {
 }
 
 #[derive(Clone, Deserialize)]
-pub struct TextPosition {
+pub struct CursorPosition {
     pub row: u64,
-    pub column: u64,
+    pub col: u64,
 }
 
 #[derive(Clone, Serialize)]
@@ -122,4 +126,11 @@ pub enum SyscallDataType {
     Float(f32),
     #[strum(message = "Double")]
     Double(f64),
+}
+
+#[derive(Deserialize)]
+pub enum FileOperation {
+    Insert = 0,
+    Delete = 1,
+    Cover = 2,
 }

@@ -1,7 +1,9 @@
-use crate::interface::assembler::Assembler;
-use crate::modules::riscv::basic::assembler::assembler::RiscVAssembler;
-use crate::modules::riscv::basic::interface::parser::*;
 use std::fs;
+
+use crate::{
+    interface::assembler::Assembler,
+    modules::riscv::basic::{assembler::assembler::RiscVAssembler, interface::parser::*},
+};
 
 #[test]
 pub fn test_assembler() {

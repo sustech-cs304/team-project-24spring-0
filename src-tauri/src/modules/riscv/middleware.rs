@@ -1,13 +1,25 @@
-/// Module providing API functions for the frontend of a Tauri application.
-/// Could be used by `invoke`
+/// This module provides API functions for the frontend. Could be used by
+/// `invoke` in EMCAScript
 pub mod frontend_api {
-    use crate::io::file_io;
-    use crate::modules::riscv::basic::interface::assembler::RiscVAssembler;
-    use crate::modules::riscv::basic::interface::parser::{RISCVExtension, RISCVParser};
-    use crate::storage::rope_store;
-    use crate::types::middleware_types::*;
-    use crate::utility::ptr::Ptr;
     use tauri::State;
+
+    use crate::{
+        io::file_io,
+        modules::riscv::basic::interface::parser::{RISCVExtension, RISCVParser},
+        storage::rope_store,
+        types::middleware_types::{
+            AssembleResult,
+            AssemblerConfig,
+            CurTabName,
+            CursorPosition,
+            FileOperation,
+            Optional,
+            SyscallDataType,
+            Tab,
+            TabMap,
+        },
+        utility::{ptr::Ptr, state_helper::state},
+    };
 
     /// Creates a new tab with content loaded from a specified file path.
     /// - `tab_map`: Current state of all open tabs.
@@ -124,22 +136,31 @@ pub mod frontend_api {
     /// Returns `bool` indicating whether the cursor was successfully set.
     #[tauri::command]
     pub fn set_cursor(tab_map: State<TabMap>, filepath: &str, row: u64, col: u64) -> bool {
-        todo!("Implement setCursor, need to check whether current file is in shared state");
+        let mut server = tab_map.rpc_server.lock().unwrap();
+        if server.is_running() {
+            server.set_host_cursor(row, col);
+            true
+        } else {
+            false
+        }
     }
 
     /// Updates the content of the tab associated with the given file path.
     /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: Current state of all open tabs.
-    /// - `row`: Row number where the update should start.
-    /// - `column`: Column number where the update should start.
+    /// - `op`: File operation to be performed.
+    /// - `start`: Starting position of the content to be updated.
+    /// - `end`: Ending position of the content to be updated.
     /// - `content`: New content to be inserted.
     ///
     /// Returns `Optional` indicating the success or failure of the update.
     #[tauri::command]
-    pub fn insert_in_current_tab(
+    pub fn modify_current_tab(
         cur_tab_name: State<CurTabName>,
         tab_map: State<TabMap>,
-        pos: TextPosition,
+        op: FileOperation,
+        start: CursorPosition,
+        end: CursorPosition,
         content: &str,
     ) -> Optional {
         let filepath = cur_tab_name.name.lock().unwrap().clone();
@@ -158,21 +179,6 @@ pub mod frontend_api {
                 message: "Tab not found".to_string(),
             },
         }
-    }
-
-    /// Deletes the content from one specific position to another in current tab
-    /// - `cur_tab_name`: State containing the current tab name.
-    /// - `tab_map`: Current state of all open tabs.
-    #[allow(non_snake_case)]
-    #[tauri::command]
-    pub fn delete_in_current_tab(
-        cur_tab_name: State<CurTabName>,
-        tab_map: State<TabMap>,
-        startPos: TextPosition,
-        endPos: TextPosition,
-    ) -> Optional {
-        let filepath = cur_tab_name.name.lock().unwrap().clone();
-        todo!("implement delete and live shared check");
     }
 
     /// Reads the content of a tab from the file at the specified path.
@@ -471,56 +477,88 @@ pub mod frontend_api {
     ///
     /// Returns `Optional` indicating the success or failure of the RPC server
     #[tauri::command]
-    pub fn start_rpc_server(
+    pub fn start_share_server(
         cur_tab_name: State<CurTabName>,
         tab_map: State<TabMap>,
         port: u16,
         password: &str,
     ) -> Optional {
+        if tab_map.tabs.lock().unwrap().len() == 0 {
+            return Optional {
+                success: false,
+                message: "No tab had been opened".to_string(),
+            };
+        }
         let mut rpc_lock = tab_map.rpc_server.lock().unwrap();
-        match rpc_lock.start_service(
-            cur_tab_name.name.lock().unwrap().clone(),
-            Ptr::new(&tab_map),
-        ) {
-            Ok(()) => {
-                rpc_lock.change_password(password);
-                if let Err(e) = rpc_lock.change_port(port) {
-                    return Optional {
-                        success: false,
-                        message: e.to_string(),
-                    };
-                } else {
-                    return Optional {
-                        success: true,
-                        message: String::new(),
-                    };
-                }
-            }
-            Err(e) => Optional {
+        rpc_lock.stop_service();
+        rpc_lock.change_password(password);
+        if let Err(e) = rpc_lock.set_port(port) {
+            return Optional {
                 success: false,
                 message: e.to_string(),
-            },
+            };
+        } else if let Err(e) = rpc_lock.start_service(
+            state::get_current_tab_name(&cur_tab_name),
+            Ptr::new(&tab_map),
+        ) {
+            return Optional {
+                success: false,
+                message: e.to_string(),
+            };
+        } else {
+            return Optional {
+                success: true,
+                message: String::new(),
+            };
         }
     }
 
-    /// Stops the RPC server for the current tab.
+    /// Authorize and connect to a remote RPC server as client.
+    /// - `cur_tab_name`: State containing the current tab name.
+    /// - `tab_map`: State containing the map of all tabs.
+    /// - `ip`: IPV4 address of the remote server.
+    /// - `port`: Port number of the remote server.
+    /// - `password`: Password to be used for the connection.
+    ///
+    /// Returns `Optional` indicating the success or failure of the connection.
+    #[tauri::command]
+    pub fn authorize(
+        cur_tab_name: State<CurTabName>,
+        tab_map: State<TabMap>,
+        ip: String,
+        port: u16,
+        password: String,
+    ) -> Optional {
+        todo!("Implement authorize as client");
+    }
+
+    /// Stop the share server for the current tab.
     /// - `tab_map`: State containing the map of all tabs.
     ///
-    /// Returns `bool` indicating whether the RPC server was successfully stop.
+    /// Returns `bool` indicating the success or failure, failure means the
+    /// server is not running.
     #[tauri::command]
-    pub fn stop_rpc_server(tab_map: State<TabMap>) -> bool {
-        let mut rpc_lock = tab_map.rpc_server.lock().unwrap();
-        rpc_lock.stop_service();
-        true
+    pub fn stop_share_server(tab_map: State<TabMap>) -> bool {
+        let mut server = tab_map.rpc_server.lock().unwrap();
+        if !server.is_running() {
+            false
+        } else {
+            server.stop_service();
+            true
+        }
     }
 }
 
-/// Module providing API functions for the backend of a Tauri application
-/// to emit event to the frontend.
+/// This module provides API functions for the backend of a Tauri application
+/// to emit event to the frontend, and the frontend needs to handle the event by
+/// `listen`.
 pub mod backend_api {
-    use crate::types::middleware_types::{SyscallDataType, SyscallOutput, SyscallRequest};
-    use crate::APP_HANDLE;
     use tauri::Manager;
+
+    use crate::{
+        types::middleware_types::{SyscallDataType, SyscallOutput, SyscallRequest},
+        APP_HANDLE,
+    };
 
     /// Emits a print syscall output event to the frontend.
     /// - `pathname`: Identifier for the tab to which the output should be sent.

@@ -1,14 +1,14 @@
 use once_cell::sync::Lazy;
-
-use super::super::super::basic::interface::parser::ParserRISCVInstOp;
-use super::super::super::basic::parser::oplist::*;
-use super::super::constants::{RV32IInstruction, RV32IRegister};
-use super::lexer::RV32IOpToken;
-use crate::utility::enum_map::build_map_mut_data;
+use RV32IRegister::*;
 
 pub use super::super::super::basic::parser::oplist::RISCVOpdSet;
-
-use RV32IRegister::*;
+use super::{
+    super::{
+        super::basic::{interface::parser::ParserRISCVInstOp, parser::oplist::*},
+        constants::{RV32IInstruction, RV32IRegister},
+    },
+    lexer::RV32IOpToken,
+};
 
 // --------------------set-------------------------
 pub fn opd_set_load_mem(op: ParserRISCVInstOp, name: &str, unit: &str) -> Vec<RISCVOpdSet> {

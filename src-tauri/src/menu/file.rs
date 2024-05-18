@@ -1,15 +1,28 @@
-use super::display_dialog;
-use crate::io::file_io;
-use crate::modules::riscv::basic::interface::assembler::RiscVAssembler;
-use crate::modules::riscv::basic::interface::parser::{RISCVExtension, RISCVParser};
-use crate::storage::rope_store;
-use crate::types::menu_types;
-use crate::types::middleware_types::{Tab, TabMap};
-use crate::utility::ptr::Ptr;
-use crate::utility::state_helper::event::{get_current_tab_name, set_current_tab_name};
 use std::path::Path;
-use tauri::api::dialog::{FileDialogBuilder, MessageDialogButtons, MessageDialogKind};
-use tauri::{CustomMenuItem, Manager, Menu, Submenu, WindowMenuEvent};
+
+use tauri::{
+    api::dialog::{FileDialogBuilder, MessageDialogButtons, MessageDialogKind},
+    CustomMenuItem,
+    Manager,
+    Menu,
+    Submenu,
+    WindowMenuEvent,
+};
+
+use super::display_dialog;
+use crate::{
+    io::file_io,
+    modules::riscv::basic::interface::parser::{RISCVExtension, RISCVParser},
+    storage::rope_store,
+    types::{
+        menu_types,
+        middleware_types::{Tab, TabMap},
+    },
+    utility::{
+        ptr::Ptr,
+        state_helper::event::{get_current_tab_name, set_current_tab_name},
+    },
+};
 
 pub fn new() -> Submenu {
     Submenu::new(
@@ -159,8 +172,12 @@ fn close_handler(event: &WindowMenuEvent) {
     let tab_map = window.state::<TabMap>();
     let name = get_current_tab_name(event);
     let mut lock = tab_map.tabs.lock().unwrap();
-    let mut tab = lock.get_mut(&name).unwrap();
-    dirty_close_checker(event, &name, &mut tab);
+    match lock.get_mut(&name) {
+        Some(tab) => {
+            dirty_close_checker(event, &name, tab);
+        }
+        None => {}
+    }
 }
 
 /// Iterate all tabs, check if each tab is dirty, if so, display a dialog to ask
@@ -176,6 +193,7 @@ fn exit_handler(event: &WindowMenuEvent) {
     for (name, tab) in lock.iter_mut() {
         dirty_close_checker(event, name, tab);
     }
+    window.app_handle().exit(0);
 }
 
 /// Create a new tab with the file in provided file path

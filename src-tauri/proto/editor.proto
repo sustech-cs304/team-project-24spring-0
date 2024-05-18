@@ -9,13 +9,31 @@ service Editor {
     rpc UpdateContent(UpdateContentRequest) returns (UpdateContentReply);
 }
 
+enum OperationType{
+    INSERT = 0;
+    DELETE = 1;
+    REPLACE = 2;
+}
+
+message Pos{
+    uint64 row = 1;
+    uint64 col = 2;
+}
+
+message ContentPosition{
+    Pos start = 1;     
+    Pos end = 2;
+}
+
 message AuthorizeRequest{
     string password = 1;
 }
 
 message AuthorizeReply{
     bool success = 1;
-    string file = 2;
+    string fileName = 2;
+    uint64 version = 3;
+    string content = 4;
 }
 
 message DisconnectRequest{
@@ -28,7 +46,7 @@ message DisconnectReply{
 message SetCursorRequest{
     string file = 1;
     uint64 row = 2;
-    uint64 column = 3;
+    uint64 col = 3;
 }
 
 message SetCursorReply{
@@ -36,21 +54,23 @@ message SetCursorReply{
 }
 
 message GetContentRequest{
-    string file = 1;
-    string hash = 2;
+    bool fullContent = 1;
+    uint64 version = 2;
 }
 
 message GetContentReply{
-    bool need_update = 1;
-    string content = 2;
+        repeated UpdateContentRequest history = 1;
+        string fullContent = 2;
 }
 
 message UpdateContentRequest{
-    string file = 1;
-    string content = 2;
+    uint64 version = 1;
+    OperationType op = 2;
+    ContentPosition opRange = 3;
+    string modified_content = 4;
 }
 
 message UpdateContentReply{
     bool success = 1;
-    string content = 2;
+    string message = 2;
 }

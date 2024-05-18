@@ -1,14 +1,14 @@
 use once_cell::sync::Lazy;
-
-use super::super::super::basic::interface::parser::ParserRISCVInstOp;
-use super::super::super::basic::parser::oplist::*;
-use super::super::constants::{RV32FInstruction, RV32FRegister};
-use super::lexer::RV32FOpToken;
-use crate::utility::enum_map::build_map_mut_data;
+use RV32FRegister::*;
 
 pub use super::super::super::basic::parser::oplist::RISCVOpdSet;
-
-use RV32FRegister::*;
+use super::{
+    super::{
+        super::basic::{interface::parser::ParserRISCVInstOp, parser::oplist::*},
+        constants::{RV32FInstruction, RV32FRegister},
+    },
+    lexer::RV32FOpToken,
+};
 
 pub static OP_LIST: Lazy<Vec<Vec<RISCVOpdSet>>> = Lazy::new(|| {
     let mut op_def = [

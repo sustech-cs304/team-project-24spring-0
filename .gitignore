@@ -1,7 +1,9 @@
 # editor config
 .vscode/
+.cargo/
 .idea/
 .cache/
+.vim/
 
 # debuger storage
 .gdb_history
