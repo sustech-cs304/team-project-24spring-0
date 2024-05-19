@@ -104,11 +104,6 @@ L2:
                     println!("Data.length: {}", res.data.len());
                     println!("{:?}", res.text);
                     println!("Text.length: {}", res.text.len());
-                    if let Err(e) = fs::write("output.txt", res.text) {
-                        eprintln!("Error writing to file: {}", e);
-                    } else {
-                        println!("String has been written to output.txt successfully!");
-                    }
                 }
                 Err(err) => {
                     for e in err {
