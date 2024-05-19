@@ -2,11 +2,13 @@ use std::collections::{BTreeMap, HashMap};
 
 use logos::Logos;
 
-use super::super::interface::parser::*;
-use super::label::LabelData;
-use super::lexer::{LexerIter, RISCVOpToken, RISCVToken, Symbol};
-use super::oplist::{RISCVExpectImm, RISCVExpectToken, RISCVOpdSetAim, RISCVOpdSetAimOpd};
-use super::r#macro::MacroData;
+use super::{
+    super::interface::parser::*,
+    label::LabelData,
+    lexer::{LexerIter, RISCVOpToken, RISCVToken, Symbol},
+    oplist::{RISCVExpectImm, RISCVExpectToken, RISCVOpdSetAim, RISCVOpdSetAimOpd},
+    r#macro::MacroData,
+};
 use crate::utility::ptr::Ptr;
 
 pub struct RISCVParser {
@@ -16,9 +18,9 @@ pub struct RISCVParser {
 }
 
 impl Parser<RISCV> for RISCVParser {
-    fn parse(&mut self, code_str: String) -> Result<ParserResult<RISCV>, Vec<ParserError>> {
+    fn parse(&mut self, code_str: &String) -> Result<ParserResult<RISCV>, Vec<ParserError>> {
         self.init();
-        let mut _status = RISCVParserStatus::new(&code_str);
+        let mut _status = RISCVParserStatus::new(code_str);
         let status_ptr = Ptr::new(&_status);
         let status = status_ptr.as_mut();
 
@@ -26,9 +28,14 @@ impl Parser<RISCV> for RISCVParser {
             self.parse_token(status_ptr, token)?;
         }
         self.dispose_label_list()?;
+        Self::load_data_to_result(status);
         Ok(_status.result)
     }
 }
+
+// for RISCVParserStatus::data_buf size
+// not guaranteed, just a recommendation
+const DATA_CHUNK_RECOMMEND_SIZE: usize = 0x7ff;
 
 pub type RISCVSymbolList = Vec<&'static Vec<(&'static str, Symbol<'static>)>>;
 
@@ -59,6 +66,7 @@ pub(super) struct RISCVParserStatus<'a> {
     macro_def: Option<MacroData>,
     label_def: Option<String>,
     data_seg_size: usize,
+    data_buf: Vec<Vec<ParserResultData>>,
     result: ParserResult<RISCV>,
 }
 
@@ -72,6 +80,7 @@ impl RISCVParserStatus<'_> {
             macro_def: None,
             label_def: None,
             data_seg_size: 0,
+            data_buf: Vec::new(),
             result: ParserResult {
                 data: Vec::new(),
                 text: Vec::new(),
@@ -90,26 +99,15 @@ macro_rules! load_data_helper {
                 .iter
                 .get_error("data segment size exceed max limit 0xfffff".to_string()))
         } else {
+            let label_pos = ParserRISCVLabel::Data($status.data_seg_size);
             $status.data_seg_size += $vec.len();
-            let label_pos: ParserRISCVLabel;
-            let now_len = $status.result.data.len();
-            if let Some(ParserResultData::Data(chunk)) = $status.result.data.last_mut() {
-                if chunk.len() < DATA_CHUNK_RECOMMEND_SIZE {
-                    label_pos = ParserRISCVLabel::Data((now_len - 1, chunk.len()));
+            match $status.data_buf.last_mut() {
+                Some(chunk) if chunk.len() < DATA_CHUNK_RECOMMEND_SIZE => {
                     chunk.extend($vec);
-                } else {
-                    label_pos = ParserRISCVLabel::Data((now_len, 0));
-                    $status
-                        .result
-                        .data
-                        .push(ParserResultData::Data(Vec::from($vec)));
                 }
-            } else {
-                label_pos = ParserRISCVLabel::Data((now_len, 0));
-                $status
-                    .result
-                    .data
-                    .push(ParserResultData::Data(Vec::from($vec)));
+                _ => {
+                    $status.data_buf.push(Vec::from($vec));
+                }
             }
             if let Some(label_name) = &$status.label_def {
                 $label_list.get_mut(label_name).unwrap().def = Some(label_pos);
@@ -193,7 +191,7 @@ impl RISCVParser {
         }
     }
 
-    fn load_to_result(
+    fn load_text_to_result(
         result: &mut ParserResult<RISCV>,
         line: usize,
         stash_opd: &Vec<Option<ParserRISCVInstOpd>>,
@@ -281,6 +279,10 @@ impl RISCVParser {
                 .iter
                 .get_error("requires in data segment".to_string())),
         }
+    }
+
+    fn load_data_to_result(status: &mut RISCVParserStatus) {
+        status.result.data = status.data_buf.concat();
     }
 
     fn parse_op(
@@ -423,7 +425,7 @@ impl RISCVParser {
             // add basic instruction to status.result
             for aim_basic in &success_set.aim_basics {
                 // add instruction
-                Self::load_to_result(&mut status.result, now_line, &stash_opd, aim_basic);
+                Self::load_text_to_result(&mut status.result, now_line, &stash_opd, aim_basic);
                 // update label_list if has label
                 Self::update_label_ref(
                     &mut status.result,
@@ -505,7 +507,12 @@ impl RISCVParser {
                             if status.segment == RISCVSegment::Text {
                                 status.result.text.push(ParserResultText::Align(val as u8));
                             } else {
-                                status.result.data.push(ParserResultData::Align(val as u8));
+                                let byte = 1 << val as usize;
+                                load_data_helper!(
+                                    self.label_list,
+                                    status,
+                                    vec![0; byte - status.data_seg_size % byte]
+                                )?;
                             }
                             Ok(())
                         } else {
@@ -561,27 +568,13 @@ impl RISCVParser {
                         .iter
                         .get_error("invalid directive in text segment".to_string()));
                 }
-                if let Some(RISCVToken::ImmediateInt(val)) = status.iter.next(&self.symbol_list)? {
-                    if val < 0 {
-                        return Err(status
-                            .iter
-                            .get_error(".space requires a non-negative integer".to_string()));
-                    } else if ((MAX_DATA_SIZE - status.data_seg_size) as i128) < val {
-                        return Err(status
-                            .iter
-                            .get_error("data segment size exceed max limit 0xfffff".to_string()));
-                    } else {
-                        status
-                            .result
-                            .data
-                            .push(ParserResultData::Data(vec![0; val as usize]));
-                        status.data_seg_size += val as usize;
-                        return Ok(());
+                match status.iter.next(&self.symbol_list)? {
+                    Some(RISCVToken::ImmediateInt(val)) if val >= 0 => {
+                        load_data_helper!(self.label_list, status, vec![0; val as usize])
                     }
-                } else {
-                    Err(status
+                    _ => Err(status
                         .iter
-                        .get_error(".space requires a non-negative integer".to_string()))
+                        .get_error(".space requires a non-negative integer".to_string())),
                 }
             }
             RISCVToken::String => Self::set_data_seg(status, RISCVDataType::Asciz),

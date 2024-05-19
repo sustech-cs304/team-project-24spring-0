@@ -1,13 +1,15 @@
 use once_cell::sync::Lazy;
-
-use super::super::super::basic::interface::parser::ParserRISCVInstOp;
-use super::super::super::basic::parser::oplist::*;
-use super::super::constants::{RV32IInstruction, RV32IRegister};
-use super::lexer::RV32IOpToken;
+use RV32IRegister::*;
 
 pub use super::super::super::basic::parser::oplist::RISCVOpdSet;
-
-use RV32IRegister::*;
+use super::{
+    super::{
+        super::basic::{interface::parser::ParserRISCVInstOp, parser::oplist::*},
+        constants::{RV32IInstruction, RV32IRegister},
+    },
+    lexer::RV32IOpToken,
+};
+use crate::utility::enum_map::build_map_mut_data;
 
 // --------------------set-------------------------
 pub fn opd_set_load_mem(op: ParserRISCVInstOp, name: &str, unit: &str) -> Vec<RISCVOpdSet> {
@@ -112,13 +114,7 @@ pub fn opd_set_store_mem(op: ParserRISCVInstOp, name: &str, unit: &str) -> Vec<R
     ]
 }
 
-pub static OP_LIST: Lazy<[Vec<RISCVOpdSet>; u8::MAX as usize]> = Lazy::new(|| unsafe {
-    assert!(
-        std::mem::size_of::<RV32IOpToken>() == 1,
-        "Size of RV32IOpToken must be 1"
-    );
-    const TMP_FOR_INIT: Vec<RISCVOpdSet> = Vec::new();
-    let mut op_list = [TMP_FOR_INIT; u8::MAX as usize];
+pub static OP_LIST: Lazy<Vec<Vec<RISCVOpdSet>>> = Lazy::new(|| {
     let mut op_def = [
         (
             RV32IOpToken::Add,
@@ -991,8 +987,5 @@ pub static OP_LIST: Lazy<[Vec<RISCVOpdSet>; u8::MAX as usize]> = Lazy::new(|| un
             )],
         ),
     ];
-    op_def.iter_mut().for_each(|(op, opd_set)| {
-        op_list[std::mem::transmute::<_, u8>(*op) as usize] = std::mem::take(opd_set);
-    });
-    op_list
+    build_map_mut_data(&mut op_def, |def| (def.0, std::mem::take(&mut def.1)))
 });

@@ -1,20 +1,23 @@
-use std::io::Write;
-use std::str::FromStr;
+use std::{io::Write, str::FromStr};
 
 use once_cell::sync::Lazy;
 use strum::VariantArray;
 
 #[cfg(debug_assertions)]
 use super::super::super::basic::interface::parser::{export_list, export_pair};
-use super::super::super::basic::interface::parser::{
-    ParserRISCVCsr, ParserRISCVInstOp, ParserRISCVRegister,
+use super::{
+    super::super::{
+        basic::{
+            interface::parser::{ParserRISCVCsr, ParserRISCVInstOp, ParserRISCVRegister},
+            parser::{
+                lexer::{RISCVOpToken, Symbol},
+                parser::RISCVSymbolList,
+            },
+        },
+        rv32i::constants::{RV32ICsr, RV32IInstruction, RV32IRegister, RV32I_REGISTER_VALID_NAME},
+    },
+    lexer::RV32IOpToken,
 };
-use super::super::super::basic::parser::lexer::{RISCVOpToken, Symbol};
-use super::super::super::basic::parser::parser::RISCVSymbolList;
-use super::super::super::rv32i::constants::{
-    RV32ICsr, RV32IInstruction, RV32IRegister, RV32I_REGISTER_VALID_NAME,
-};
-use super::lexer::RV32IOpToken;
 
 pub static RV32I_SYMBOL_LIST: Lazy<RISCVSymbolList> = Lazy::new(|| vec![&OP_TOKEN, &REG_TOKEN]);
 

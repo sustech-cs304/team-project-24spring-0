@@ -1,7 +1,8 @@
-use crate::interface::assembler::{Instruction, Operand};
-use crate::interface::simulator::Simulator;
-use crate::simulator::cpu::CPU;
-use crate::types::middleware_types::SyscallDataType;
+use crate::{
+    interface::simulator::Simulator,
+    simulator::cpu::*,
+    types::middleware_types::SyscallDataType,
+};
 
 struct RiscVSimulator {
     // pc: u32,
@@ -12,15 +13,23 @@ struct RiscVSimulator {
 }
 
 impl<EXR, REG, ERR> Simulator<EXR, REG, ERR> for RiscVSimulator {
-    fn load_inst(&mut self, ir: &EXR) -> Result<bool, ERR> {
-        unimplemented!()
+    fn load_inst(&mut self, ir: &EXR) -> Result<(), ERR> {
+        unimplemented!();
     }
 
     fn run(&mut self) -> Result<REG, ERR> {
-        unimplemented!()
+        unimplemented!();
+    }
+
+    fn debug(&mut self) -> Result<REG, ERR> {
+        unimplemented!();
     }
 
     fn step(&mut self) -> Result<REG, ERR> {
+        unimplemented!();
+    }
+
+    fn stop(&mut self) -> Result<(), ERR> {
         unimplemented!();
     }
 
@@ -28,15 +37,15 @@ impl<EXR, REG, ERR> Simulator<EXR, REG, ERR> for RiscVSimulator {
         unimplemented!();
     }
 
-    fn redo(&mut self) -> Result<REG, ERR> {
+    fn undo(&mut self) -> Result<REG, ERR> {
         unimplemented!();
     }
 
-    fn set_breakpoint(&mut self, line_number: u64) -> Result<bool, ERR> {
+    fn set_breakpoint(&mut self, line_number: u64) -> Result<(), ERR> {
         unimplemented!();
     }
 
-    fn remove_breakpoint(&mut self, line_number: u64) -> Result<bool, ERR> {
+    fn remove_breakpoint(&mut self, line_number: u64) -> Result<(), ERR> {
         unimplemented!();
     }
 

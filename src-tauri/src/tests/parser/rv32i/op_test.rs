@@ -1,10 +1,10 @@
-use crate::modules::riscv::basic::interface::parser::*;
-
 use ParserRISCVInstOpd::*;
 use ParserRISCVLabel::*;
 use ParserRISCVLabelHandler::*;
 use RV32IInstruction::*;
 use RV32IRegister::*;
+
+use crate::modules::riscv::basic::interface::parser::*;
 
 macro_rules! reg {
     () => {
@@ -69,7 +69,7 @@ macro_rules! expect_helper {
 
 macro_rules! test {
     ($expect:expr, $code:expr, $parser:expr) => {
-        let res = $parser.parse($code.to_string()).unwrap();
+        let res = $parser.parse(&$code.to_string()).unwrap();
         assert_eq!(res, $expect);
     };
 }

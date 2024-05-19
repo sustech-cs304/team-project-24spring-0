@@ -1,3 +1,3 @@
-#[cfg(test)]
+pub mod assembler;
 pub mod parser;
-pub mod simulator;
+mod remote;
