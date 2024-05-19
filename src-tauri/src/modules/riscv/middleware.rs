@@ -234,8 +234,8 @@ pub mod frontend_api {
         let tab = lock.get_mut(&name).unwrap();
         tab.data_return_range = (start, end);
         if let (Some(assemble_result), Some(AssembleResult::Success(assemble_return))) = (
-            &tab.assembly_cache.assembler_result,
-            &mut tab.assembly_cache.output,
+            &tab.assembly_cache.assembler_result.0,
+            &mut tab.assembly_cache.assembler_result.1,
         ) {
             assemble_return.data = assemble_result.data[start as usize..=end as usize].to_vec();
         }
@@ -254,45 +254,53 @@ pub mod frontend_api {
         let tab = lock.get_mut(&name).unwrap();
         let code = tab.text.to_string();
         let cache = &mut tab.assembly_cache;
-        if cache.code == code {
-            return cache.output.clone().unwrap();
+        if cache.code != code {
+            cache.parser_result = Default::default();
+            cache.assembler_result = Default::default();
         }
         cache.code = code;
         if !parse(cache, &mut tab.parser) {
-            return cache.output.clone().unwrap();
-        }
-        match tab.assembler.assemble(cache.parser_result.clone().unwrap()) {
-            Ok(res) => {
-                cache.assembler_result = Some(res.clone());
-                cache.output = Some(AssembleResult::Success(AssembleSuccess {
-                    data: res.data
-                        [tab.data_return_range.0 as usize..=tab.data_return_range.1 as usize]
-                        .to_vec(),
-                    text: res
-                        .instruction
-                        .iter()
-                        .map(|inst| Text {
-                            line: inst.line_number + 1,
-                            address: inst.address,
-                            code: inst.code,
-                            basic: Default::default(),
-                        })
-                        .collect(),
-                }));
+            AssembleResult::Error(cache.parser_result.1.clone().unwrap())
+        } else if cache.assembler_result.1.is_some() {
+            cache.assembler_result.1.clone().unwrap()
+        } else {
+            match tab
+                .assembler
+                .assemble(cache.parser_result.0.clone().unwrap())
+            {
+                Ok(res) => {
+                    cache.assembler_result.0 = Some(res.clone());
+                    cache.assembler_result.1 = Some(AssembleResult::Success(AssembleSuccess {
+                        data: res.data
+                            [tab.data_return_range.0 as usize..=tab.data_return_range.1 as usize]
+                            .to_vec(),
+                        text: res
+                            .instruction
+                            .iter()
+                            .map(|inst| Text {
+                                line: inst.line_number + 1,
+                                address: inst.address,
+                                code: inst.code,
+                                basic: Default::default(),
+                            })
+                            .collect(),
+                    }));
+                }
+                Err(mut e) => {
+                    cache.assembler_result.0 = None;
+                    cache.assembler_result.1 = Some(AssembleResult::Error(
+                        e.iter_mut()
+                            .map(|err| AssembleError {
+                                line: err.line as u64,
+                                column: 0,
+                                msg: std::mem::take(&mut err.msg),
+                            })
+                            .collect(),
+                    ));
+                }
             }
-            Err(mut e) => {
-                cache.output = Some(AssembleResult::Error(
-                    e.iter_mut()
-                        .map(|err| AssembleError {
-                            line: err.line as u64,
-                            column: 0,
-                            msg: std::mem::take(&mut err.msg),
-                        })
-                        .collect(),
-                ));
-            }
+            cache.assembler_result.1.clone().unwrap()
         }
-        cache.output.clone().unwrap()
     }
 
     /// Placeholder for a function to dump data from all tabs.
@@ -307,20 +315,15 @@ pub mod frontend_api {
         let tab = lock.get_mut(&name).unwrap();
         let code = tab.text.to_string();
         let cache = &mut tab.assembly_cache;
-        if cache.code == code {
-            match &cache.output {
-                Some(AssembleResult::Success(_)) => return DumpResult::Success(()),
-                Some(AssembleResult::Error(e)) => return DumpResult::Error(e.clone()),
-                _ => {}
-            }
+        if cache.code != code {
+            cache.parser_result = Default::default();
+            cache.assembler_result = Default::default();
         }
         cache.code = code;
         if !parse(cache, &mut tab.parser) {
-            if let Some(AssembleResult::Error(e)) = &cache.output {
-                return DumpResult::Error(e.clone());
-            }
+            return DumpResult::Error(cache.parser_result.1.clone().unwrap());
         }
-        match tab.assembler.dump(cache.parser_result.clone().unwrap()) {
+        match tab.assembler.dump(cache.parser_result.0.clone().unwrap()) {
             Ok(mem) => {
                 for (ext, data) in [("text", &mem.text), ("data", &mem.data)] {
                     if let Some(e) =
@@ -553,22 +556,30 @@ pub mod frontend_api {
 
     /// helper function
     fn parse(cache: &mut AssembleCache, parser: &mut Box<dyn Parser<RISCV>>) -> bool {
-        match parser.parse(&cache.code) {
-            Ok(res) => {
-                cache.parser_result = Some(res);
-                true
-            }
-            Err(mut e) => {
-                cache.output = Some(AssembleResult::Error(
-                    e.iter_mut()
-                        .map(|err| AssembleError {
-                            line: err.pos.0 as u64,
-                            column: err.pos.1 as u64,
-                            msg: std::mem::take(&mut err.msg),
-                        })
-                        .collect(),
-                ));
-                false
+        if cache.parser_result.0.is_some() {
+            true
+        } else if cache.parser_result.1.is_some() {
+            false
+        } else {
+            match parser.parse(&cache.code) {
+                Ok(res) => {
+                    cache.parser_result.0 = Some(res);
+                    cache.parser_result.1 = None;
+                    true
+                }
+                Err(mut e) => {
+                    cache.parser_result.0 = None;
+                    cache.parser_result.1 = Some(
+                        e.iter_mut()
+                            .map(|err| AssembleError {
+                                line: err.pos.0 as u64,
+                                column: err.pos.1 as u64,
+                                msg: std::mem::take(&mut err.msg),
+                            })
+                            .collect(),
+                    );
+                    false
+                }
             }
         }
     }

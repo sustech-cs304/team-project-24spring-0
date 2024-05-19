@@ -84,9 +84,8 @@ pub struct AssembleError {
 #[derive(Default)]
 pub struct AssembleCache {
     pub code: String,
-    pub parser_result: Option<ParserResult<RISCV>>,
-    pub assembler_result: Option<AssemblerResult<RISCV>>,
-    pub output: Option<AssembleResult>,
+    pub parser_result: (Option<ParserResult<RISCV>>, Option<Vec<AssembleError>>),
+    pub assembler_result: (Option<AssemblerResult<RISCV>>, Option<AssembleResult>),
 }
 
 #[derive(Clone, Serialize)]
