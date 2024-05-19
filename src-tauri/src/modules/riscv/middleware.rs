@@ -4,20 +4,14 @@ pub mod frontend_api {
     use tauri::State;
 
     use crate::{
+        interface::parser::Parser,
         io::file_io,
-        modules::riscv::basic::interface::parser::{RISCVExtension, RISCVParser},
-        storage::rope_store,
-        types::middleware_types::{
-            AssembleResult,
-            AssemblerConfig,
-            CurTabName,
-            CursorPosition,
-            FileOperation,
-            Optional,
-            SyscallDataType,
-            Tab,
-            TabMap,
+        modules::riscv::basic::interface::{
+            assembler::RiscVAssembler,
+            parser::{RISCVExtension, RISCVParser, RISCV},
         },
+        storage::rope_store,
+        types::middleware_types::*,
         utility::{ptr::Ptr, state_helper::state},
     };
 
@@ -39,6 +33,9 @@ pub mod frontend_api {
                 let tab = Tab {
                     text: Box::new(content),
                     parser: Box::new(RISCVParser::new(&vec![RISCVExtension::RV32I])),
+                    assembler: Box::new(RiscVAssembler::new()),
+                    data_return_range: Default::default(),
+                    assembly_cache: Default::default(),
                 };
                 tab_map
                     .tabs
@@ -217,6 +214,28 @@ pub mod frontend_api {
         }
     }
 
+    /// Sets the range [start, end] of data to be returned by the assembly and
+    /// simulator for the current tab. Default is [0, 0].
+    /// - `cur_tab_name`: State containing the current tab name.
+    /// - `tab_map`: State containing the map of all tabs.
+    /// - `start`: Start of the range (included).
+    /// - `end`: End of the range (included).
+    ///
+    /// Returns `Vec<Data>` containing the data in the specified range.
+    #[tauri::command]
+    pub fn set_return_data_range(
+        cur_tab_name: State<CurTabName>,
+        tab_map: State<TabMap>,
+        start: u64,
+        end: u64,
+    ) -> Vec<Data> {
+        let name = cur_tab_name.name.lock().unwrap().clone();
+        let mut lock = tab_map.tabs.lock().unwrap();
+        let tab = lock.get_mut(&name).unwrap();
+        tab.data_return_range = (start, end);
+        todo!("call simulator to get data");
+    }
+
     /// Assembles the code in the currently active tab.
     /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: State containing the map of all tabs.
@@ -227,16 +246,50 @@ pub mod frontend_api {
         let name = cur_tab_name.name.lock().unwrap().clone();
         let mut lock = tab_map.tabs.lock().unwrap();
         let tab = lock.get_mut(&name).unwrap();
-        todo!("Implement assembler operation");
-        match tab.parser.parse(tab.text.to_string()) {
-            Ok(ir) => AssembleResult {
-                success: true,
-                error: Default::default(),
-            },
-            Err(e) => AssembleResult {
-                success: false,
-                error: e,
-            },
+        let code = tab.text.to_string();
+        let cache = &mut tab.assembly_cache;
+        if cache.code != code {
+            cache.parser_result = Default::default();
+            cache.assembler_result = Default::default();
+        }
+        cache.code = code;
+        if !parse(cache, &mut tab.parser) {
+            AssembleResult::Error(cache.parser_result.clone().unwrap())
+        } else if cache.assembler_result.is_some() {
+            cache.assembler_result.clone().unwrap()
+        } else {
+            match tab.assembler.assemble(cache.parser_cache.clone().unwrap()) {
+                Ok(res) => {
+                    todo!("load result to simulator");
+                    cache.assembler_result = Some(AssembleResult::Success(AssembleSuccess {
+                        data: res.data
+                            [tab.data_return_range.0 as usize..=tab.data_return_range.1 as usize]
+                            .to_vec(),
+                        text: res
+                            .instruction
+                            .iter()
+                            .map(|inst| Text {
+                                line: inst.line_number + 1,
+                                address: inst.address,
+                                code: inst.code,
+                                basic: Default::default(),
+                            })
+                            .collect(),
+                    }));
+                }
+                Err(mut e) => {
+                    cache.assembler_result = Some(AssembleResult::Error(
+                        e.iter_mut()
+                            .map(|err| AssembleError {
+                                line: err.line as u64,
+                                column: 0,
+                                msg: std::mem::take(&mut err.msg),
+                            })
+                            .collect(),
+                    ));
+                }
+            }
+            cache.assembler_result.clone().unwrap()
         }
     }
 
@@ -244,10 +297,47 @@ pub mod frontend_api {
     /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: State containing the map of all tabs.
     ///
-    /// Returns `bool` indicating whether the dump was successful.
+    /// Returns `DumpResult` indicating whether the dump was successful.
     #[tauri::command]
-    pub fn dump(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> bool {
-        todo!("Implement dump")
+    pub fn dump(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> DumpResult {
+        let name = cur_tab_name.name.lock().unwrap().clone();
+        let mut lock = tab_map.tabs.lock().unwrap();
+        let tab = lock.get_mut(&name).unwrap();
+        let code = tab.text.to_string();
+        let cache = &mut tab.assembly_cache;
+        if cache.code != code {
+            cache.parser_result = Default::default();
+            cache.assembler_result = Default::default();
+        }
+        cache.code = code;
+        if !parse(cache, &mut tab.parser) {
+            return DumpResult::Error(cache.parser_result.clone().unwrap());
+        }
+        match tab.assembler.dump(cache.parser_cache.clone().unwrap()) {
+            Ok(mem) => {
+                for (ext, data) in [("text", &mem.text), ("data", &mem.data)] {
+                    if let Some(e) =
+                        file_io::write_file(tab.text.get_path().with_extension(ext).as_path(), data)
+                    {
+                        return DumpResult::Error(vec![AssembleError {
+                            line: 0,
+                            column: 0,
+                            msg: e,
+                        }]);
+                    }
+                }
+                DumpResult::Success(())
+            }
+            Err(mut e) => DumpResult::Error(
+                e.iter_mut()
+                    .map(|err| AssembleError {
+                        line: err.line as u64,
+                        column: 0,
+                        msg: std::mem::take(&mut err.msg),
+                    })
+                    .collect(),
+            ),
+        }
     }
 
     /// Run the code in the currently active tab in normal mode(won't stop at
@@ -255,11 +345,10 @@ pub mod frontend_api {
     /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: State containing the map of all tabs.
     ///
-    /// Returns `bool` indicating whether the debug session was successfully
-    /// started.
-    /// TODO: return regs and memory status
+    /// Returns `SimulatorResult` indicating whether the debug session was
+    /// successfully started.
     #[tauri::command]
-    pub fn run(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> bool {
+    pub fn run(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> SimulatorResult {
         todo!("Implement debug")
     }
 
@@ -267,11 +356,10 @@ pub mod frontend_api {
     /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: State containing the map of all tabs.
     ///
-    /// Returns `bool` indicating whether the debug session was successfully
-    /// started.
-    /// TODO: return regs and memory status
+    /// Returns `SimulatorResult` indicating whether the debug session was
+    /// successfully started.
     #[tauri::command]
-    pub fn debug(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> bool {
+    pub fn debug(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> SimulatorResult {
         todo!("Implement debug")
     }
 
@@ -279,9 +367,9 @@ pub mod frontend_api {
     /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: State containing the map of all tabs.
     ///
-    /// Returns `bool` indicating whether the step was successful.
+    /// Returns `SimulatorResult` indicating whether the step was successful.
     #[tauri::command]
-    pub fn step(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> bool {
+    pub fn step(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> SimulatorResult {
         todo!("Implement step")
     }
 
@@ -289,9 +377,9 @@ pub mod frontend_api {
     /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: State containing the map of all tabs.
     ///
-    /// Returns `bool` indicating whether the reset was successful.
+    /// Returns `SimulatorResult` indicating whether the reset was successful.
     #[tauri::command]
-    pub fn reset(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> bool {
+    pub fn reset(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> SimulatorResult {
         todo!("Implement reset")
     }
 
@@ -299,9 +387,9 @@ pub mod frontend_api {
     /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: State containing the map of all tabs.
     ///
-    /// Returns `bool` indicating whether the undo was successful.
+    /// Returns `SimulatorResult` indicating whether the undo was successful.
     #[tauri::command]
-    pub fn undo(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> bool {
+    pub fn undo(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> SimulatorResult {
         todo!("Implement undo")
     }
 
@@ -360,7 +448,6 @@ pub mod frontend_api {
             _ => return false,
         };
         todo!("call simulator syscall_input with val");
-        //tab.parser.syscall_input_request(v);
     }
 
     /// Updates the assembler settings for the current tab.
@@ -454,6 +541,36 @@ pub mod frontend_api {
         } else {
             server.stop_service();
             true
+        }
+    }
+
+    /// helper function
+    fn parse(cache: &mut AssembleCache, parser: &mut Box<dyn Parser<RISCV>>) -> bool {
+        if cache.parser_cache.is_some() {
+            true
+        } else if cache.parser_result.is_some() {
+            false
+        } else {
+            match parser.parse(&cache.code) {
+                Ok(res) => {
+                    cache.parser_cache = Some(res);
+                    cache.parser_result = None;
+                    true
+                }
+                Err(mut e) => {
+                    cache.parser_cache = None;
+                    cache.parser_result = Some(
+                        e.iter_mut()
+                            .map(|err| AssembleError {
+                                line: err.pos.0 as u64,
+                                column: err.pos.1 as u64,
+                                msg: std::mem::take(&mut err.msg),
+                            })
+                            .collect(),
+                    );
+                    false
+                }
+            }
         }
     }
 }

@@ -1,5 +1,3 @@
-use std::fs;
-
 use crate::{
     interface::assembler::Assembler,
     modules::riscv::basic::{assembler::assembler::RiscVAssembler, interface::parser::*},
@@ -94,7 +92,7 @@ L2:
 ",
     );
     let mut riscv_assembler = RiscVAssembler::new();
-    let parse_result = p.parse(rope.clone().to_string());
+    let parse_result = p.parse(&rope.clone().to_string());
     match parse_result {
         Ok(res) => {
             let dump_result = riscv_assembler.dump(res);
@@ -104,11 +102,6 @@ L2:
                     println!("Data.length: {}", res.data.len());
                     println!("{:?}", res.text);
                     println!("Text.length: {}", res.text.len());
-                    if let Err(e) = fs::write("output.txt", res.text) {
-                        eprintln!("Error writing to file: {}", e);
-                    } else {
-                        println!("String has been written to output.txt successfully!");
-                    }
                 }
                 Err(err) => {
                     for e in err {
@@ -116,19 +109,22 @@ L2:
                     }
                 }
             }
-        }
-        Err(err) => {
-            for e in err {
-                println!("{}", e.to_string());
-            }
-        }
-    }
-    let ast = p.parse(rope.clone().to_string()).unwrap();
-    let assembled_result = riscv_assembler.assemble(ast);
-    match assembled_result {
-        Ok(res) => {
-            for instruction in res {
-                println!("{}", instruction.to_string());
+            let ast = p.parse(&rope.clone().to_string()).unwrap();
+            let assembled_result = riscv_assembler.assemble(ast);
+            match assembled_result {
+                Ok(res) => {
+                    for data in res.data {
+                        println!("0x{:08x}", data);
+                    }
+                    for instruction in res.instruction {
+                        println!("{}", instruction.to_string());
+                    }
+                }
+                Err(err) => {
+                    for e in err {
+                        println!("{}", e.to_string());
+                    }
+                }
             }
         }
         Err(err) => {

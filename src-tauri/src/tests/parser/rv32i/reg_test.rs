@@ -36,7 +36,7 @@ pub fn test() {
                 };
 
                 let res = parser
-                    .parse(format!(
+                    .parse(&format!(
                         "add {}, {}, {}",
                         VALID_REG_NAME[i], VALID_REG_NAME[j], VALID_REG_NAME[k]
                     ))
