@@ -6,7 +6,7 @@ use strum_macros::{Display, EnumMessage};
 
 use crate::{
     interface::{
-        assembler::{AssembleResult as AssemblerResult, Assembler},
+        assembler::Assembler,
         parser::{Parser, ParserResult},
         storage::MFile,
     },

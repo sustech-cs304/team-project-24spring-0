@@ -1,5 +1,3 @@
-use std::fs;
-
 use crate::{
     interface::assembler::Assembler,
     modules::riscv::basic::{assembler::assembler::RiscVAssembler, interface::parser::*},

@@ -4,7 +4,7 @@ pub mod frontend_api {
     use tauri::State;
 
     use crate::{
-        interface::{assembler::Assembler, parser::Parser},
+        interface::parser::Parser,
         io::file_io,
         modules::riscv::basic::interface::{
             assembler::RiscVAssembler,
