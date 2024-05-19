@@ -11,6 +11,9 @@
 )]
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 #![feature(linked_list_cursors)]
+/// front_end api is under [`middleware.rs`]
+///
+/// [`middleware.rs`]: crate::modules::riscv::middleware
 mod interface;
 mod io;
 mod menu;
