@@ -1,2 +1,2 @@
-pub mod assemble;
+pub mod assembler;
 pub mod parser;

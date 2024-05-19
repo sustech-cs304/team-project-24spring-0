@@ -2,7 +2,6 @@
 #![cfg_attr(
     debug_assertions,
     allow(dead_code),
-    allow(unused_imports),
     allow(unused_variables),
     allow(unused_mut),
     allow(unused_assignments),
@@ -12,16 +11,22 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 #![feature(linked_list_cursors)]
 
+/// front_end api is under [`middleware.rs`]
+///
+/// [`middleware.rs`]: crate::modules::riscv::middleware
 mod interface;
+
 mod io;
 mod menu;
 mod modules;
 mod remote;
 mod simulator;
 mod storage;
-mod tests;
 mod types;
 mod utility;
+
+#[cfg(test)]
+mod tests;
 
 use std::sync::{Arc, Mutex};
 
@@ -57,6 +62,7 @@ fn main() {
             frontend_api::read_tab,
             frontend_api::write_tab,
             frontend_api::set_cursor,
+            frontend_api::set_return_data_range,
             frontend_api::assembly,
             frontend_api::run,
             frontend_api::debug,

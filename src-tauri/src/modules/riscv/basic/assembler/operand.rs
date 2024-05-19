@@ -7,7 +7,6 @@ use crate::{
                 ParserRISCVImmediate,
                 ParserRISCVLabel,
                 ParserRISCVRegister,
-                DATA_CHUNK_RECOMMEND_SIZE,
                 RISCV,
             },
         },
@@ -107,9 +106,7 @@ impl From<ParserRISCVLabel> for u32 {
     fn from(label: ParserRISCVLabel) -> Self {
         match label {
             ParserRISCVLabel::Text(pos) => MAIN as u32 + pos as u32 * 4,
-            ParserRISCVLabel::Data((num, pos)) => {
-                DATA as u32 + num as u32 * DATA_CHUNK_RECOMMEND_SIZE as u32 + pos as u32
-            }
+            ParserRISCVLabel::Data(pos) => DATA as u32 + pos as u32,
             ParserRISCVLabel::Unknown(_) => 0,
         }
     }
