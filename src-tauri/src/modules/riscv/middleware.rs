@@ -228,18 +228,12 @@ pub mod frontend_api {
         tab_map: State<TabMap>,
         start: u64,
         end: u64,
-    ) -> bool {
+    ) -> Vec<Data> {
         let name = cur_tab_name.name.lock().unwrap().clone();
         let mut lock = tab_map.tabs.lock().unwrap();
         let tab = lock.get_mut(&name).unwrap();
         tab.data_return_range = (start, end);
-        if let (Some(assemble_result), Some(AssembleResult::Success(assemble_return))) = (
-            &tab.assembly_cache.assembler_result.0,
-            &mut tab.assembly_cache.assembler_result.1,
-        ) {
-            assemble_return.data = assemble_result.data[start as usize..=end as usize].to_vec();
-        }
-        true
+        todo!("call simulator to get data");
     }
 
     /// Assembles the code in the currently active tab.
@@ -260,17 +254,14 @@ pub mod frontend_api {
         }
         cache.code = code;
         if !parse(cache, &mut tab.parser) {
-            AssembleResult::Error(cache.parser_result.1.clone().unwrap())
-        } else if cache.assembler_result.1.is_some() {
-            cache.assembler_result.1.clone().unwrap()
+            AssembleResult::Error(cache.parser_result.clone().unwrap())
+        } else if cache.assembler_result.is_some() {
+            cache.assembler_result.clone().unwrap()
         } else {
-            match tab
-                .assembler
-                .assemble(cache.parser_result.0.clone().unwrap())
-            {
+            match tab.assembler.assemble(cache.parser_cache.clone().unwrap()) {
                 Ok(res) => {
-                    cache.assembler_result.0 = Some(res.clone());
-                    cache.assembler_result.1 = Some(AssembleResult::Success(AssembleSuccess {
+                    todo!("load result to simulator");
+                    cache.assembler_result = Some(AssembleResult::Success(AssembleSuccess {
                         data: res.data
                             [tab.data_return_range.0 as usize..=tab.data_return_range.1 as usize]
                             .to_vec(),
@@ -287,8 +278,7 @@ pub mod frontend_api {
                     }));
                 }
                 Err(mut e) => {
-                    cache.assembler_result.0 = None;
-                    cache.assembler_result.1 = Some(AssembleResult::Error(
+                    cache.assembler_result = Some(AssembleResult::Error(
                         e.iter_mut()
                             .map(|err| AssembleError {
                                 line: err.line as u64,
@@ -299,7 +289,7 @@ pub mod frontend_api {
                     ));
                 }
             }
-            cache.assembler_result.1.clone().unwrap()
+            cache.assembler_result.clone().unwrap()
         }
     }
 
@@ -321,9 +311,9 @@ pub mod frontend_api {
         }
         cache.code = code;
         if !parse(cache, &mut tab.parser) {
-            return DumpResult::Error(cache.parser_result.1.clone().unwrap());
+            return DumpResult::Error(cache.parser_result.clone().unwrap());
         }
-        match tab.assembler.dump(cache.parser_result.0.clone().unwrap()) {
+        match tab.assembler.dump(cache.parser_cache.clone().unwrap()) {
             Ok(mem) => {
                 for (ext, data) in [("text", &mem.text), ("data", &mem.data)] {
                     if let Some(e) =
@@ -556,20 +546,20 @@ pub mod frontend_api {
 
     /// helper function
     fn parse(cache: &mut AssembleCache, parser: &mut Box<dyn Parser<RISCV>>) -> bool {
-        if cache.parser_result.0.is_some() {
+        if cache.parser_cache.is_some() {
             true
-        } else if cache.parser_result.1.is_some() {
+        } else if cache.parser_result.is_some() {
             false
         } else {
             match parser.parse(&cache.code) {
                 Ok(res) => {
-                    cache.parser_result.0 = Some(res);
-                    cache.parser_result.1 = None;
+                    cache.parser_cache = Some(res);
+                    cache.parser_result = None;
                     true
                 }
                 Err(mut e) => {
-                    cache.parser_result.0 = None;
-                    cache.parser_result.1 = Some(
+                    cache.parser_cache = None;
+                    cache.parser_result = Some(
                         e.iter_mut()
                             .map(|err| AssembleError {
                                 line: err.pos.0 as u64,
