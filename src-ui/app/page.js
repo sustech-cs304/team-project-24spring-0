@@ -9,23 +9,47 @@ import { listen } from '@tauri-apps/api/event';
 import useFileStore from "@/utils/state";
 
 export default function Home() {
-    const state = useFileStore();
 
     useEffect(() => {
         const unListenedFileOpen = listen('front_file_open', (event) => {
             // setOutput(prevOutput => prevOutput + '\nEvent received:\n' + JSON.stringify(event.payload));
+            const state = useFileStore.getState();
+            for (let file of state.files) {
+                if (file.fileName === event.payload["file_path"]) {
+                    return;
+                }
+            }
+            console.log('file open event received');
+
             state.addFile(
                 {
                     fileName: event.payload["file_path"],
                     code: event.payload["content"],
+                    original: event.payload["content"],
+                    assembly: "",
+                    runLines: [],
                 }
             );
-            return event.payload;
+            // return event.payload;
+        });
+
+        const unListenedFileSave = listen('front_file_save', (event) => {
+            const state = useFileStore.getState();
+            const file = state.files.find(file => file.fileName === state.currentFile);
+            state.updateFile(state.currentFile, file.code, file.code, file.assembly, file.runLines);
+        });
+
+        const unListenedFileSaveAs = listen('front_file_save_as', (event) => {
+            const state = useFileStore.getState();
+            const file = state.files.find(file => file.fileName === state.currentFile);
+            state.updateFile(state.currentFile, file.code, file.code, file.assembly, file.runLines);
         });
 
 
         return () => {
             unListenedFileOpen.then(dispose => dispose());
+            unListenedFileSave.then(dispose => dispose());
+            unListenedFileSaveAs.then(dispose => dispose());
         };
     }, []);
 

@@ -18,7 +18,7 @@ export default function Register() {
                                 <TableCell>0</TableCell>
                             </TableRow>
                             {Array.from({ length: 31 }, (_, index) => (
-                                <TableRow key={index}>
+                                <TableRow key={index+1}>
                                     <TableCell>{`x${index}`}</TableCell>
                                     <TableCell>0</TableCell>
                                 </TableRow>
