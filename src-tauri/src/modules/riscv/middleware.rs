@@ -4,10 +4,11 @@ pub mod frontend_api {
     use tauri::State;
 
     use crate::{
+        interface::{assembler::Assembler, parser::Parser},
         io::file_io,
         modules::riscv::basic::interface::{
             assembler::RiscVAssembler,
-            parser::{RISCVExtension, RISCVParser},
+            parser::{RISCVExtension, RISCVParser, RISCV},
         },
         storage::rope_store,
         types::middleware_types::*,
@@ -33,8 +34,8 @@ pub mod frontend_api {
                     text: Box::new(content),
                     parser: Box::new(RISCVParser::new(&vec![RISCVExtension::RV32I])),
                     assembler: Box::new(RiscVAssembler::new()),
-                    parser_result: Default::default(),
-                    assemble_result: Default::default(),
+                    data_return_range: Default::default(),
+                    assembly_cache: Default::default(),
                 };
                 tab_map
                     .tabs
@@ -213,6 +214,34 @@ pub mod frontend_api {
         }
     }
 
+    /// Sets the range [start, end] of data to be returned by the assembly and
+    /// simulator for the current tab. Default is [0, 0].
+    /// - `cur_tab_name`: State containing the current tab name.
+    /// - `tab_map`: State containing the map of all tabs.
+    /// - `start`: Start of the range (included).
+    /// - `end`: End of the range (included).
+    ///
+    /// Returns `bool` indicating whether the range was successfully set.
+    #[tauri::command]
+    pub fn set_return_data_range(
+        cur_tab_name: State<CurTabName>,
+        tab_map: State<TabMap>,
+        start: u64,
+        end: u64,
+    ) -> bool {
+        let name = cur_tab_name.name.lock().unwrap().clone();
+        let mut lock = tab_map.tabs.lock().unwrap();
+        let tab = lock.get_mut(&name).unwrap();
+        tab.data_return_range = (start, end);
+        if let (Some(assemble_result), Some(AssembleResult::Success(assemble_return))) = (
+            &tab.assembly_cache.assembler_result,
+            &mut tab.assembly_cache.output,
+        ) {
+            assemble_return.data = assemble_result.data[start as usize..=end as usize].to_vec();
+        }
+        true
+    }
+
     /// Assembles the code in the currently active tab.
     /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: State containing the map of all tabs.
@@ -223,58 +252,47 @@ pub mod frontend_api {
         let name = cur_tab_name.name.lock().unwrap().clone();
         let mut lock = tab_map.tabs.lock().unwrap();
         let tab = lock.get_mut(&name).unwrap();
-        if tab.parser_result.0.is_none() {
-            if tab.parser_result.1.is_some() {
-                return AssembleResult::Error(tab.parser_result.1.clone().unwrap());
+        let code = tab.text.to_string();
+        let cache = &mut tab.assembly_cache;
+        if cache.code == code {
+            return cache.output.clone().unwrap();
+        }
+        cache.code = code;
+        if !parse(cache, &mut tab.parser) {
+            return cache.output.clone().unwrap();
+        }
+        match tab.assembler.assemble(cache.parser_result.clone().unwrap()) {
+            Ok(res) => {
+                cache.assembler_result = Some(res.clone());
+                cache.output = Some(AssembleResult::Success(AssembleSuccess {
+                    data: res.data
+                        [tab.data_return_range.0 as usize..=tab.data_return_range.1 as usize]
+                        .to_vec(),
+                    text: res
+                        .instruction
+                        .iter()
+                        .map(|inst| Text {
+                            line: inst.line_number + 1,
+                            address: inst.address,
+                            code: inst.code,
+                            basic: Default::default(),
+                        })
+                        .collect(),
+                }));
             }
-            match tab.parser.parse(tab.text.to_string()) {
-                Ok(res) => tab.parser_result.0 = Some(res),
-                Err(mut e) => {
-                    tab.parser_result.1 = Some(
-                        e.iter_mut()
-                            .map(|err| AssembleError {
-                                line: err.pos.0 as u64,
-                                column: err.pos.1 as u64,
-                                msg: std::mem::take(&mut err.msg),
-                            })
-                            .collect(),
-                    );
-                    return AssembleResult::Error(tab.parser_result.1.clone().unwrap());
-                }
+            Err(mut e) => {
+                cache.output = Some(AssembleResult::Error(
+                    e.iter_mut()
+                        .map(|err| AssembleError {
+                            line: err.line as u64,
+                            column: 0,
+                            msg: std::mem::take(&mut err.msg),
+                        })
+                        .collect(),
+                ));
             }
         }
-        if tab.assemble_result.1.is_none() {
-            match tab.assembler.assemble(tab.parser_result.0.clone().unwrap()) {
-                Ok(res) => {
-                    tab.assemble_result.0 = Some(res.clone());
-                    tab.assemble_result.1 = Some(AssembleResult::Success(AssembleSuccess {
-                        data: res.data,
-                        text: res
-                            .instruction
-                            .iter()
-                            .map(|inst| AssembleSuccessText {
-                                line: inst.line_number + 1,
-                                address: inst.address,
-                                code: inst.code,
-                                basic: Default::default(),
-                            })
-                            .collect(),
-                    }));
-                }
-                Err(mut e) => {
-                    tab.assemble_result.1 = Some(AssembleResult::Error(
-                        e.iter_mut()
-                            .map(|err| AssembleError {
-                                line: err.line as u64,
-                                column: 0,
-                                msg: std::mem::take(&mut err.msg),
-                            })
-                            .collect(),
-                    ));
-                }
-            }
-        }
-        tab.assemble_result.1.clone().unwrap()
+        cache.output.clone().unwrap()
     }
 
     /// Placeholder for a function to dump data from all tabs.
@@ -287,27 +305,22 @@ pub mod frontend_api {
         let name = cur_tab_name.name.lock().unwrap().clone();
         let mut lock = tab_map.tabs.lock().unwrap();
         let tab = lock.get_mut(&name).unwrap();
-        if tab.parser_result.0.is_none() {
-            if tab.parser_result.1.is_some() {
-                return DumpResult::Error(tab.parser_result.1.clone().unwrap());
-            }
-            match tab.parser.parse(tab.text.to_string()) {
-                Ok(res) => tab.parser_result.0 = Some(res),
-                Err(mut e) => {
-                    tab.parser_result.1 = Some(
-                        e.iter_mut()
-                            .map(|err| AssembleError {
-                                line: err.pos.0 as u64,
-                                column: err.pos.1 as u64,
-                                msg: std::mem::take(&mut err.msg),
-                            })
-                            .collect(),
-                    );
-                    return DumpResult::Error(tab.parser_result.1.clone().unwrap());
-                }
+        let code = tab.text.to_string();
+        let cache = &mut tab.assembly_cache;
+        if cache.code == code {
+            match &cache.output {
+                Some(AssembleResult::Success(_)) => return DumpResult::Success(()),
+                Some(AssembleResult::Error(e)) => return DumpResult::Error(e.clone()),
+                _ => {}
             }
         }
-        match tab.assembler.dump(tab.parser_result.0.clone().unwrap()) {
+        cache.code = code;
+        if !parse(cache, &mut tab.parser) {
+            if let Some(AssembleResult::Error(e)) = &cache.output {
+                return DumpResult::Error(e.clone());
+            }
+        }
+        match tab.assembler.dump(cache.parser_result.clone().unwrap()) {
             Ok(mem) => {
                 for (ext, data) in [("text", &mem.text), ("data", &mem.data)] {
                     if let Some(e) =
@@ -339,11 +352,10 @@ pub mod frontend_api {
     /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: State containing the map of all tabs.
     ///
-    /// Returns `bool` indicating whether the debug session was successfully
-    /// started.
-    /// TODO: return regs and memory status
+    /// Returns `SimulatorResult` indicating whether the debug session was
+    /// successfully started.
     #[tauri::command]
-    pub fn run(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> bool {
+    pub fn run(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> SimulatorResult {
         todo!("Implement debug")
     }
 
@@ -351,11 +363,10 @@ pub mod frontend_api {
     /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: State containing the map of all tabs.
     ///
-    /// Returns `bool` indicating whether the debug session was successfully
-    /// started.
-    /// TODO: return regs and memory status
+    /// Returns `SimulatorResult` indicating whether the debug session was
+    /// successfully started.
     #[tauri::command]
-    pub fn debug(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> bool {
+    pub fn debug(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> SimulatorResult {
         todo!("Implement debug")
     }
 
@@ -363,9 +374,9 @@ pub mod frontend_api {
     /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: State containing the map of all tabs.
     ///
-    /// Returns `bool` indicating whether the step was successful.
+    /// Returns `SimulatorResult` indicating whether the step was successful.
     #[tauri::command]
-    pub fn step(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> bool {
+    pub fn step(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> SimulatorResult {
         todo!("Implement step")
     }
 
@@ -373,9 +384,9 @@ pub mod frontend_api {
     /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: State containing the map of all tabs.
     ///
-    /// Returns `bool` indicating whether the reset was successful.
+    /// Returns `SimulatorResult` indicating whether the reset was successful.
     #[tauri::command]
-    pub fn reset(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> bool {
+    pub fn reset(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> SimulatorResult {
         todo!("Implement reset")
     }
 
@@ -383,9 +394,9 @@ pub mod frontend_api {
     /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: State containing the map of all tabs.
     ///
-    /// Returns `bool` indicating whether the undo was successful.
+    /// Returns `SimulatorResult` indicating whether the undo was successful.
     #[tauri::command]
-    pub fn undo(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> bool {
+    pub fn undo(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> SimulatorResult {
         todo!("Implement undo")
     }
 
@@ -444,7 +455,6 @@ pub mod frontend_api {
             _ => return false,
         };
         todo!("call simulator syscall_input with val");
-        //tab.parser.syscall_input_request(v);
     }
 
     /// Updates the assembler settings for the current tab.
@@ -538,6 +548,28 @@ pub mod frontend_api {
         } else {
             server.stop_service();
             true
+        }
+    }
+
+    /// helper function
+    fn parse(cache: &mut AssembleCache, parser: &mut Box<dyn Parser<RISCV>>) -> bool {
+        match parser.parse(&cache.code) {
+            Ok(res) => {
+                cache.parser_result = Some(res);
+                true
+            }
+            Err(mut e) => {
+                cache.output = Some(AssembleResult::Error(
+                    e.iter_mut()
+                        .map(|err| AssembleError {
+                            line: err.pos.0 as u64,
+                            column: err.pos.1 as u64,
+                            msg: std::mem::take(&mut err.msg),
+                        })
+                        .collect(),
+                ));
+                false
+            }
         }
     }
 }

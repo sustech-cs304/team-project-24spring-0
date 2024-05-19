@@ -1,6 +1,9 @@
 use std::fmt::Display;
 
-use crate::interface::parser::{ParserInstSet, ParserResult};
+use crate::{
+    interface::parser::{ParserInstSet, ParserResult},
+    types::middleware_types::AssemblerConfig,
+};
 
 pub trait Assembler<IS>: Send + Sync
 where
@@ -8,6 +11,7 @@ where
 {
     fn assemble(&mut self, ast: ParserResult<IS>)
         -> Result<AssembleResult<IS>, Vec<AssemblyError>>;
+    fn update_config(&mut self, config: &AssemblerConfig);
     fn dump(&mut self, ast: ParserResult<IS>) -> Result<Memory, Vec<AssemblyError>>;
 }
 

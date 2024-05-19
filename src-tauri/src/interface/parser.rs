@@ -1,5 +1,5 @@
 pub trait Parser<IS: ParserInstSet>: Send + Sync {
-    fn parse(&mut self, code: String) -> Result<ParserResult<IS>, Vec<ParserError>>;
+    fn parse(&mut self, code: &String) -> Result<ParserResult<IS>, Vec<ParserError>>;
 }
 
 // in crate::modules::[instruction_set]::basic::interface::parser

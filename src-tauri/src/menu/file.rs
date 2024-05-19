@@ -212,8 +212,8 @@ fn new_tab(event: &WindowMenuEvent, file_path: &Path) -> Option<String> {
                 parser: Box::new(RISCVParser::new(&vec![RISCVExtension::RV32I])),
                 assembler: Box::new(RiscVAssembler::new()),
                 //simulator: Box::new(Default::default()),
-                parser_result: Default::default(),
-                assemble_result: Default::default(),
+                data_return_range: Default::default(),
+                assembly_cache: Default::default(),
             };
             tab_map
                 .tabs

@@ -356,6 +356,10 @@ impl Assembler<RISCV> for RiscVAssembler {
         }
     }
 
+    fn update_config(&mut self, config: &crate::types::middleware_types::AssemblerConfig) {
+        unimplemented!()
+    }
+
     fn dump(&mut self, ast: ParserResult<RISCV>) -> Result<Memory, Vec<AssemblyError>> {
         let data = ast.data;
         let text = ast.text;

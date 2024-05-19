@@ -20,8 +20,8 @@ pub struct Tab {
     pub parser: Box<dyn Parser<RISCV>>,
     pub assembler: Box<dyn Assembler<RISCV>>,
     //pub simulator: Box<dyn Simulator<i32, i32, i32, i32>>,
-    pub parser_result: (Option<ParserResult<RISCV>>, Option<Vec<AssembleError>>),
-    pub assemble_result: (Option<AssemblerResult<RISCV>>, Option<AssembleResult>),
+    pub data_return_range: (u64, u64),
+    pub assembly_cache: AssembleCache,
 }
 
 #[derive(Default)]
@@ -60,25 +60,51 @@ pub enum DumpResult {
 
 #[derive(Clone, Serialize)]
 pub struct AssembleSuccess {
-    pub data: Vec<AssembleSuccessData>,
-    pub text: Vec<AssembleSuccessText>,
+    pub data: Vec<Data>,
+    pub text: Vec<Text>,
 }
 
 #[derive(Clone, Serialize)]
-pub struct AssembleSuccessText {
+pub struct Text {
     pub line: u64,
     pub address: u32,
     pub code: u32,
     pub basic: String,
 }
 
-pub type AssembleSuccessData = u32;
+pub type Data = u32;
 
 #[derive(Clone, Serialize)]
 pub struct AssembleError {
     pub line: u64,
     pub column: u64,
     pub msg: String,
+}
+
+#[derive(Default)]
+pub struct AssembleCache {
+    pub code: String,
+    pub parser_result: Option<ParserResult<RISCV>>,
+    pub assembler_result: Option<AssemblerResult<RISCV>>,
+    pub output: Option<AssembleResult>,
+}
+
+#[derive(Clone, Serialize)]
+pub struct SimulatorResult {
+    pub success: bool,
+    pub has_current_text: bool,
+    pub current_text: u64,
+    pub registers: Vec<Register>,
+    pub data: Vec<Data>,
+    pub has_message: bool,
+    pub message: String,
+}
+
+#[derive(Clone, Serialize)]
+pub struct Register {
+    pub name: String,
+    pub number: String,
+    pub value: u64,
 }
 
 #[derive(Clone, Serialize)]

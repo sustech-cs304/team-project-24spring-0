@@ -69,7 +69,7 @@ macro_rules! expect_helper {
 
 macro_rules! test {
     ($expect:expr, $code:expr, $parser:expr) => {
-        let res = $parser.parse($code.to_string()).unwrap();
+        let res = $parser.parse(&$code.to_string()).unwrap();
         assert_eq!(res, $expect);
     };
 }

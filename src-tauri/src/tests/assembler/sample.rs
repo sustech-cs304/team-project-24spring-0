@@ -94,7 +94,7 @@ L2:
 ",
     );
     let mut riscv_assembler = RiscVAssembler::new();
-    let parse_result = p.parse(rope.clone().to_string());
+    let parse_result = p.parse(&rope.clone().to_string());
     match parse_result {
         Ok(res) => {
             let dump_result = riscv_assembler.dump(res);
@@ -116,7 +116,7 @@ L2:
                     }
                 }
             }
-            let ast = p.parse(rope.clone().to_string()).unwrap();
+            let ast = p.parse(&rope.clone().to_string()).unwrap();
             let assembled_result = riscv_assembler.assemble(ast);
             match assembled_result {
                 Ok(res) => {

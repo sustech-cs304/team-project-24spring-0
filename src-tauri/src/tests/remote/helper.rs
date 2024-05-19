@@ -38,8 +38,8 @@ pub fn init_test_server(content: &str) -> Result<RpcServerImpl, String> {
                     parser: Box::new(RISCVParser::new(&vec![RISCVExtension::RV32I])),
                     assembler: Box::new(RiscVAssembler::new()),
                     //simulator: Box::new(Default::default()),
-                    parser_result: Default::default(),
-                    assemble_result: Default::default(),
+                    data_return_range: Default::default(),
+                    assembly_cache: Default::default(),
                 };
                 static_tab.insert(TEST_FILE_NAME.to_string(), tab);
             }

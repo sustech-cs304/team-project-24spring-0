@@ -95,7 +95,7 @@ L2:
         jalr    ra
 ",
     );
-    let res = p.parse(rope.to_string());
+    let res = p.parse(&rope.to_string());
     match res {
         Ok(res) => println!("{}", res.to_string()),
         Err(err) => {
