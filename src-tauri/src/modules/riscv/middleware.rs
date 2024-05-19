@@ -221,7 +221,7 @@ pub mod frontend_api {
     /// - `start`: Start of the range (included).
     /// - `end`: End of the range (included).
     ///
-    /// Returns `bool` indicating whether the range was successfully set.
+    /// Returns `Vec<Data>` containing the data in the specified range.
     #[tauri::command]
     pub fn set_return_data_range(
         cur_tab_name: State<CurTabName>,
