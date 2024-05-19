@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["any","debug","ptr","state_helper","text_helper"]};
+window.SIDEBAR_ITEMS = {"mod":["any","debug","enum_map","ptr","state_helper","text_helper"]};

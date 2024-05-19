@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/modules/riscv/basic/parser/parser.rs`."><title>parser.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../../../../" data-static-root-path="../../../../../../static.files/" data-current-crate="moras" data-themes="" data-resource-suffix="" data-rustdoc-version="1.80.0-nightly (1a7397988 2024-05-17)" data-channel="nightly" data-search-js="search-d52510db62a78183.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../../../src-files.js"></script><script defer src="../../../../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/modules/riscv/basic/parser/parser.rs`."><title>parser.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../../../../" data-static-root-path="../../../../../../static.files/" data-current-crate="moras" data-themes="" data-resource-suffix="" data-rustdoc-version="1.80.0-nightly (b1ec1bd65 2024-05-18)" data-channel="nightly" data-search-js="search-d52510db62a78183.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../../../src-files.js"></script><script defer src="../../../../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -611,15 +611,6 @@
 <a href="#611" id="611">611</a>
 <a href="#612" id="612">612</a>
 <a href="#613" id="613">613</a>
-<a href="#614" id="614">614</a>
-<a href="#615" id="615">615</a>
-<a href="#616" id="616">616</a>
-<a href="#617" id="617">617</a>
-<a href="#618" id="618">618</a>
-<a href="#619" id="619">619</a>
-<a href="#620" id="620">620</a>
-<a href="#621" id="621">621</a>
-<a href="#622" id="622">622</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::collections::{BTreeMap, HashMap};
 
 <span class="kw">use </span>logos::Logos;
@@ -640,9 +631,9 @@
 }
 
 <span class="kw">impl </span>Parser&lt;RISCV&gt; <span class="kw">for </span>RISCVParser {
-    <span class="kw">fn </span>parse(<span class="kw-2">&amp;mut </span><span class="self">self</span>, code_str: String) -&gt; <span class="prelude-ty">Result</span>&lt;ParserResult&lt;RISCV&gt;, Vec&lt;ParserError&gt;&gt; {
+    <span class="kw">fn </span>parse(<span class="kw-2">&amp;mut </span><span class="self">self</span>, code_str: <span class="kw-2">&amp;</span>String) -&gt; <span class="prelude-ty">Result</span>&lt;ParserResult&lt;RISCV&gt;, Vec&lt;ParserError&gt;&gt; {
         <span class="self">self</span>.init();
-        <span class="kw">let </span><span class="kw-2">mut </span>_status = RISCVParserStatus::new(<span class="kw-2">&amp;</span>code_str);
+        <span class="kw">let </span><span class="kw-2">mut </span>_status = RISCVParserStatus::new(code_str);
         <span class="kw">let </span>status_ptr = Ptr::new(<span class="kw-2">&amp;</span>_status);
         <span class="kw">let </span>status = status_ptr.as_mut();
 
@@ -650,9 +641,14 @@
             <span class="self">self</span>.parse_token(status_ptr, token)<span class="question-mark">?</span>;
         }
         <span class="self">self</span>.dispose_label_list()<span class="question-mark">?</span>;
+        <span class="self">Self</span>::load_data_to_result(status);
         <span class="prelude-val">Ok</span>(_status.result)
     }
 }
+
+<span class="comment">// for RISCVParserStatus::data_buf size
+// not guaranteed, just a recommendation
+</span><span class="kw">const </span>DATA_CHUNK_RECOMMEND_SIZE: usize = <span class="number">0x7ff</span>;
 
 <span class="kw">pub type </span>RISCVSymbolList = Vec&lt;<span class="kw-2">&amp;</span><span class="lifetime">'static </span>Vec&lt;(<span class="kw-2">&amp;</span><span class="lifetime">'static </span>str, Symbol&lt;<span class="lifetime">'static</span>&gt;)&gt;&gt;;
 
@@ -683,6 +679,7 @@
     </span>macro_def: <span class="prelude-ty">Option</span>&lt;MacroData&gt;,
     label_def: <span class="prelude-ty">Option</span>&lt;String&gt;,
     data_seg_size: usize,
+    data_buf: Vec&lt;Vec&lt;ParserResultData&gt;&gt;,
     result: ParserResult&lt;RISCV&gt;,
 }
 
@@ -696,6 +693,7 @@
             macro_def: <span class="prelude-val">None</span>,
             label_def: <span class="prelude-val">None</span>,
             data_seg_size: <span class="number">0</span>,
+            data_buf: Vec::new(),
             result: ParserResult {
                 data: Vec::new(),
                 text: Vec::new(),
@@ -714,26 +712,15 @@
                 </span>.iter
                 .get_error(<span class="string">"data segment size exceed max limit 0xfffff"</span>.to_string()))
         } <span class="kw">else </span>{
+            <span class="kw">let </span>label_pos = ParserRISCVLabel::Data(<span class="macro-nonterminal">$status</span>.data_seg_size);
             <span class="macro-nonterminal">$status</span>.data_seg_size += <span class="macro-nonterminal">$vec</span>.len();
-            <span class="kw">let </span>label_pos: ParserRISCVLabel;
-            <span class="kw">let </span>now_len = <span class="macro-nonterminal">$status</span>.result.data.len();
-            <span class="kw">if let </span><span class="prelude-val">Some</span>(ParserResultData::Data(chunk)) = <span class="macro-nonterminal">$status</span>.result.data.last_mut() {
-                <span class="kw">if </span>chunk.len() &lt; DATA_CHUNK_RECOMMEND_SIZE {
-                    label_pos = ParserRISCVLabel::Data((now_len - <span class="number">1</span>, chunk.len()));
+            <span class="kw">match </span><span class="macro-nonterminal">$status</span>.data_buf.last_mut() {
+                <span class="prelude-val">Some</span>(chunk) <span class="kw">if </span>chunk.len() &lt; DATA_CHUNK_RECOMMEND_SIZE =&gt; {
                     chunk.extend(<span class="macro-nonterminal">$vec</span>);
-                } <span class="kw">else </span>{
-                    label_pos = ParserRISCVLabel::Data((now_len, <span class="number">0</span>));
-                    <span class="macro-nonterminal">$status
-                        </span>.result
-                        .data
-                        .push(ParserResultData::Data(Vec::from(<span class="macro-nonterminal">$vec</span>)));
                 }
-            } <span class="kw">else </span>{
-                label_pos = ParserRISCVLabel::Data((now_len, <span class="number">0</span>));
-                <span class="macro-nonterminal">$status
-                    </span>.result
-                    .data
-                    .push(ParserResultData::Data(Vec::from(<span class="macro-nonterminal">$vec</span>)));
+                <span class="kw">_ </span>=&gt; {
+                    <span class="macro-nonterminal">$status</span>.data_buf.push(Vec::from(<span class="macro-nonterminal">$vec</span>));
+                }
             }
             <span class="kw">if let </span><span class="prelude-val">Some</span>(label_name) = <span class="kw-2">&amp;</span><span class="macro-nonterminal">$status</span>.label_def {
                 <span class="macro-nonterminal">$label_list</span>.get_mut(label_name).unwrap().def = <span class="prelude-val">Some</span>(label_pos);
@@ -817,7 +804,7 @@
         }
     }
 
-    <span class="kw">fn </span>load_to_result(
+    <span class="kw">fn </span>load_text_to_result(
         result: <span class="kw-2">&amp;mut </span>ParserResult&lt;RISCV&gt;,
         line: usize,
         stash_opd: <span class="kw-2">&amp;</span>Vec&lt;<span class="prelude-ty">Option</span>&lt;ParserRISCVInstOpd&gt;&gt;,
@@ -905,6 +892,10 @@
                 .iter
                 .get_error(<span class="string">"requires in data segment"</span>.to_string())),
         }
+    }
+
+    <span class="kw">fn </span>load_data_to_result(status: <span class="kw-2">&amp;mut </span>RISCVParserStatus) {
+        status.result.data = status.data_buf.concat();
     }
 
     <span class="kw">fn </span>parse_op(
@@ -1047,7 +1038,7 @@
             <span class="comment">// add basic instruction to status.result
             </span><span class="kw">for </span>aim_basic <span class="kw">in </span><span class="kw-2">&amp;</span>success_set.aim_basics {
                 <span class="comment">// add instruction
-                </span><span class="self">Self</span>::load_to_result(<span class="kw-2">&amp;mut </span>status.result, now_line, <span class="kw-2">&amp;</span>stash_opd, aim_basic);
+                </span><span class="self">Self</span>::load_text_to_result(<span class="kw-2">&amp;mut </span>status.result, now_line, <span class="kw-2">&amp;</span>stash_opd, aim_basic);
                 <span class="comment">// update label_list if has label
                 </span><span class="self">Self</span>::update_label_ref(
                     <span class="kw-2">&amp;mut </span>status.result,
@@ -1129,7 +1120,12 @@
                             <span class="kw">if </span>status.segment == RISCVSegment::Text {
                                 status.result.text.push(ParserResultText::Align(val <span class="kw">as </span>u8));
                             } <span class="kw">else </span>{
-                                status.result.data.push(ParserResultData::Align(val <span class="kw">as </span>u8));
+                                <span class="kw">let </span>byte = <span class="number">1 </span>&lt;&lt; val <span class="kw">as </span>usize;
+                                <span class="macro">load_data_helper!</span>(
+                                    <span class="self">self</span>.label_list,
+                                    status,
+                                    <span class="macro">vec!</span>[<span class="number">0</span>; byte - status.data_seg_size % byte]
+                                )<span class="question-mark">?</span>;
                             }
                             <span class="prelude-val">Ok</span>(())
                         } <span class="kw">else </span>{
@@ -1185,27 +1181,13 @@
                         .iter
                         .get_error(<span class="string">"invalid directive in text segment"</span>.to_string()));
                 }
-                <span class="kw">if let </span><span class="prelude-val">Some</span>(RISCVToken::ImmediateInt(val)) = status.iter.next(<span class="kw-2">&amp;</span><span class="self">self</span>.symbol_list)<span class="question-mark">? </span>{
-                    <span class="kw">if </span>val &lt; <span class="number">0 </span>{
-                        <span class="kw">return </span><span class="prelude-val">Err</span>(status
-                            .iter
-                            .get_error(<span class="string">".space requires a non-negative integer"</span>.to_string()));
-                    } <span class="kw">else if </span>((MAX_DATA_SIZE - status.data_seg_size) <span class="kw">as </span>i128) &lt; val {
-                        <span class="kw">return </span><span class="prelude-val">Err</span>(status
-                            .iter
-                            .get_error(<span class="string">"data segment size exceed max limit 0xfffff"</span>.to_string()));
-                    } <span class="kw">else </span>{
-                        status
-                            .result
-                            .data
-                            .push(ParserResultData::Data(<span class="macro">vec!</span>[<span class="number">0</span>; val <span class="kw">as </span>usize]));
-                        status.data_seg_size += val <span class="kw">as </span>usize;
-                        <span class="kw">return </span><span class="prelude-val">Ok</span>(());
+                <span class="kw">match </span>status.iter.next(<span class="kw-2">&amp;</span><span class="self">self</span>.symbol_list)<span class="question-mark">? </span>{
+                    <span class="prelude-val">Some</span>(RISCVToken::ImmediateInt(val)) <span class="kw">if </span>val &gt;= <span class="number">0 </span>=&gt; {
+                        <span class="macro">load_data_helper!</span>(<span class="self">self</span>.label_list, status, <span class="macro">vec!</span>[<span class="number">0</span>; val <span class="kw">as </span>usize])
                     }
-                } <span class="kw">else </span>{
-                    <span class="prelude-val">Err</span>(status
+                    <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(status
                         .iter
-                        .get_error(<span class="string">".space requires a non-negative integer"</span>.to_string()))
+                        .get_error(<span class="string">".space requires a non-negative integer"</span>.to_string())),
                 }
             }
             RISCVToken::String =&gt; <span class="self">Self</span>::set_data_seg(status, RISCVDataType::Asciz),

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"static":["TEST_FILE_CONTENT"]};

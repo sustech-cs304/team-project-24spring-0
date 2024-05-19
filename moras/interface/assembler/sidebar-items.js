@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["Operand"],"struct":["AssemblyError","Instruction","InstructionSet","Memory"],"trait":["Assembler","InstructionSetTrait"]};
+window.SIDEBAR_ITEMS = {"enum":["Operand"],"struct":["AssembleResult","AssemblyError","Instruction","InstructionSet","Memory"],"trait":["Assembler","InstructionSetTrait"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["MAP_SIZE"],"fn":["build_map","build_map_mut_data"],"macro":["build_map_helper"],"struct":["EnumMap"]};

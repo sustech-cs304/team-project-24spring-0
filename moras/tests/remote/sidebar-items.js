@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"mod":["client_test","helper","server_test"]};

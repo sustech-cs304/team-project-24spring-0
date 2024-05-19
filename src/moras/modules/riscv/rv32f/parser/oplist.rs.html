@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/modules/riscv/rv32f/parser/oplist.rs`."><title>oplist.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../../../../" data-static-root-path="../../../../../../static.files/" data-current-crate="moras" data-themes="" data-resource-suffix="" data-rustdoc-version="1.80.0-nightly (1a7397988 2024-05-17)" data-channel="nightly" data-search-js="search-d52510db62a78183.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../../../src-files.js"></script><script defer src="../../../../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/modules/riscv/rv32f/parser/oplist.rs`."><title>oplist.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../../../../" data-static-root-path="../../../../../../static.files/" data-current-crate="moras" data-themes="" data-resource-suffix="" data-rustdoc-version="1.80.0-nightly (b1ec1bd65 2024-05-18)" data-channel="nightly" data-search-js="search-d52510db62a78183.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../../../src-files.js"></script><script defer src="../../../../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -87,16 +87,6 @@
 <a href="#87" id="87">87</a>
 <a href="#88" id="88">88</a>
 <a href="#89" id="89">89</a>
-<a href="#90" id="90">90</a>
-<a href="#91" id="91">91</a>
-<a href="#92" id="92">92</a>
-<a href="#93" id="93">93</a>
-<a href="#94" id="94">94</a>
-<a href="#95" id="95">95</a>
-<a href="#96" id="96">96</a>
-<a href="#97" id="97">97</a>
-<a href="#98" id="98">98</a>
-<a href="#99" id="99">99</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>once_cell::sync::Lazy;
 <span class="kw">use </span>RV32FRegister::<span class="kw-2">*</span>;
 
@@ -108,92 +98,82 @@
     },
     lexer::RV32FOpToken,
 };
+<span class="kw">use </span><span class="kw">crate</span>::utility::enum_map::build_map_mut_data;
 
-<span class="kw">pub static </span>OP_LIST: Lazy&lt;[Vec&lt;RISCVOpdSet&gt;; u8::MAX <span class="kw">as </span>usize]&gt; = Lazy::new(|| {
-    <span class="kw">unsafe </span>{
-        <span class="macro">assert!</span>(
-            std::mem::size_of::&lt;RV32FOpToken&gt;() == <span class="number">1</span>,
-            <span class="string">"Size of RV32FOpToken must be 1"
-        </span>);
-        <span class="kw">const </span>TMP_FOR_INIT: Vec&lt;RISCVOpdSet&gt; = Vec::new();
-        <span class="kw">let </span><span class="kw-2">mut </span>op_list = [TMP_FOR_INIT; u8::MAX <span class="kw">as </span>usize];
-        <span class="kw">let </span><span class="kw-2">mut </span>op_def = [
-            (RV32FOpToken::FaddS, <span class="macro">vec!</span>[]),
-            (RV32FOpToken::FclassS, <span class="macro">vec!</span>[]),
-            (RV32FOpToken::FcvtSW, <span class="macro">vec!</span>[]),
-            (RV32FOpToken::FcvtSWu, <span class="macro">vec!</span>[]),
-            (RV32FOpToken::FcvtWS, <span class="macro">vec!</span>[]),
-            (RV32FOpToken::FcvtWuS, <span class="macro">vec!</span>[]),
-            (RV32FOpToken::FdivS, <span class="macro">vec!</span>[]),
-            (RV32FOpToken::FeqS, <span class="macro">vec!</span>[]),
-            (RV32FOpToken::FleS, <span class="macro">vec!</span>[]),
-            (RV32FOpToken::FltS, <span class="macro">vec!</span>[]),
-            (RV32FOpToken::Flw, <span class="macro">vec!</span>[]),
-            (RV32FOpToken::FmaddS, <span class="macro">vec!</span>[]),
-            (RV32FOpToken::FmaxS, <span class="macro">vec!</span>[]),
-            (RV32FOpToken::FminS, <span class="macro">vec!</span>[]),
-            (RV32FOpToken::FmsubS, <span class="macro">vec!</span>[]),
-            (RV32FOpToken::FmulS, <span class="macro">vec!</span>[]),
-            (RV32FOpToken::FmvSX, <span class="macro">vec!</span>[]),
-            (RV32FOpToken::FmvXS, <span class="macro">vec!</span>[]),
-            (RV32FOpToken::FnmaddS, <span class="macro">vec!</span>[]),
-            (RV32FOpToken::FnmsubS, <span class="macro">vec!</span>[]),
-            (RV32FOpToken::FsgnjS, <span class="macro">vec!</span>[]),
-            (RV32FOpToken::FsgnjnS, <span class="macro">vec!</span>[]),
-            (RV32FOpToken::FsgnjxS, <span class="macro">vec!</span>[]),
-            (RV32FOpToken::FsqrtS, <span class="macro">vec!</span>[]),
-            (RV32FOpToken::FsubS, <span class="macro">vec!</span>[]),
-            (RV32FOpToken::Fsw, <span class="macro">vec!</span>[]),
-            (RV32FOpToken::FabsS, <span class="macro">vec!</span>[]),
-            (RV32FOpToken::FgeS, <span class="macro">vec!</span>[]),
-            (RV32FOpToken::FgtS, <span class="macro">vec!</span>[]),
-            (RV32FOpToken::FmvS, <span class="macro">vec!</span>[]),
-            (RV32FOpToken::FmvWX, <span class="macro">vec!</span>[]),
-            (RV32FOpToken::FmvXW, <span class="macro">vec!</span>[]),
-            (RV32FOpToken::FnegS, <span class="macro">vec!</span>[]),
-            <span class="comment">// (RV32FOpToken::FaddD, vec![]),
-            // (RV32FOpToken::FclassD, vec![]),
-            // (RV32FOpToken::FcvtDS, vec![]),
-            // (RV32FOpToken::FcvtDW, vec![]),
-            // (RV32FOpToken::FcvtDWu, vec![]),
-            // (RV32FOpToken::FcvtSD, vec![]),
-            // (RV32FOpToken::FcvtWD, vec![]),
-            // (RV32FOpToken::FcvtWuD, vec![]),
-            // (RV32FOpToken::FdivD, vec![]),
-            // (RV32FOpToken::FeqD, vec![]),
-            // (RV32FOpToken::Fld, vec![]),
-            // (RV32FOpToken::FleD, vec![]),
-            // (RV32FOpToken::FltD, vec![]),
-            // (RV32FOpToken::FmaddD, vec![]),
-            // (RV32FOpToken::FmaxD, vec![]),
-            // (RV32FOpToken::FminD, vec![]),
-            // (RV32FOpToken::FmsubD, vec![]),
-            // (RV32FOpToken::FmulD, vec![]),
-            // (RV32FOpToken::FnmaddD, vec![]),
-            // (RV32FOpToken::FnmsubD, vec![]),
-            // (RV32FOpToken::Fsd, vec![]),
-            // (RV32FOpToken::FsgnjD, vec![]),
-            // (RV32FOpToken::FsgnjnD, vec![]),
-            // (RV32FOpToken::FsgnjxD, vec![]),
-            // (RV32FOpToken::FsqrtD, vec![]),
-            // (RV32FOpToken::FsubD, vec![]),
-            // (RV32FOpToken::FabsD, vec![]),
-            // (RV32FOpToken::FgeD, vec![]),
-            // (RV32FOpToken::FgtD, vec![]),
-            // (RV32FOpToken::FmvD, vec![]),
-            // (RV32FOpToken::FnegD, vec![]),
-            </span>(RV32FOpToken::Frcsr, <span class="macro">vec!</span>[]),
-            (RV32FOpToken::Frflags, <span class="macro">vec!</span>[]),
-            (RV32FOpToken::Frrm, <span class="macro">vec!</span>[]),
-            (RV32FOpToken::Frsr, <span class="macro">vec!</span>[]),
-            (RV32FOpToken::Fsflags, <span class="macro">vec!</span>[]),
-            (RV32FOpToken::Fsrm, <span class="macro">vec!</span>[]),
-            (RV32FOpToken::Fsrr, <span class="macro">vec!</span>[]),
-        ];
-        op_def.iter_mut().for_each(|(op, opd_set)| {
-            op_list[std::mem::transmute::&lt;<span class="kw">_</span>, u8&gt;(<span class="kw-2">*</span>op) <span class="kw">as </span>usize] = std::mem::take(opd_set);
-        });
-        op_list
-    }
+<span class="kw">pub static </span>OP_LIST: Lazy&lt;Vec&lt;Vec&lt;RISCVOpdSet&gt;&gt;&gt; = Lazy::new(|| {
+    <span class="kw">let </span><span class="kw-2">mut </span>op_def = [
+        (RV32FOpToken::FaddS, <span class="macro">vec!</span>[]),
+        (RV32FOpToken::FclassS, <span class="macro">vec!</span>[]),
+        (RV32FOpToken::FcvtSW, <span class="macro">vec!</span>[]),
+        (RV32FOpToken::FcvtSWu, <span class="macro">vec!</span>[]),
+        (RV32FOpToken::FcvtWS, <span class="macro">vec!</span>[]),
+        (RV32FOpToken::FcvtWuS, <span class="macro">vec!</span>[]),
+        (RV32FOpToken::FdivS, <span class="macro">vec!</span>[]),
+        (RV32FOpToken::FeqS, <span class="macro">vec!</span>[]),
+        (RV32FOpToken::FleS, <span class="macro">vec!</span>[]),
+        (RV32FOpToken::FltS, <span class="macro">vec!</span>[]),
+        (RV32FOpToken::Flw, <span class="macro">vec!</span>[]),
+        (RV32FOpToken::FmaddS, <span class="macro">vec!</span>[]),
+        (RV32FOpToken::FmaxS, <span class="macro">vec!</span>[]),
+        (RV32FOpToken::FminS, <span class="macro">vec!</span>[]),
+        (RV32FOpToken::FmsubS, <span class="macro">vec!</span>[]),
+        (RV32FOpToken::FmulS, <span class="macro">vec!</span>[]),
+        (RV32FOpToken::FmvSX, <span class="macro">vec!</span>[]),
+        (RV32FOpToken::FmvXS, <span class="macro">vec!</span>[]),
+        (RV32FOpToken::FnmaddS, <span class="macro">vec!</span>[]),
+        (RV32FOpToken::FnmsubS, <span class="macro">vec!</span>[]),
+        (RV32FOpToken::FsgnjS, <span class="macro">vec!</span>[]),
+        (RV32FOpToken::FsgnjnS, <span class="macro">vec!</span>[]),
+        (RV32FOpToken::FsgnjxS, <span class="macro">vec!</span>[]),
+        (RV32FOpToken::FsqrtS, <span class="macro">vec!</span>[]),
+        (RV32FOpToken::FsubS, <span class="macro">vec!</span>[]),
+        (RV32FOpToken::Fsw, <span class="macro">vec!</span>[]),
+        (RV32FOpToken::FabsS, <span class="macro">vec!</span>[]),
+        (RV32FOpToken::FgeS, <span class="macro">vec!</span>[]),
+        (RV32FOpToken::FgtS, <span class="macro">vec!</span>[]),
+        (RV32FOpToken::FmvS, <span class="macro">vec!</span>[]),
+        (RV32FOpToken::FmvWX, <span class="macro">vec!</span>[]),
+        (RV32FOpToken::FmvXW, <span class="macro">vec!</span>[]),
+        (RV32FOpToken::FnegS, <span class="macro">vec!</span>[]),
+        <span class="comment">// (RV32FOpToken::FaddD, vec![]),
+        // (RV32FOpToken::FclassD, vec![]),
+        // (RV32FOpToken::FcvtDS, vec![]),
+        // (RV32FOpToken::FcvtDW, vec![]),
+        // (RV32FOpToken::FcvtDWu, vec![]),
+        // (RV32FOpToken::FcvtSD, vec![]),
+        // (RV32FOpToken::FcvtWD, vec![]),
+        // (RV32FOpToken::FcvtWuD, vec![]),
+        // (RV32FOpToken::FdivD, vec![]),
+        // (RV32FOpToken::FeqD, vec![]),
+        // (RV32FOpToken::Fld, vec![]),
+        // (RV32FOpToken::FleD, vec![]),
+        // (RV32FOpToken::FltD, vec![]),
+        // (RV32FOpToken::FmaddD, vec![]),
+        // (RV32FOpToken::FmaxD, vec![]),
+        // (RV32FOpToken::FminD, vec![]),
+        // (RV32FOpToken::FmsubD, vec![]),
+        // (RV32FOpToken::FmulD, vec![]),
+        // (RV32FOpToken::FnmaddD, vec![]),
+        // (RV32FOpToken::FnmsubD, vec![]),
+        // (RV32FOpToken::Fsd, vec![]),
+        // (RV32FOpToken::FsgnjD, vec![]),
+        // (RV32FOpToken::FsgnjnD, vec![]),
+        // (RV32FOpToken::FsgnjxD, vec![]),
+        // (RV32FOpToken::FsqrtD, vec![]),
+        // (RV32FOpToken::FsubD, vec![]),
+        // (RV32FOpToken::FabsD, vec![]),
+        // (RV32FOpToken::FgeD, vec![]),
+        // (RV32FOpToken::FgtD, vec![]),
+        // (RV32FOpToken::FmvD, vec![]),
+        // (RV32FOpToken::FnegD, vec![]),
+        </span>(RV32FOpToken::Frcsr, <span class="macro">vec!</span>[]),
+        (RV32FOpToken::Frflags, <span class="macro">vec!</span>[]),
+        (RV32FOpToken::Frrm, <span class="macro">vec!</span>[]),
+        (RV32FOpToken::Frsr, <span class="macro">vec!</span>[]),
+        (RV32FOpToken::Fsflags, <span class="macro">vec!</span>[]),
+        (RV32FOpToken::Fsrm, <span class="macro">vec!</span>[]),
+        (RV32FOpToken::Fsrr, <span class="macro">vec!</span>[]),
+    ];
+    build_map_mut_data(<span class="kw-2">&amp;mut </span>op_def, |def| (def.<span class="number">0</span>, std::mem::take(<span class="kw-2">&amp;mut </span>def.<span class="number">1</span>)))
 });
 </code></pre></div></section></main></body></html>
