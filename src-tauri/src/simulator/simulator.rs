@@ -1,15 +1,17 @@
+use super::cpu::CPU;
 use crate::{
-    interface::{assembler::{AssembleResult, Instruction, InstructionSet, InstructionSetTrait}, parser::ParserInstSet, simulator::Simulator},
-    modules::riscv::rv32i::constants::{RV32IInstruction, RV32IRegister},
+    interface::{
+        assembler::{AssembleResult, Instruction, InstructionSet, InstructionSetTrait},
+        simulator::Simulator,
+    },
+    modules::riscv::{
+        basic::{assembler::register, interface::parser::RISCV},
+        rv32i::constants::{RV32IInstruction, RV32IRegister},
+    },
     types::middleware_types::SyscallDataType,
 };
-
-struct RiscVSimulator {
-    // pc: u32,
-    // memory: Vec<u8>,
-    // registers: [u32; 32],
-    // instructions: Vec<Instruction>,
-    cpu: CPU,
+pub struct RiscVSimulator {
+    pub cpu: CPU,
 }
 
 impl<EXR, REG, ERR> Simulator<EXR, REG, ERR> for RiscVSimulator {

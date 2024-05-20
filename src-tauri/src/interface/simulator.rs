@@ -13,5 +13,8 @@ pub trait Simulator<EXR, REG, ERR>: Send + Sync {
     fn syscall_input(&mut self, input: SyscallDataType);
 }
 
-// default
-// new
+#[derive(Debug)]
+pub struct SimulatesError {
+    pub address: u32,
+    pub msg: String,
+}

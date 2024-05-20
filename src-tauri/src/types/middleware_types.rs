@@ -162,7 +162,6 @@ impl AssemblerConfig {
     }
 }
 
-
 #[derive(EnumMessage, Display)]
 pub enum SyscallDataType {
     #[strum(message = "Char")]
