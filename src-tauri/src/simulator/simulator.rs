@@ -1,6 +1,6 @@
 use crate::{
-    interface::simulator::Simulator,
-    simulator::cpu::*,
+    interface::{assembler::{AssembleResult, Instruction, InstructionSet, InstructionSetTrait}, parser::ParserInstSet, simulator::Simulator},
+    modules::riscv::rv32i::constants::{RV32IInstruction, RV32IRegister},
     types::middleware_types::SyscallDataType,
 };
 

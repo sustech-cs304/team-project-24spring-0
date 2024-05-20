@@ -121,23 +121,47 @@ pub struct SyscallRequest {
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct AssemblerConfig {
-    memory_map_limit_address: u64,
-    kernel_space_high_address: u64,
-    mmio_base_address: u64,
-    kernel_space_base_address: u64,
-    user_space_high_address: u64,
-    data_segment_limit_address: u64,
-    stack_base_address: u64,
-    stack_pointer_sp: u64,
-    stack_limit_address: u64,
-    heap_base_address: u64,
-    dot_data_base_address: u64,
-    global_pointer_gp: u64,
-    data_segment_base_address: u64,
-    dot_extern_base_address: u64,
-    text_limit_address: u64,
-    dot_text_base_address: u64,
+    pub memory_map_limit_address: u32,
+    pub kernel_space_high_address: u32,
+    pub mmio_base_address: u32,
+    pub kernel_space_base_address: u32,
+    pub user_space_high_address: u32,
+    pub data_segment_limit_address: u32,
+    pub stack_base_address: u32,
+    pub stack_pointer_sp: u32,
+    pub stack_limit_address: u32,
+    pub heap_base_address: u32,
+    pub dot_data_base_address: u32,
+    pub global_pointer_gp: u32,
+    pub data_segment_base_address: u32,
+    pub dot_extern_base_address: u32,
+    pub text_limit_address: u32,
+    pub dot_text_base_address: u32,
 }
+
+impl AssemblerConfig {
+    pub fn new() -> Self {
+        AssemblerConfig {
+            memory_map_limit_address: 0x80000000,
+            kernel_space_high_address: 0x80000000,
+            mmio_base_address: 0x40000000,
+            kernel_space_base_address: 0x80000000,
+            user_space_high_address: 0x40000000,
+            data_segment_limit_address: 0x80000000,
+            stack_base_address: 0x7FFFFFFF,
+            stack_pointer_sp: 0x7FFFFFFF,
+            stack_limit_address: 0x7FFFFFF0,
+            heap_base_address: 0x10000000,
+            dot_data_base_address: 0x10000000,
+            global_pointer_gp: 0x10000000,
+            data_segment_base_address: 0x10000000,
+            dot_extern_base_address: 0x10000000,
+            text_limit_address: 0x10000000,
+            dot_text_base_address: 0x10000000,
+        }
+    }
+}
+
 
 #[derive(EnumMessage, Display)]
 pub enum SyscallDataType {
