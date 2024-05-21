@@ -42,6 +42,8 @@ export default function MultifileCode() {
                 outputStore.addOutput('Error ' + i + ' at line ' + error.line + ', column ' + error.column + ': ' + error.msg);
             }
         }
+
+
     }
 
     const handleDebug = async () => {
