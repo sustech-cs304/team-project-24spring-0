@@ -1,5 +1,6 @@
-use crate::types::middleware_types::SyscallDataType;
 use std::fmt::Display;
+
+use crate::types::middleware_types::SyscallDataType;
 
 pub trait Simulator<EXR, REG, ERR>: Send + Sync {
     fn load_inst(&mut self, ir: &EXR) -> Result<(), ERR>;
@@ -22,6 +23,10 @@ pub struct SimulatesError {
 
 impl Display for SimulatesError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "SimulatesError at address 0x{:08X}: {}", self.address, self.msg)
+        write!(
+            f,
+            "SimulatesError at address 0x{:08X}: {}",
+            self.address, self.msg
+        )
     }
 }

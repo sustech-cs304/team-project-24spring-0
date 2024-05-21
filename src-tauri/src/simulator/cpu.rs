@@ -1,5 +1,5 @@
-use std::mem;
-use std::collections::VecDeque;
+use std::{collections::VecDeque, mem};
+
 use super::instruction::*;
 use crate::{
     interface::simulator::SimulatesError,
@@ -7,14 +7,12 @@ use crate::{
     types::middleware_types::AssemblerConfig,
 };
 
-
 #[derive(Clone)]
 struct CPUState {
     pub memory: Vec<u8>,
     pub registers: [u32; 32],
     pub pc: u32,
 }
-
 
 pub struct CPU {
     pub state: CPUState,
@@ -45,13 +43,15 @@ impl CPU {
     pub fn load_inst(&mut self, data_segment: &Vec<u8>, text_segment: &Vec<u8>) {
         let data_base_address = self.address_config.dot_data_base_address;
         let text_base_address = self.address_config.dot_text_base_address;
-    
+
         // Copy data segment
-        self.state.memory[data_base_address as usize..(data_base_address as usize + data_segment.len())]
+        self.state.memory
+            [data_base_address as usize..(data_base_address as usize + data_segment.len())]
             .copy_from_slice(data_segment);
-    
+
         // Copy text segment
-        self.state.memory[text_base_address as usize..(text_base_address as usize + text_segment.len())]
+        self.state.memory
+            [text_base_address as usize..(text_base_address as usize + text_segment.len())]
             .copy_from_slice(text_segment);
 
         self.data_segment = data_segment.clone();
@@ -87,38 +87,38 @@ impl CPU {
 
     pub fn step(&mut self) -> Result<(), SimulatesError> {
         let raw_inst = self.fetch();
-            let mut inst: SIMInstruction = self.decode(raw_inst);
-            let pc_copy = self.state.pc;
-            if (self.state.pc as usize) >= self.state.memory.len() {
-                return Err(SimulatesError {
-                    address: self.state.pc,
-                    msg: "PC overflow.".to_string(),
-                });
-            }
-            match self.execute(&mut inst, pc_copy) {
-                Ok(()) => {}
-                Err(e) => return Err(e),
-            }
-            match inst.name.as_str() {
-                "ecall" => match self.state.registers[17] {
-                    93 => {
-                        // `exit` syscall
-                        // NOTE: NOT error
-                        return Err(SimulatesError {
-                            address: pc_copy,
-                            msg: "Program exited with exit code 0.".to_string(),
-                        });
-                    }
-                    _ => {}
-                },
-                "unimp" => {
+        let mut inst: SIMInstruction = self.decode(raw_inst);
+        let pc_copy = self.state.pc;
+        if (self.state.pc as usize) >= self.state.memory.len() {
+            return Err(SimulatesError {
+                address: self.state.pc,
+                msg: "PC overflow.".to_string(),
+            });
+        }
+        match self.execute(&mut inst, pc_copy) {
+            Ok(()) => {}
+            Err(e) => return Err(e),
+        }
+        match inst.name.as_str() {
+            "ecall" => match self.state.registers[17] {
+                93 => {
+                    // `exit` syscall
+                    // NOTE: NOT error
                     return Err(SimulatesError {
                         address: pc_copy,
-                        msg: "Reached an unimplemented instruction.".to_string(),
+                        msg: "Program exited with exit code 0.".to_string(),
                     });
                 }
                 _ => {}
+            },
+            "unimp" => {
+                return Err(SimulatesError {
+                    address: pc_copy,
+                    msg: "Reached an unimplemented instruction.".to_string(),
+                });
             }
+            _ => {}
+        }
         return Ok(());
     }
 
@@ -132,7 +132,7 @@ impl CPU {
         self.load_inst(&data_segment_copy, &text_segment_copy);
     }
 
-    fn undo(&mut self) -> Result<(), SimulatesError>{
+    fn undo(&mut self) -> Result<(), SimulatesError> {
         if let Some(state) = self.undo_stack.pop_front() {
             self.state = state;
             return Ok(());
@@ -168,7 +168,6 @@ impl CPU {
             ..(self.address_config.dot_text_base_address as usize + text_segment.len())]
             .copy_from_slice(&text_segment);
     }
-
 
     fn fetch(&self) -> u32 {
         let index = self.state.pc as usize;
@@ -311,13 +310,13 @@ impl CPU {
                         0x0 => match funct7 {
                             0x0 => {
                                 inst.name = format!("add     x{},x{},x{}", rd, rs1, rs2);
-                                self.state.registers[rd] =
-                                    self.state.registers[rs1].wrapping_add(self.state.registers[rs2]);
+                                self.state.registers[rd] = self.state.registers[rs1]
+                                    .wrapping_add(self.state.registers[rs2]);
                             }
                             0x20 => {
                                 inst.name = format!("sub     x{},x{},x{}", rd, rs1, rs2);
-                                self.state.registers[rd] =
-                                    self.state.registers[rs1].wrapping_sub(self.state.registers[rs2]);
+                                self.state.registers[rd] = self.state.registers[rs1]
+                                    .wrapping_sub(self.state.registers[rs2]);
                             }
                             _ => {
                                 return Err(SimulatesError {
@@ -328,29 +327,35 @@ impl CPU {
                         },
                         0x4 => {
                             inst.name = format!("xor     x{},x{},x{}", rd, rs1, rs2);
-                            self.state.registers[rd] = self.state.registers[rs1] ^ self.state.registers[rs2];
+                            self.state.registers[rd] =
+                                self.state.registers[rs1] ^ self.state.registers[rs2];
                         }
                         0x6 => {
                             inst.name = format!("or      x{},x{},x{}", rd, rs1, rs2);
-                            self.state.registers[rd] = self.state.registers[rs1] | self.state.registers[rs2];
+                            self.state.registers[rd] =
+                                self.state.registers[rs1] | self.state.registers[rs2];
                         }
                         0x7 => {
                             inst.name = format!("and     x{},x{},x{}", rd, rs1, rs2);
-                            self.state.registers[rd] = self.state.registers[rs1] & self.state.registers[rs2];
+                            self.state.registers[rd] =
+                                self.state.registers[rs1] & self.state.registers[rs2];
                         }
                         0x1 => {
                             inst.name = format!("sll     x{},x{},x{}", rd, rs1, rs2);
-                            self.state.registers[rd] = self.state.registers[rs1] << self.state.registers[rs2];
+                            self.state.registers[rd] =
+                                self.state.registers[rs1] << self.state.registers[rs2];
                         }
                         0x5 => match funct7 {
                             0x0 => {
                                 inst.name = format!("srl     x{},x{},x{}", rd, rs1, rs2);
-                                self.state.registers[rd] = self.state.registers[rs1] >> self.state.registers[rs2];
+                                self.state.registers[rd] =
+                                    self.state.registers[rs1] >> self.state.registers[rs2];
                             }
                             0x20 => {
                                 inst.name = format!("sra     x{},x{},x{}", rd, rs1, rs2);
-                                self.state.registers[rd] =
-                                    ((self.state.registers[rs1] as i32) >> self.state.registers[rs2]) as u32;
+                                self.state.registers[rd] = ((self.state.registers[rs1] as i32)
+                                    >> self.state.registers[rs2])
+                                    as u32;
                             }
                             _ => {
                                 return Err(SimulatesError {
@@ -361,20 +366,22 @@ impl CPU {
                         },
                         0x2 => {
                             inst.name = format!("slt     x{},x{},x{}", rd, rs1, rs2);
-                            self.state.registers[rd] =
-                                if (self.state.registers[rs1] as i32) < (self.state.registers[rs2] as i32) {
-                                    1
-                                } else {
-                                    0
-                                }
-                        }
-                        0x3 => {
-                            inst.name = format!("sltu    x{},x{},x{}", rd, rs1, rs2);
-                            self.state.registers[rd] = if self.state.registers[rs1] < self.state.registers[rs2] {
+                            self.state.registers[rd] = if (self.state.registers[rs1] as i32)
+                                < (self.state.registers[rs2] as i32)
+                            {
                                 1
                             } else {
                                 0
                             }
+                        }
+                        0x3 => {
+                            inst.name = format!("sltu    x{},x{},x{}", rd, rs1, rs2);
+                            self.state.registers[rd] =
+                                if self.state.registers[rs1] < self.state.registers[rs2] {
+                                    1
+                                } else {
+                                    0
+                                }
                         }
                         _ => {
                             return Err(SimulatesError {
@@ -515,8 +522,9 @@ impl CPU {
                         0b0010011 => match funct3 {
                             0x0 => {
                                 inst.name = format!("addi    x{},x{},{}", rd, rs1, imm as i32);
-                                self.state.registers[rd] =
-                                    (self.state.registers[rs1] as i32).wrapping_add(imm as i32) as u32;
+                                self.state.registers[rd] = (self.state.registers[rs1] as i32)
+                                    .wrapping_add(imm as i32)
+                                    as u32;
 
                                 if rd == 0 && rs1 == 0 && imm == 0 {
                                     inst.name = String::from("nop");
@@ -539,16 +547,20 @@ impl CPU {
                             }
                             0x2 => {
                                 inst.name = format!("slti    x{},x{},{}", rd, rs1, imm as i32);
-                                self.state.registers[rd] = if (self.state.registers[rs1] as i32) < (imm as i32)
-                                {
+                                self.state.registers[rd] =
+                                    if (self.state.registers[rs1] as i32) < (imm as i32) {
+                                        1
+                                    } else {
+                                        0
+                                    }
+                            }
+                            0x3 => {
+                                inst.name = format!("sltiu   x{},x{},{}", rd, rs1, imm);
+                                self.state.registers[rd] = if self.state.registers[rs1] < imm {
                                     1
                                 } else {
                                     0
                                 }
-                            }
-                            0x3 => {
-                                inst.name = format!("sltiu   x{},x{},{}", rd, rs1, imm);
-                                self.state.registers[rd] = if self.state.registers[rs1] < imm { 1 } else { 0 }
                             }
                             0x1 => {
                                 let shamt = imm & 0b11111;
@@ -564,8 +576,10 @@ impl CPU {
                                 0b0100000 => {
                                     let shamt = imm & 0b11111;
                                     inst.name = format!("srai    x{},x{},{:#x}", rd, rs1, shamt);
-                                    self.state.registers[rd] =
-                                        CPU::sign_extend(self.state.registers[rs1] >> shamt, 32 - shamt);
+                                    self.state.registers[rd] = CPU::sign_extend(
+                                        self.state.registers[rs1] >> shamt,
+                                        32 - shamt,
+                                    );
                                 }
                                 _ => {
                                     panic!("should never be here.")
@@ -578,22 +592,23 @@ impl CPU {
                         0b0000011 => match funct3 {
                             0x0 => {
                                 inst.name = format!("lb      x{},{}(x{})", rd, imm as i32, rs1);
-                                let index =
-                                    (self.state.registers[rs1] + CPU::sign_extend(imm, 12)) as usize;
-                                self.state.registers[rd] = CPU::sign_extend(self.state.memory[index] as u32, 8);
+                                let index = (self.state.registers[rs1] + CPU::sign_extend(imm, 12))
+                                    as usize;
+                                self.state.registers[rd] =
+                                    CPU::sign_extend(self.state.memory[index] as u32, 8);
                             }
                             0x1 => {
                                 inst.name = format!("lh      x{},{}(x{})", rd, imm as i32, rs1);
-                                let index =
-                                    (self.state.registers[rs1] + CPU::sign_extend(imm, 12)) as usize;
+                                let index = (self.state.registers[rs1] + CPU::sign_extend(imm, 12))
+                                    as usize;
                                 let half_word = self.state.memory[index] as u32
                                     | (self.state.memory[index + 1] as u32) << 8;
                                 self.state.registers[rd] = CPU::sign_extend(half_word as u32, 16);
                             }
                             0x2 => {
                                 inst.name = format!("lw      x{},{}(x{})", rd, imm as i32, rs1);
-                                let index =
-                                    (self.state.registers[rs1] + CPU::sign_extend(imm, 12)) as usize;
+                                let index = (self.state.registers[rs1] + CPU::sign_extend(imm, 12))
+                                    as usize;
 
                                 self.state.registers[rd] = self.state.memory[index] as u32
                                     | ((self.state.memory[index + 1]) as u32) << 8
@@ -602,14 +617,14 @@ impl CPU {
                             }
                             0x4 => {
                                 inst.name = format!("lbu     x{},{}(x{})", rd, imm, rs1);
-                                let index =
-                                    (self.state.registers[rs1] + CPU::sign_extend(imm, 12)) as usize;
+                                let index = (self.state.registers[rs1] + CPU::sign_extend(imm, 12))
+                                    as usize;
                                 self.state.registers[rd] = self.state.memory[index] as u32;
                             }
                             0x5 => {
                                 inst.name = format!("lhu     x{},{}(x{})", rd, imm, rs1);
-                                let index =
-                                    (self.state.registers[rs1] + CPU::sign_extend(imm, 12)) as usize;
+                                let index = (self.state.registers[rs1] + CPU::sign_extend(imm, 12))
+                                    as usize;
 
                                 self.state.registers[rd] = self.state.memory[index] as u32
                                     | (self.state.memory[index + 1] as u32) << 8;
@@ -622,7 +637,8 @@ impl CPU {
                             0x0 => {
                                 inst.name = format!("jalr    x{},x{},{:#x}", rd, rs1, imm);
                                 let pc_copy = self.state.pc;
-                                self.state.pc = self.state.registers[rs1] + CPU::sign_extend(imm, 12);
+                                self.state.pc =
+                                    self.state.registers[rs1] + CPU::sign_extend(imm, 12);
                                 self.state.pc &= !1; // set lsb to 0
                                 self.state.registers[rd] = pc_copy + 4;
 
@@ -648,8 +664,9 @@ impl CPU {
                                         }
                                         4 => {
                                             // print string
-                                            let mut index =
-                                                self.state.registers[RV32IRegister::A0 as usize] as usize;
+                                            let mut index = self.state.registers
+                                                [RV32IRegister::A0 as usize]
+                                                as usize;
                                             while self.state.memory[index] != 0 {
                                                 print!("{}", self.state.memory[index] as char);
                                                 index += 1;
@@ -667,8 +684,9 @@ impl CPU {
                                             // read string
                                             let mut input = String::new();
                                             std::io::stdin().read_line(&mut input).unwrap();
-                                            let mut index =
-                                                self.state.registers[RV32IRegister::A0 as usize] as usize;
+                                            let mut index = self.state.registers
+                                                [RV32IRegister::A0 as usize]
+                                                as usize;
                                             for c in input.chars() {
                                                 self.state.memory[index] = c as u8;
                                                 index += 1;
@@ -683,7 +701,8 @@ impl CPU {
                                             // print character
                                             print!(
                                                 "{}",
-                                                self.state.registers[RV32IRegister::A0 as usize] as u8
+                                                self.state.registers[RV32IRegister::A0 as usize]
+                                                    as u8
                                                     as char
                                             );
                                         }
@@ -771,22 +790,29 @@ impl CPU {
                     match funct3 {
                         0x0 => {
                             inst.name = format!("sb      x{},{}(x{})", rs2, imm as i32, rs1);
-                            let index = (self.state.registers[rs1] + CPU::sign_extend(imm, 12)) as usize;
+                            let index =
+                                (self.state.registers[rs1] + CPU::sign_extend(imm, 12)) as usize;
                             self.state.memory[index] = (self.state.registers[rs2] & 0xff) as u8;
                         }
                         0x1 => {
                             inst.name = format!("sh      x{},{}(x{})", rs2, imm as i32, rs1);
-                            let index = (self.state.registers[rs1] + CPU::sign_extend(imm, 12)) as usize;
+                            let index =
+                                (self.state.registers[rs1] + CPU::sign_extend(imm, 12)) as usize;
                             self.state.memory[index] = (self.state.registers[rs2] & 0xff) as u8;
-                            self.state.memory[index + 1] = (self.state.registers[rs2] >> 8 & 0xff) as u8;
+                            self.state.memory[index + 1] =
+                                (self.state.registers[rs2] >> 8 & 0xff) as u8;
                         }
                         0x2 => {
                             inst.name = format!("sw      x{},{}(x{})", rs2, imm as i32, rs1);
-                            let index = (self.state.registers[rs1] + CPU::sign_extend(imm, 12)) as usize;
+                            let index =
+                                (self.state.registers[rs1] + CPU::sign_extend(imm, 12)) as usize;
                             self.state.memory[index] = (self.state.registers[rs2] & 0xff) as u8;
-                            self.state.memory[index + 1] = (self.state.registers[rs2] >> 8 & 0xff) as u8;
-                            self.state.memory[index + 2] = (self.state.registers[rs2] >> 16 & 0xff) as u8;
-                            self.state.memory[index + 3] = (self.state.registers[rs2] >> 24 & 0xff) as u8;
+                            self.state.memory[index + 1] =
+                                (self.state.registers[rs2] >> 8 & 0xff) as u8;
+                            self.state.memory[index + 2] =
+                                (self.state.registers[rs2] >> 16 & 0xff) as u8;
+                            self.state.memory[index + 3] =
+                                (self.state.registers[rs2] >> 24 & 0xff) as u8;
                         }
                         _ => {
                             panic!("unknown S funct3: {:#05b}", funct3);
@@ -904,6 +930,4 @@ impl CPU {
             RV32IRegister::T6 => 31,
         }
     }
-
-    
 }
