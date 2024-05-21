@@ -12,6 +12,7 @@ export default function Home() {
 
     useEffect(() => {
         const unListenedFileOpen = listen('front_file_open', (event) => {
+            console.log('file open event received');
             // setOutput(prevOutput => prevOutput + '\nEvent received:\n' + JSON.stringify(event.payload));
             const state = useFileStore.getState();
             for (let file of state.files) {
@@ -28,6 +29,22 @@ export default function Home() {
                     original: event.payload["content"],
                     assembly: "",
                     runLines: [],
+                    register:
+                        [0x00000000, 0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
+                            0x00000000, 0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
+                            0x00000000, 0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
+                            0x00000000, 0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,],
+                    memory: [
+                        [0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000],
+                        [0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000],
+                        [0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000],
+                        [0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000],
+                        [0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000],
+                        [0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000],
+                        [0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000],
+                        [0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000],
+                    ],
+                    baseAddress: 0x10010000
                 }
             );
             // return event.payload;
@@ -36,13 +53,13 @@ export default function Home() {
         const unListenedFileSave = listen('front_file_save', (event) => {
             const state = useFileStore.getState();
             const file = state.files.find(file => file.fileName === state.currentFile);
-            state.updateFile(state.currentFile, file.code, file.code, file.assembly, file.runLines);
+            state.updateFile(state.currentFile, file.code, file.code, file.assembly, file.runLines, file.register, file.memory, file.baseAddress);
         });
 
         const unListenedFileSaveAs = listen('front_file_save_as', (event) => {
             const state = useFileStore.getState();
             const file = state.files.find(file => file.fileName === state.currentFile);
-            state.updateFile(state.currentFile, file.code, file.code, file.assembly, file.runLines);
+            state.updateFile(state.currentFile, file.code, file.code, file.assembly, file.runLines, file.register, file.memory, file.baseAddress);
         });
 
 
@@ -63,7 +80,7 @@ export default function Home() {
 
                       <div className='row-span-5'>
                           <Card className='h-full w-full'>
-                              <CardBody className='h-full w-full overflow-y-auto'>
+                              <CardBody className='h-full w-full overflow-y-auto overflow-x-auto'>
                                   <MultifileCode />
                               </CardBody>
                           </Card>

@@ -8,6 +8,7 @@ import CodeLineTable from "./CodeLineTable";
 import {invoke} from '@tauri-apps/api/tauri';
 import useOutputStore from "@/utils/outputState";
 import {Button} from "@nextui-org/react";
+import Memory from "@/components/Memory";
 
 
 export default function Code({fileName}) {
@@ -39,70 +40,11 @@ export default function Code({fileName}) {
                         </CardBody>
                     </Card>
                 </Tab>
-                    <Tab key="excecute" title="Execute" className="h-full w-full">
+                <Tab key="excecute" title="Execute" className="h-full w-full">
                     <Card className='h-full'>
                         <CardBody className="h-full flow grid-flow-row gap-4">
                             <CodeLineTable fileName={fileName}/>
-                            <Table aria-label="Example static collection table" className='row-span-1' hideHeader>
-                                <TableHeader>
-                                    <TableColumn>1</TableColumn>
-                                    <TableColumn>2</TableColumn>
-                                    <TableColumn>3</TableColumn>
-                                    <TableColumn>4</TableColumn>
-                                    <TableColumn>5</TableColumn>
-                                    <TableColumn>6</TableColumn>
-                                </TableHeader>
-                                <TableBody>
-                                    <TableRow key="r1">
-                                        <TableCell>0x00000000</TableCell>
-                                        <TableCell>0x00000000</TableCell>
-                                        <TableCell>0x00000000</TableCell>
-                                        <TableCell>0x00000000</TableCell>
-                                        <TableCell>0x00000000</TableCell>
-                                        <TableCell>0x00000000</TableCell>
-                                    </TableRow>
-                                    <TableRow key="r2">
-                                        <TableCell>0x00000000</TableCell>
-                                        <TableCell>0x00000000</TableCell>
-                                        <TableCell>0x00000000</TableCell>
-                                        <TableCell>0x00000000</TableCell>
-                                        <TableCell>0x00000000</TableCell>
-                                        <TableCell>0x00000000</TableCell>
-                                    </TableRow>
-                                    <TableRow key="r3">
-                                        <TableCell>0x00000000</TableCell>
-                                        <TableCell>0x00000000</TableCell>
-                                        <TableCell>0x00000000</TableCell>
-                                        <TableCell>0x00000000</TableCell>
-                                        <TableCell>0x00000000</TableCell>
-                                        <TableCell>0x00000000</TableCell>
-                                    </TableRow>
-                                    <TableRow key="r4">
-                                        <TableCell>0x00000000</TableCell>
-                                        <TableCell>0x00000000</TableCell>
-                                        <TableCell>0x00000000</TableCell>
-                                        <TableCell>0x00000000</TableCell>
-                                        <TableCell>0x00000000</TableCell>
-                                        <TableCell>0x00000000</TableCell>
-                                    </TableRow>
-                                    <TableRow key="r5">
-                                        <TableCell>0x00000000</TableCell>
-                                        <TableCell>0x00000000</TableCell>
-                                        <TableCell>0x00000000</TableCell>
-                                        <TableCell>0x00000000</TableCell>
-                                        <TableCell>0x00000000</TableCell>
-                                        <TableCell>0x00000000</TableCell>
-                                    </TableRow>
-                                    <TableRow key="r6">
-                                        <TableCell>0x00000000</TableCell>
-                                        <TableCell>0x00000000</TableCell>
-                                        <TableCell>0x00000000</TableCell>
-                                        <TableCell>0x00000000</TableCell>
-                                        <TableCell>0x00000000</TableCell>
-                                        <TableCell>0x00000000</TableCell>
-                                    </TableRow>
-                                </TableBody>
-                            </Table>
+                            <Memory fileName={fileName}/>
                         </CardBody>
                     </Card>
                 </Tab>
