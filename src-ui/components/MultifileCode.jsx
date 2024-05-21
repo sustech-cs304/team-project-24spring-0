@@ -20,13 +20,27 @@ export default function MultifileCode() {
     }
 
     const handleAssembly = async (fileName) => {
-        const result = await invoke('read_tab', {filepath: fileName});
-        const file = state.files.find(file => file.fileName === fileName);
-        const outputStore = useOutputStore.getState();
-        outputStore.addOutput('Assembly Result: \n' + result.message);
-        // if message does not start with error
-        if (! result.message.startsWith('Error')) {
-            state.updateFile(fileName, file.code, file.original, result.message, file.runLines)
+        // const result = await invoke('read_tab', {filepath: fileName});
+        // const file = state.files.find(file => file.fileName === fileName);
+        // const outputStore = useOutputStore.getState();
+        // outputStore.addOutput('Assembly Result: \n' + result.message);
+        // // if message does not start with error
+        // if (! result.message.startsWith('Error')) {
+        //     state.updateFile(fileName, file.code, file.original, result.message, file.runLines)
+        // }
+
+        const result = await invoke("assembly");
+        console.log('Invoke handle assembly result: ', result);
+        if (result.success){
+            const outputStore = useOutputStore.getState();
+            outputStore.addOutput('Assembly Result: \n' + result.message);
+        }
+        if (result.Error){
+            const outputStore = useOutputStore.getState();
+            var i = 0;
+            for (var error of result.Error){
+                outputStore.addOutput('Error ' + i + ' at line ' + error.line + ', column ' + error.column + ': ' + error.msg);
+            }
         }
     }
 
@@ -46,7 +60,7 @@ export default function MultifileCode() {
                         <div className='absolute right-4 top-2 flex-row gap-2'>
                             <ButtonGroup>
                                 <Button color="success" size="sm" onClick={() => handleAssembly(file.fileName)}>Assembly</Button>
-                                <Button color="success" size="sm" onClick={() => handleDebug()}>Debug</Button>
+                                <Button color="default" size="sm" onClick={() => handleDebug()}>Debug</Button>
                                 <Button color="danger" size="sm" onClick={() => deleteFile(file.fileName)}>Close</Button>
                             </ButtonGroup>
                         </div>

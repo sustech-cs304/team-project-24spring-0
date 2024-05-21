@@ -36,17 +36,32 @@ export default function ModifiedEditor({fileName}) {
         // you can store it in `useRef` for further usage
         editorRef.current = editor;
         monacoRef.current = monaco;
+
+        // 假设 editor 是您已经创建好的 Monaco Editor 实例
+        editor.onDidChangeModelContent(async function(event) {
+          console.log('用户进行了以下编辑操作：');
+          for (const change of event.changes) {
+            console.log('操作类型：', change.text.length > 0 ? '添加或替换' : '删除');
+            console.log('操作内容：', change.text);
+            console.log('操作起始位置：', '行：' + (change.range.startLineNumber) + '，列：' + (change.range.startColumn));
+            console.log('操作结束位置：', '行：' + (change.range.endLineNumber) + '，列：' + (change.range.endColumn));
+            var op = change.text.length > 0 ? `Insert` : `Delete`;
+            var text = change.text;
+            var startPosition = ({
+                row: change.range.startLineNumber,
+                col: change.range.startColumn
+            });
+            var endPosition = ({
+                row: change.range.endLineNumber,
+                col: change.range.endColumn
+            });
+            var result = await invoke('modify_current_tab', {op: op.toString(), content: text, start: startPosition, end: endPosition});
+            console.log('Invoke modify_current_tab result: ', result);
+          }
+        });
     }
     
 
-    var handleEditorChange = async (value) => {
-        let newInput = getDifference(file.code, value);
-        state.updateFile(fileName, value, file.original, file.assembly, file.runLines);
-        let position = editorRef.current.getPosition();
-        let line = position.lineNumber;
-        let column = position.column;
-        console.log('Current: line: ', line, 'column: ', column, 'value: ', newInput);
-    }
 
     var handleClickedRun = async () => {
         var line = editorRef.current.getPosition();
@@ -64,7 +79,6 @@ export default function ModifiedEditor({fileName}) {
             language={language_id} 
             className='overflow-hidden h-full'
             value={file.code}
-            onChange={handleEditorChange}
             onMount={handleEditorDidMount}
             options={
                 { hover: { enabled: true } }
