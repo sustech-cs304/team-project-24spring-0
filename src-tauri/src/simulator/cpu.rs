@@ -1,90 +1,113 @@
+use std::mem;
+use std::collections::VecDeque;
 use super::instruction::*;
 use crate::{
-    interface::{
-        assembler::{AssembleResult, Instruction, InstructionSet, InstructionSetTrait, Operand},
-        parser::ParserInstSet,
-        simulator::SimulatesError,
-    },
-    modules::riscv::{
-        middleware::frontend_api::syscall_input,
-        rv32i::constants::{RV32IInstruction, RV32IRegister},
-    },
+    interface::simulator::SimulatesError,
+    modules::riscv::rv32i::constants::RV32IRegister,
     types::middleware_types::AssemblerConfig,
 };
 
-pub struct CPU {
+
+#[derive(Clone)]
+struct CPUState {
     pub memory: Vec<u8>,
     pub registers: [u32; 32],
     pub pc: u32,
+}
+
+
+pub struct CPU {
+    pub state: CPUState,
     pub address_config: AssemblerConfig,
     pub data_segment: Vec<u8>,
+    pub text_segment: Vec<u8>,
+    pub breakpoints: Vec<u32>,
+    undo_stack: VecDeque<CPUState>,
 }
 
 impl CPU {
-    pub fn new(mem_size: usize) -> Self {
+    pub fn new(mem_size: usize, assembler_config: &AssemblerConfig) -> Self {
         CPU {
-            memory: vec![0; mem_size * 1024],
-            registers: [0; 32],
-            pc: 0,
-            address_config: AssemblerConfig::new(),
+            state: CPUState {
+                memory: vec![0; mem_size],
+                registers: [0; 32],
+                pc: 0,
+            },
+            // update config
+            address_config: assembler_config.clone(),
             data_segment: Vec::new(),
+            text_segment: Vec::new(),
+            breakpoints: Vec::new(),
+            undo_stack: VecDeque::new(),
         }
     }
 
-    pub fn update_config(&mut self, config: AssemblerConfig) {
-        self.address_config = config;
-        // TODO
-    }
+    pub fn load_inst(&mut self, data_segment: &Vec<u8>, text_segment: &Vec<u8>) {
+        let data_base_address = self.address_config.dot_data_base_address;
+        let text_base_address = self.address_config.dot_text_base_address;
+    
+        // Copy data segment
+        self.state.memory[data_base_address as usize..(data_base_address as usize + data_segment.len())]
+            .copy_from_slice(data_segment);
+    
+        // Copy text segment
+        self.state.memory[text_base_address as usize..(text_base_address as usize + text_segment.len())]
+            .copy_from_slice(text_segment);
 
-    pub fn reset(&mut self) {
-        self.registers.fill(0);
-        self.pc = self.address_config.dot_text_base_address;
-        self.memory.fill(0);
-        let data_segment_base_address = self.address_config.data_segment_base_address as usize;
-        let data_segment_size = self.data_segment.len();
-        self.memory[data_segment_base_address as usize
-            ..(data_segment_base_address as usize + data_segment_size as usize)]
-            .copy_from_slice(&self.data_segment);
-    }
-
-    pub fn load_data_segment(&mut self, data_segment: Vec<u8>) {
-        // let mut index = self.address_config.data_segment_base_address as usize;
-        // for byte in data_segment {
-        //     self.memory[index] = byte;
-        //     index += 1;
-        // }
-        self.data_segment = data_segment;
+        self.data_segment = data_segment.clone();
+        self.text_segment = text_segment.clone();
     }
 
     pub fn run(&mut self) -> Result<(), SimulatesError> {
-        let ret: i32;
-        self.pc = self.address_config.dot_text_base_address;
-        self.registers[2] = self.address_config.stack_pointer_sp;
-
+        self.reset();
         loop {
-            let raw_inst = self.fetch();
-            let mut inst: SIMInstruction = self.decode(raw_inst);
-            let pc_copy = self.pc;
-            if (self.pc as usize) >= self.memory.len() {
-                return Err(SimulatesError {
-                    address: self.pc,
-                    msg: "PC overflow.".to_string(),
-                });
+            let mut result = self.step();
+            match result {
+                Ok(()) => continue,
+                _ => return result,
+            }
+        }
+        Ok(())
+    }
+
+    pub fn debug(&mut self) -> Result<(), SimulatesError> {
+        self.reset();
+        loop {
+            if self.breakpoints.contains(&self.state.pc) {
                 break;
             }
-            self.execute(&mut inst, pc_copy);
+            let mut result = self.step();
+            match result {
+                Ok(()) => continue,
+                _ => return result,
+            }
+        }
+        Ok(())
+    }
+
+    pub fn step(&mut self) -> Result<(), SimulatesError> {
+        let raw_inst = self.fetch();
+            let mut inst: SIMInstruction = self.decode(raw_inst);
+            let pc_copy = self.state.pc;
+            if (self.state.pc as usize) >= self.state.memory.len() {
+                return Err(SimulatesError {
+                    address: self.state.pc,
+                    msg: "PC overflow.".to_string(),
+                });
+            }
+            match self.execute(&mut inst, pc_copy) {
+                Ok(()) => {}
+                Err(e) => return Err(e),
+            }
             match inst.name.as_str() {
-                "ecall" => match self.registers[17] {
+                "ecall" => match self.state.registers[17] {
                     93 => {
                         // `exit` syscall
-                        ret = self.registers[10] as i32;
-                        // println!("Program exited with exit code: {}", ret);
                         // NOTE: NOT error
                         return Err(SimulatesError {
                             address: pc_copy,
                             msg: "Program exited with exit code 0.".to_string(),
                         });
-                        break;
                     }
                     _ => {}
                 },
@@ -93,20 +116,66 @@ impl CPU {
                         address: pc_copy,
                         msg: "Reached an unimplemented instruction.".to_string(),
                     });
-                    break;
                 }
                 _ => {}
             }
-        }
-        Ok(())
+        return Ok(());
     }
 
+    pub fn reset(&mut self) {
+        self.state.registers.fill(0);
+        self.state.registers[2] = self.address_config.stack_pointer_sp;
+        self.state.pc = self.address_config.dot_text_base_address;
+        self.state.memory.fill(0);
+        let data_segment_copy = self.data_segment.clone();
+        let text_segment_copy = self.text_segment.clone();
+        self.load_inst(&data_segment_copy, &text_segment_copy);
+    }
+
+    fn undo(&mut self) -> Result<(), SimulatesError>{
+        if let Some(state) = self.undo_stack.pop_front() {
+            self.state = state;
+            return Ok(());
+        }
+        return Err(SimulatesError {
+            address: self.state.pc,
+            msg: "No more undo steps.".to_string(),
+        });
+    }
+
+    pub fn set_breakpoint(&mut self, line_number: u32) -> Result<(), SimulatesError> {
+        if !self.breakpoints.contains(&line_number) {
+            self.breakpoints.push(line_number);
+        }
+        return Ok(());
+    }
+
+    pub fn remove_breakpoint(&mut self, line_number: u32) -> Result<(), SimulatesError> {
+        if let Some(index) = self.breakpoints.iter().position(|&x| x == line_number) {
+            self.breakpoints.remove(index);
+        }
+        return Ok(());
+    }
+
+    pub fn load_data_segment(&mut self, data_segment: &Vec<u8>) {
+        self.state.memory[self.address_config.dot_data_base_address as usize
+            ..(self.address_config.dot_data_base_address as usize + data_segment.len())]
+            .copy_from_slice(&data_segment);
+    }
+
+    pub fn load_text_segment(&mut self, text_segment: &Vec<u8>) {
+        self.state.memory[self.address_config.dot_text_base_address as usize
+            ..(self.address_config.dot_text_base_address as usize + text_segment.len())]
+            .copy_from_slice(&text_segment);
+    }
+
+
     fn fetch(&self) -> u32 {
-        let index = self.pc as usize;
-        self.memory[index] as u32
-            | ((self.memory[index + 1]) as u32) << 8
-            | ((self.memory[index + 2]) as u32) << 16
-            | ((self.memory[index + 3]) as u32) << 24
+        let index = self.state.pc as usize;
+        self.state.memory[index] as u32
+            | ((self.state.memory[index + 1]) as u32) << 8
+            | ((self.state.memory[index + 2]) as u32) << 16
+            | ((self.state.memory[index + 3]) as u32) << 24
     }
 
     fn decode(&self, inst: u32) -> SIMInstruction {
@@ -242,13 +311,13 @@ impl CPU {
                         0x0 => match funct7 {
                             0x0 => {
                                 inst.name = format!("add     x{},x{},x{}", rd, rs1, rs2);
-                                self.registers[rd] =
-                                    self.registers[rs1].wrapping_add(self.registers[rs2]);
+                                self.state.registers[rd] =
+                                    self.state.registers[rs1].wrapping_add(self.state.registers[rs2]);
                             }
                             0x20 => {
                                 inst.name = format!("sub     x{},x{},x{}", rd, rs1, rs2);
-                                self.registers[rd] =
-                                    self.registers[rs1].wrapping_sub(self.registers[rs2]);
+                                self.state.registers[rd] =
+                                    self.state.registers[rs1].wrapping_sub(self.state.registers[rs2]);
                             }
                             _ => {
                                 return Err(SimulatesError {
@@ -259,29 +328,29 @@ impl CPU {
                         },
                         0x4 => {
                             inst.name = format!("xor     x{},x{},x{}", rd, rs1, rs2);
-                            self.registers[rd] = self.registers[rs1] ^ self.registers[rs2];
+                            self.state.registers[rd] = self.state.registers[rs1] ^ self.state.registers[rs2];
                         }
                         0x6 => {
                             inst.name = format!("or      x{},x{},x{}", rd, rs1, rs2);
-                            self.registers[rd] = self.registers[rs1] | self.registers[rs2];
+                            self.state.registers[rd] = self.state.registers[rs1] | self.state.registers[rs2];
                         }
                         0x7 => {
                             inst.name = format!("and     x{},x{},x{}", rd, rs1, rs2);
-                            self.registers[rd] = self.registers[rs1] & self.registers[rs2];
+                            self.state.registers[rd] = self.state.registers[rs1] & self.state.registers[rs2];
                         }
                         0x1 => {
                             inst.name = format!("sll     x{},x{},x{}", rd, rs1, rs2);
-                            self.registers[rd] = self.registers[rs1] << self.registers[rs2];
+                            self.state.registers[rd] = self.state.registers[rs1] << self.state.registers[rs2];
                         }
                         0x5 => match funct7 {
                             0x0 => {
                                 inst.name = format!("srl     x{},x{},x{}", rd, rs1, rs2);
-                                self.registers[rd] = self.registers[rs1] >> self.registers[rs2];
+                                self.state.registers[rd] = self.state.registers[rs1] >> self.state.registers[rs2];
                             }
                             0x20 => {
                                 inst.name = format!("sra     x{},x{},x{}", rd, rs1, rs2);
-                                self.registers[rd] =
-                                    ((self.registers[rs1] as i32) >> self.registers[rs2]) as u32;
+                                self.state.registers[rd] =
+                                    ((self.state.registers[rs1] as i32) >> self.state.registers[rs2]) as u32;
                             }
                             _ => {
                                 return Err(SimulatesError {
@@ -292,8 +361,8 @@ impl CPU {
                         },
                         0x2 => {
                             inst.name = format!("slt     x{},x{},x{}", rd, rs1, rs2);
-                            self.registers[rd] =
-                                if (self.registers[rs1] as i32) < (self.registers[rs2] as i32) {
+                            self.state.registers[rd] =
+                                if (self.state.registers[rs1] as i32) < (self.state.registers[rs2] as i32) {
                                     1
                                 } else {
                                     0
@@ -301,7 +370,7 @@ impl CPU {
                         }
                         0x3 => {
                             inst.name = format!("sltu    x{},x{},x{}", rd, rs1, rs2);
-                            self.registers[rd] = if self.registers[rs1] < self.registers[rs2] {
+                            self.state.registers[rd] = if self.state.registers[rs1] < self.state.registers[rs2] {
                                 1
                             } else {
                                 0
@@ -330,12 +399,12 @@ impl CPU {
                                 "beq     x{},x{},{:08x}",
                                 rs1,
                                 rs2,
-                                (self.pc) as i32 + imm as i32
+                                (self.state.pc) as i32 + imm as i32
                             );
-                            let lhs = self.registers[rs1];
-                            let rhs = self.registers[rs2];
+                            let lhs = self.state.registers[rs1];
+                            let rhs = self.state.registers[rs2];
                             if lhs == rhs {
-                                self.pc = (self.pc as i32 + imm as i32) as u32;
+                                self.state.pc = (self.state.pc as i32 + imm as i32) as u32;
                                 return Ok(());
                             };
                         }
@@ -344,12 +413,12 @@ impl CPU {
                                 "bne     x{},x{},{:08x}",
                                 rs1,
                                 rs2,
-                                (self.pc) as i32 + imm as i32
+                                (self.state.pc) as i32 + imm as i32
                             );
-                            let lhs = self.registers[rs1];
-                            let rhs = self.registers[rs2];
+                            let lhs = self.state.registers[rs1];
+                            let rhs = self.state.registers[rs2];
                             if lhs != rhs {
-                                self.pc = (self.pc as i32 + imm as i32) as u32;
+                                self.state.pc = (self.state.pc as i32 + imm as i32) as u32;
                                 return Ok(());
                             };
                         }
@@ -358,12 +427,12 @@ impl CPU {
                                 "blt     x{},x{},{:08x}",
                                 rs1,
                                 rs2,
-                                (self.pc) as i32 + imm as i32
+                                (self.state.pc) as i32 + imm as i32
                             );
-                            let lhs = self.registers[rs1] as i32;
-                            let rhs = self.registers[rs2] as i32;
+                            let lhs = self.state.registers[rs1] as i32;
+                            let rhs = self.state.registers[rs2] as i32;
                             if lhs < rhs {
-                                self.pc = (self.pc as i32 + imm as i32) as u32;
+                                self.state.pc = (self.state.pc as i32 + imm as i32) as u32;
                                 return Ok(());
                             };
                         }
@@ -372,12 +441,12 @@ impl CPU {
                                 "bge     x{},x{},{:08x}",
                                 rs1,
                                 rs2,
-                                (self.pc) as i32 + imm as i32
+                                (self.state.pc) as i32 + imm as i32
                             );
-                            let lhs = self.registers[rs1] as i32;
-                            let rhs = self.registers[rs2] as i32;
+                            let lhs = self.state.registers[rs1] as i32;
+                            let rhs = self.state.registers[rs2] as i32;
                             if lhs >= rhs {
-                                self.pc = (self.pc as i32 + imm as i32) as u32;
+                                self.state.pc = (self.state.pc as i32 + imm as i32) as u32;
                                 return Ok(());
                             };
                         }
@@ -386,12 +455,12 @@ impl CPU {
                                 "bltu    x{},x{},{:08x}",
                                 rs1,
                                 rs2,
-                                (self.pc) as i32 + imm as i32
+                                (self.state.pc) as i32 + imm as i32
                             );
-                            let lhs = self.registers[rs1];
-                            let rhs = self.registers[rs2];
+                            let lhs = self.state.registers[rs1];
+                            let rhs = self.state.registers[rs2];
                             if lhs < rhs {
-                                self.pc = (self.pc as i32 + imm as i32) as u32;
+                                self.state.pc = (self.state.pc as i32 + imm as i32) as u32;
                                 return Ok(());
                             };
                         }
@@ -400,12 +469,12 @@ impl CPU {
                                 "bgeu    x{},x{},{:08x}",
                                 rs1,
                                 rs2,
-                                (self.pc) as i32 + imm as i32
+                                (self.state.pc) as i32 + imm as i32
                             );
-                            let lhs = self.registers[rs1];
-                            let rhs = self.registers[rs2];
+                            let lhs = self.state.registers[rs1];
+                            let rhs = self.state.registers[rs2];
                             if lhs >= rhs {
-                                self.pc = (self.pc as i32 + imm as i32) as u32;
+                                self.state.pc = (self.state.pc as i32 + imm as i32) as u32;
                                 return Ok(());
                             };
                         }
@@ -423,9 +492,9 @@ impl CPU {
                     match inst.opcode {
                         0b1101111 => {
                             inst.name = format!("jal     x{},{:08x}", rd, imm);
-                            self.registers[rd] = self.pc + 4;
-                            self.pc = (self.pc as i32 + imm as i32) as u32;
-                            self.registers[0] = 0;
+                            self.state.registers[rd] = self.state.pc + 4;
+                            self.state.pc = (self.state.pc as i32 + imm as i32) as u32;
+                            self.state.registers[0] = 0;
                             return Ok(());
                         }
                         _ => {
@@ -446,8 +515,8 @@ impl CPU {
                         0b0010011 => match funct3 {
                             0x0 => {
                                 inst.name = format!("addi    x{},x{},{}", rd, rs1, imm as i32);
-                                self.registers[rd] =
-                                    (self.registers[rs1] as i32).wrapping_add(imm as i32) as u32;
+                                self.state.registers[rd] =
+                                    (self.state.registers[rs1] as i32).wrapping_add(imm as i32) as u32;
 
                                 if rd == 0 && rs1 == 0 && imm == 0 {
                                     inst.name = String::from("nop");
@@ -455,22 +524,22 @@ impl CPU {
                             }
                             0x4 => {
                                 inst.name = format!("xori    x{},x{},{}", rd, rs1, imm as i32);
-                                self.registers[rd] =
-                                    ((self.registers[rs1] as i32) ^ (imm as i32)) as u32;
+                                self.state.registers[rd] =
+                                    ((self.state.registers[rs1] as i32) ^ (imm as i32)) as u32;
                             }
                             0x6 => {
                                 inst.name = format!("ori     x{},x{},{}", rd, rs1, imm as i32);
-                                self.registers[rd] =
-                                    ((self.registers[rs1] as i32) | (imm as i32)) as u32;
+                                self.state.registers[rd] =
+                                    ((self.state.registers[rs1] as i32) | (imm as i32)) as u32;
                             }
                             0x7 => {
                                 inst.name = format!("andi    x{},x{},{}", rd, rs1, imm as i32);
-                                self.registers[rd] =
-                                    ((self.registers[rs1] as i32) & (imm as i32)) as u32;
+                                self.state.registers[rd] =
+                                    ((self.state.registers[rs1] as i32) & (imm as i32)) as u32;
                             }
                             0x2 => {
                                 inst.name = format!("slti    x{},x{},{}", rd, rs1, imm as i32);
-                                self.registers[rd] = if (self.registers[rs1] as i32) < (imm as i32)
+                                self.state.registers[rd] = if (self.state.registers[rs1] as i32) < (imm as i32)
                                 {
                                     1
                                 } else {
@@ -479,24 +548,24 @@ impl CPU {
                             }
                             0x3 => {
                                 inst.name = format!("sltiu   x{},x{},{}", rd, rs1, imm);
-                                self.registers[rd] = if self.registers[rs1] < imm { 1 } else { 0 }
+                                self.state.registers[rd] = if self.state.registers[rs1] < imm { 1 } else { 0 }
                             }
                             0x1 => {
                                 let shamt = imm & 0b11111;
                                 inst.name = format!("slli    x{},x{},{:#x}", rd, rs1, shamt);
-                                self.registers[rd] = self.registers[rs1] << shamt;
+                                self.state.registers[rd] = self.state.registers[rs1] << shamt;
                             }
                             0x5 => match (imm >> 5) & 0b1111111 {
                                 0 => {
                                     let shamt = imm & 0b11111;
                                     inst.name = format!("srli    x{},x{},{:#x}", rd, rs1, shamt);
-                                    self.registers[rd] = self.registers[rs1] >> shamt;
+                                    self.state.registers[rd] = self.state.registers[rs1] >> shamt;
                                 }
                                 0b0100000 => {
                                     let shamt = imm & 0b11111;
                                     inst.name = format!("srai    x{},x{},{:#x}", rd, rs1, shamt);
-                                    self.registers[rd] =
-                                        CPU::sign_extend(self.registers[rs1] >> shamt, 32 - shamt);
+                                    self.state.registers[rd] =
+                                        CPU::sign_extend(self.state.registers[rs1] >> shamt, 32 - shamt);
                                 }
                                 _ => {
                                     panic!("should never be here.")
@@ -510,40 +579,40 @@ impl CPU {
                             0x0 => {
                                 inst.name = format!("lb      x{},{}(x{})", rd, imm as i32, rs1);
                                 let index =
-                                    (self.registers[rs1] + CPU::sign_extend(imm, 12)) as usize;
-                                self.registers[rd] = CPU::sign_extend(self.memory[index] as u32, 8);
+                                    (self.state.registers[rs1] + CPU::sign_extend(imm, 12)) as usize;
+                                self.state.registers[rd] = CPU::sign_extend(self.state.memory[index] as u32, 8);
                             }
                             0x1 => {
                                 inst.name = format!("lh      x{},{}(x{})", rd, imm as i32, rs1);
                                 let index =
-                                    (self.registers[rs1] + CPU::sign_extend(imm, 12)) as usize;
-                                let half_word = self.memory[index] as u32
-                                    | (self.memory[index + 1] as u32) << 8;
-                                self.registers[rd] = CPU::sign_extend(half_word as u32, 16);
+                                    (self.state.registers[rs1] + CPU::sign_extend(imm, 12)) as usize;
+                                let half_word = self.state.memory[index] as u32
+                                    | (self.state.memory[index + 1] as u32) << 8;
+                                self.state.registers[rd] = CPU::sign_extend(half_word as u32, 16);
                             }
                             0x2 => {
                                 inst.name = format!("lw      x{},{}(x{})", rd, imm as i32, rs1);
                                 let index =
-                                    (self.registers[rs1] + CPU::sign_extend(imm, 12)) as usize;
+                                    (self.state.registers[rs1] + CPU::sign_extend(imm, 12)) as usize;
 
-                                self.registers[rd] = self.memory[index] as u32
-                                    | ((self.memory[index + 1]) as u32) << 8
-                                    | ((self.memory[index + 2]) as u32) << 16
-                                    | ((self.memory[index + 3]) as u32) << 24;
+                                self.state.registers[rd] = self.state.memory[index] as u32
+                                    | ((self.state.memory[index + 1]) as u32) << 8
+                                    | ((self.state.memory[index + 2]) as u32) << 16
+                                    | ((self.state.memory[index + 3]) as u32) << 24;
                             }
                             0x4 => {
                                 inst.name = format!("lbu     x{},{}(x{})", rd, imm, rs1);
                                 let index =
-                                    (self.registers[rs1] + CPU::sign_extend(imm, 12)) as usize;
-                                self.registers[rd] = self.memory[index] as u32;
+                                    (self.state.registers[rs1] + CPU::sign_extend(imm, 12)) as usize;
+                                self.state.registers[rd] = self.state.memory[index] as u32;
                             }
                             0x5 => {
                                 inst.name = format!("lhu     x{},{}(x{})", rd, imm, rs1);
                                 let index =
-                                    (self.registers[rs1] + CPU::sign_extend(imm, 12)) as usize;
+                                    (self.state.registers[rs1] + CPU::sign_extend(imm, 12)) as usize;
 
-                                self.registers[rd] = self.memory[index] as u32
-                                    | (self.memory[index + 1] as u32) << 8;
+                                self.state.registers[rd] = self.state.memory[index] as u32
+                                    | (self.state.memory[index + 1] as u32) << 8;
                             }
                             _ => {
                                 panic!("unknown I funct3: {:#05b}", funct3);
@@ -552,12 +621,12 @@ impl CPU {
                         0b1100111 => match funct3 {
                             0x0 => {
                                 inst.name = format!("jalr    x{},x{},{:#x}", rd, rs1, imm);
-                                let pc_copy = self.pc;
-                                self.pc = self.registers[rs1] + CPU::sign_extend(imm, 12);
-                                self.pc &= !1; // set lsb to 0
-                                self.registers[rd] = pc_copy + 4;
+                                let pc_copy = self.state.pc;
+                                self.state.pc = self.state.registers[rs1] + CPU::sign_extend(imm, 12);
+                                self.state.pc &= !1; // set lsb to 0
+                                self.state.registers[rd] = pc_copy + 4;
 
-                                self.registers[0] = 0;
+                                self.state.registers[0] = 0;
                                 return Ok(());
                             }
                             _ => {
@@ -568,21 +637,21 @@ impl CPU {
                             0b000 => match imm {
                                 0x0 => {
                                     inst.name = String::from("ecall");
-                                    let syscall = self.registers[RV32IRegister::A7 as usize];
+                                    let syscall = self.state.registers[RV32IRegister::A7 as usize];
                                     match syscall {
                                         1 => {
                                             // print integer
                                             println!(
                                                 "{}",
-                                                self.registers[RV32IRegister::A0 as usize]
+                                                self.state.registers[RV32IRegister::A0 as usize]
                                             );
                                         }
                                         4 => {
                                             // print string
                                             let mut index =
-                                                self.registers[RV32IRegister::A0 as usize] as usize;
-                                            while self.memory[index] != 0 {
-                                                print!("{}", self.memory[index] as char);
+                                                self.state.registers[RV32IRegister::A0 as usize] as usize;
+                                            while self.state.memory[index] != 0 {
+                                                print!("{}", self.state.memory[index] as char);
                                                 index += 1;
                                             }
                                         }
@@ -590,7 +659,7 @@ impl CPU {
                                             // read integer
                                             let mut input = String::new();
                                             std::io::stdin().read_line(&mut input).unwrap();
-                                            self.registers[RV32IRegister::A0 as usize] =
+                                            self.state.registers[RV32IRegister::A0 as usize] =
                                                 input.trim().parse().unwrap();
                                             //syscall_input()
                                         }
@@ -599,12 +668,12 @@ impl CPU {
                                             let mut input = String::new();
                                             std::io::stdin().read_line(&mut input).unwrap();
                                             let mut index =
-                                                self.registers[RV32IRegister::A0 as usize] as usize;
+                                                self.state.registers[RV32IRegister::A0 as usize] as usize;
                                             for c in input.chars() {
-                                                self.memory[index] = c as u8;
+                                                self.state.memory[index] = c as u8;
                                                 index += 1;
                                             }
-                                            self.memory[index] = 0;
+                                            self.state.memory[index] = 0;
                                         }
                                         10 => {
                                             // exit
@@ -614,7 +683,7 @@ impl CPU {
                                             // print character
                                             print!(
                                                 "{}",
-                                                self.registers[RV32IRegister::A0 as usize] as u8
+                                                self.state.registers[RV32IRegister::A0 as usize] as u8
                                                     as char
                                             );
                                         }
@@ -622,7 +691,7 @@ impl CPU {
                                             // read character
                                             let mut input = String::new();
                                             std::io::stdin().read_line(&mut input).unwrap();
-                                            self.registers[RV32IRegister::A0 as usize] =
+                                            self.state.registers[RV32IRegister::A0 as usize] =
                                                 input.chars().next().unwrap() as u32;
                                         }
                                         34 => {
@@ -630,7 +699,7 @@ impl CPU {
                                             // with zeroes)
                                             print!(
                                                 "{:08x}",
-                                                self.registers[RV32IRegister::A0 as usize]
+                                                self.state.registers[RV32IRegister::A0 as usize]
                                             );
                                         }
                                         35 => {
@@ -638,14 +707,14 @@ impl CPU {
                                             // zeroes)
                                             print!(
                                                 "{:032b}",
-                                                self.registers[RV32IRegister::A0 as usize]
+                                                self.state.registers[RV32IRegister::A0 as usize]
                                             );
                                         }
                                         36 => {
                                             // Prints an integer (in decimal format)
                                             print!(
                                                 "{}",
-                                                self.registers[RV32IRegister::A0 as usize]
+                                                self.state.registers[RV32IRegister::A0 as usize]
                                             );
                                         }
                                         _ => {
@@ -702,22 +771,22 @@ impl CPU {
                     match funct3 {
                         0x0 => {
                             inst.name = format!("sb      x{},{}(x{})", rs2, imm as i32, rs1);
-                            let index = (self.registers[rs1] + CPU::sign_extend(imm, 12)) as usize;
-                            self.memory[index] = (self.registers[rs2] & 0xff) as u8;
+                            let index = (self.state.registers[rs1] + CPU::sign_extend(imm, 12)) as usize;
+                            self.state.memory[index] = (self.state.registers[rs2] & 0xff) as u8;
                         }
                         0x1 => {
                             inst.name = format!("sh      x{},{}(x{})", rs2, imm as i32, rs1);
-                            let index = (self.registers[rs1] + CPU::sign_extend(imm, 12)) as usize;
-                            self.memory[index] = (self.registers[rs2] & 0xff) as u8;
-                            self.memory[index + 1] = (self.registers[rs2] >> 8 & 0xff) as u8;
+                            let index = (self.state.registers[rs1] + CPU::sign_extend(imm, 12)) as usize;
+                            self.state.memory[index] = (self.state.registers[rs2] & 0xff) as u8;
+                            self.state.memory[index + 1] = (self.state.registers[rs2] >> 8 & 0xff) as u8;
                         }
                         0x2 => {
                             inst.name = format!("sw      x{},{}(x{})", rs2, imm as i32, rs1);
-                            let index = (self.registers[rs1] + CPU::sign_extend(imm, 12)) as usize;
-                            self.memory[index] = (self.registers[rs2] & 0xff) as u8;
-                            self.memory[index + 1] = (self.registers[rs2] >> 8 & 0xff) as u8;
-                            self.memory[index + 2] = (self.registers[rs2] >> 16 & 0xff) as u8;
-                            self.memory[index + 3] = (self.registers[rs2] >> 24 & 0xff) as u8;
+                            let index = (self.state.registers[rs1] + CPU::sign_extend(imm, 12)) as usize;
+                            self.state.memory[index] = (self.state.registers[rs2] & 0xff) as u8;
+                            self.state.memory[index + 1] = (self.state.registers[rs2] >> 8 & 0xff) as u8;
+                            self.state.memory[index + 2] = (self.state.registers[rs2] >> 16 & 0xff) as u8;
+                            self.state.memory[index + 3] = (self.state.registers[rs2] >> 24 & 0xff) as u8;
                         }
                         _ => {
                             panic!("unknown S funct3: {:#05b}", funct3);
@@ -730,11 +799,11 @@ impl CPU {
                     match inst.opcode {
                         0b0110111 => {
                             inst.name = format!("lui     x{},{:#x}", rd, imm);
-                            self.registers[rd] = imm << 12;
+                            self.state.registers[rd] = imm << 12;
                         }
                         0b0010111 => {
                             inst.name = format!("auipc   x{},{:#x}", rd, imm);
-                            self.registers[rd] = self.pc + (imm << 12);
+                            self.state.registers[rd] = self.state.pc + (imm << 12);
                         }
                         _ => {
                             panic!("unknown U opcode: {:#09b}", inst.opcode);
@@ -745,8 +814,8 @@ impl CPU {
             InstTypeName::Fence => inst.name = String::from("fence"),
             InstTypeName::Unimp => inst.name = String::from("unimp"),
         }
-        self.registers[0] = 0;
-        self.pc += 4;
+        self.undo_stack.push_front(self.state.clone());
+        self.state.pc += 4;
         Ok(())
     }
 
@@ -754,136 +823,6 @@ impl CPU {
         assert!(size > 0 && size <= 32);
         (((data << (32 - size)) as i32) >> (32 - size)) as u32
     }
-
-    // fn ecall(&mut self) -> Result<(), ()> {
-    //     let syscall = self.registers[RV32IRegister::A7 as usize];
-    //     match syscall {
-    //         1 => {
-    //             // print integer
-    //             let a0 = self.registers[RV32IRegister::A0 as usize];
-    //             print!("{}", a0);
-    //         }
-    //         5 => {
-    //             // read int
-    //             let a0 = self.registers[RV32IRegister::A0 as usize];
-    //             let a1 = self.registers[RV32IRegister::A1 as usize];
-    //             let mut addr = a0;
-    //             let mut size = a1;
-    //             let mut data = self.load(addr, 8)?;
-    //             let mut input = String::new();
-    //             while data != 0 && size > 0 {
-    //                 input.push(data as u8 as char);
-    //                 addr += 1;
-    //                 size -= 1;
-    //                 data = self.load(addr, 8)?;
-    //             }
-    //             self.registers[RV32IRegister::A0 as usize] =
-    //         }
-    //         10 => {
-    //             // exit
-    //             self.pc = self.instructions.len() as u32 * 4;
-    //         }
-    //         17 => {
-    //             // get time
-    //             let time = std::time::SystemTime::now()
-    //                 .duration_since(std::time::UNIX_EPOCH)
-    //                 .unwrap();
-    //             self.registers[RV32IRegister::A0 as usize] = time.as_secs() as
-    // u32;             self.registers[RV32IRegister::A1 as usize] =
-    // time.subsec_nanos() as u32;         }
-    //         34 => {
-    //             // Prints an integer (in hexadecimal format left-padded with
-    // zeroes)             let a0 = self.registers[RV32IRegister::A0 as usize];
-    //             let mut addr = a0;
-    //             let mut data = self.load(addr, 8)?;
-    //             while data != 0 {
-    //                 print!("{:08x}", data);
-    //                 addr += 1;
-    //                 data = self.load(addr, 8)?;
-    //             }
-    //         }
-    //         35 => {
-    //             // Prints an integer (in binary format left-padded with zeroes)
-    //             let a0 = self.registers[RV32IRegister::A0 as usize];
-    //             let mut addr = a0;
-    //             let mut data = self.load(addr, 8)?;
-    //             while data != 0 {
-    //                 print!("{:08b}", data);
-    //                 addr += 1;
-    //                 data = self.load(addr, 8)?;
-    //             }
-    //         }
-    //         36 => {
-    //             // Prints an integer (unsigned)
-    //             let a0 = self.registers[RV32IRegister::A0 as usize];
-    //             let mut addr = a0;
-    //             let mut data = self.load(addr, 8)?;
-    //             while data != 0 {
-    //                 print!("{}", data);
-    //                 addr += 1;
-    //                 data = self.load(addr, 8)?;
-    //             }
-    //         }
-    //         40 => {
-    //             // Set seed for the underlying Java pseudorandom number generator
-    //             let a0 = self.registers[RV32IRegister::A0 as usize];
-    //             let a1 = self.registers[RV32IRegister::A1 as usize];
-    //             let mut addr = a0;
-    //             let mut data = self.load(addr, 8)?;
-    //             let mut seed = 0;
-    //             while data != 0 {
-    //                 seed = (seed << 8) | data;
-    //                 addr += 1;
-    //                 data = self.load(addr, 8)?;
-    //             }
-    //             self.rng.seed(seed);
-    //         }
-    //         41 => {
-    //             // Generate a random number
-    //             let a0 = self.registers[RV32IRegister::A0 as usize];
-    //             let a1 = self.registers[RV32IRegister::A1 as usize];
-    //             let mut addr = a0;
-    //             let mut data = self.load(addr, 8)?;
-    //             let mut size = a1;
-    //             let mut random = self.rng.next_u32();
-    //             while size > 0 {
-    //                 self.dram.store(addr, random as u32, 8)?;
-    //                 addr += 1;
-    //                 size -= 1;
-    //                 random = self.rng.next_u32();
-    //             }
-    //         }
-    //         42 => {
-    //             // Generate a random number in the range [0, a1)
-    //             let a0 = self.registers[RV32IRegister::A0 as usize];
-    //             let a1 = self.registers[RV32IRegister::A1 as usize];
-    //             let mut addr = a0;
-    //             let mut data = self.load(addr, 8)?;
-    //             let random = self.rng.next_u32() % a1;
-    //             self.dram.store(addr, random as u32, 8)?;
-    //         }
-    //         // 43 => {
-    //         //     // Generate a random number in the range [a0, a1)
-    //         //     let a0 = self.registers[RV32IRegister::A0 as usize];
-    //         //     let a1 = self.registers[RV32IRegister::A1 as usize];
-    //         //     let mut addr = a0;
-    //         //     let mut data = self.load(addr, 8)?;
-    //         //     let random = self.rng.next_u32() % (a1 - a0) + a0;
-    //         //     self.dram.store(addr, random as u32, 8)?;
-    //         // }
-    //         50 => {
-    //             // Service to display a message to user
-    //             let a0 = self.registers[RV32IRegister::A0 as usize];
-    //             let a1 = self.registers[RV32IRegister::A1 as usize];
-    //             let mut addr = a0;
-
-    //         }
-    //         _ => {
-    //             return Err(());
-    //         }
-    //     }
-    //     return Ok(());
-    // }
 
     pub fn print_registers(&mut self) {
         let mut output = String::from("");
@@ -900,16 +839,16 @@ impl CPU {
                     "x{:02}({})={:>#18x} x{:02}({})={:>#18x} x{:02}({})={:>#18x} x{:02}({})={:>#18x}",
                     i,
                     abi[i],
-                    self.registers[i],
+                    self.state.registers[i],
                     i + 1,
                     abi[i + 1],
-                    self.registers[i + 1],
+                    self.state.registers[i + 1],
                     i + 2,
                     abi[i + 2],
-                    self.registers[i + 2],
+                    self.state.registers[i + 2],
                     i + 3,
                     abi[i + 3],
-                    self.registers[i + 3],
+                    self.state.registers[i + 3],
                 )
             );
         }
@@ -917,13 +856,13 @@ impl CPU {
     }
 
     pub fn print_memory(&mut self, rs1: usize, imm: i32) {
-        let index = (self.registers[rs1] + CPU::sign_extend(imm as u32, 12)) as usize;
+        let index = (self.state.registers[rs1] + CPU::sign_extend(imm as u32, 12)) as usize;
         let mut output = String::from("");
         for i in index..index + 4 {
             output = format!(
                 "{}\n{}",
                 output,
-                format!("memory[{:>#18x}]={:>#18x}", i, self.memory[i],)
+                format!("memory[{:>#18x}]={:>#18x}", i, self.state.memory[i],)
             );
         }
         println!("{}", output);
@@ -966,294 +905,5 @@ impl CPU {
         }
     }
 
-    // pub fn execute_enum(&mut self, instruction: Instruction) -> Result<(), ()> {
-    //     let opcode = instruction.op;
-    //     let mut imm: i32 = 0;
-    //     let mut rd: usize = 0;
-    //     let mut rs1: usize = 0;
-    //     let mut rs2: usize = 0;
-    //     let mut temp0: Option<usize> = None;
-    //     let mut temp1: Option<usize> = None;
-    //     let mut temp2: Option<usize> = None;
-    //     let mut imm_temp: Option<i32> = None;
-    //     for operand in instruction.ins {
-    //         match operand {
-    //             Operand::Reg(reg) => {
-    //                 let reg = self.register_name_to_u32(reg);
-    //                 if temp0.is_none() {
-    //                     temp0 = Some(reg as usize);
-    //                 } else if temp1.is_none() {
-    //                     temp1 = Some(reg as usize);
-    //                 } else if temp2.is_none() {
-    //                     temp2 = Some(reg as usize);
-    //                 }
-    //             }
-    //             Operand::Operator(operator) => {
-    //                 imm_temp = Some(operator as i32);
-    //             }
-    //         }
-    //     }
-
-    //     match opcode {
-    //         // R-type
-    //         RV32IInstruction::Add
-    //         | RV32IInstruction::Sub
-    //         | RV32IInstruction::Xor
-    //         | RV32IInstruction::Or
-    //         | RV32IInstruction::And
-    //         | RV32IInstruction::Sll
-    //         | RV32IInstruction::Srl
-    //         | RV32IInstruction::Sra
-    //         | RV32IInstruction::Slt
-    //         | RV32IInstruction::Sltu => {
-    //             rd = temp0.unwrap();
-    //             rs1 = temp1.unwrap();
-    //             rs2 = temp2.unwrap();
-    //         }
-    //         // B-type
-    //         RV32IInstruction::Beq
-    //         | RV32IInstruction::Bne
-    //         | RV32IInstruction::Blt
-    //         | RV32IInstruction::Bge
-    //         | RV32IInstruction::Bltu
-    //         | RV32IInstruction::Bgeu => {
-    //             rs1 = temp0.unwrap();
-    //             rs2 = temp1.unwrap();
-    //             imm = imm_temp.unwrap();
-    //         }
-    //         // J-type
-    //         RV32IInstruction::Jal => {
-    //             rd = temp0.unwrap();
-    //             imm = imm_temp.unwrap();
-    //         }
-    //         // I-type
-    //         RV32IInstruction::Addi
-    //         | RV32IInstruction::Xori
-    //         | RV32IInstruction::Ori
-    //         | RV32IInstruction::Andi
-    //         | RV32IInstruction::Slti
-    //         | RV32IInstruction::Sltiu
-    //         | RV32IInstruction::Slli
-    //         | RV32IInstruction::Srli
-    //         | RV32IInstruction::Srai
-    //         | RV32IInstruction::Jalr
-    //         | RV32IInstruction::Lb
-    //         | RV32IInstruction::Lh
-    //         | RV32IInstruction::Lw
-    //         | RV32IInstruction::Lbu
-    //         | RV32IInstruction::Lhu => {
-    //             rd = temp0.unwrap();
-    //             rs1 = temp1.unwrap();
-    //             imm = imm_temp.unwrap();
-    //         }
-
-    //         // S-type
-    //         RV32IInstruction::Sb | RV32IInstruction::Sh | RV32IInstruction::Sw =>
-    // {             rs1 = temp0.unwrap();
-    //             rs2 = temp1.unwrap();
-    //             imm = imm_temp.unwrap();
-    //         }
-    //         // U-type
-    //         RV32IInstruction::Lui | RV32IInstruction::Auipc => {
-    //             rd = temp0.unwrap();
-    //             imm = imm_temp.unwrap();
-    //         }
-    //         _ => {
-    //             return Err(());
-    //         }
-    //     }
-
-    //     match opcode {
-    //         RV32IInstruction::Add => {
-    //             self.registers[rd] = self.registers[rs1] + self.registers[rs2];
-    //         }
-    //         RV32IInstruction::Sub => {
-    //             self.registers[rd] = self.registers[rs1] - self.registers[rs2];
-    //         }
-    //         RV32IInstruction::Xor => {
-    //             self.registers[rd] = self.registers[rs1] ^ self.registers[rs2];
-    //         }
-    //         RV32IInstruction::Or => {
-    //             self.registers[rd] = self.registers[rs1] | self.registers[rs2];
-    //         }
-    //         RV32IInstruction::And => {
-    //             self.registers[rd] = self.registers[rs1] & self.registers[rs2];
-    //         }
-    //         RV32IInstruction::Sll => {
-    //             self.registers[rd] = self.registers[rs1] << self.registers[rs2];
-    //         }
-    //         RV32IInstruction::Srl => {
-    //             self.registers[rd] = self.registers[rs1] >> self.registers[rs2];
-    //         }
-    //         RV32IInstruction::Sra => {
-    //             self.registers[rd] = ((self.registers[rs1] as i32) >>
-    // self.registers[rs2]) as u32;         }
-    //         RV32IInstruction::Slt => {
-    //             self.registers[rd] = if (self.registers[rs1] as i32) <
-    // (self.registers[rs2] as i32)             {
-    //                 1
-    //             } else {
-    //                 0
-    //             };
-    //         }
-    //         RV32IInstruction::Sltu => {
-    //             self.registers[rd] = if self.registers[rs1] < self.registers[rs2]
-    // {                 1
-    //             } else {
-    //                 0
-    //             };
-    //         }
-    //         RV32IInstruction::Beq => {
-    //             if self.registers[rs1] == self.registers[rs2] {
-    //                 self.pc = (self.pc as i32 + imm) as u32;
-    //                 // self.pc += 4 in previous instruction
-    //             }
-    //         }
-    //         RV32IInstruction::Bne => {
-    //             if self.registers[rs1] != self.registers[rs2] {
-    //                 self.pc = (self.pc as i32 + imm) as u32;
-    //             }
-    //         }
-    //         RV32IInstruction::Blt => {
-    //             if (self.registers[rs1] as i32) < (self.registers[rs2] as i32) {
-    //                 self.pc = (self.pc as i32 + imm) as u32;
-    //             }
-    //         }
-    //         RV32IInstruction::Bge => {
-    //             if (self.registers[rs1] as i32) >= (self.registers[rs2] as i32) {
-    //                 self.pc = (self.pc as i32 + imm) as u32;
-    //             }
-    //         }
-    //         RV32IInstruction::Bltu => {
-    //             if self.registers[rs1] < self.registers[rs2] {
-    //                 self.pc = (self.pc as i32 + imm) as u32;
-    //             }
-    //         }
-    //         RV32IInstruction::Bgeu => {
-    //             if self.registers[rs1] >= self.registers[rs2] {
-    //                 self.pc = (self.pc as i32 + imm) as u32;
-    //             }
-    //         }
-    //         RV32IInstruction::Jal => {
-    //             self.registers[rd] = self.pc + 4;
-    //             self.pc = (self.pc as i32 + imm) as u32;
-    //         }
-    //         RV32IInstruction::Addi => {
-    //             self.registers[rd] = (self.registers[rs1] as
-    // i32).wrapping_add(imm as i32) as u32;         }
-    //         RV32IInstruction::Xori => {
-    //             self.registers[rd] = ((self.registers[rs1] as i32) ^ (imm as
-    // i32)) as u32;         }
-    //         RV32IInstruction::Ori => {
-    //             self.registers[rd] = ((self.registers[rs1] as i32) | (imm as
-    // i32)) as u32;         }
-    //         RV32IInstruction::Andi => {
-    //             self.registers[rd] = ((self.registers[rs1] as i32) & (imm as
-    // i32)) as u32;         }
-    //         RV32IInstruction::Slti => {
-    //             self.registers[rd] = if (self.registers[rs1] as i32) < (imm as
-    // i32) {                 1
-    //             } else {
-    //                 0
-    //             };
-    //         }
-    //         RV32IInstruction::Sltiu => {
-    //             self.registers[rd] = if self.registers[rs1] < (imm as u32) {
-    //                 1
-    //             } else {
-    //                 0
-    //             };
-    //         }
-    //         RV32IInstruction::Slli => {
-    //             let shamt = imm & 0b11111;
-    //             self.registers[rd] = self.registers[rs1] << shamt;
-    //         }
-    //         RV32IInstruction::Srli => {
-    //             let shamt = imm & 0b11111;
-    //             self.registers[rd] = self.registers[rs1] >> shamt;
-    //         }
-    //         RV32IInstruction::Srai => {
-    //             let shamt = imm & 0b11111;
-    //             self.registers[rd] =
-    //                 CPU::sign_extend(self.registers[rs1] >> shamt, 32 - shamt as
-    // u32);         }
-    //         RV32IInstruction::Jalr => {
-    //             let t = self.pc;
-    //             self.pc = ((self.registers[rs1] as i32 + imm) as u32) & !1;
-    //             // set lsb to 0
-    //             self.registers[rd] = t + 4;
-    //         }
-    //         RV32IInstruction::Lb => {
-    //             let index = (self.registers[rs1] + CPU::sign_extend(imm as u32,
-    // 12)) as usize;             self.registers[rd] =
-    // CPU::sign_extend(self.memory[index] as u32, 8);
-    // self.print_memory(rs1, imm);         }
-    //         RV32IInstruction::Lh => {
-    //             let index = (self.registers[rs1] + CPU::sign_extend(imm as u32,
-    // 12)) as usize;             let half_word = self.memory[index] as u32 |
-    // (self.memory[index + 1] as u32) << 8;             self.registers[rd] =
-    // CPU::sign_extend(half_word as u32, 16);
-    // self.print_memory(rs1, imm);         }
-    //         RV32IInstruction::Lw => {
-    //             let index = (self.registers[rs1] + CPU::sign_extend(imm as u32,
-    // 12)) as usize;
-
-    //             self.registers[rd] = self.memory[index] as u32
-    //                 | ((self.memory[index + 1]) as u32) << 8
-    //                 | ((self.memory[index + 2]) as u32) << 16
-    //                 | ((self.memory[index + 3]) as u32) << 24;
-    //             self.print_memory(rs1, imm);
-    //         }
-    //         RV32IInstruction::Lbu => {
-    //             let index = (self.registers[rs1] + CPU::sign_extend(imm as u32,
-    // 12)) as usize;             self.registers[rd] = self.memory[index] as
-    // u32;             self.print_memory(rs1, imm);
-    //         }
-    //         RV32IInstruction::Lhu => {
-    //             let index = (self.registers[rs1] + CPU::sign_extend(imm as u32,
-    // 12)) as usize;
-
-    //             self.registers[rd] =
-    //                 self.memory[index] as u32 | (self.memory[index + 1] as u32)
-    // << 8;             self.print_memory(rs1, imm);
-    //         }
-    //         RV32IInstruction::Sb => {
-    //             let index = (self.registers[rs1] + CPU::sign_extend(imm as u32,
-    // 12)) as usize;             self.memory[index] = (self.registers[rs2] &
-    // 0xff) as u8;             self.print_memory(rs1, imm);
-    //         }
-    //         RV32IInstruction::Sh => {
-    //             let index = (self.registers[rs1] + CPU::sign_extend(imm as u32,
-    // 12)) as usize;             self.memory[index] = (self.registers[rs2] &
-    // 0xff) as u8;             self.memory[index + 1] = ((self.registers[rs2]
-    // >> 8) & 0xff) as u8;             self.print_memory(rs1, imm);
-    //         }
-    //         RV32IInstruction::Sw => {
-    //             let index = (self.registers[rs1] + CPU::sign_extend(imm as u32,
-    // 12)) as usize;             self.memory[index] = (self.registers[rs2] &
-    // 0xff) as u8;             self.memory[index + 1] = (self.registers[rs2] >>
-    // 8 & 0xff) as u8;             self.memory[index + 2] =
-    // (self.registers[rs2] >> 16 & 0xff) as u8;             self.memory[index +
-    // 3] = (self.registers[rs2] >> 24 & 0xff) as u8;
-    // self.print_memory(rs1, imm);         }
-    //         RV32IInstruction::Lui => {
-    //             self.registers[rd] = (imm << 12) as u32;
-    //         }
-    //         RV32IInstruction::Auipc => {
-    //             self.registers[rd] = (self.pc as i32 + imm << 12) as u32;
-    //         }
-    //         RV32IInstruction::Ecall => {
-    //             self.registers[rd] = self.pc;
-    //             self.pc = (self.pc as i32 + imm) as u32;
-    //         }
-    //         RV32IInstruction::Ebreak => {
-    //             self.registers[rd] = self.pc;
-    //             self.pc = (self.pc as i32 + imm) as u32;
-    //         }
-    //         _ => {
-    //             return Err(());
-    //         }
-    //     }
-    //     return Ok(());
-    // }
+    
 }
