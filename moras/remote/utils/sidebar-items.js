@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["get_free_port","list_check","list_check_and_del","list_insert_asc","list_insert_or_replace_asc"]};
+window.SIDEBAR_ITEMS = {"fn":["get_free_port"],"mod":["priority_lsit"]};
