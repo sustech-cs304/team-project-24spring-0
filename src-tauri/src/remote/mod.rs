@@ -21,17 +21,17 @@ pub trait GetCmpType {
 }
 
 #[derive(Clone)]
-struct OpRange {
-    start: CursorPosition,
-    end: CursorPosition,
+pub struct OpRange {
+    pub start: CursorPosition,
+    pub end: CursorPosition,
 }
 
 #[derive(Clone)]
-struct History {
-    version: u64,
-    op: OperationType,
-    op_range: OpRange,
-    modified_content: String,
+pub struct History {
+    pub version: u64,
+    pub op: OperationType,
+    pub op_range: OpRange,
+    pub modified_content: String,
 }
 
 #[derive(Clone, Debug)]

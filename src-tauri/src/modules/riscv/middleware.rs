@@ -49,7 +49,7 @@ pub mod frontend_api {
             }
             Err(e) => Optional {
                 success: false,
-                message: e,
+                message: e.to_string(),
             },
         }
     }
@@ -189,7 +189,7 @@ pub mod frontend_api {
             },
             Err(e) => Optional {
                 success: false,
-                message: e,
+                message: e.to_string(),
             },
         }
     }
@@ -205,7 +205,7 @@ pub mod frontend_api {
         match file_io::write_file_str(filepath, data) {
             Some(e) => Optional {
                 success: false,
-                message: e,
+                message: e.to_string(),
             },
             None => Optional {
                 success: true,
@@ -322,7 +322,7 @@ pub mod frontend_api {
                         return DumpResult::Error(vec![AssembleError {
                             line: 0,
                             column: 0,
-                            msg: e,
+                            msg: e.to_string(),
                         }]);
                     }
                 }

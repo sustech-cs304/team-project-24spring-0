@@ -23,7 +23,7 @@ use tokio::task::JoinHandle;
 use tonic::{transport::Server, Request, Response, Status};
 
 use super::{
-    utils::{list_check_and_del, list_insert_or_replace_asc},
+    utils::priority_lsit::{list_check_and_del, list_insert_or_replace_asc},
     ClientCursor,
     CursorCMP,
     History,
@@ -269,23 +269,8 @@ impl Editor for Arc<Mutex<ServerHandle>> {
                 }
 
                 // handle operation
-                let raw_rope = tab.text.get_raw();
-                let char_idx = raw_rope.line_to_char(start.row as usize) + start.col as usize;
-                match request_ref.op() {
-                    Insert => {
-                        raw_rope.insert(char_idx, &request_ref.modified_content);
-                    }
-                    Delete => {
-                        todo!("Implement delete content");
-                        //raw_rope.remove(char_idx, char_idx +
-                        // request_ref.content.len());
-                    }
-                    Replace => {
-                        todo!("Implement replace content");
-                        //raw_rope.remove(char_idx, char_idx + request_ref.content.len());
-                        raw_rope.insert(char_idx, &request_ref.modified_content);
-                    }
-                }
+                //tab.text.
+                todo!("update cursor");
                 Ok(Response::new(UpdateContentReply {
                     success: true,
                     message: String::new(),
@@ -297,7 +282,7 @@ impl Editor for Arc<Mutex<ServerHandle>> {
 }
 
 pub struct RpcServerImpl {
-    port: u16, //TODO: add mutex or use atomic
+    port: u16, //FIXME: add mutex or use atomic
     tokio_runtime: tokio::runtime::Runtime,
     server_handle: Option<JoinHandle<()>>,
     shared_handler: Arc<Mutex<ServerHandle>>,

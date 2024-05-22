@@ -1,4 +1,5 @@
 use std::{
+    error::Error,
     path::{Path, PathBuf},
     time::SystemTime,
 };
@@ -6,8 +7,9 @@ use std::{
 use ropey::Rope;
 
 use crate::{
-    interface::storage::{FileShareStatus, MFile},
+    interface::storage::{BasicFile, FileShareStatus, MFile, MeragableFile},
     io::file_io,
+    remote::{server::editor_rpc::OperationType, History},
 };
 
 pub struct Text {
@@ -18,7 +20,7 @@ pub struct Text {
     last_modified: SystemTime,
 }
 
-impl MFile<Rope, String> for Text {
+impl BasicFile<Rope> for Text {
     fn get_path(&self) -> &PathBuf {
         &self.path
     }
@@ -43,7 +45,7 @@ impl MFile<Rope, String> for Text {
         self.data.as_ref().to_string()
     }
 
-    fn save(&mut self) -> Option<String> {
+    fn save(&mut self) -> Option<Box<dyn Error>> {
         match file_io::write_file(self.path.as_path(), &self.data.as_ref().to_string()) {
             Some(e) => Some(e),
             None => {
@@ -70,7 +72,7 @@ impl MFile<Rope, String> for Text {
 }
 
 impl Text {
-    pub fn from_path(file_path: &Path) -> Result<Self, String> {
+    pub fn from_path(file_path: &Path) -> Result<Self, Box<dyn Error>> {
         match file_io::read_file(file_path) {
             Ok(content) => match file_io::get_last_modified(file_path) {
                 Ok(last_modified) => Ok(Text {
@@ -86,7 +88,7 @@ impl Text {
         }
     }
 
-    pub fn from_path_str(file_path: &str) -> Result<Self, String> {
+    pub fn from_path_str(file_path: &str) -> Result<Self, Box<dyn Error>> {
         Text::from_path(Path::new(file_path))
     }
 
@@ -100,3 +102,30 @@ impl Text {
         })
     }
 }
+
+impl MeragableFile<Rope, History> for Text {
+    fn merge_history(&mut self, histories: &Vec<History>) -> Result<(), Box<dyn Error>> {
+        for history in histories {
+            let raw_rope = self.data.as_mut();
+            let range = &history.op_range;
+            let start_idx =
+                raw_rope.line_to_char(range.start.row as usize) + range.start.col as usize;
+            let end_idx = raw_rope.line_to_char(range.end.row as usize) + range.end.col as usize;
+            match history.op {
+                OperationType::Insert => {
+                    raw_rope.insert(start_idx, &history.modified_content);
+                }
+                OperationType::Delete => {
+                    raw_rope.remove(start_idx..end_idx);
+                }
+                OperationType::Replace => {
+                    raw_rope.remove(start_idx..end_idx);
+                    raw_rope.insert(start_idx, &history.modified_content);
+                }
+            }
+        }
+        Ok(())
+    }
+}
+
+impl MFile<Rope, History> for Text {}

@@ -6,10 +6,9 @@ use std::{
 use rand::random;
 
 use super::{
-    utils::{list_check_and_del, list_insert_or_replace_asc},
+    utils::priority_lsit::{list_check_and_del, list_insert_or_replace_asc},
     ClientCursor,
     CursorCMP,
-    GetCmpType,
 };
 
 fn gen_client_cursor(len: u16, ip: IpAddr) -> Vec<ClientCursor> {

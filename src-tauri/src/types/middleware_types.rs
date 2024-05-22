@@ -11,12 +11,13 @@ use crate::{
         storage::MFile,
     },
     modules::riscv::basic::interface::parser::RISCV,
-    remote::server::RpcServerImpl,
+    remote::{server::RpcServerImpl, History},
 };
 
 //TODO: add simulator and assembler as member
+
 pub struct Tab {
-    pub text: Box<dyn MFile<Rope, String>>,
+    pub text: Box<dyn MFile<Rope, History>>,
     pub parser: Box<dyn Parser<RISCV>>,
     pub assembler: Box<dyn Assembler<RISCV>>,
     //pub simulator: Box<dyn Simulator<i32, i32, i32, i32>>,
