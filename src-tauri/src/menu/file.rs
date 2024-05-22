@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::{error::Error, path::Path};
 
 use tauri::{
     api::dialog::{FileDialogBuilder, MessageDialogButtons, MessageDialogKind},
@@ -77,7 +77,7 @@ fn open_handler(event: WindowMenuEvent) {
                 MessageDialogKind::Info,
                 MessageDialogButtons::Ok,
                 format!("Failed to open {:?}", file_path.file_name().unwrap()).as_str(),
-                err.as_str(),
+                &err.to_string(),
                 |_| {},
             ),
             None => {
@@ -115,7 +115,7 @@ fn save_handler(event: &WindowMenuEvent) {
                 MessageDialogKind::Info,
                 MessageDialogButtons::Ok,
                 "Failed to save file",
-                err.as_str(),
+                &err.to_string(),
                 |_| {},
             );
         }
@@ -146,7 +146,7 @@ fn save_as_handler(event: WindowMenuEvent) {
                     MessageDialogKind::Info,
                     MessageDialogButtons::Ok,
                     "Failed to save file",
-                    err.as_str(),
+                    &err.to_string(),
                     |_| {},
                 );
             }
@@ -203,7 +203,7 @@ fn exit_handler(event: &WindowMenuEvent) {
 ///
 /// Return None if success, Some(err) if failed.
 /// If success, will set the current tab name to the opened file path.
-fn new_tab(event: &WindowMenuEvent, file_path: &Path) -> Option<String> {
+fn new_tab(event: &WindowMenuEvent, file_path: &Path) -> Option<Box<dyn Error>> {
     match rope_store::Text::from_path(file_path) {
         Ok(content) => {
             let tab_map = event.window().state::<TabMap>();
