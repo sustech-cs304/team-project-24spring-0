@@ -99,7 +99,7 @@ pub mod priority_lsit {
     }
 
     pub fn get_cursor<'a, C>(
-          list: &'a mut LinkedList<C::Type>,
+        list: &'a mut LinkedList<C::Type>,
         value: &C::Type,
     ) -> Option<linked_list::CursorMut<'a, C::Type>>
     where
