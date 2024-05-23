@@ -9,7 +9,7 @@ pub enum FileShareStatus {
     Host,
     Client,
 }
-pub trait MFile<D, H>: BasicFile<D> + MeragableFile<D, H> {}
+pub trait MFile<D, H, C>: BasicFile<D> + MeragableFile<D, H, C> {}
 
 pub trait BasicFile<D>: Send + Sync {
     fn get_path(&self) -> &PathBuf;
@@ -22,17 +22,21 @@ pub trait BasicFile<D>: Send + Sync {
 
     fn to_string(&self) -> String;
 
-    fn save(&mut self) -> Option<Box<dyn Error>>;
+    fn save(&mut self) -> Option<Box<dyn Error + Send + Sync>>;
 
     fn update_content(&mut self, content: &str);
 
     fn get_raw(&mut self) -> &mut D;
 
-    fn handle_modify(&mut self, op: FileOperation) -> Result<(), Box<dyn Error>>;
+    fn handle_modify(&mut self, op: FileOperation) -> Result<(), Box<dyn Error + Send + Sync>>;
 
     fn switch_share_status(&mut self, status: FileShareStatus);
 }
 
-pub trait MeragableFile<D, H>: Send + Sync {
-    fn merge_history(&mut self, histories: &Vec<H>) -> Result<(), Box<dyn Error>>;
+pub trait MeragableFile<D, H, C>: Send + Sync {
+    fn merge_history(
+        &mut self,
+        histories: &[H],
+        cursors: &mut C,
+    ) -> Result<(), Box<dyn Error + Send + Sync>>;
 }

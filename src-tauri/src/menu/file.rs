@@ -203,7 +203,7 @@ fn exit_handler(event: &WindowMenuEvent) {
 ///
 /// Return None if success, Some(err) if failed.
 /// If success, will set the current tab name to the opened file path.
-fn new_tab(event: &WindowMenuEvent, file_path: &Path) -> Option<Box<dyn Error>> {
+fn new_tab(event: &WindowMenuEvent, file_path: &Path) -> Option<Box<dyn Error + Send + Sync>> {
     match rope_store::Text::from_path(file_path) {
         Ok(content) => {
             let tab_map = event.window().state::<TabMap>();

@@ -35,13 +35,15 @@ pub struct History {
 }
 
 #[derive(Clone, Debug)]
-struct ClientCursor {
-    ip: SocketAddr,
-    row: u64,
-    col: u64,
+pub struct ClientCursor {
+    pub addr: SocketAddr,
+    pub row: u64,
+    pub col: u64,
 }
 
-struct CursorCMP(ClientCursor);
+struct CursorAsc(ClientCursor);
+
+pub struct CursorRowEq(ClientCursor);
 
 impl Into<Pos> for CursorPosition {
     fn into(self) -> Pos {
@@ -52,11 +54,29 @@ impl Into<Pos> for CursorPosition {
     }
 }
 
+impl From<Pos> for CursorPosition {
+    fn from(pos: Pos) -> Self {
+        CursorPosition {
+            row: pos.row,
+            col: pos.col,
+        }
+    }
+}
+
 impl Into<ContentPosition> for OpRange {
     fn into(self) -> ContentPosition {
         ContentPosition {
             start: Option::Some(self.start.into()),
             end: Option::Some(self.end.into()),
+        }
+    }
+}
+
+impl From<ContentPosition> for OpRange {
+    fn from(pos: ContentPosition) -> Self {
+        OpRange {
+            start: pos.start.unwrap().into(),
+            end: pos.end.unwrap().into(),
         }
     }
 }
@@ -72,39 +92,67 @@ impl Into<UpdateContentRequest> for History {
     }
 }
 
-impl GetCmpType for CursorCMP {
+impl From<UpdateContentRequest> for History {
+    fn from(req: UpdateContentRequest) -> Self {
+        History {
+            version: req.version,
+            op: req.op(),
+            op_range: req.op_range.unwrap().into(),
+            modified_content: req.modified_content,
+        }
+    }
+}
+
+impl GetCmpType for CursorAsc {
     type Type = ClientCursor;
 
     fn new(t: &Self::Type) -> Self {
-        CursorCMP { 0: t.clone() }
+        CursorAsc { 0: t.clone() }
     }
 }
 
-impl PartialEq for CursorCMP {
+impl PartialEq for CursorAsc {
     fn eq(&self, other: &Self) -> bool {
-        self.0.ip == other.0.ip
+        self.0.addr == other.0.addr
     }
 }
 
-impl Eq for CursorCMP {}
+impl Eq for CursorAsc {}
 
-impl PartialOrd for CursorCMP {
+impl PartialOrd for CursorAsc {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Option::Some(
             self.0
                 .row
                 .cmp(&other.0.row)
                 .then(self.0.col.cmp(&other.0.col))
-                .then(self.0.ip.cmp(&other.0.ip)),
+                .then(self.0.addr.cmp(&other.0.addr)),
         )
     }
 }
-impl Ord for CursorCMP {
+
+impl Ord for CursorAsc {
     fn cmp(&self, other: &Self) -> Ordering {
         self.0
             .row
             .cmp(&other.0.row)
             .then(self.0.col.cmp(&other.0.col))
-            .then(self.0.ip.cmp(&other.0.ip))
+            .then(self.0.addr.cmp(&other.0.addr))
     }
 }
+
+impl GetCmpType for CursorRowEq {
+    type Type = ClientCursor;
+
+    fn new(t: &Self::Type) -> Self {
+        CursorRowEq { 0: t.clone() }
+    }
+}
+
+impl PartialEq for CursorRowEq {
+    fn eq(&self, other: &Self) -> bool {
+        self.0.row == other.0.row
+    }
+}
+
+impl Eq for CursorRowEq {}
