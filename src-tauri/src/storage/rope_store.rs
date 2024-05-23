@@ -16,7 +16,7 @@ use crate::{
         utils::priority_lsit::get_cursor,
         ClientCursor,
         CursorRowEq,
-        History,
+        Modification,
     },
     utility::text_helper::lines_count,
 };
@@ -25,21 +25,17 @@ pub struct Text {
     share_status: FileShareStatus,
     data: Box<Rope>,
     path: PathBuf,
+    version: usize,
     dirty: bool,
     last_modified: SystemTime,
 }
 
-impl BasicFile<Rope> for Text {
+impl BasicFile<Rope, Modification> for Text {
     fn get_path(&self) -> &PathBuf {
         &self.path
     }
     fn get_path_str(&self) -> String {
         self.path.to_str().unwrap().to_string()
-    }
-
-    fn update_content(&mut self, content: &str) {
-        *self.data = Rope::from_str(&content);
-        self.dirty = true;
     }
 
     fn is_dirty(&self) -> bool {
@@ -70,7 +66,7 @@ impl BasicFile<Rope> for Text {
 
     fn handle_modify(
         &mut self,
-        op: crate::types::middleware_types::FileOperation,
+        modify: &Modification,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         match self.share_status {
             FileShareStatus::Host => {
@@ -81,7 +77,24 @@ impl BasicFile<Rope> for Text {
                 todo!("perform function change");
             }
             FileShareStatus::Private => {
-                todo!("perform function change");
+                let raw_rope = self.data.as_mut();
+                let range = &modify.op_range;
+                let start_idx =
+                    raw_rope.line_to_char(range.start.row as usize) + range.start.col as usize;
+                let end_idx =
+                    raw_rope.line_to_char(range.end.row as usize) + range.end.col as usize;
+                match modify.op {
+                    OperationType::Insert => {
+                        raw_rope.insert(start_idx, &modify.modified_content);
+                    }
+                    OperationType::Delete => {
+                        raw_rope.remove(start_idx..end_idx);
+                    }
+                    OperationType::Replace => {
+                        raw_rope.remove(start_idx..end_idx);
+                        raw_rope.insert(start_idx, &modify.modified_content);
+                    }
+                }
                 self.dirty = true;
                 Ok(())
             }
@@ -101,6 +114,7 @@ impl Text {
                     share_status: Default::default(),
                     data: Box::new(Rope::from_str(&content)),
                     path: PathBuf::from(file_path),
+                    version: 0,
                     dirty: false,
                     last_modified,
                 }),
@@ -119,16 +133,20 @@ impl Text {
             share_status: Default::default(),
             data: Box::new(Rope::from_str(text)),
             path: file_path.to_path_buf(),
+            version: 0,
             dirty: false,
             last_modified: std::time::SystemTime::now(),
         })
     }
 }
 
-impl MeragableFile<Rope, History, Cursor> for Text {
+impl MeragableFile<Rope, Modification, Cursor> for Text {
+    fn get_version(&self) -> usize {
+        self.version
+    }
     fn merge_history(
         &mut self,
-        histories: &[History],
+        histories: &[Modification],
         cursors: &mut Cursor,
     ) -> Result<(), Box<dyn Error + Send + Sync>> {
         for history in histories {
@@ -186,4 +204,4 @@ impl MeragableFile<Rope, History, Cursor> for Text {
     }
 }
 
-impl MFile<Rope, History, Cursor> for Text {}
+impl MFile<Rope, Modification, Cursor> for Text {}

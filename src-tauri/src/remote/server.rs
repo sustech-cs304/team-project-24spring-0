@@ -28,7 +28,7 @@ use super::{
     utils::priority_lsit::{list_check_and_del, list_insert_or_replace_asc},
     ClientCursor,
     CursorAsc,
-    History,
+    Modification,
 };
 use crate::{
     dprintln,
@@ -48,7 +48,7 @@ struct ServerHandle {
     password: Mutex<String>,
     clients: Mutex<Vec<SocketAddr>>,
     cursor_pos: Mutex<Cursor>,
-    history: Mutex<Vec<History>>,
+    history: Mutex<Vec<Modification>>,
 }
 
 impl ServerHandle {
@@ -64,7 +64,7 @@ impl ServerHandle {
         list_insert_or_replace_asc::<CursorAsc>(
             &mut *lock,
             ClientCursor {
-                addr: format!("127.0.0.1:{}", port).parse().unwrap(),
+                addr: format!("0.0.0.0:{}", port).parse().unwrap(),
                 row,
                 col,
             },
@@ -85,7 +85,7 @@ impl ServerHandle {
                 let mut tab = tabs_lock.get_mut(&map_state_lock.0).unwrap();
                 handle(&mut tab)
             }
-            None => Err("TabMap have not been iniitilized".to_string()),
+            None => Err("TabMap has not been iniitilized".to_string()),
         }
     }
 
@@ -110,7 +110,7 @@ impl ServerHandle {
 
     fn get_history_since<T>(&self, version: usize) -> Vec<T>
     where
-        History: Into<T> + Clone,
+        Modification: Into<T> + Clone,
     {
         let lock = self.history.lock().unwrap();
         lock[version..]
@@ -272,7 +272,7 @@ impl Editor for Arc<Mutex<ServerHandle>> {
 
                 // handle operation
                 match tab.text.merge_history(
-                    &vec![History::from(request_ref.clone())],
+                    &vec![Modification::from(request_ref.clone())],
                     &mut *handler.cursor_pos.lock().unwrap(),
                 ) {
                     Ok(_) => Ok(Response::new(UpdateContentReply {

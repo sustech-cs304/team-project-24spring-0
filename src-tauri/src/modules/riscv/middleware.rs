@@ -10,6 +10,7 @@ pub mod frontend_api {
             assembler::RiscVAssembler,
             parser::{RISCVExtension, RISCVParser, RISCV},
         },
+        remote::{Modification, OpRange},
         storage::rope_store,
         types::middleware_types::*,
         utility::{ptr::Ptr, state_helper::state},
@@ -158,14 +159,22 @@ pub mod frontend_api {
         content: &str,
     ) -> Optional {
         let filepath = cur_tab_name.name.lock().unwrap().clone();
-        todo!("implement insert and live shared check");
         match tab_map.tabs.lock().unwrap().get_mut(&filepath) {
             Some(tab) => {
-                tab.text.update_content(content);
-                tab.text.set_dirty(true);
-                Optional {
-                    success: true,
-                    message: String::new(),
+                match tab.text.handle_modify(&Modification {
+                    op: op.into(),
+                    op_range: OpRange { start, end },
+                    version: tab.text.get_version() as u64,
+                    modified_content: content.to_owned(),
+                }) {
+                    Ok(_) => Optional {
+                        success: true,
+                        message: String::new(),
+                    },
+                    Err(e) => Optional {
+                        success: false,
+                        message: e.to_string(),
+                    },
                 }
             }
             None => Optional {

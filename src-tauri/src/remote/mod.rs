@@ -12,7 +12,7 @@ use std::{cmp::Ordering, net::SocketAddr};
 
 use server::editor_rpc::{ContentPosition, OperationType, Pos, UpdateContentRequest};
 
-use crate::middleware_types::CursorPosition;
+use crate::{middleware_types::CursorPosition, types::middleware_types::FileOperation};
 
 pub trait GetCmpType {
     type Type: Clone;
@@ -27,7 +27,7 @@ pub struct OpRange {
 }
 
 #[derive(Clone)]
-pub struct History {
+pub struct Modification {
     pub version: u64,
     pub op: OperationType,
     pub op_range: OpRange,
@@ -81,7 +81,7 @@ impl From<ContentPosition> for OpRange {
     }
 }
 
-impl Into<UpdateContentRequest> for History {
+impl Into<UpdateContentRequest> for Modification {
     fn into(self) -> UpdateContentRequest {
         UpdateContentRequest {
             version: self.version,
@@ -92,9 +92,9 @@ impl Into<UpdateContentRequest> for History {
     }
 }
 
-impl From<UpdateContentRequest> for History {
+impl From<UpdateContentRequest> for Modification {
     fn from(req: UpdateContentRequest) -> Self {
-        History {
+        Modification {
             version: req.version,
             op: req.op(),
             op_range: req.op_range.unwrap().into(),
@@ -156,3 +156,13 @@ impl PartialEq for CursorRowEq {
 }
 
 impl Eq for CursorRowEq {}
+
+impl Into<OperationType> for FileOperation {
+    fn into(self) -> OperationType {
+        match self {
+            FileOperation::Insert => OperationType::Insert,
+            FileOperation::Delete => OperationType::Delete,
+            FileOperation::Replace => OperationType::Replace,
+        }
+    }
+}

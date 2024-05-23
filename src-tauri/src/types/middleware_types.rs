@@ -14,13 +14,13 @@ use crate::{
         storage::MFile,
     },
     modules::riscv::basic::interface::parser::RISCV,
-    remote::{server::RpcServerImpl, ClientCursor, History},
+    remote::{server::RpcServerImpl, ClientCursor, Modification},
 };
 
 pub type Cursor = LinkedList<ClientCursor>;
 
 pub struct Tab {
-    pub text: Box<dyn MFile<Rope, History, Cursor>>,
+    pub text: Box<dyn MFile<Rope, Modification, Cursor>>,
     pub parser: Box<dyn Parser<RISCV>>,
     pub assembler: Box<dyn Assembler<RISCV>>,
     //pub simulator: Box<dyn Simulator<i32, i32, i32, i32>>,
@@ -163,5 +163,5 @@ pub enum SyscallDataType {
 pub enum FileOperation {
     Insert = 0,
     Delete = 1,
-    Cover = 2,
+    Replace = 2,
 }
