@@ -141,11 +141,7 @@ impl MeragableFile<Rope, Modification, Cursor> for Text {
     fn get_version(&self) -> usize {
         self.version
     }
-    fn merge_history(
-        &mut self,
-        histories: &[Modification],
-        cursors: &mut Cursor,
-    ) -> Result<(), Box<dyn Error + Send + Sync>> {
+    fn merge_history(&mut self, histories: &[Modification], cursors: &mut Cursor) -> ResultVoid {
         for history in histories {
             let increase_lines = lines_count(&history.modified_content);
             let raw_rope = self.data.as_mut();

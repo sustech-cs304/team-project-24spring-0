@@ -1,4 +1,4 @@
-use std::{error::Error, path::Path};
+use std::path::Path;
 
 use tauri::{
     api::dialog::{FileDialogBuilder, MessageDialogButtons, MessageDialogKind},
@@ -20,6 +20,7 @@ use crate::{
     types::{
         menu_types,
         middleware_types::{Tab, TabMap},
+        ResultVoid,
     },
     utility::{
         ptr::Ptr,
@@ -73,14 +74,7 @@ fn open_handler(event: WindowMenuEvent) {
     let picker = FileDialogBuilder::new();
     picker.pick_file(move |file_path| match file_path {
         Some(file_path) => match new_tab(&event, file_path.as_path()) {
-            Some(err) => display_dialog(
-                MessageDialogKind::Info,
-                MessageDialogButtons::Ok,
-                format!("Failed to open {:?}", file_path.file_name().unwrap()).as_str(),
-                &err.to_string(),
-                |_| {},
-            ),
-            None => {
+            Ok(_) => {
                 let name = get_current_tab_name(&event);
                 let tab_map = event.window().state::<TabMap>();
                 let lock = tab_map.tabs.lock().unwrap();
@@ -97,6 +91,13 @@ fn open_handler(event: WindowMenuEvent) {
                     )
                     .unwrap();
             }
+            Err(e) => display_dialog(
+                MessageDialogKind::Info,
+                MessageDialogButtons::Ok,
+                format!("Failed to open {:?}", file_path.file_name().unwrap()).as_str(),
+                &e.to_string(),
+                |_| {},
+            ),
         },
         _ => {}
     });
@@ -203,28 +204,24 @@ fn exit_handler(event: &WindowMenuEvent) {
 ///
 /// Return None if success, Some(err) if failed.
 /// If success, will set the current tab name to the opened file path.
-fn new_tab(event: &WindowMenuEvent, file_path: &Path) -> Option<Box<dyn Error + Send + Sync>> {
-    match rope_store::Text::from_path(file_path) {
-        Ok(content) => {
-            let tab_map = event.window().state::<TabMap>();
-            let tab = Tab {
-                text: Box::new(content),
-                parser: Box::new(RISCVParser::new(&vec![RISCVExtension::RV32I])),
-                assembler: Box::new(RiscVAssembler::new()),
-                //simulator: Box::new(Default::default()),
-                data_return_range: Default::default(),
-                assembly_cache: Default::default(),
-            };
-            tab_map
-                .tabs
-                .lock()
-                .unwrap()
-                .insert(file_path.to_str().unwrap().to_string(), tab);
-            set_current_tab_name(&event, file_path.to_str().unwrap());
-            None
-        }
-        Err(e) => Some(e),
-    }
+fn new_tab(event: &WindowMenuEvent, file_path: &Path) -> ResultVoid {
+    let content = rope_store::Text::from_path(file_path)?;
+    let tab_map = event.window().state::<TabMap>();
+    let tab = Tab {
+        text: Box::new(content),
+        parser: Box::new(RISCVParser::new(&vec![RISCVExtension::RV32I])),
+        assembler: Box::new(RiscVAssembler::new()),
+        //simulator: Box::new(Default::default()),
+        data_return_range: Default::default(),
+        assembly_cache: Default::default(),
+    };
+    tab_map
+        .tabs
+        .lock()
+        .unwrap()
+        .insert(file_path.to_str().unwrap().to_string(), tab);
+    set_current_tab_name(&event, file_path.to_str().unwrap());
+    Ok(())
 }
 
 /// Check if the file is dirty, if so, display a dialog to ask user to save the

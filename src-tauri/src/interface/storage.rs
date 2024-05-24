@@ -26,7 +26,7 @@ pub trait BasicFile<D, H>: Send + Sync {
 
     fn get_raw(&mut self) -> &mut D;
 
-    fn handle_modify(&mut self, history: &H) -> Result<(), Box<dyn Error + Send + Sync>>;
+    fn handle_modify(&mut self, history: &H) -> ResultVoid;
 
     fn switch_share_status(&mut self, status: FileShareStatus);
 }
