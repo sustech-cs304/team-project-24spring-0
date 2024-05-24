@@ -60,16 +60,51 @@ export default function MultifileCode() {
   }
 
   const handleDebug = async () => {
-    const result = await invoke('debug')
+    let result = await invoke('debug');
     const outputStore = useOutputStore.getState()
     console.log('Invoke handle debug result: ', result)
-    outputStore.addOutput('Debug Result: \n' + result.message)
+
+    if (result.success) {
+      outputStore.addOutput('Debug Succeeded!')
+      let fileName = state.currentFile;
+      const currentFile = state.files.find(file => file.fileName === fileName)
+      state.updateFile(
+          currentFile.fileName,
+          currentFile.code,
+          currentFile.original,
+          currentFile.assembly,
+          currentFile.runLines,
+          result.registers,
+          currentFile.memory,
+          currentFile.baseAddress,
+      )
+      if (result.has_current_text) {
+        state.updateFile(
+            currentFile.fileName,
+            currentFile.code,
+            currentFile.original,
+            currentFile.assembly,
+            [result.current_text],
+            result.registers,
+            currentFile.memory,
+            currentFile.baseAddress,
+        )
+      }
+      console.log('updated file')
+      console.log(currentFile)
+    } else {
+      outputStore.addOutput('Debug Failed!')
+    }
+
+    if (result.has_message) {
+      outputStore.addOutput('Debug Result: \n' + result.message)
+    }
   }
 
   const handleRun = async () => {
-    const result = await invoke('run')
-    const outputStore = useOutputStore.getState()
-    console.log('Invoke handle run result: ', result)
+    let result = await invoke('run');
+    const outputStore = useOutputStore.getState();
+    console.log('Invoke handle run result: ', result);
 
     if (result.success) {
       outputStore.addOutput('Run Succeded!')
