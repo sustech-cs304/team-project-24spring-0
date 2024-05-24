@@ -129,7 +129,9 @@ impl Editor for Arc<Mutex<ServerHandle>> {
     ) -> Result<Response<AuthorizeReply>, Status> {
         let handler = self.lock().unwrap();
         handler.handle_rpc_with_cur_tab(|tab| {
-            if request.get_ref().password == handler.password.lock().unwrap().as_str() {
+            if request.get_ref().password == handler.password.lock().unwrap().as_str()
+                || handler.password.lock().unwrap().is_empty()
+            {
                 if let Ok(_) = handler.check_ip_authorized(request.remote_addr().unwrap()) {
                     Ok(AuthorizeReply {
                         success: true,
@@ -298,19 +300,6 @@ pub struct RpcServerImpl {
 }
 
 impl RpcServerImpl {
-    fn default(thread_num: usize) -> Self {
-        Self {
-            port: AtomicU16::new(0),
-            tokio_runtime: tokio::runtime::Builder::new_multi_thread()
-                .worker_threads(thread_num)
-                .enable_all()
-                .build()
-                .unwrap(),
-            server_handle: None,
-            shared_handler: Arc::new(Mutex::new(Default::default())),
-        }
-    }
-
     /// Start the service with a tab map.
     ///
     /// If the server is already running, return an error.
@@ -374,7 +363,16 @@ impl RpcServerImpl {
 
 impl Default for RpcServerImpl {
     fn default() -> Self {
-        Self::default(8)
+        Self {
+            port: AtomicU16::new(0),
+            tokio_runtime: tokio::runtime::Builder::new_multi_thread()
+                .worker_threads(8)
+                .enable_all()
+                .build()
+                .unwrap(),
+            server_handle: None,
+            shared_handler: Arc::new(Mutex::new(Default::default())),
+        }
     }
 }
 

@@ -535,6 +535,7 @@ pub mod frontend_api {
         password: String,
     ) -> Optional {
         todo!("Implement authorize as client");
+        //TODO:@Vollate
     }
 
     /// Stop the share server for the current tab.

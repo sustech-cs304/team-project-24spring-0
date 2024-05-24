@@ -15,7 +15,7 @@ function getDifference(a, b)
 
     while (j < b.length)
     {
-     if (a[i] != b[j] || i == a.length)
+     if (a[i] !== b[j] || i === a.length)
          result += b[j];
      else
          i++;

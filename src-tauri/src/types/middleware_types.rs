@@ -14,7 +14,7 @@ use crate::{
         storage::MFile,
     },
     modules::riscv::basic::interface::parser::RISCV,
-    remote::{server::RpcServerImpl, ClientCursor, Modification},
+    remote::{client::RpcClientImpl, server::RpcServerImpl, ClientCursor, Modification},
 };
 
 pub type Cursor = LinkedList<ClientCursor>;
@@ -32,6 +32,7 @@ pub struct Tab {
 pub struct TabMap {
     pub tabs: Mutex<HashMap<String, Tab>>,
     pub rpc_server: Mutex<RpcServerImpl>,
+    pub rpc_client: Mutex<RpcClientImpl>,
 }
 
 pub struct CurTabName {

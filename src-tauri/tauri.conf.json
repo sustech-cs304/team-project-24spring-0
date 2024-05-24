@@ -72,7 +72,7 @@
       {
         "fullscreen": false,
         "height": 800,
-        "resizable": false,
+        "resizable": true,
         "label": "moras",
         "title": "Moras",
         "width": 1280

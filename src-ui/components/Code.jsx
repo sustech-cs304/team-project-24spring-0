@@ -1,13 +1,21 @@
 import React, {useEffect, useRef} from "react";
 import ModifiedEditor from "@/components/ModifiedEditor";
-import {Tabs, Tab, Card, CardBody, Textarea} from "@nextui-org/react";
-import {Table, TableHeader, TableBody, TableRow, TableColumn, TableCell} from "@nextui-org/react";
+import {
+    Card,
+    CardBody,
+    Tab,
+    Table,
+    TableBody,
+    TableCell,
+    TableColumn,
+    TableHeader,
+    TableRow,
+    Tabs
+} from "@nextui-org/react";
 import TestPage from "@/components/TestPage";
 import useFileStore from "@/utils/state";
 import CodeLineTable from "./CodeLineTable";
 import {invoke} from '@tauri-apps/api/tauri';
-import useOutputStore from "@/utils/outputState";
-import {Button} from "@nextui-org/react";
 
 
 export default function Code({fileName}) {
@@ -39,7 +47,7 @@ export default function Code({fileName}) {
                         </CardBody>
                     </Card>
                 </Tab>
-                    <Tab key="excecute" title="Execute" className="h-full w-full">
+                <Tab key="excecute" title="Execute" className="h-full w-full">
                     <Card className='h-full'>
                         <CardBody className="h-full flow grid-flow-row gap-4">
                             <CodeLineTable fileName={fileName}/>
@@ -109,7 +117,7 @@ export default function Code({fileName}) {
                 <Tab key="test" title="Test" className="h-full">
                     <Card className='h-full'>
                         <CardBody>
-                            <TestPage />
+                            <TestPage/>
                         </CardBody>
                     </Card>
                 </Tab>

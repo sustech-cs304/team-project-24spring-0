@@ -1,6 +1,5 @@
 import Code from "@/components/Code";
-import {Tab, Tabs} from "@nextui-org/react";
-import {Button, ButtonGroup} from "@nextui-org/react";
+import {Button, ButtonGroup, Tab, Tabs} from "@nextui-org/react";
 import {invoke} from '@tauri-apps/api/tauri';
 
 import useFileStore from "@/utils/state";
@@ -13,7 +12,7 @@ export default function MultifileCode() {
     const deleteFile = async (fileName) => {
         state.deleteFile(fileName);
         const result = await invoke('close_tab', {filepath: fileName});
-        if (result.success){
+        if (result.success) {
             const outputStore = useOutputStore.getState();
             outputStore.addOutput('File closed: ' + fileName);
         }
@@ -25,7 +24,7 @@ export default function MultifileCode() {
         const outputStore = useOutputStore.getState();
         outputStore.addOutput('Assembly Result: \n' + result.message);
         // if message does not start with error
-        if (! result.message.startsWith('Error')) {
+        if (!result.message.startsWith('Error')) {
             state.updateFile(fileName, file.code, file.original, result.message, file.runLines)
         }
     }
@@ -40,14 +39,18 @@ export default function MultifileCode() {
     return (
         <Tabs size="small" aria-label="Files">
             {files.map(file => (
-                <Tab key={file.fileName} title={file.fileName.split('/').pop().split('\\').pop() + (file.code!=file.original?' *':"")} className="h-full">
+                <Tab key={file.fileName}
+                     title={file.fileName.split('/').pop().split('\\').pop() + (file.code !== file.original ? ' *' : "")}
+                     className="h-full">
                     <div className="h-full w-full relative">
                         <Code fileName={file.fileName}/>
                         <div className='absolute right-4 top-2 flex-row gap-2'>
                             <ButtonGroup>
-                                <Button color="success" size="sm" onClick={() => handleAssembly(file.fileName)}>Assembly</Button>
+                                <Button color="success" size="sm"
+                                        onClick={() => handleAssembly(file.fileName)}>Assembly</Button>
                                 <Button color="success" size="sm" onClick={() => handleDebug()}>Debug</Button>
-                                <Button color="danger" size="sm" onClick={() => deleteFile(file.fileName)}>Close</Button>
+                                <Button color="danger" size="sm"
+                                        onClick={() => deleteFile(file.fileName)}>Close</Button>
                             </ButtonGroup>
                         </div>
                     </div>
