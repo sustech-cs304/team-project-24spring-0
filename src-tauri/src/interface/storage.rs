@@ -1,5 +1,7 @@
 use std::{error::Error, path::PathBuf};
 
+use crate::types::ResultVoid;
+
 #[derive(Default)]
 pub enum FileShareStatus {
     #[default]
@@ -20,7 +22,7 @@ pub trait BasicFile<D, H>: Send + Sync {
 
     fn to_string(&self) -> String;
 
-    fn save(&mut self) -> Option<Box<dyn Error + Send + Sync>>;
+    fn save(&mut self) -> ResultVoid;
 
     fn get_raw(&mut self) -> &mut D;
 

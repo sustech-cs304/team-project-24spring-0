@@ -1,5 +1,7 @@
 use std::{error::Error, fs::File, io::prelude::*, path::Path, time::SystemTime};
 
+use crate::types::ResultVoid;
+
 /// Read file with  std::Path.
 pub fn read_file(file_path: &Path) -> Result<String, Box<dyn Error + Send + Sync>> {
     let file = File::open(file_path);
@@ -25,15 +27,10 @@ pub fn get_last_modified(file_path: &Path) -> Result<SystemTime, Box<dyn Error +
 }
 
 /// Write file with  std::Path.
-pub fn write_file(file_path: &Path, data: &str) -> Option<Box<dyn Error + Send + Sync>> {
-    let file = File::create(file_path);
-    match file {
-        Ok(mut file) => match file.write_all(data.as_bytes()) {
-            Ok(_) => None,
-            Err(e) => Some(Box::new(e)),
-        },
-        Err(e) => Some(Box::new(e)),
-    }
+pub fn write_file(file_path: &Path, data: &str) -> ResultVoid {
+    let mut file = File::create(file_path)?;
+    file.write_all(data.as_bytes())?;
+    Ok(())
 }
 
 /// Read file with string path.
@@ -43,7 +40,7 @@ pub fn read_file_str(file_path_str: &str) -> Result<String, Box<dyn Error + Send
 }
 
 /// write file with string path
-pub fn write_file_str(file_path_str: &str, data: &str) -> Option<Box<dyn Error + Send + Sync>> {
+pub fn write_file_str(file_path_str: &str, data: &str) -> ResultVoid {
     let file_path = std::path::Path::new(file_path_str);
     write_file(file_path, data)
 }

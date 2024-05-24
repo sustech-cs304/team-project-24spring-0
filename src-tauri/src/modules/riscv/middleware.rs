@@ -212,13 +212,13 @@ pub mod frontend_api {
     #[tauri::command]
     pub fn write_tab(filepath: &str, data: &str) -> Optional {
         match file_io::write_file_str(filepath, data) {
-            Some(e) => Optional {
-                success: false,
-                message: e.to_string(),
-            },
-            None => Optional {
+            Ok(_) => Optional {
                 success: true,
                 message: String::new(),
+            },
+            Err(e) => Optional {
+                success: false,
+                message: e.to_string(),
             },
         }
     }
@@ -325,7 +325,7 @@ pub mod frontend_api {
         match tab.assembler.dump(cache.parser_cache.clone().unwrap()) {
             Ok(mem) => {
                 for (ext, data) in [("text", &mem.text), ("data", &mem.data)] {
-                    if let Some(e) =
+                    if let Err(e) =
                         file_io::write_file(tab.text.get_path().with_extension(ext).as_path(), data)
                     {
                         return DumpResult::Error(vec![AssembleError {

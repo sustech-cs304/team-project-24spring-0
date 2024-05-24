@@ -110,19 +110,19 @@ fn save_handler(event: &WindowMenuEvent) {
     let mut lock = tab_map.tabs.lock().unwrap();
     let tab = lock.get_mut(&name).unwrap();
     match tab.text.save() {
-        Some(err) => {
+        Ok(_) => {
+            let _ = event
+                .window()
+                .emit("front_file_save", get_current_tab_name(&event));
+        }
+        Err(e) => {
             display_dialog(
                 MessageDialogKind::Info,
                 MessageDialogButtons::Ok,
                 "Failed to save file",
-                &err.to_string(),
+                &e.to_string(),
                 |_| {},
             );
-        }
-        None => {
-            let _ = event
-                .window()
-                .emit("front_file_save", get_current_tab_name(&event));
         }
     }
 }
@@ -141,17 +141,17 @@ fn save_as_handler(event: WindowMenuEvent) {
     let picker = tauri::api::dialog::FileDialogBuilder::new();
     picker.save_file(move |file_path| match file_path {
         Some(file_path) => match file_io::write_file(file_path.as_path(), &content) {
-            Some(err) => {
+            Ok(_) => {
+                event.window().emit("front_file_save_as", true).unwrap();
+            }
+            Err(e) => {
                 display_dialog(
                     MessageDialogKind::Info,
                     MessageDialogButtons::Ok,
                     "Failed to save file",
-                    &err.to_string(),
+                    &e.to_string(),
                     |_| {},
                 );
-            }
-            None => {
-                event.window().emit("front_file_save_as", true).unwrap();
             }
         },
         _ => {}
@@ -248,7 +248,18 @@ fn dirty_close_checker(event: &WindowMenuEvent, name: &str, tab: &mut Tab) {
             move |save| {
                 if save {
                     let tab = tab_ptr.as_mut();
-                    tab.text.save();
+                    match tab.text.save() {
+                        Ok(_) => {}
+                        Err(e) => {
+                            display_dialog(
+                                MessageDialogKind::Info,
+                                MessageDialogButtons::Ok,
+                                "Failed to save file",
+                                &e.to_string(),
+                                |_| {},
+                            );
+                        }
+                    }
                 }
                 let event = event_ptr.as_ref();
                 let _ = event.window().emit("front_close_tab", true);

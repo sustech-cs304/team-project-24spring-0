@@ -18,6 +18,7 @@ use crate::{
         CursorRowEq,
         Modification,
     },
+    types::ResultVoid,
     utility::text_helper::lines_count,
 };
 
@@ -50,14 +51,10 @@ impl BasicFile<Rope, Modification> for Text {
         self.data.as_ref().to_string()
     }
 
-    fn save(&mut self) -> Option<Box<dyn Error + Send + Sync>> {
-        match file_io::write_file(self.path.as_path(), &self.data.as_ref().to_string()) {
-            Some(e) => Some(e),
-            None => {
-                self.dirty = false;
-                None
-            }
-        }
+    fn save(&mut self) -> ResultVoid {
+        file_io::write_file(self.path.as_path(), &self.data.as_ref().to_string())?;
+        self.dirty = false;
+        Ok(())
     }
 
     fn get_raw(&mut self) -> &mut Rope {
