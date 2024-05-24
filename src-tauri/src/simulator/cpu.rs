@@ -1,7 +1,4 @@
-use std::{
-    collections:: VecDeque,
-};
-
+use std::collections::VecDeque;
 
 use crate::{
     interface::{
@@ -9,7 +6,12 @@ use crate::{
         simulator::SimulatesError,
     },
     modules::riscv::{
-        basic::interface::parser::{ParserRISCVInstOp, ParserRISCVRegister, RISCV}, middleware::backend_api::{self, syscall_output_print}, rv32i::{assembler::rv32i::RV32I, constants::{RV32IInstruction, RV32IRegister}}
+        basic::interface::parser::{ParserRISCVInstOp, ParserRISCVRegister, RISCV},
+        middleware::backend_api::{self, syscall_output_print},
+        rv32i::{
+            assembler::rv32i::RV32I,
+            constants::{RV32IInstruction, RV32IRegister},
+        },
     },
     types::middleware_types::AssemblerConfig,
 };
@@ -52,7 +54,7 @@ impl CPU {
     pub fn load_inst(&mut self, assemble_result: &AssembleResult<RISCV>) {
         self.state.registers[2] = self.address_config.stack_pointer_sp;
         self.state.pc = self.address_config.dot_text_base_address;
-        
+
         let data_base_address = self.address_config.dot_data_base_address;
         let text_base_address = self.address_config.dot_text_base_address;
 
@@ -425,7 +427,8 @@ impl CPU {
                             1 => {
                                 // print integer
                                 println!("{}", self.state.registers[RV32IRegister::A0 as usize]);
-                                let output = &self.state.registers[RV32IRegister::A0 as usize].to_string();
+                                let output =
+                                    &self.state.registers[RV32IRegister::A0 as usize].to_string();
                                 syscall_output_print("pathname", output);
                             }
                             4 => {
@@ -508,8 +511,7 @@ impl CPU {
                             _ => {}
                         }
                     }
-                    RV32IInstruction::Ebreak => {
-                    }
+                    RV32IInstruction::Ebreak => {}
                     _ => {
                         return Err(SimulatesError {
                             address: self.state.pc,
@@ -574,7 +576,6 @@ impl CPU {
             .copy_from_slice(&text_segment);
     }
 
-
     fn sign_extend(data: u32, size: u32) -> u32 {
         assert!(size > 0 && size <= 32);
         (((data << (32 - size)) as i32) >> (32 - size)) as u32
@@ -623,5 +624,4 @@ impl CPU {
         }
         println!("{}", output);
     }
-
 }
