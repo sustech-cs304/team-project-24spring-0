@@ -265,9 +265,10 @@ pub mod frontend_api {
                 Ok(res) => {
                     // todo!("load result to simulator");
                     cache.assembler_result = Some(AssembleResult::Success(AssembleSuccess {
-                        data: res.data
-                            [tab.data_return_range.0 as usize..=tab.data_return_range.1 as usize]
-                            .to_vec(),
+                        data: vec![
+                            0;
+                            (tab.data_return_range.1 - tab.data_return_range.0 + 1) as usize
+                        ],
                         text: res
                             .instruction
                             .iter()
@@ -610,7 +611,7 @@ pub mod frontend_api {
         }
     }
 
-    fn  fack_simulator_result(
+    fn fack_simulator_result(
         cur_tab_name: &State<CurTabName>,
         tab_map: &State<TabMap>,
     ) -> SimulatorResult {
