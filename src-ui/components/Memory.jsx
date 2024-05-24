@@ -14,7 +14,6 @@ export default function Memory({fileName}) {
     for (var i = 0; i < 8; i++){
         var row = [baseAddress + 0x20 * i];
         for (var j = 0; j < 8; j++){
-            console.log(currentFile);
             row.push(currentFile.memory[i][j]);
         }
         rows.push(row);
@@ -28,7 +27,6 @@ export default function Memory({fileName}) {
                         <th>Address</th>
                         <th>Value(+0)</th>
                         <th>Value(+4)</th>
-                        <th>Value(+8)</th>
                         <th>Value(+8)</th>
                         <th>Value(+c)</th>
                         <th>Value(+10)</th>

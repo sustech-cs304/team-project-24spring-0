@@ -62,7 +62,24 @@ export default function MultifileCode() {
         const result = await invoke('run');
         const outputStore = useOutputStore.getState();
         console.log('Invoke handle run result: ', result);
-        outputStore.addOutput('Run Result: \n' + result.message);
+
+        if (result.success){
+            outputStore.addOutput("Run Succeded!");
+            let fileName = state.currentFile;
+            const currentFile = state.files.find(file => file.fileName === fileName);
+            state.updateFile(currentFile.fileName, currentFile.code, currentFile.original, currentFile.assembly, currentFile.runLines, result.registers, currentFile.memory, currentFile.baseAddress);
+            if (result.has_current_text){
+                state.updateFile(currentFile.fileName, currentFile.code, currentFile.original, currentFile.assembly, [result.current_text], result.registers, currentFile.memory, currentFile.baseAddress);
+            }
+            console.log('updated file');
+            console.log(currentFile);
+        } else {
+            outputStore.addOutput("Run Failed!");
+        }
+        if (result.has_message){
+            outputStore.addOutput('Run Result: \n' + result.message);
+        }
+
     }
 
     return (
