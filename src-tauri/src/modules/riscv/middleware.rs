@@ -353,9 +353,6 @@ pub mod frontend_api {
     #[tauri::command]
     pub fn run(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> SimulatorResult {
         {
-            let name = cur_tab_name.name.lock().unwrap().clone();
-            let mut lock = tab_map.tabs.lock().unwrap();
-            let tab = lock.get_mut(&name).unwrap();
             return fack_simulator_result(&cur_tab_name, &tab_map);
         }
         todo!("Implement debug")
@@ -370,9 +367,6 @@ pub mod frontend_api {
     #[tauri::command]
     pub fn debug(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> SimulatorResult {
         {
-            let name = cur_tab_name.name.lock().unwrap().clone();
-            let mut lock = tab_map.tabs.lock().unwrap();
-            let tab = lock.get_mut(&name).unwrap();
             return fack_simulator_result(&cur_tab_name, &tab_map);
         }
         todo!("Implement debug")
@@ -386,9 +380,6 @@ pub mod frontend_api {
     #[tauri::command]
     pub fn step(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> SimulatorResult {
         {
-            let name = cur_tab_name.name.lock().unwrap().clone();
-            let mut lock = tab_map.tabs.lock().unwrap();
-            let tab = lock.get_mut(&name).unwrap();
             return fack_simulator_result(&cur_tab_name, &tab_map);
         }
         todo!("Implement step")
@@ -402,9 +393,6 @@ pub mod frontend_api {
     #[tauri::command]
     pub fn reset(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> SimulatorResult {
         {
-            let name = cur_tab_name.name.lock().unwrap().clone();
-            let mut lock = tab_map.tabs.lock().unwrap();
-            let tab = lock.get_mut(&name).unwrap();
             return fack_simulator_result(&cur_tab_name, &tab_map);
         }
         todo!("Implement reset")
@@ -418,9 +406,6 @@ pub mod frontend_api {
     #[tauri::command]
     pub fn undo(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> SimulatorResult {
         {
-            let name = cur_tab_name.name.lock().unwrap().clone();
-            let mut lock = tab_map.tabs.lock().unwrap();
-            let tab = lock.get_mut(&name).unwrap();
             return fack_simulator_result(&cur_tab_name, &tab_map);
         }
         todo!("Implement undo")
@@ -625,7 +610,7 @@ pub mod frontend_api {
         }
     }
 
-    fn fack_simulator_result(
+    fn  fack_simulator_result(
         cur_tab_name: &State<CurTabName>,
         tab_map: &State<TabMap>,
     ) -> SimulatorResult {
