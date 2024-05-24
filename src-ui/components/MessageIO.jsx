@@ -8,6 +8,7 @@ import {useState} from "react";
 export default function MessageIO() {
     var outputStore = useOutputStore();
     var outputs = useOutputStore(state => state.output);
+    const fileState = useFileStore.getState();
     const [question, setQuestion] = useState("");
     const [answer, setAnswer] = useState("");
 
@@ -90,7 +91,7 @@ export default function MessageIO() {
                                             value={question}
                                             onChange={(e) => setQuestion(e.target.value)}
                                             placeholder="Ask AI about your code"></textarea>
-                                <Button className="h-full" size="sm" color="primary" onClick={() => handleAskAI()}>Send</Button>
+                                <Button className="h-full" size="sm" color="primary" disabled={fileState.files.length<=0} onClick={() => handleAskAI()}>Send</Button>
                                 <textarea id="AIAnswer" rows="4" readOnly
                                           className="h-full block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                                           value={answer}
