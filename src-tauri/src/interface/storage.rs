@@ -1,6 +1,6 @@
 use std::{error::Error, path::PathBuf};
 
-use crate::types::middleware_types::FileOperation;
+use crate::types::ResultVoid;
 
 #[derive(Default)]
 pub enum FileShareStatus {
@@ -9,9 +9,9 @@ pub enum FileShareStatus {
     Host,
     Client,
 }
-pub trait MFile<D, H>: BasicFile<D> + MeragableFile<D, H> {}
+pub trait MFile<D, H, C>: BasicFile<D, H> + MeragableFile<D, H, C> {}
 
-pub trait BasicFile<D>: Send + Sync {
+pub trait BasicFile<D, H>: Send + Sync {
     fn get_path(&self) -> &PathBuf;
 
     fn get_path_str(&self) -> String;
@@ -22,17 +22,20 @@ pub trait BasicFile<D>: Send + Sync {
 
     fn to_string(&self) -> String;
 
-    fn save(&mut self) -> Option<Box<dyn Error>>;
-
-    fn update_content(&mut self, content: &str);
+    fn save(&mut self) -> ResultVoid;
 
     fn get_raw(&mut self) -> &mut D;
 
-    fn handle_modify(&mut self, op: FileOperation) -> Result<(), Box<dyn Error>>;
+    fn handle_modify(&mut self, history: &H) -> ResultVoid;
 
     fn switch_share_status(&mut self, status: FileShareStatus);
 }
 
-pub trait MeragableFile<D, H>: Send + Sync {
-    fn merge_history(&mut self, histories: &Vec<H>) -> Result<(), Box<dyn Error>>;
+pub trait MeragableFile<D, H, C>: Send + Sync {
+    fn get_version(&self) -> usize;
+    fn merge_history(
+        &mut self,
+        histories: &[H],
+        cursors: &mut C,
+    ) -> Result<(), Box<dyn Error + Send + Sync>>;
 }

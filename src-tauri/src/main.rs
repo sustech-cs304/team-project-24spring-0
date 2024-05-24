@@ -44,6 +44,7 @@ fn main() {
         .manage(middleware_types::TabMap {
             tabs: Default::default(),
             rpc_server: Default::default(),
+            rpc_client: Default::default(),
         })
         .manage(middleware_types::CurTabName {
             name: Default::default(),

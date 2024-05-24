@@ -28,7 +28,13 @@ jobs:
           toolchain: nightly
           components: rustfmt
 
-      - name: Format check
+      - name: JS/JSON format check
+        working-directory: ./src-ui
+        run: |
+            npm install
+            npm run format-check
+
+      - name: RUst format check
         working-directory: ./src-tauri
         run: cargo fmt -- --check
 

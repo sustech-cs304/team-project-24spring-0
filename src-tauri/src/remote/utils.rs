@@ -5,7 +5,7 @@ use std::{
 
 use rand::random;
 
-pub fn get_free_port(ip: Ipv4Addr, try_times: usize) -> Result<u16, Box<dyn Error>> {
+pub fn get_free_port(ip: Ipv4Addr, try_times: usize) -> Result<u16, Box<dyn Error + Send + Sync>> {
     let port = random::<u16>();
     for _ in 0..try_times {
         let addr = SocketAddrV4::new(ip, port);
@@ -20,7 +20,10 @@ pub fn get_free_port(ip: Ipv4Addr, try_times: usize) -> Result<u16, Box<dyn Erro
 }
 
 pub mod priority_lsit {
-    use std::{collections::LinkedList, fmt::Debug};
+    use std::{
+        collections::{linked_list, LinkedList},
+        fmt::Debug,
+    };
 
     use super::super::GetCmpType;
 
@@ -93,5 +96,28 @@ pub mod priority_lsit {
     {
         list_check_and_del::<C>(list, &value);
         list_insert_asc::<C>(list, value);
+    }
+
+    pub fn get_cursor<'a, C>(
+        list: &'a mut LinkedList<C::Type>,
+        value: &C::Type,
+    ) -> Option<linked_list::CursorMut<'a, C::Type>>
+    where
+        C: PartialEq + GetCmpType,
+        C::Type: Debug,
+    {
+        let mut cursor = list.cursor_front_mut();
+        loop {
+            match cursor.current() {
+                Some(v) => {
+                    if C::new(v) == C::new(value) {
+                        cursor.move_prev();
+                        return Some(cursor);
+                    }
+                    cursor.move_next();
+                }
+                None => return None,
+            }
+        }
     }
 }

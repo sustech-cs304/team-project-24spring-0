@@ -10,6 +10,7 @@ pub mod frontend_api {
             assembler::RiscVAssembler,
             parser::{RISCVExtension, RISCVParser, RISCV},
         },
+        remote::{Modification, OpRange},
         storage::rope_store,
         types::middleware_types::*,
         utility::{ptr::Ptr, state_helper::state},
@@ -158,14 +159,22 @@ pub mod frontend_api {
         content: &str,
     ) -> Optional {
         let filepath = cur_tab_name.name.lock().unwrap().clone();
-        todo!("implement insert and live shared check");
         match tab_map.tabs.lock().unwrap().get_mut(&filepath) {
             Some(tab) => {
-                tab.text.update_content(content);
-                tab.text.set_dirty(true);
-                Optional {
-                    success: true,
-                    message: String::new(),
+                match tab.text.handle_modify(&Modification {
+                    op: op.into(),
+                    op_range: OpRange { start, end },
+                    version: tab.text.get_version() as u64,
+                    modified_content: content.to_owned(),
+                }) {
+                    Ok(_) => Optional {
+                        success: true,
+                        message: String::new(),
+                    },
+                    Err(e) => Optional {
+                        success: false,
+                        message: e.to_string(),
+                    },
                 }
             }
             None => Optional {
@@ -203,13 +212,13 @@ pub mod frontend_api {
     #[tauri::command]
     pub fn write_tab(filepath: &str, data: &str) -> Optional {
         match file_io::write_file_str(filepath, data) {
-            Some(e) => Optional {
-                success: false,
-                message: e.to_string(),
-            },
-            None => Optional {
+            Ok(_) => Optional {
                 success: true,
                 message: String::new(),
+            },
+            Err(e) => Optional {
+                success: false,
+                message: e.to_string(),
             },
         }
     }
@@ -316,7 +325,7 @@ pub mod frontend_api {
         match tab.assembler.dump(cache.parser_cache.clone().unwrap()) {
             Ok(mem) => {
                 for (ext, data) in [("text", &mem.text), ("data", &mem.data)] {
-                    if let Some(e) =
+                    if let Err(e) =
                         file_io::write_file(tab.text.get_path().with_extension(ext).as_path(), data)
                     {
                         return DumpResult::Error(vec![AssembleError {
@@ -526,6 +535,7 @@ pub mod frontend_api {
         password: String,
     ) -> Optional {
         todo!("Implement authorize as client");
+        //TODO:@Vollate
     }
 
     /// Stop the share server for the current tab.
