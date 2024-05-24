@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["lines"]};
+window.SIDEBAR_ITEMS = {"fn":["lines_count"]};

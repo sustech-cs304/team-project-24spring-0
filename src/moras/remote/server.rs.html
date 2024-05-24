@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/remote/server.rs`."><title>server.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="moras" data-themes="" data-resource-suffix="" data-rustdoc-version="1.80.0-nightly (791adf759 2024-05-21)" data-channel="nightly" data-search-js="search-d52510db62a78183.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/remote/server.rs`."><title>server.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="moras" data-themes="" data-resource-suffix="" data-rustdoc-version="1.80.0-nightly (867900499 2024-05-23)" data-channel="nightly" data-search-js="search-d52510db62a78183.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -394,11 +394,24 @@
 <a href="#394" id="394">394</a>
 <a href="#395" id="395">395</a>
 <a href="#396" id="396">396</a>
+<a href="#397" id="397">397</a>
+<a href="#398" id="398">398</a>
+<a href="#399" id="399">399</a>
+<a href="#400" id="400">400</a>
+<a href="#401" id="401">401</a>
+<a href="#402" id="402">402</a>
+<a href="#403" id="403">403</a>
+<a href="#404" id="404">404</a>
+<a href="#405" id="405">405</a>
+<a href="#406" id="406">406</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::{
-    collections::LinkedList,
     error::Error,
     net::SocketAddr,
-    sync::{atomic, Arc, Mutex},
+    sync::{
+        atomic::{<span class="self">self</span>, AtomicU16},
+        Arc,
+        Mutex,
+    },
 };
 
 <span class="kw">use </span>editor_rpc::{
@@ -409,7 +422,6 @@
     DisconnectRequest,
     GetContentReply,
     GetContentRequest,
-    OperationType::{Delete, Insert, Replace},
     SetCursorReply,
     SetCursorRequest,
     UpdateContentReply,
@@ -421,13 +433,13 @@
 <span class="kw">use super</span>::{
     utils::priority_lsit::{list_check_and_del, list_insert_or_replace_asc},
     ClientCursor,
-    CursorCMP,
-    History,
+    CursorAsc,
+    Modification,
 };
 <span class="kw">use crate</span>::{
     dprintln,
     interface::remote::RpcServer,
-    types::middleware_types::{Tab, TabMap},
+    types::middleware_types::{Cursor, Tab, TabMap},
     utility::ptr::Ptr,
 };
 
@@ -441,8 +453,8 @@
     version: atomic::AtomicUsize,
     password: Mutex&lt;String&gt;,
     clients: Mutex&lt;Vec&lt;SocketAddr&gt;&gt;,
-    cursor_pos: Mutex&lt;LinkedList&lt;ClientCursor&gt;&gt;,
-    history: Mutex&lt;Vec&lt;History&gt;&gt;,
+    cursor_pos: Mutex&lt;Cursor&gt;,
+    history: Mutex&lt;Vec&lt;Modification&gt;&gt;,
 }
 
 <span class="kw">impl </span>ServerHandle {
@@ -455,10 +467,10 @@
     <span class="doccomment">/// Update host cursor position.
     </span><span class="kw">fn </span>set_host_cursor(<span class="kw-2">&amp;mut </span><span class="self">self</span>, row: u64, col: u64, port: u16) {
         <span class="kw">let </span><span class="kw-2">mut </span>lock = <span class="self">self</span>.cursor_pos.lock().unwrap();
-        list_insert_or_replace_asc::&lt;CursorCMP&gt;(
+        list_insert_or_replace_asc::&lt;CursorAsc&gt;(
             <span class="kw-2">&amp;mut *</span>lock,
             ClientCursor {
-                ip: <span class="macro">format!</span>(<span class="string">"127.0.0.1:{}"</span>, port).parse().unwrap(),
+                addr: <span class="macro">format!</span>(<span class="string">"0.0.0.0:{}"</span>, port).parse().unwrap(),
                 row,
                 col,
             },
@@ -479,7 +491,7 @@
                 <span class="kw">let </span><span class="kw-2">mut </span>tab = tabs_lock.get_mut(<span class="kw-2">&amp;</span>map_state_lock.<span class="number">0</span>).unwrap();
                 handle(<span class="kw-2">&amp;mut </span>tab)
             }
-            <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Err</span>(<span class="string">"TabMap have not been iniitilized"</span>.to_string()),
+            <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Err</span>(<span class="string">"TabMap has not been iniitilized"</span>.to_string()),
         }
     }
 
@@ -495,7 +507,6 @@
 
     <span class="kw">fn </span>check_ip_authorized(<span class="kw-2">&amp;</span><span class="self">self</span>, ip: SocketAddr) -&gt; <span class="prelude-ty">Result</span>&lt;(), Status&gt; {
         <span class="kw">let </span>clients = <span class="self">self</span>.clients.lock().unwrap();
-        <span class="macro">dprintln!</span>(<span class="string">"{:?}"</span>, clients);
         <span class="kw">if </span>clients.iter().any(|x| <span class="kw-2">*</span>x == ip) {
             <span class="prelude-val">Ok</span>(())
         } <span class="kw">else </span>{
@@ -505,7 +516,7 @@
 
     <span class="kw">fn </span>get_history_since&lt;T&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, version: usize) -&gt; Vec&lt;T&gt;
     <span class="kw">where
-        </span>History: Into&lt;T&gt; + Clone,
+        </span>Modification: Into&lt;T&gt; + Clone,
     {
         <span class="kw">let </span>lock = <span class="self">self</span>.history.lock().unwrap();
         lock[version..]
@@ -522,10 +533,11 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         request: Request&lt;AuthorizeRequest&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Response&lt;AuthorizeReply&gt;, Status&gt; {
-        <span class="macro">dprintln!</span>(<span class="string">"Request from: {:?}"</span>, request.remote_addr().unwrap());
         <span class="kw">let </span>handler = <span class="self">self</span>.lock().unwrap();
         handler.handle_rpc_with_cur_tab(|tab| {
-            <span class="kw">if </span>request.get_ref().password == handler.password.lock().unwrap().as_str() {
+            <span class="kw">if </span>request.get_ref().password == handler.password.lock().unwrap().as_str()
+                || handler.password.lock().unwrap().is_empty()
+            {
                 <span class="kw">if let </span><span class="prelude-val">Ok</span>(<span class="kw">_</span>) = handler.check_ip_authorized(request.remote_addr().unwrap()) {
                     <span class="prelude-val">Ok</span>(AuthorizeReply {
                         success: <span class="bool-val">true</span>,
@@ -559,7 +571,7 @@
         request: Request&lt;DisconnectRequest&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Response&lt;DisconnectReply&gt;, Status&gt; {
         <span class="kw">let </span>handler = <span class="self">self</span>.lock().unwrap();
-        <span class="kw">let _ </span>= handler.check_ip_authorized(request.remote_addr().unwrap())<span class="question-mark">?</span>;
+        handler.check_ip_authorized(request.remote_addr().unwrap())<span class="question-mark">?</span>;
         <span class="kw">let </span><span class="kw-2">mut </span>clients = handler.clients.lock().unwrap();
         <span class="kw">let </span><span class="kw-2">mut </span>success = <span class="bool-val">false</span>;
         <span class="kw">if let </span><span class="prelude-val">Some</span>(pos) = clients
@@ -568,10 +580,10 @@
         {
             clients.remove(pos);
             <span class="kw">let </span><span class="kw-2">mut </span>cursor_lock = handler.cursor_pos.lock().unwrap();
-            success = list_check_and_del::&lt;CursorCMP&gt;(
+            success = list_check_and_del::&lt;CursorAsc&gt;(
                 <span class="kw-2">&amp;mut </span>cursor_lock,
                 <span class="kw-2">&amp;</span>ClientCursor {
-                    ip: request.remote_addr().unwrap(),
+                    addr: request.remote_addr().unwrap(),
                     row: <span class="number">0</span>,
                     col: <span class="number">0</span>,
                 },
@@ -585,16 +597,17 @@
         request: Request&lt;SetCursorRequest&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Response&lt;SetCursorReply&gt;, Status&gt; {
         <span class="kw">let </span>handler = <span class="self">self</span>.lock().unwrap();
-        <span class="kw">let _ </span>= handler.check_ip_authorized(request.remote_addr().unwrap())<span class="question-mark">?</span>;
+        handler.check_ip_authorized(request.remote_addr().unwrap())<span class="question-mark">?</span>;
         <span class="kw">let </span><span class="kw-2">mut </span>cursor_lock = handler.cursor_pos.lock().unwrap();
-        list_insert_or_replace_asc::&lt;CursorCMP&gt;(
+        list_insert_or_replace_asc::&lt;CursorAsc&gt;(
             <span class="kw-2">&amp;mut *</span>cursor_lock,
             ClientCursor {
-                ip: request.remote_addr().unwrap(),
+                addr: request.remote_addr().unwrap(),
                 row: request.get_ref().row,
                 col: request.get_ref().col,
             },
         );
+        <span class="macro">dprintln!</span>(<span class="string">"Set cursor: {:?}"</span>, cursor_lock);
         <span class="prelude-val">Ok</span>(Response::new(SetCursorReply { success: <span class="bool-val">true </span>}))
     }
 
@@ -603,7 +616,7 @@
         request: Request&lt;GetContentRequest&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Response&lt;GetContentReply&gt;, Status&gt; {
         <span class="kw">let </span>handler = <span class="self">self</span>.lock().unwrap();
-        <span class="kw">let _ </span>= handler.check_ip_authorized(request.remote_addr().unwrap())<span class="question-mark">?</span>;
+        handler.check_ip_authorized(request.remote_addr().unwrap())<span class="question-mark">?</span>;
         <span class="kw">return </span>handler.handle_rpc_with_cur_tab(
             |tab: <span class="kw-2">&amp;mut </span>Tab| -&gt; <span class="prelude-ty">Result</span>&lt;GetContentReply, String&gt; {
                 <span class="kw">if </span>request.get_ref().full_content {
@@ -633,6 +646,7 @@
         request: Request&lt;UpdateContentRequest&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Response&lt;UpdateContentReply&gt;, Status&gt; {
         <span class="kw">let </span>handler = <span class="self">self</span>.lock().unwrap();
+        handler.check_ip_authorized(request.remote_addr().unwrap())<span class="question-mark">?</span>;
         <span class="kw">let </span>map_state_lock = handler.map_state.lock().unwrap();
         <span class="kw">match </span>map_state_lock.<span class="number">1 </span>{
             <span class="prelude-val">Some</span>(tab_map_ptr) =&gt; {
@@ -654,7 +668,7 @@
 
                 <span class="comment">// check cursor position correct
                 </span><span class="kw">for </span>cursor <span class="kw">in </span><span class="kw-2">&amp;*</span>cursor_lock {
-                    <span class="kw">if </span>cursor.ip == request.remote_addr().unwrap()
+                    <span class="kw">if </span>cursor.addr == request.remote_addr().unwrap()
                         &amp;&amp; (start.row != cursor.row || start.col != cursor.col)
                     {
                         <span class="kw">return </span><span class="prelude-val">Ok</span>(Response::new(UpdateContentReply {
@@ -665,12 +679,19 @@
                 }
 
                 <span class="comment">// handle operation
-                //tab.text.
-                </span><span class="macro">todo!</span>(<span class="string">"update cursor"</span>);
-                <span class="prelude-val">Ok</span>(Response::new(UpdateContentReply {
-                    success: <span class="bool-val">true</span>,
-                    message: String::new(),
-                }))
+                </span><span class="kw">match </span>tab.text.merge_history(
+                    <span class="kw-2">&amp;</span><span class="macro">vec!</span>[Modification::from(request_ref.clone())],
+                    <span class="kw-2">&amp;mut *</span>handler.cursor_pos.lock().unwrap(),
+                ) {
+                    <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(Response::new(UpdateContentReply {
+                        success: <span class="bool-val">true</span>,
+                        message: String::new(),
+                    })),
+                    <span class="prelude-val">Err</span>(e) =&gt; <span class="prelude-val">Ok</span>(Response::new(UpdateContentReply {
+                        success: <span class="bool-val">false</span>,
+                        message: e.to_string(),
+                    })),
+                }
             }
             <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Err</span>(Status::internal(<span class="string">"TabMap have not been iniitilized"</span>)),
         }
@@ -678,26 +699,13 @@
 }
 
 <span class="kw">pub struct </span>RpcServerImpl {
-    port: u16, <span class="comment">//FIXME: add mutex or use atomic
-    </span>tokio_runtime: tokio::runtime::Runtime,
+    port: AtomicU16,
+    tokio_runtime: tokio::runtime::Runtime,
     server_handle: <span class="prelude-ty">Option</span>&lt;JoinHandle&lt;()&gt;&gt;,
     shared_handler: Arc&lt;Mutex&lt;ServerHandle&gt;&gt;,
 }
 
 <span class="kw">impl </span>RpcServerImpl {
-    <span class="kw">fn </span>default(thread_num: usize) -&gt; <span class="self">Self </span>{
-        <span class="self">Self </span>{
-            port: <span class="number">0</span>,
-            tokio_runtime: tokio::runtime::Builder::new_multi_thread()
-                .worker_threads(thread_num)
-                .enable_all()
-                .build()
-                .unwrap(),
-            server_handle: <span class="prelude-val">None</span>,
-            shared_handler: Arc::new(Mutex::new(Default::default())),
-        }
-    }
-
     <span class="doccomment">/// Start the service with a tab map.
     ///
     /// If the server is already running, return an error.
@@ -725,7 +733,7 @@
         <span class="kw">if </span><span class="self">self</span>.is_running() {
             <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="string">"Server already running"</span>.into());
         }
-        <span class="self">self</span>.port = port;
+        <span class="self">self</span>.port.store(port, atomic::Ordering::Relaxed);
         <span class="prelude-val">Ok</span>(())
     }
 
@@ -742,7 +750,7 @@
 
     <span class="doccomment">/// Get the port of the server.
     </span><span class="kw">pub fn </span>get_port(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u16 {
-        <span class="self">self</span>.port
+        <span class="self">self</span>.port.load(atomic::Ordering::Relaxed)
     }
 
     <span class="doccomment">/// Update the host cursor position.
@@ -751,16 +759,26 @@
     /// - `col`: The column of the cursor.
     /// TODO:  add out of range check
     </span><span class="kw">pub fn </span>set_host_cursor(<span class="kw-2">&amp;mut </span><span class="self">self</span>, row: u64, col: u64) {
-        <span class="self">self</span>.shared_handler
-            .lock()
-            .unwrap()
-            .set_host_cursor(row, col, <span class="self">self</span>.port);
+        <span class="self">self</span>.shared_handler.lock().unwrap().set_host_cursor(
+            row,
+            col,
+            <span class="self">self</span>.port.load(atomic::Ordering::Relaxed),
+        );
     }
 }
 
 <span class="kw">impl </span>Default <span class="kw">for </span>RpcServerImpl {
     <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
-        <span class="self">Self</span>::default(<span class="number">8</span>)
+        <span class="self">Self </span>{
+            port: AtomicU16::new(<span class="number">0</span>),
+            tokio_runtime: tokio::runtime::Builder::new_multi_thread()
+                .worker_threads(<span class="number">8</span>)
+                .enable_all()
+                .build()
+                .unwrap(),
+            server_handle: <span class="prelude-val">None</span>,
+            shared_handler: Arc::new(Mutex::new(Default::default())),
+        }
     }
 }
 
@@ -769,7 +787,9 @@
         <span class="kw">if </span><span class="self">self</span>.server_handle.is_some() {
             <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="string">"Server already running"</span>.into());
         }
-        <span class="kw">let </span>addr = <span class="macro">format!</span>(<span class="string">"0.0.0.0:{}"</span>, <span class="self">self</span>.port).parse().unwrap();
+        <span class="kw">let </span>addr = <span class="macro">format!</span>(<span class="string">"0.0.0.0:{}"</span>, <span class="self">self</span>.port.load(atomic::Ordering::Relaxed))
+            .parse()
+            .unwrap();
         <span class="macro">dprintln!</span>(<span class="string">"Server listening on: {}"</span>, addr);
         <span class="kw">let </span>handler = Arc::clone(<span class="kw-2">&amp;</span><span class="self">self</span>.shared_handler);
 

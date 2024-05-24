@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/menu/file.rs`."><title>file.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="moras" data-themes="" data-resource-suffix="" data-rustdoc-version="1.80.0-nightly (791adf759 2024-05-21)" data-channel="nightly" data-search-js="search-d52510db62a78183.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/menu/file.rs`."><title>file.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="moras" data-themes="" data-resource-suffix="" data-rustdoc-version="1.80.0-nightly (867900499 2024-05-23)" data-channel="nightly" data-search-js="search-d52510db62a78183.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -256,7 +256,15 @@
 <a href="#256" id="256">256</a>
 <a href="#257" id="257">257</a>
 <a href="#258" id="258">258</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>std::{error::Error, path::Path};
+<a href="#259" id="259">259</a>
+<a href="#260" id="260">260</a>
+<a href="#261" id="261">261</a>
+<a href="#262" id="262">262</a>
+<a href="#263" id="263">263</a>
+<a href="#264" id="264">264</a>
+<a href="#265" id="265">265</a>
+<a href="#266" id="266">266</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span>std::path::Path;
 
 <span class="kw">use </span>tauri::{
     api::dialog::{FileDialogBuilder, MessageDialogButtons, MessageDialogKind},
@@ -278,6 +286,7 @@
     types::{
         menu_types,
         middleware_types::{Tab, TabMap},
+        ResultVoid,
     },
     utility::{
         ptr::Ptr,
@@ -331,14 +340,7 @@
     <span class="kw">let </span>picker = FileDialogBuilder::new();
     picker.pick_file(<span class="kw">move </span>|file_path| <span class="kw">match </span>file_path {
         <span class="prelude-val">Some</span>(file_path) =&gt; <span class="kw">match </span>new_tab(<span class="kw-2">&amp;</span>event, file_path.as_path()) {
-            <span class="prelude-val">Some</span>(err) =&gt; display_dialog(
-                MessageDialogKind::Info,
-                MessageDialogButtons::Ok,
-                <span class="macro">format!</span>(<span class="string">"Failed to open {:?}"</span>, file_path.file_name().unwrap()).as_str(),
-                <span class="kw-2">&amp;</span>err.to_string(),
-                |<span class="kw">_</span>| {},
-            ),
-            <span class="prelude-val">None </span>=&gt; {
+            <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; {
                 <span class="kw">let </span>name = get_current_tab_name(<span class="kw-2">&amp;</span>event);
                 <span class="kw">let </span>tab_map = event.window().state::&lt;TabMap&gt;();
                 <span class="kw">let </span>lock = tab_map.tabs.lock().unwrap();
@@ -355,6 +357,13 @@
                     )
                     .unwrap();
             }
+            <span class="prelude-val">Err</span>(e) =&gt; display_dialog(
+                MessageDialogKind::Info,
+                MessageDialogButtons::Ok,
+                <span class="macro">format!</span>(<span class="string">"Failed to open {:?}"</span>, file_path.file_name().unwrap()).as_str(),
+                <span class="kw-2">&amp;</span>e.to_string(),
+                |<span class="kw">_</span>| {},
+            ),
         },
         <span class="kw">_ </span>=&gt; {}
     });
@@ -368,19 +377,19 @@
     <span class="kw">let </span><span class="kw-2">mut </span>lock = tab_map.tabs.lock().unwrap();
     <span class="kw">let </span>tab = lock.get_mut(<span class="kw-2">&amp;</span>name).unwrap();
     <span class="kw">match </span>tab.text.save() {
-        <span class="prelude-val">Some</span>(err) =&gt; {
+        <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; {
+            <span class="kw">let _ </span>= event
+                .window()
+                .emit(<span class="string">"front_file_save"</span>, get_current_tab_name(<span class="kw-2">&amp;</span>event));
+        }
+        <span class="prelude-val">Err</span>(e) =&gt; {
             display_dialog(
                 MessageDialogKind::Info,
                 MessageDialogButtons::Ok,
                 <span class="string">"Failed to save file"</span>,
-                <span class="kw-2">&amp;</span>err.to_string(),
+                <span class="kw-2">&amp;</span>e.to_string(),
                 |<span class="kw">_</span>| {},
             );
-        }
-        <span class="prelude-val">None </span>=&gt; {
-            <span class="kw">let _ </span>= event
-                .window()
-                .emit(<span class="string">"front_file_save"</span>, get_current_tab_name(<span class="kw-2">&amp;</span>event));
         }
     }
 }
@@ -399,17 +408,17 @@
     <span class="kw">let </span>picker = tauri::api::dialog::FileDialogBuilder::new();
     picker.save_file(<span class="kw">move </span>|file_path| <span class="kw">match </span>file_path {
         <span class="prelude-val">Some</span>(file_path) =&gt; <span class="kw">match </span>file_io::write_file(file_path.as_path(), <span class="kw-2">&amp;</span>content) {
-            <span class="prelude-val">Some</span>(err) =&gt; {
+            <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; {
+                event.window().emit(<span class="string">"front_file_save_as"</span>, <span class="bool-val">true</span>).unwrap();
+            }
+            <span class="prelude-val">Err</span>(e) =&gt; {
                 display_dialog(
                     MessageDialogKind::Info,
                     MessageDialogButtons::Ok,
                     <span class="string">"Failed to save file"</span>,
-                    <span class="kw-2">&amp;</span>err.to_string(),
+                    <span class="kw-2">&amp;</span>e.to_string(),
                     |<span class="kw">_</span>| {},
                 );
-            }
-            <span class="prelude-val">None </span>=&gt; {
-                event.window().emit(<span class="string">"front_file_save_as"</span>, <span class="bool-val">true</span>).unwrap();
             }
         },
         <span class="kw">_ </span>=&gt; {}
@@ -461,28 +470,24 @@
 ///
 /// Return None if success, Some(err) if failed.
 /// If success, will set the current tab name to the opened file path.
-</span><span class="kw">fn </span>new_tab(event: <span class="kw-2">&amp;</span>WindowMenuEvent, file_path: <span class="kw-2">&amp;</span>Path) -&gt; <span class="prelude-ty">Option</span>&lt;Box&lt;<span class="kw">dyn </span>Error&gt;&gt; {
-    <span class="kw">match </span>rope_store::Text::from_path(file_path) {
-        <span class="prelude-val">Ok</span>(content) =&gt; {
-            <span class="kw">let </span>tab_map = event.window().state::&lt;TabMap&gt;();
-            <span class="kw">let </span>tab = Tab {
-                text: Box::new(content),
-                parser: Box::new(RISCVParser::new(<span class="kw-2">&amp;</span><span class="macro">vec!</span>[RISCVExtension::RV32I])),
-                assembler: Box::new(RiscVAssembler::new()),
-                <span class="comment">//simulator: Box::new(Default::default()),
-                </span>data_return_range: Default::default(),
-                assembly_cache: Default::default(),
-            };
-            tab_map
-                .tabs
-                .lock()
-                .unwrap()
-                .insert(file_path.to_str().unwrap().to_string(), tab);
-            set_current_tab_name(<span class="kw-2">&amp;</span>event, file_path.to_str().unwrap());
-            <span class="prelude-val">None
-        </span>}
-        <span class="prelude-val">Err</span>(e) =&gt; <span class="prelude-val">Some</span>(e),
-    }
+</span><span class="kw">fn </span>new_tab(event: <span class="kw-2">&amp;</span>WindowMenuEvent, file_path: <span class="kw-2">&amp;</span>Path) -&gt; ResultVoid {
+    <span class="kw">let </span>content = rope_store::Text::from_path(file_path)<span class="question-mark">?</span>;
+    <span class="kw">let </span>tab_map = event.window().state::&lt;TabMap&gt;();
+    <span class="kw">let </span>tab = Tab {
+        text: Box::new(content),
+        parser: Box::new(RISCVParser::new(<span class="kw-2">&amp;</span><span class="macro">vec!</span>[RISCVExtension::RV32I])),
+        assembler: Box::new(RiscVAssembler::new()),
+        <span class="comment">//simulator: Box::new(Default::default()),
+        </span>data_return_range: Default::default(),
+        assembly_cache: Default::default(),
+    };
+    tab_map
+        .tabs
+        .lock()
+        .unwrap()
+        .insert(file_path.to_str().unwrap().to_string(), tab);
+    set_current_tab_name(<span class="kw-2">&amp;</span>event, file_path.to_str().unwrap());
+    <span class="prelude-val">Ok</span>(())
 }
 
 <span class="doccomment">/// Check if the file is dirty, if so, display a dialog to ask user to save the
@@ -506,7 +511,18 @@
             <span class="kw">move </span>|save| {
                 <span class="kw">if </span>save {
                     <span class="kw">let </span>tab = tab_ptr.as_mut();
-                    tab.text.save();
+                    <span class="kw">match </span>tab.text.save() {
+                        <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; {}
+                        <span class="prelude-val">Err</span>(e) =&gt; {
+                            display_dialog(
+                                MessageDialogKind::Info,
+                                MessageDialogButtons::Ok,
+                                <span class="string">"Failed to save file"</span>,
+                                <span class="kw-2">&amp;</span>e.to_string(),
+                                |<span class="kw">_</span>| {},
+                            );
+                        }
+                    }
                 }
                 <span class="kw">let </span>event = event_ptr.as_ref();
                 <span class="kw">let _ </span>= event.window().emit(<span class="string">"front_close_tab"</span>, <span class="bool-val">true</span>);

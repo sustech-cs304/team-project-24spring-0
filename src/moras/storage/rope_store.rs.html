@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/storage/rope_store.rs`."><title>rope_store.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="moras" data-themes="" data-resource-suffix="" data-rustdoc-version="1.80.0-nightly (791adf759 2024-05-21)" data-channel="nightly" data-search-js="search-d52510db62a78183.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/storage/rope_store.rs`."><title>rope_store.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="moras" data-themes="" data-resource-suffix="" data-rustdoc-version="1.80.0-nightly (867900499 2024-05-23)" data-channel="nightly" data-search-js="search-d52510db62a78183.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -129,8 +129,75 @@
 <a href="#129" id="129">129</a>
 <a href="#130" id="130">130</a>
 <a href="#131" id="131">131</a>
+<a href="#132" id="132">132</a>
+<a href="#133" id="133">133</a>
+<a href="#134" id="134">134</a>
+<a href="#135" id="135">135</a>
+<a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
+<a href="#159" id="159">159</a>
+<a href="#160" id="160">160</a>
+<a href="#161" id="161">161</a>
+<a href="#162" id="162">162</a>
+<a href="#163" id="163">163</a>
+<a href="#164" id="164">164</a>
+<a href="#165" id="165">165</a>
+<a href="#166" id="166">166</a>
+<a href="#167" id="167">167</a>
+<a href="#168" id="168">168</a>
+<a href="#169" id="169">169</a>
+<a href="#170" id="170">170</a>
+<a href="#171" id="171">171</a>
+<a href="#172" id="172">172</a>
+<a href="#173" id="173">173</a>
+<a href="#174" id="174">174</a>
+<a href="#175" id="175">175</a>
+<a href="#176" id="176">176</a>
+<a href="#177" id="177">177</a>
+<a href="#178" id="178">178</a>
+<a href="#179" id="179">179</a>
+<a href="#180" id="180">180</a>
+<a href="#181" id="181">181</a>
+<a href="#182" id="182">182</a>
+<a href="#183" id="183">183</a>
+<a href="#184" id="184">184</a>
+<a href="#185" id="185">185</a>
+<a href="#186" id="186">186</a>
+<a href="#187" id="187">187</a>
+<a href="#188" id="188">188</a>
+<a href="#189" id="189">189</a>
+<a href="#190" id="190">190</a>
+<a href="#191" id="191">191</a>
+<a href="#192" id="192">192</a>
+<a href="#193" id="193">193</a>
+<a href="#194" id="194">194</a>
+<a href="#195" id="195">195</a>
+<a href="#196" id="196">196</a>
+<a href="#197" id="197">197</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::{
     error::Error,
+    net::{IpAddr, Ipv4Addr, SocketAddr},
     path::{Path, PathBuf},
     time::SystemTime,
 };
@@ -140,28 +207,33 @@
 <span class="kw">use crate</span>::{
     interface::storage::{BasicFile, FileShareStatus, MFile, MeragableFile},
     io::file_io,
-    remote::{server::editor_rpc::OperationType, History},
+    middleware_types::Cursor,
+    remote::{
+        server::editor_rpc::OperationType,
+        utils::priority_lsit::get_cursor,
+        ClientCursor,
+        CursorRowEq,
+        Modification,
+    },
+    types::ResultVoid,
+    utility::text_helper::lines_count,
 };
 
 <span class="kw">pub struct </span>Text {
     share_status: FileShareStatus,
     data: Box&lt;Rope&gt;,
     path: PathBuf,
+    version: usize,
     dirty: bool,
     last_modified: SystemTime,
 }
 
-<span class="kw">impl </span>BasicFile&lt;Rope&gt; <span class="kw">for </span>Text {
+<span class="kw">impl </span>BasicFile&lt;Rope, Modification&gt; <span class="kw">for </span>Text {
     <span class="kw">fn </span>get_path(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>PathBuf {
         <span class="kw-2">&amp;</span><span class="self">self</span>.path
     }
     <span class="kw">fn </span>get_path_str(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; String {
         <span class="self">self</span>.path.to_str().unwrap().to_string()
-    }
-
-    <span class="kw">fn </span>update_content(<span class="kw-2">&amp;mut </span><span class="self">self</span>, content: <span class="kw-2">&amp;</span>str) {
-        <span class="kw-2">*</span><span class="self">self</span>.data = Rope::from_str(<span class="kw-2">&amp;</span>content);
-        <span class="self">self</span>.dirty = <span class="bool-val">true</span>;
     }
 
     <span class="kw">fn </span>is_dirty(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
@@ -176,25 +248,48 @@
         <span class="self">self</span>.data.as_ref().to_string()
     }
 
-    <span class="kw">fn </span>save(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Box&lt;<span class="kw">dyn </span>Error&gt;&gt; {
-        <span class="kw">match </span>file_io::write_file(<span class="self">self</span>.path.as_path(), <span class="kw-2">&amp;</span><span class="self">self</span>.data.as_ref().to_string()) {
-            <span class="prelude-val">Some</span>(e) =&gt; <span class="prelude-val">Some</span>(e),
-            <span class="prelude-val">None </span>=&gt; {
-                <span class="self">self</span>.dirty = <span class="bool-val">false</span>;
-                <span class="prelude-val">None
-            </span>}
-        }
+    <span class="kw">fn </span>save(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; ResultVoid {
+        file_io::write_file(<span class="self">self</span>.path.as_path(), <span class="kw-2">&amp;</span><span class="self">self</span>.data.as_ref().to_string())<span class="question-mark">?</span>;
+        <span class="self">self</span>.dirty = <span class="bool-val">false</span>;
+        <span class="prelude-val">Ok</span>(())
     }
 
     <span class="kw">fn </span>get_raw(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut </span>Rope {
         <span class="self">self</span>.data.as_mut()
     }
 
-    <span class="kw">fn </span>handle_modify(
-        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        op: <span class="kw">crate</span>::types::middleware_types::FileOperation,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>std::error::Error&gt;&gt; {
-        <span class="macro">todo!</span>(<span class="string">"handle this"</span>);
+    <span class="kw">fn </span>handle_modify(<span class="kw-2">&amp;mut </span><span class="self">self</span>, modify: <span class="kw-2">&amp;</span>Modification) -&gt; ResultVoid {
+        <span class="kw">match </span><span class="self">self</span>.share_status {
+            FileShareStatus::Host =&gt; {
+                <span class="macro">todo!</span>(<span class="string">"perform function change"</span>);
+                <span class="self">self</span>.dirty = <span class="bool-val">true</span>;
+            }
+            FileShareStatus::Client =&gt; {
+                <span class="macro">todo!</span>(<span class="string">"perform function change"</span>);
+            }
+            FileShareStatus::Private =&gt; {
+                <span class="kw">let </span>raw_rope = <span class="self">self</span>.data.as_mut();
+                <span class="kw">let </span>range = <span class="kw-2">&amp;</span>modify.op_range;
+                <span class="kw">let </span>start_idx =
+                    raw_rope.line_to_char(range.start.row <span class="kw">as </span>usize) + range.start.col <span class="kw">as </span>usize;
+                <span class="kw">let </span>end_idx =
+                    raw_rope.line_to_char(range.end.row <span class="kw">as </span>usize) + range.end.col <span class="kw">as </span>usize;
+                <span class="kw">match </span>modify.op {
+                    OperationType::Insert =&gt; {
+                        raw_rope.insert(start_idx, <span class="kw-2">&amp;</span>modify.modified_content);
+                    }
+                    OperationType::Delete =&gt; {
+                        raw_rope.remove(start_idx..end_idx);
+                    }
+                    OperationType::Replace =&gt; {
+                        raw_rope.remove(start_idx..end_idx);
+                        raw_rope.insert(start_idx, <span class="kw-2">&amp;</span>modify.modified_content);
+                    }
+                }
+                <span class="self">self</span>.dirty = <span class="bool-val">true</span>;
+                <span class="prelude-val">Ok</span>(())
+            }
+        }
     }
 
     <span class="kw">fn </span>switch_share_status(<span class="kw-2">&amp;mut </span><span class="self">self</span>, status: <span class="kw">crate</span>::interface::storage::FileShareStatus) {
@@ -203,13 +298,14 @@
 }
 
 <span class="kw">impl </span>Text {
-    <span class="kw">pub fn </span>from_path(file_path: <span class="kw-2">&amp;</span>Path) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, Box&lt;<span class="kw">dyn </span>Error&gt;&gt; {
+    <span class="kw">pub fn </span>from_path(file_path: <span class="kw-2">&amp;</span>Path) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, Box&lt;<span class="kw">dyn </span>Error + Send + Sync&gt;&gt; {
         <span class="kw">match </span>file_io::read_file(file_path) {
             <span class="prelude-val">Ok</span>(content) =&gt; <span class="kw">match </span>file_io::get_last_modified(file_path) {
                 <span class="prelude-val">Ok</span>(last_modified) =&gt; <span class="prelude-val">Ok</span>(Text {
                     share_status: Default::default(),
                     data: Box::new(Rope::from_str(<span class="kw-2">&amp;</span>content)),
                     path: PathBuf::from(file_path),
+                    version: <span class="number">0</span>,
                     dirty: <span class="bool-val">false</span>,
                     last_modified,
                 }),
@@ -219,7 +315,7 @@
         }
     }
 
-    <span class="kw">pub fn </span>from_path_str(file_path: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, Box&lt;<span class="kw">dyn </span>Error&gt;&gt; {
+    <span class="kw">pub fn </span>from_path_str(file_path: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, Box&lt;<span class="kw">dyn </span>Error + Send + Sync&gt;&gt; {
         Text::from_path(Path::new(file_path))
     }
 
@@ -228,30 +324,66 @@
             share_status: Default::default(),
             data: Box::new(Rope::from_str(text)),
             path: file_path.to_path_buf(),
+            version: <span class="number">0</span>,
             dirty: <span class="bool-val">false</span>,
             last_modified: std::time::SystemTime::now(),
         })
     }
 }
 
-<span class="kw">impl </span>MeragableFile&lt;Rope, History&gt; <span class="kw">for </span>Text {
-    <span class="kw">fn </span>merge_history(<span class="kw-2">&amp;mut </span><span class="self">self</span>, histories: <span class="kw-2">&amp;</span>Vec&lt;History&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>Error&gt;&gt; {
+<span class="kw">impl </span>MeragableFile&lt;Rope, Modification, Cursor&gt; <span class="kw">for </span>Text {
+    <span class="kw">fn </span>get_version(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+        <span class="self">self</span>.version
+    }
+    <span class="kw">fn </span>merge_history(<span class="kw-2">&amp;mut </span><span class="self">self</span>, histories: <span class="kw-2">&amp;</span>[Modification], cursors: <span class="kw-2">&amp;mut </span>Cursor) -&gt; ResultVoid {
         <span class="kw">for </span>history <span class="kw">in </span>histories {
+            <span class="kw">let </span>increase_lines = lines_count(<span class="kw-2">&amp;</span>history.modified_content);
             <span class="kw">let </span>raw_rope = <span class="self">self</span>.data.as_mut();
             <span class="kw">let </span>range = <span class="kw-2">&amp;</span>history.op_range;
             <span class="kw">let </span>start_idx =
                 raw_rope.line_to_char(range.start.row <span class="kw">as </span>usize) + range.start.col <span class="kw">as </span>usize;
             <span class="kw">let </span>end_idx = raw_rope.line_to_char(range.end.row <span class="kw">as </span>usize) + range.end.col <span class="kw">as </span>usize;
+            <span class="kw">let </span><span class="kw-2">mut </span>changed_lines;
             <span class="kw">match </span>history.op {
                 OperationType::Insert =&gt; {
                     raw_rope.insert(start_idx, <span class="kw-2">&amp;</span>history.modified_content);
+                    changed_lines = increase_lines;
                 }
                 OperationType::Delete =&gt; {
                     raw_rope.remove(start_idx..end_idx);
+                    changed_lines = (range.end.row - range.start.row) <span class="kw">as </span>usize;
                 }
                 OperationType::Replace =&gt; {
                     raw_rope.remove(start_idx..end_idx);
                     raw_rope.insert(start_idx, <span class="kw-2">&amp;</span>history.modified_content);
+                    changed_lines = increase_lines - (range.end.row - range.start.row) <span class="kw">as </span>usize;
+                }
+            }
+            <span class="kw">let </span><span class="kw-2">mut </span>cusrors_to_update = get_cursor::&lt;CursorRowEq&gt;(
+                cursors,
+                <span class="kw-2">&amp;</span>ClientCursor {
+                    addr: SocketAddr::new(IpAddr::V4(Ipv4Addr::new(<span class="number">127</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">1</span>)), <span class="number">0</span>),
+                    row: range.start.row,
+                    col: range.start.col,
+                },
+            )
+            .unwrap();
+            <span class="kw">if </span>changed_lines == <span class="number">0 </span>{
+                cusrors_to_update.current().unwrap().col +=
+                    history.op_range.end.col - history.op_range.start.col;
+            } <span class="kw">else </span>{
+                cusrors_to_update.current().unwrap().col += {
+                    <span class="kw">let </span>idx = history.modified_content.rfind(<span class="string">"\n"</span>).unwrap();
+                    (history.modified_content.len() - idx - <span class="number">1</span>) <span class="kw">as </span>u64
+                };
+                <span class="kw">loop </span>{
+                    cusrors_to_update.move_next();
+                    <span class="kw">match </span>cusrors_to_update.current() {
+                        <span class="prelude-val">Some</span>(cursor) =&gt; {
+                            cursor.row += changed_lines <span class="kw">as </span>u64;
+                        }
+                        <span class="prelude-val">None </span>=&gt; <span class="kw">break</span>,
+                    }
                 }
             }
         }
@@ -259,5 +391,5 @@
     }
 }
 
-<span class="kw">impl </span>MFile&lt;Rope, History&gt; <span class="kw">for </span>Text {}
+<span class="kw">impl </span>MFile&lt;Rope, Modification, Cursor&gt; <span class="kw">for </span>Text {}
 </code></pre></div></section></main></body></html>
