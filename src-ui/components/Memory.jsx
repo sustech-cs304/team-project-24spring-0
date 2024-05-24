@@ -41,7 +41,7 @@ export default function Memory({fileName}) {
                     {rows.map((row, index) => (
                         <tr key={index}>
                             {row.map((cell, index) => (
-                                <td key={index}>{cell.toString(16)}</td>
+                                <td key={index}>{cell.toString()}</td>
                             ))}
                         </tr>
                     ))}

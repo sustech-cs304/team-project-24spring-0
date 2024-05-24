@@ -14,25 +14,17 @@ export default function Register() {
         if (currentFile === undefined) {
             return (
                 <TableBody>
-                    <TableRow key="0">
-                        <TableCell>x0</TableCell>
-                        <TableCell>0</TableCell>
-                    </TableRow>
-                    {Array.from({ length: 31 }, (_, index) => (
-                        <TableRow key={index+1}>
-                            <TableCell>{`x${index}`}</TableCell>
-                            <TableCell>0</TableCell>
-                        </TableRow>
-                    ))}
+
                 </TableBody>
             )
         } else {
             return (
                 <TableBody>
-                    {Array.from({ length: 32 }, (_, index) => (
+                    {Array.from({ length: currentFile.register.length }, (_, index) => (
                         <TableRow key={index}>
-                            <TableCell>{`x${index}`}</TableCell>
-                            <TableCell>{currentFile.register[index]}</TableCell>
+                            <TableCell>{currentFile.register[index].name}</TableCell>
+                            <TableCell>{currentFile.register[index].number}</TableCell>
+                            <TableCell>{currentFile.register[index].value}</TableCell>
                         </TableRow>
                     ))}
                 </TableBody>
@@ -46,7 +38,8 @@ export default function Register() {
                 <CardBody className='h-full'>
                     <Table className='h-full'  aria-label="Example static collection table">
                         <TableHeader>
-                            <TableColumn>Register</TableColumn>
+                            <TableColumn>Name</TableColumn>
+                            <TableColumn>Number</TableColumn>
                             <TableColumn>Value</TableColumn>
                         </TableHeader>
                         {getRegisterTable()}

@@ -7,7 +7,7 @@ import useOutputStore from "@/utils/outputState";
 export default function CodeLineTable({fileName}) {
     const store = useFileStore();
     const file = store.files.find(file => file.fileName === fileName);
-    var lines = file.assembly.split('\n');
+    var lines = file.assembly;
 
     var handleSelectionChange = (selectedKeys) => {
         store.setSelectedLines(fileName, selectedKeys);
@@ -15,7 +15,9 @@ export default function CodeLineTable({fileName}) {
     }
 
     var handleStep = async () => {
+        console.log("Step Executed")
         const result = await invoke('step');
+        console.log(result);
         const outputStore = useOutputStore.getState();
         outputStore.addOutput('Step Result: \n' + result.message);
     }

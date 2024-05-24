@@ -21,29 +21,32 @@ export default function MultifileCode() {
 
     const handleAssembly = async (fileName) => {
 
-        // const result = await invoke("assembly");
-        // console.log('Invoke handle assembly result: ', result);
-        // if (result.success){
-        //     const outputStore = useOutputStore.getState();
-        //     outputStore.addOutput('Assembly Result: \n' + result.message);
-        // }
-        // if (result.Error){
-        //     const outputStore = useOutputStore.getState();
-        //     var i = 0;
-        //     for (var error of result.Error){
-        //         outputStore.addOutput('Error ' + i + ' at line ' + error.line + ', column ' + error.column + ': ' + error.msg);
-        //     }
-        // }
-
-        var result = {
-            Success: {
-                data: [],
-                text: [
-                    'add x1, x2, x3',
-                    'add x2, x1, x4',
-                ]
-            },
-        };
+        let result = await invoke("assembly");
+        // let result = {
+        //     Success: {
+        //         data: [],
+        //         text: [
+        //             'add x1, x2, x3',
+        //             'add x2, x1, x4',
+        //         ]
+        //     },
+        // };
+        console.log('Invoke handle assembly result: ', result);
+        if (result.Success){
+            const outputStore = useOutputStore.getState();
+            outputStore.addOutput('Assembly Result: \n' + result.Success.text.join('\n'));
+            const currentFile = state.files.find(file => file.fileName === fileName);
+            state.updateFile(currentFile.fileName, currentFile.code, currentFile.original, result.Success.text, [], currentFile.register, currentFile.memory, currentFile.baseAddress);
+            console.log('updated file');
+            console.log(currentFile);
+        }
+        if (result.Error){
+            const outputStore = useOutputStore.getState();
+            var i = 0;
+            for (var error of result.Error){
+                outputStore.addOutput('Error ' + i + ' at line ' + error.line + ', column ' + error.column + ': ' + error.msg);
+            }
+        }
 
 
     }
@@ -55,6 +58,13 @@ export default function MultifileCode() {
         outputStore.addOutput('Debug Result: \n' + result.message);
     }
 
+    const handleRun = async () => {
+        const result = await invoke('run');
+        const outputStore = useOutputStore.getState();
+        console.log('Invoke handle run result: ', result);
+        outputStore.addOutput('Run Result: \n' + result.message);
+    }
+
     return (
         <Tabs size="small" aria-label="Files">
             {files.map(file => (
@@ -64,7 +74,8 @@ export default function MultifileCode() {
                         <div className='absolute right-4 top-2 flex-row gap-2'>
                             <ButtonGroup>
                                 <Button color="success" size="sm" onClick={() => handleAssembly(file.fileName)}>Assembly</Button>
-                                <Button color="default" size="sm" onClick={() => handleDebug()}>Debug</Button>
+                                <Button color="primary" size="sm" onClick={() => handleRun()}>Run</Button>
+                                <Button color="secondary" size="sm" onClick={() => handleDebug()}>Debug</Button>
                                 <Button color="danger" size="sm" onClick={() => deleteFile(file.fileName)}>Close</Button>
                             </ButtonGroup>
                         </div>
