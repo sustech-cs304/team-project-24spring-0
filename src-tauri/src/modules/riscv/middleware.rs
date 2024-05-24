@@ -233,6 +233,9 @@ pub mod frontend_api {
         let mut lock = tab_map.tabs.lock().unwrap();
         let tab = lock.get_mut(&name).unwrap();
         tab.data_return_range = (start, end);
+        {
+            return vec![0; (end - start + 1) as usize];
+        }
         todo!("call simulator to get data");
     }
 
@@ -260,7 +263,7 @@ pub mod frontend_api {
         } else {
             match tab.assembler.assemble(cache.parser_cache.clone().unwrap()) {
                 Ok(res) => {
-                    todo!("load result to simulator");
+                    // todo!("load result to simulator");
                     cache.assembler_result = Some(AssembleResult::Success(AssembleSuccess {
                         data: res.data
                             [tab.data_return_range.0 as usize..=tab.data_return_range.1 as usize]
@@ -349,6 +352,12 @@ pub mod frontend_api {
     /// successfully started.
     #[tauri::command]
     pub fn run(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> SimulatorResult {
+        {
+            let name = cur_tab_name.name.lock().unwrap().clone();
+            let mut lock = tab_map.tabs.lock().unwrap();
+            let tab = lock.get_mut(&name).unwrap();
+            return fack_simulator_result(&cur_tab_name, &tab_map);
+        }
         todo!("Implement debug")
     }
 
@@ -360,6 +369,12 @@ pub mod frontend_api {
     /// successfully started.
     #[tauri::command]
     pub fn debug(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> SimulatorResult {
+        {
+            let name = cur_tab_name.name.lock().unwrap().clone();
+            let mut lock = tab_map.tabs.lock().unwrap();
+            let tab = lock.get_mut(&name).unwrap();
+            return fack_simulator_result(&cur_tab_name, &tab_map);
+        }
         todo!("Implement debug")
     }
 
@@ -370,6 +385,12 @@ pub mod frontend_api {
     /// Returns `SimulatorResult` indicating whether the step was successful.
     #[tauri::command]
     pub fn step(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> SimulatorResult {
+        {
+            let name = cur_tab_name.name.lock().unwrap().clone();
+            let mut lock = tab_map.tabs.lock().unwrap();
+            let tab = lock.get_mut(&name).unwrap();
+            return fack_simulator_result(&cur_tab_name, &tab_map);
+        }
         todo!("Implement step")
     }
 
@@ -380,6 +401,12 @@ pub mod frontend_api {
     /// Returns `SimulatorResult` indicating whether the reset was successful.
     #[tauri::command]
     pub fn reset(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> SimulatorResult {
+        {
+            let name = cur_tab_name.name.lock().unwrap().clone();
+            let mut lock = tab_map.tabs.lock().unwrap();
+            let tab = lock.get_mut(&name).unwrap();
+            return fack_simulator_result(&cur_tab_name, &tab_map);
+        }
         todo!("Implement reset")
     }
 
@@ -390,6 +417,12 @@ pub mod frontend_api {
     /// Returns `SimulatorResult` indicating whether the undo was successful.
     #[tauri::command]
     pub fn undo(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> SimulatorResult {
+        {
+            let name = cur_tab_name.name.lock().unwrap().clone();
+            let mut lock = tab_map.tabs.lock().unwrap();
+            let tab = lock.get_mut(&name).unwrap();
+            return fack_simulator_result(&cur_tab_name, &tab_map);
+        }
         todo!("Implement undo")
     }
 
@@ -400,6 +433,9 @@ pub mod frontend_api {
     /// Returns `bool` indicating whether the breakpoint was successfully set.
     #[tauri::command]
     pub fn set_breakpoint(tab_map: State<TabMap>, line: usize) -> bool {
+        {
+            return true;
+        }
         todo!("Implement setBreakPoint")
     }
 
@@ -411,6 +447,9 @@ pub mod frontend_api {
     /// removed.
     #[tauri::command]
     pub fn remove_breakpoint(tab_map: State<TabMap>, line: u64) -> bool {
+        {
+            return true;
+        }
         todo!("Implement removeBreakPoint")
     }
 
@@ -447,6 +486,9 @@ pub mod frontend_api {
             "Long" => SyscallDataType::Long(val.parse::<i64>().unwrap()),
             _ => return false,
         };
+        {
+            return true;
+        }
         todo!("call simulator syscall_input with val");
     }
 
@@ -463,6 +505,9 @@ pub mod frontend_api {
         tab_map: State<TabMap>,
         settings: AssemblerConfig,
     ) -> bool {
+        {
+            return true;
+        }
         todo!("Implement updateAssemblerSettings");
     }
 
@@ -525,6 +570,12 @@ pub mod frontend_api {
         port: u16,
         password: String,
     ) -> Optional {
+        {
+            return Optional {
+                success: true,
+                message: "".to_string(),
+            };
+        }
         todo!("Implement authorize as client");
     }
 
@@ -572,6 +623,35 @@ pub mod frontend_api {
                 }
             }
         }
+    }
+
+    fn fack_simulator_result(
+        cur_tab_name: &State<CurTabName>,
+        tab_map: &State<TabMap>,
+    ) -> SimulatorResult {
+        let name = cur_tab_name.name.lock().unwrap().clone();
+        let mut lock = tab_map.tabs.lock().unwrap();
+        let tab = lock.get_mut(&name).unwrap();
+        return SimulatorResult {
+            success: true,
+            has_current_text: false,
+            current_text: 0,
+            registers: vec![
+                Register {
+                    name: "x0".to_string(),
+                    number: "0".to_string(),
+                    value: 0,
+                },
+                Register {
+                    name: "pc".to_string(),
+                    number: "".to_string(),
+                    value: 0,
+                },
+            ],
+            data: vec![0; (tab.data_return_range.1 - tab.data_return_range.0 + 1) as usize],
+            has_message: true,
+            message: "test".to_string(),
+        };
     }
 }
 
