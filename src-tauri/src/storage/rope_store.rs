@@ -61,10 +61,7 @@ impl BasicFile<Rope, Modification> for Text {
         self.data.as_mut()
     }
 
-    fn handle_modify(
-        &mut self,
-        modify: &Modification,
-    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    fn handle_modify(&mut self, modify: &Modification) -> ResultVoid {
         match self.share_status {
             FileShareStatus::Host => {
                 todo!("perform function change");
