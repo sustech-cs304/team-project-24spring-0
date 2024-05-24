@@ -34,15 +34,19 @@ export default function CodeLineTable({fileName}) {
             >
             <TableHeader>
                 <TableColumn>Line</TableColumn>
+                <TableColumn>Address</TableColumn>
                 <TableColumn>Code</TableColumn>
+                <TableColumn>Basic</TableColumn>
                 <TableColumn>Run</TableColumn>
             </TableHeader>
             <TableBody>
                 {lines.map((line, index) => (
-                    <TableRow key={index} >
-                        <TableCell>{index+1}</TableCell>
-                        <TableCell>{line}</TableCell>
-                        <TableCell></TableCell>
+                    <TableRow key={index}>
+                        <TableCell>{line.line}</TableCell>
+                        <TableCell>{line.address}</TableCell>
+                        <TableCell>{line.code}</TableCell>
+                        <TableCell>{line.basic}</TableCell>
+                        <TableCell>{line.run}</TableCell>
                     </TableRow>
                 ))}
             </TableBody>
