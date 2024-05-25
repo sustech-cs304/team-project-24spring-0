@@ -1,9 +1,8 @@
 use crate::{
-    interface::assembler::Assembler,
+    interface::assembler::{AssembleResult, Assembler, AssemblyError},
     modules::riscv::basic::{assembler::assembler::RiscVAssembler, interface::parser::*},
+    types::middleware_types::AssemblerConfig,
 };
-use crate::interface::assembler::{AssembleResult, AssemblyError};
-use crate::types::middleware_types::AssemblerConfig;
 
 #[test]
 pub fn test_assembler() {
@@ -115,7 +114,7 @@ L2:
             let assembled_result = riscv_assembler.assemble(ast);
             check_assembler(assembled_result);
             let ast = p.parse(&rope.clone().to_string()).unwrap();
-            let mut new_configuration = AssemblerConfig{
+            let mut new_configuration = AssemblerConfig {
                 memory_map_limit_address: 0x00007fff,
                 kernel_space_high_address: 0x00007fff,
                 mmio_base_address: 0x00007f00,
