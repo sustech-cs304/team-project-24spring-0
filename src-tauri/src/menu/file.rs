@@ -162,7 +162,7 @@ fn share_handler(event: &WindowMenuEvent) {
     let _window = tauri::WindowBuilder::new(
         &event.window().app_handle(),
         "live_share", /* the unique window label */
-        tauri::WindowUrl::External("https://tauri.app/".parse().unwrap()),
+        tauri::WindowUrl::External("http://localhost:3000/share".parse().unwrap()),
     )
     .title("Live Share")
     .menu(Menu::new())

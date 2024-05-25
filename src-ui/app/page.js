@@ -26,7 +26,7 @@ export default function Home() {
         code: event.payload['content'],
         original: event.payload['content'],
         assembly: [],
-        runLines: "",
+        runLines: '',
         register: [
           { name: 'x', number: '0', value: 0 },
           { name: 'x', number: '1', value: 0 },

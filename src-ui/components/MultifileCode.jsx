@@ -2,7 +2,7 @@ import Code from '@/components/Code'
 import { Tab, Tabs } from '@nextui-org/react'
 import { Button, ButtonGroup } from '@nextui-org/react'
 import { invoke } from '@tauri-apps/api/tauri'
-import handleStimulatorResult from "@/utils/handleStimulatorResult";
+import handleStimulatorResult from '@/utils/handleStimulatorResult'
 
 import useFileStore from '@/utils/state'
 import useOutputStore from '@/utils/outputState'
@@ -10,7 +10,7 @@ import useOutputStore from '@/utils/outputState'
 export default function MultifileCode() {
   const state = useFileStore()
   const files = useFileStore(state => state.files)
-  const outputStore = useOutputStore.getState();
+  const outputStore = useOutputStore.getState()
 
   const deleteFile = async fileName => {
     state.deleteFile(fileName)
@@ -62,17 +62,17 @@ export default function MultifileCode() {
   }
 
   const handleDebug = async () => {
-    let result = await invoke('debug');
+    let result = await invoke('debug')
     console.log('Invoke handle debug result: ', result)
 
-    await handleStimulatorResult(result, 'Debug', state, outputStore);
+    await handleStimulatorResult(result, 'Debug', state, outputStore)
   }
 
   const handleRun = async () => {
-    let result = await invoke('run');
-    console.log('Invoke handle run result: ', result);
+    let result = await invoke('run')
+    console.log('Invoke handle run result: ', result)
 
-    await handleStimulatorResult(result, 'Run', state, outputStore);
+    await handleStimulatorResult(result, 'Run', state, outputStore)
   }
 
   var handleStep = async () => {

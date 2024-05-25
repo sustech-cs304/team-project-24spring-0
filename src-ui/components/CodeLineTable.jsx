@@ -49,8 +49,6 @@ export default function CodeLineTable({ fileName }) {
     }
   }
 
-
-
   return (
     <div className="flex flex-col gap-2">
       <Table
@@ -71,11 +69,11 @@ export default function CodeLineTable({ fileName }) {
         <TableBody>
           {lines.map((line, index) => (
             <TableRow key={index}>
-              <TableCell>{line.line+1}</TableCell>
+              <TableCell>{line.source}</TableCell>
               <TableCell>{line.address}</TableCell>
               <TableCell>{line.code}</TableCell>
               <TableCell>{line.basic}</TableCell>
-              <TableCell>{file.runLines === index ? "⬅️" : ""}</TableCell>
+              <TableCell>{file.runLines === index ? '⬅️' : ''}</TableCell>
             </TableRow>
           ))}
         </TableBody>

@@ -1,6 +1,8 @@
 import {
   Button,
-  ButtonGroup, Card, CardBody,
+  ButtonGroup,
+  Card,
+  CardBody,
   Table,
   TableBody,
   TableCell,
@@ -33,26 +35,26 @@ export default function Memory({ fileName }) {
       <CardBody>
         <table className="table-auto">
           <thead>
-          <tr>
-            <th>Address</th>
-            <th>Value(+0)</th>
-            <th>Value(+4)</th>
-            <th>Value(+8)</th>
-            <th>Value(+c)</th>
-            <th>Value(+10)</th>
-            <th>Value(+14)</th>
-            <th>Value(+18)</th>
-            <th>Value(+1c)</th>
-          </tr>
+            <tr>
+              <th>Address</th>
+              <th>Value(+0)</th>
+              <th>Value(+4)</th>
+              <th>Value(+8)</th>
+              <th>Value(+c)</th>
+              <th>Value(+10)</th>
+              <th>Value(+14)</th>
+              <th>Value(+18)</th>
+              <th>Value(+1c)</th>
+            </tr>
           </thead>
           <tbody>
-          {rows.map((row, index) => (
+            {rows.map((row, index) => (
               <tr key={index}>
                 {row.map((cell, index) => (
-                    <td key={index}>{cell.toString(16)}</td>
+                  <td key={index}>{cell.toString(16)}</td>
                 ))}
               </tr>
-          ))}
+            ))}
           </tbody>
         </table>
         <ButtonGroup className="w-full pt-2">
@@ -65,41 +67,5 @@ export default function Memory({ fileName }) {
         </ButtonGroup>
       </CardBody>
     </Card>
-  )
-
-  return (
-      <Table aria-label="Example static collection table" className="row-span-1" hideHeader>
-        <TableHeader>
-          <TableColumn>Address</TableColumn>
-          <TableColumn>Value(+0)</TableColumn>
-          <TableColumn>Value(+4)</TableColumn>
-          <TableColumn>Value(+8)</TableColumn>
-          <TableColumn>Value(+c)</TableColumn>
-          <TableColumn>Value(+10)</TableColumn>
-          <TableColumn>Value(+14)</TableColumn>
-          <TableColumn>Value(+18)</TableColumn>
-          <TableColumn>Value(+1c)</TableColumn>
-        </TableHeader>
-        <TableBody>
-          {/*{rows.map((row, index) => (*/}
-          {/*    <TableRow key={'row' + index}>*/}
-          {/*        {row.map((cell, index) => (*/}
-          {/*            <TableCell key={'row ' + row + ' col ' + index}>{cell.toString(16)}</TableCell>*/}
-          {/*        ))}*/}
-          {/*    </TableRow>*/}
-        {/*))}*/}
-        <TableRow key={'row test'}>
-          <TableCell>0x00000000</TableCell>
-          <TableCell>0x00000000</TableCell>
-          <TableCell>0x00000000</TableCell>
-          <TableCell>0x00000000</TableCell>
-          <TableCell>0x00000000</TableCell>
-          <TableCell>0x00000000</TableCell>
-          <TableCell>0x00000000</TableCell>
-          <TableCell>0x00000000</TableCell>
-          <TableCell>0x00000000</TableCell>
-        </TableRow>
-      </TableBody>
-    </Table>
   )
 }
