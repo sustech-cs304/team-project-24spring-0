@@ -121,22 +121,22 @@ pub struct SyscallRequest {
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct AssemblerConfig {
-    memory_map_limit_address: u64,
-    kernel_space_high_address: u64,
-    mmio_base_address: u64,
-    kernel_space_base_address: u64,
-    user_space_high_address: u64,
-    data_segment_limit_address: u64,
-    stack_base_address: u64,
-    stack_pointer_sp: u64,
-    stack_limit_address: u64,
-    heap_base_address: u64,
-    dot_data_base_address: u64,
-    global_pointer_gp: u64,
-    data_segment_base_address: u64,
-    dot_extern_base_address: u64,
-    text_limit_address: u64,
-    dot_text_base_address: u64,
+    pub(crate) memory_map_limit_address: u64,
+    pub(crate) kernel_space_high_address: u64,
+    pub(crate) mmio_base_address: u64,
+    pub(crate) kernel_space_base_address: u64,
+    pub(crate) user_space_high_address: u64,
+    pub(crate) data_segment_limit_address: u64,
+    pub(crate) stack_base_address: u64,
+    pub(crate) stack_pointer_sp: u64,
+    pub(crate) stack_limit_address: u64,
+    pub(crate) heap_base_address: u64,
+    pub(crate) dot_data_base_address: u64,
+    pub(crate) global_pointer_gp: u64,
+    pub(crate) data_segment_base_address: u64,
+    pub(crate) dot_extern_base_address: u64,
+    pub(crate) text_limit_address: u64,
+    pub(crate) dot_text_base_address: u64,
 }
 
 #[derive(EnumMessage, Display)]

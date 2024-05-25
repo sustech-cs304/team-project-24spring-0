@@ -20,6 +20,7 @@ use crate::{
         },
         rv32i::assembler::rv32i::RV32I,
     },
+    types::middleware_types::AssemblerConfig,
 };
 pub(crate) const MAIN: i32 = 0x00400000;
 pub(crate) const DATA: i32 = 0x10010000;
@@ -27,15 +28,15 @@ const MAX_RELATIVE_OFFSET: i32 = 0b0111_1111_1111_1111_1111;
 const MIN_RELATIVE_OFFSET: i32 = -0b1000_0000_0000_0000_0000;
 
 macro_rules! modify_label {
-    ($label:ident, $line:expr, $imm:ident, $start:ident) => {
+    ($self:ident, $label:ident, $line:expr, $imm:ident, $start:ident) => {
         match $label {
             ParserRISCVImmediate::Imm(imm) => {
                 $imm = *imm;
             }
             ParserRISCVImmediate::Lbl((label, handler)) => {
-                let address: RISCVImmediate = u32::from(*label) as i32;
+                let address: RISCVImmediate = u32::from(*label) as i32 - DATA as i32 + $self.data;
                 let mut line_addr: RISCVImmediate =
-                    u32::from(ParserRISCVLabel::Text($start)) as i32;
+                    u32::from(ParserRISCVLabel::Text($start)) as i32 - MAIN as i32 + $self.main;
                 match handler {
                     ParserRISCVLabelHandler::Low => $imm = get_32u_low(address),
                     ParserRISCVLabelHandler::High => $imm = get_32u_high(address),
@@ -60,18 +61,18 @@ macro_rules! extract_opds {
             $rs2 = u32::from(*rs2);
         }
     };
-    ($inst:expr, I, $rd:ident, $rs1:ident, $imm:ident, $start:ident) => {
+    ($self:ident, $inst:expr, I, $rd:ident, $rs1:ident, $imm:ident, $start:ident) => {
         if let [ParserRISCVInstOpd::Reg(rd), ParserRISCVInstOpd::Reg(rs1), ParserRISCVInstOpd::Imm(imm)] = &$inst.opd[..] {
             $rd = u32::from(*rd);
             $rs1 = u32::from(*rs1);
-            modify_label!(imm, $inst.line, $imm, $start);
+            modify_label!($self, imm, $inst.line, $imm, $start);
         }
     };
-    ($inst:expr, S, $rs1:ident, $rs2:ident, $imm:ident, $start:ident) => {
+    ($self:ident, $inst:expr, S, $rs1:ident, $rs2:ident, $imm:ident, $start:ident) => {
         if let [ParserRISCVInstOpd::Reg(rs1), ParserRISCVInstOpd::Imm(imm), ParserRISCVInstOpd::Reg(rs2)] = &$inst.opd[..] {
             $rs2 = u32::from(*rs1);
             $rs1 = u32::from(*rs2);
-            modify_label!(imm, $inst.line, $imm, $start);
+            modify_label!($self, imm, $inst.line, $imm, $start);
         }
     };
     ($inst:expr, J, $rd:ident, $imm:ident, $start:ident, $error:ident) => {
@@ -101,10 +102,10 @@ macro_rules! extract_opds {
             }
         }
     };
-    ($inst:expr, U, $rd:ident, $imm:ident, $start:ident) => {
+    ($self:ident, $inst:expr, U, $rd:ident, $imm:ident, $start:ident) => {
         if let [ParserRISCVInstOpd::Reg(rd), ParserRISCVInstOpd::Imm(imm)] = &$inst.opd[..] {
             $rd = u32::from(*rd);
-            modify_label!(imm, $inst.line, $imm, $start);
+            modify_label!($self, imm, $inst.line, $imm, $start);
         }
     };
     ($inst:expr, R4, $rd:ident, $rs1:ident, $rs2:ident, $rs3:ident) => {
@@ -117,11 +118,17 @@ macro_rules! extract_opds {
     };
 }
 
-pub struct RiscVAssembler;
+pub struct RiscVAssembler {
+    main: i32,
+    data: i32,
+}
 
 impl RiscVAssembler {
     pub fn new() -> Self {
-        RiscVAssembler
+        RiscVAssembler {
+            main: MAIN,
+            data: DATA,
+        }
     }
 }
 
@@ -197,7 +204,7 @@ impl Assembler<RISCV> for RiscVAssembler {
                                 | RV32IInstruction::Csrrw
                                 | RV32IInstruction::Csrrwi
                                 | RV32IInstruction::Ecall => {
-                                    extract_opds!(inst, I, rd, rs1, imm, index);
+                                    extract_opds!(self, inst, I, rd, rs1, imm, index);
                                     result.operands = Vec::from([
                                         Operand::from(rd),
                                         Operand::from(rs1),
@@ -208,7 +215,7 @@ impl Assembler<RISCV> for RiscVAssembler {
                                 | RV32IInstruction::Sh
                                 | RV32IInstruction::Lw
                                 | RV32IInstruction::Sw => {
-                                    extract_opds!(inst, S, rs1, rs2, imm, index);
+                                    extract_opds!(self, inst, S, rs1, rs2, imm, index);
                                     result.operands = Vec::from([
                                         Operand::from(imm),
                                         Operand::from(rs1),
@@ -234,7 +241,7 @@ impl Assembler<RISCV> for RiscVAssembler {
                                     ]);
                                 }
                                 RV32IInstruction::Auipc | RV32IInstruction::Lui => {
-                                    extract_opds!(inst, U, rd, imm, index);
+                                    extract_opds!(self, inst, U, rd, imm, index);
                                     result.operands =
                                         Vec::from([Operand::from(rd), Operand::from(imm)]);
                                 }
@@ -298,7 +305,7 @@ impl Assembler<RISCV> for RiscVAssembler {
                                     ]);
                                 }
                                 RV32FInstruction::Flw => {
-                                    extract_opds!(inst, I, rd, rs1, imm, index);
+                                    extract_opds!(self, inst, I, rd, rs1, imm, index);
                                     result.operands = Vec::from([
                                         Operand::from(rd),
                                         Operand::from(rs1),
@@ -306,7 +313,7 @@ impl Assembler<RISCV> for RiscVAssembler {
                                     ]);
                                 }
                                 RV32FInstruction::Fsw => {
-                                    extract_opds!(inst, S, rs1, rs2, imm, index);
+                                    extract_opds!(self, inst, S, rs1, rs2, imm, index);
                                     result.operands = Vec::from([
                                         Operand::from(imm),
                                         Operand::from(rs1),
@@ -319,14 +326,14 @@ impl Assembler<RISCV> for RiscVAssembler {
                 }
                 ParserResultText::Align(_) => {}
             }
-            match process_code(index, element) {
+            match process_code(self, index, element) {
                 Ok(result) => {
                     line.code = result.code;
                     line.basic = result.basic;
                 }
                 Err(err) => error.extend(err),
             };
-            line.address = MAIN as u32 + index as u32 * 4;
+            line.address = self.main as u32 + index as u32 * 4;
             let old_operation = line.instruction.operation;
             let new_instruction = std::mem::replace(&mut line.instruction, result);
             let opd: Vec<ParserRISCVInstOpd> = new_instruction
@@ -356,8 +363,9 @@ impl Assembler<RISCV> for RiscVAssembler {
         }
     }
 
-    fn update_config(&mut self, config: &crate::types::middleware_types::AssemblerConfig) {
-        unimplemented!()
+    fn update_config(&mut self, config: &AssemblerConfig) {
+        self.main = config.dot_text_base_address as i32;
+        self.data = config.dot_data_base_address as i32;
     }
 
     fn dump(&mut self, ast: ParserResult<RISCV>) -> Result<Memory, Vec<AssemblyError>> {
@@ -378,7 +386,7 @@ impl Assembler<RISCV> for RiscVAssembler {
             data_segment.push(String::from(format!("{:032b}", 0)));
         }
         for (index, element) in text.iter().enumerate() {
-            match process_code(index, element) {
+            match process_code(self, index, element) {
                 Ok(line) => {
                     let binary_string = format!("{:032b}", line.code);
                     text_segment.push(binary_string);
@@ -405,6 +413,7 @@ pub struct ProcessResult {
 }
 
 fn process_code(
+    assembler: &RiscVAssembler,
     index: usize,
     element: &ParserResultText<RISCV>,
 ) -> Result<ProcessResult, Vec<AssemblyError>> {
@@ -456,13 +465,13 @@ fn process_code(
                     | RV32IInstruction::Csrrw
                     | RV32IInstruction::Csrrwi
                     | RV32IInstruction::Ecall => {
-                        extract_opds!(inst, I, rd, rs1, imm, index);
+                        extract_opds!(assembler, inst, I, rd, rs1, imm, index);
                     }
                     RV32IInstruction::Sb
                     | RV32IInstruction::Sh
                     | RV32IInstruction::Lw
                     | RV32IInstruction::Sw => {
-                        extract_opds!(inst, S, rs1, rs2, imm, index);
+                        extract_opds!(assembler, inst, S, rs1, rs2, imm, index);
                     }
                     RV32IInstruction::Jal => {
                         extract_opds!(inst, J, rd, imm, index, error);
@@ -476,7 +485,7 @@ fn process_code(
                         extract_opds!(inst, B, rs1, rs2, imm, index, error);
                     }
                     RV32IInstruction::Auipc | RV32IInstruction::Lui => {
-                        extract_opds!(inst, U, rd, imm, index);
+                        extract_opds!(assembler, inst, U, rd, imm, index);
                     }
                     RV32IInstruction::Fence => {
                         if let [ParserRISCVInstOpd::Imm(imm1), ParserRISCVInstOpd::Imm(imm2)] =

@@ -84,3 +84,26 @@ impl<IS: ParserInstSet + InstructionSetTrait> InstructionSet<IS> {
         }
     }
 }
+
+impl Default for AssemblerConfig {
+    fn default() -> Self {
+        Self {
+            memory_map_limit_address: 0xffffffff,
+            kernel_space_high_address: 0xffffffff,
+            mmio_base_address: 0xffff0000,
+            kernel_space_base_address: 0x80000000,
+            user_space_high_address: 0x7fffffff,
+            data_segment_limit_address: 0x7fffffff,
+            stack_base_address: 0x7ffffffc,
+            stack_pointer_sp: 0x7fffeffc,
+            stack_limit_address: 0x10040000,
+            heap_base_address: 0x10040000,
+            dot_data_base_address: 0x10010000,
+            global_pointer_gp: 0x10008000,
+            data_segment_base_address: 0x10000000,
+            dot_extern_base_address: 0x10000000,
+            text_limit_address: 0x0ffffffc,
+            dot_text_base_address: 0x00400000,
+        }
+    }
+}
