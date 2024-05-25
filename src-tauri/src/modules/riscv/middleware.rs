@@ -273,10 +273,14 @@ pub mod frontend_api {
                             .instruction
                             .iter()
                             .map(|inst| Text {
-                                line: inst.line_number,
                                 address: inst.address,
                                 code: inst.code,
                                 basic: Default::default(),
+                                source: tab
+                                    .text
+                                    .get_raw()
+                                    .line(inst.line_number as usize)
+                                    .to_string(),
                             })
                             .collect(),
                     }));
