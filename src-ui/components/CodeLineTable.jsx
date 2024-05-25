@@ -49,13 +49,7 @@ export default function CodeLineTable({ fileName }) {
     }
   }
 
-  var handleStep = async () => {
-    console.log('Step Executed')
-    const result = await invoke('step')
-    console.log(result)
-    const outputStore = useOutputStore.getState()
-    outputStore.addOutput('Step Result: \n' + result.message)
-  }
+
 
   return (
     <div className="flex flex-col gap-2">
@@ -81,14 +75,11 @@ export default function CodeLineTable({ fileName }) {
               <TableCell>{line.address}</TableCell>
               <TableCell>{line.code}</TableCell>
               <TableCell>{line.basic}</TableCell>
-              <TableCell>{line.run}</TableCell>
+              <TableCell>{file.runLines === index ? "YES" : "NO"}</TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table>
-      <Button color="default" className="w-full" onClick={() => handleStep()}>
-        Step
-      </Button>
     </div>
   )
 }

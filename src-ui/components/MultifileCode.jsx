@@ -2,6 +2,7 @@ import Code from '@/components/Code'
 import { Tab, Tabs } from '@nextui-org/react'
 import { Button, ButtonGroup } from '@nextui-org/react'
 import { invoke } from '@tauri-apps/api/tauri'
+import handleStimulatorResult from "@/utils/handleStimulatorResult";
 
 import useFileStore from '@/utils/state'
 import useOutputStore from '@/utils/outputState'
@@ -9,6 +10,7 @@ import useOutputStore from '@/utils/outputState'
 export default function MultifileCode() {
   const state = useFileStore()
   const files = useFileStore(state => state.files)
+  const outputStore = useOutputStore.getState();
 
   const deleteFile = async fileName => {
     state.deleteFile(fileName)
@@ -61,85 +63,32 @@ export default function MultifileCode() {
 
   const handleDebug = async () => {
     let result = await invoke('debug');
-    const outputStore = useOutputStore.getState()
     console.log('Invoke handle debug result: ', result)
 
-    if (result.success) {
-      outputStore.addOutput('Debug Succeeded!')
-      let fileName = state.currentFile;
-      const currentFile = state.files.find(file => file.fileName === fileName)
-      state.updateFile(
-          currentFile.fileName,
-          currentFile.code,
-          currentFile.original,
-          currentFile.assembly,
-          currentFile.runLines,
-          result.registers,
-          currentFile.memory,
-          currentFile.baseAddress,
-      )
-      if (result.has_current_text) {
-        state.updateFile(
-            currentFile.fileName,
-            currentFile.code,
-            currentFile.original,
-            currentFile.assembly,
-            [result.current_text],
-            result.registers,
-            currentFile.memory,
-            currentFile.baseAddress,
-        )
-      }
-      console.log('updated file')
-      console.log(currentFile)
-    } else {
-      outputStore.addOutput('Debug Failed!')
-    }
-
-    if (result.has_message) {
-      outputStore.addOutput('Debug Result: \n' + result.message)
-    }
+    await handleStimulatorResult(result, 'Debug', state, outputStore);
   }
 
   const handleRun = async () => {
     let result = await invoke('run');
-    const outputStore = useOutputStore.getState();
     console.log('Invoke handle run result: ', result);
 
-    if (result.success) {
-      outputStore.addOutput('Run Succeded!')
-      let fileName = state.currentFile
-      const currentFile = state.files.find(file => file.fileName === fileName)
-      state.updateFile(
-        currentFile.fileName,
-        currentFile.code,
-        currentFile.original,
-        currentFile.assembly,
-        currentFile.runLines,
-        result.registers,
-        currentFile.memory,
-        currentFile.baseAddress,
-      )
-      if (result.has_current_text) {
-        state.updateFile(
-          currentFile.fileName,
-          currentFile.code,
-          currentFile.original,
-          currentFile.assembly,
-          [result.current_text],
-          result.registers,
-          currentFile.memory,
-          currentFile.baseAddress,
-        )
-      }
-      console.log('updated file')
-      console.log(currentFile)
-    } else {
-      outputStore.addOutput('Run Failed!')
-    }
-    if (result.has_message) {
-      outputStore.addOutput('Run Result: \n' + result.message)
-    }
+    await handleStimulatorResult(result, 'Run', state, outputStore);
+  }
+
+  var handleStep = async () => {
+    console.log('Step Executed')
+    const result = await invoke('step')
+    console.log(result)
+
+    await handleStimulatorResult(result, 'Step', state, outputStore)
+  }
+
+  var handleUndo = async () => {
+    console.log('Undo Executed')
+    const result = await invoke('undo')
+    console.log(result)
+
+    await handleStimulatorResult(result, 'Undo', state, outputStore)
   }
 
   return (
@@ -165,6 +114,12 @@ export default function MultifileCode() {
                 </Button>
                 <Button color="secondary" size="sm" onClick={() => handleDebug()}>
                   Debug
+                </Button>
+                <Button color="success" size="sm" className="w-full" onClick={() => handleStep()}>
+                  Step
+                </Button>
+                <Button color="warning" size="sm" className="w-full" onClick={() => handleUndo()}>
+                  Undo
                 </Button>
                 <Button color="danger" size="sm" onClick={() => deleteFile(file.fileName)}>
                   Close

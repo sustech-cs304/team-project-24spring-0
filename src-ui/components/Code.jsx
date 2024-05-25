@@ -1,13 +1,10 @@
 import React, { useEffect, useRef } from 'react'
 import ModifiedEditor from '@/components/ModifiedEditor'
 import { Tabs, Tab, Card, CardBody, Textarea } from '@nextui-org/react'
-import { Table, TableHeader, TableBody, TableRow, TableColumn, TableCell } from '@nextui-org/react'
 import TestPage from '@/components/TestPage'
 import useFileStore from '@/utils/state'
 import CodeLineTable from './CodeLineTable'
 import { invoke } from '@tauri-apps/api/tauri'
-import useOutputStore from '@/utils/outputState'
-import { Button } from '@nextui-org/react'
 import Memory from '@/components/Memory'
 
 export default function Code({ fileName }) {

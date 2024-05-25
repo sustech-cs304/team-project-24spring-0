@@ -620,7 +620,7 @@ pub mod frontend_api {
         let tab = lock.get_mut(&name).unwrap();
         return SimulatorResult {
             success: true,
-            has_current_text: false,
+            has_current_text: true,
             current_text: 0,
             registers: vec![
                 Register {
