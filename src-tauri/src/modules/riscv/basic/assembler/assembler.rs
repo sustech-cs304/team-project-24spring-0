@@ -22,8 +22,8 @@ use crate::{
     },
     types::middleware_types::AssemblerConfig,
 };
-pub(crate) const MAIN: i32 = 0x00400000;
-pub(crate) const DATA: i32 = 0x10010000;
+pub const MAIN: u32 = 0x00400000;
+pub const DATA: u32 = 0x10010000;
 const MAX_RELATIVE_OFFSET: i32 = 0b0111_1111_1111_1111_1111;
 const MIN_RELATIVE_OFFSET: i32 = -0b1000_0000_0000_0000_0000;
 
@@ -34,9 +34,9 @@ macro_rules! modify_label {
                 $imm = *imm;
             }
             ParserRISCVImmediate::Lbl((label, handler)) => {
-                let address: RISCVImmediate = u32::from(*label) as i32 - DATA as i32 + $self.data;
-                let mut line_addr: RISCVImmediate =
-                    u32::from(ParserRISCVLabel::Text($start)) as i32 - MAIN as i32 + $self.main;
+                let address: u32 = u32::from(*label) - DATA + $self.data;
+                let mut line_addr: u32 =
+                    u32::from(ParserRISCVLabel::Text($start)) - MAIN + $self.main;
                 match handler {
                     ParserRISCVLabelHandler::Low => $imm = get_32u_low(address),
                     ParserRISCVLabelHandler::High => $imm = get_32u_high(address),
@@ -119,8 +119,8 @@ macro_rules! extract_opds {
 }
 
 pub struct RiscVAssembler {
-    main: i32,
-    data: i32,
+    main: u32,
+    data: u32,
 }
 
 impl RiscVAssembler {
@@ -364,8 +364,8 @@ impl Assembler<RISCV> for RiscVAssembler {
     }
 
     fn update_config(&mut self, config: &AssemblerConfig) {
-        self.main = config.dot_text_base_address as i32;
-        self.data = config.dot_data_base_address as i32;
+        self.main = config.dot_text_base_address as u32;
+        self.data = config.dot_data_base_address as u32;
     }
 
     fn dump(&mut self, ast: ParserResult<RISCV>) -> Result<Memory, Vec<AssemblyError>> {

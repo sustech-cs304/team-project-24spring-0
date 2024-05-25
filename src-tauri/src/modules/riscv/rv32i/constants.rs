@@ -145,9 +145,9 @@ impl From<RV32IRegister> for &'static str {
     }
 }
 
-pub fn get_32u_low(i: RISCVImmediate) -> RISCVImmediate {
-    (i & 0x7ff) | -(i & 0x800)
+pub fn get_32u_low(i: u32) -> RISCVImmediate {
+    ((i & 0x7ff) | ((!(i & 0x800)) + 1)) as RISCVImmediate
 }
-pub fn get_32u_high(i: RISCVImmediate) -> RISCVImmediate {
-    (i >> 12) + ((i & 0x800) >> 11)
+pub fn get_32u_high(i: u32) -> RISCVImmediate {
+    ((i >> 12) + ((i & 0x800) >> 11)) as RISCVImmediate
 }
