@@ -71,11 +71,11 @@ export default function CodeLineTable({ fileName }) {
         <TableBody>
           {lines.map((line, index) => (
             <TableRow key={index}>
-              <TableCell>{line.line}</TableCell>
+              <TableCell>{line.line+1}</TableCell>
               <TableCell>{line.address}</TableCell>
               <TableCell>{line.code}</TableCell>
               <TableCell>{line.basic}</TableCell>
-              <TableCell>{file.runLines === index ? "YES" : "NO"}</TableCell>
+              <TableCell>{file.runLines === index ? "⬅️" : ""}</TableCell>
             </TableRow>
           ))}
         </TableBody>

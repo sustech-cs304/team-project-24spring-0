@@ -38,8 +38,14 @@ export default function Code({ fileName }) {
         <Tab key="excecute" title="Execute" className="h-full w-full">
           <Card className="h-full">
             <CardBody className="h-full flow grid-flow-row gap-4">
-              <CodeLineTable fileName={fileName} />
-              <Memory fileName={fileName} />
+              <Tabs aria="execute" isVertical={true}>
+                <Tab key='codeTable' title='Code Table'>
+                    <CodeLineTable fileName={fileName} />
+                </Tab>
+                <Tab key='memory' title='Memory'>
+                    <Memory fileName={fileName} />
+                </Tab>
+              </Tabs>
             </CardBody>
           </Card>
         </Tab>
