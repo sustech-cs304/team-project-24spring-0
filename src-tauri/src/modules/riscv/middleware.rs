@@ -273,7 +273,7 @@ pub mod frontend_api {
                             .instruction
                             .iter()
                             .map(|inst| Text {
-                                line: inst.line_number + 1,
+                                line: inst.line_number,
                                 address: inst.address,
                                 code: inst.code,
                                 basic: Default::default(),
