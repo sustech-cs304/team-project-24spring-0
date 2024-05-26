@@ -72,7 +72,7 @@ pub struct Text {
     pub basic: String,
 }
 
-pub type Data = u32;
+pub type Data = u8;
 
 #[derive(Clone, Serialize)]
 pub struct AssembleError {

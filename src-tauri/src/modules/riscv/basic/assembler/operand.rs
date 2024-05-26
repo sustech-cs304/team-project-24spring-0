@@ -3,7 +3,6 @@ use crate::{
     modules::riscv::basic::interface::parser::{
         ParserRISCVImmediate,
         ParserRISCVLabel,
-        ParserRISCVRegister,
         RISCV,
     },
 };

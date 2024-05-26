@@ -22,7 +22,7 @@ pub trait InstructionSetTrait {
 
 #[derive(Clone)]
 pub struct AssembleResult<IS: ParserInstSet + InstructionSetTrait> {
-    pub data: Vec<u32>,
+    pub data: Vec<u8>,
     pub instruction: Vec<InstructionSet<IS>>,
 }
 

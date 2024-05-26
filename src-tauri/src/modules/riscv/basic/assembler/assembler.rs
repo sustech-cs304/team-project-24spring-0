@@ -135,15 +135,6 @@ impl Assembler<RISCV> for RiscVAssembler {
         &mut self,
         ast: ParserResult<RISCV>,
     ) -> Result<AssembleResult<RISCV>, Vec<AssemblyError>> {
-        let data = ast.data;
-        let mut data_segment: Vec<u32> = Vec::new();
-        for chunk in data.chunks(4) {
-            let mut line: u32 = 0;
-            for (i, &e) in chunk.iter().enumerate() {
-                line |= (e as u32) << (i * 8);
-            }
-            data_segment.push(line);
-        }
         let mut results: Vec<InstructionSet<RISCV>> = Vec::new();
         let mut error: Vec<AssemblyError> = Vec::new();
         for (index, element) in ast.text.iter().enumerate() {
@@ -338,7 +329,7 @@ impl Assembler<RISCV> for RiscVAssembler {
         }
         if error.is_empty() {
             Ok(AssembleResult {
-                data: data_segment,
+                data: ast.data,
                 instruction: results,
             })
         } else {
