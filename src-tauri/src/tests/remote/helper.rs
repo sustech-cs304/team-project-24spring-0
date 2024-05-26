@@ -8,6 +8,7 @@ use crate::{
         parser::{RISCVExtension, RISCVParser},
     },
     remote::{client::RpcClientImpl, server::RpcServerImpl, utils::get_free_port},
+    simulator::simulator::RISCVSimulator,
     storage::rope_store,
     types::middleware_types::{Tab, TabMap},
     utility::ptr::Ptr,
@@ -39,7 +40,7 @@ pub fn init_test_server(content: &str) -> Result<RpcServerImpl, String> {
                     text: Box::new(content),
                     parser: Box::new(RISCVParser::new(&vec![RISCVExtension::RV32I])),
                     assembler: Box::new(RiscVAssembler::new()),
-                    //simulator: Box::new(Default::default()),
+                    simulator: Box::new(RISCVSimulator::new(TEST_FILE_NAME)),
                     data_return_range: Default::default(),
                     assembly_cache: Default::default(),
                 };

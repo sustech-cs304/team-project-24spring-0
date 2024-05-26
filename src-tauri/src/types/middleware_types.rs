@@ -11,6 +11,7 @@ use crate::{
     interface::{
         assembler::Assembler,
         parser::{Parser, ParserResult},
+        simulator::Simulator,
         storage::MFile,
     },
     modules::riscv::basic::interface::parser::RISCV,
@@ -23,7 +24,7 @@ pub struct Tab {
     pub text: Box<dyn MFile<Rope, Modification, Cursor>>,
     pub parser: Box<dyn Parser<RISCV>>,
     pub assembler: Box<dyn Assembler<RISCV>>,
-    //pub simulator: Box<dyn Simulator<i32, i32, i32, i32>>,
+    pub simulator: Box<dyn Simulator>,
     pub data_return_range: (u64, u64),
     pub assembly_cache: AssembleCache,
 }
@@ -126,22 +127,45 @@ pub struct SyscallRequest {
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct AssemblerConfig {
-    memory_map_limit_address: u64,
-    kernel_space_high_address: u64,
-    mmio_base_address: u64,
-    kernel_space_base_address: u64,
-    user_space_high_address: u64,
-    data_segment_limit_address: u64,
-    stack_base_address: u64,
-    stack_pointer_sp: u64,
-    stack_limit_address: u64,
-    heap_base_address: u64,
-    dot_data_base_address: u64,
-    global_pointer_gp: u64,
-    data_segment_base_address: u64,
-    dot_extern_base_address: u64,
-    text_limit_address: u64,
-    dot_text_base_address: u64,
+    pub memory_map_limit_address: u64,
+    pub kernel_space_high_address: u64,
+    pub mmio_base_address: u64,
+    pub kernel_space_base_address: u64,
+    pub user_space_high_address: u64,
+    pub data_segment_limit_address: u64,
+    pub stack_base_address: u64,
+    pub stack_pointer_sp: u64,
+    pub stack_limit_address: u64,
+    pub heap_base_address: u64,
+    pub dot_data_base_address: u64,
+    pub global_pointer_gp: u64,
+    pub data_segment_base_address: u64,
+    pub dot_extern_base_address: u64,
+    pub text_limit_address: u64,
+    pub dot_text_base_address: u64,
+}
+
+impl Default for AssemblerConfig {
+    fn default() -> Self {
+        Self {
+            memory_map_limit_address: 0xffffffff,
+            kernel_space_high_address: 0xffffffff,
+            mmio_base_address: 0xffff0000,
+            kernel_space_base_address: 0x80000000,
+            user_space_high_address: 0x7fffffff,
+            data_segment_limit_address: 0x7fffffff,
+            stack_base_address: 0x7ffffffc,
+            stack_pointer_sp: 0x7fffeffc,
+            stack_limit_address: 0x10040000,
+            heap_base_address: 0x10040000,
+            dot_data_base_address: 0x10010000,
+            global_pointer_gp: 0x10008000,
+            data_segment_base_address: 0x10000000,
+            dot_extern_base_address: 0x10000000,
+            text_limit_address: 0x0ffffffc,
+            dot_text_base_address: 0x00400000,
+        }
+    }
 }
 
 #[derive(EnumMessage, Display)]

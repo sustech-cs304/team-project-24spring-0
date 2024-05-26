@@ -11,6 +11,7 @@ pub mod frontend_api {
             parser::{RISCVExtension, RISCVParser, RISCV},
         },
         remote::{Modification, OpRange},
+        simulator::simulator::RISCVSimulator,
         storage::rope_store,
         types::middleware_types::*,
         utility::{ptr::Ptr, state_helper::state},
@@ -35,6 +36,7 @@ pub mod frontend_api {
                     text: Box::new(content),
                     parser: Box::new(RISCVParser::new(&vec![RISCVExtension::RV32I])),
                     assembler: Box::new(RiscVAssembler::new()),
+                    simulator: Box::new(RISCVSimulator::new(filepath)),
                     data_return_range: Default::default(),
                     assembly_cache: Default::default(),
                 };
@@ -269,11 +271,8 @@ pub mod frontend_api {
         } else {
             match tab.assembler.assemble(cache.parser_cache.clone().unwrap()) {
                 Ok(res) => {
-                    todo!("load result to simulator");
                     cache.assembler_result = Some(AssembleResult::Success(AssembleSuccess {
-                        data: res.data
-                            [tab.data_return_range.0 as usize..=tab.data_return_range.1 as usize]
-                            .to_vec(),
+                        data: Default::default(),
                         text: res
                             .instruction
                             .iter()
@@ -281,10 +280,17 @@ pub mod frontend_api {
                                 line: inst.line_number + 1,
                                 address: inst.address,
                                 code: inst.code,
-                                basic: Default::default(),
+                                basic: inst.basic.to_string(),
                             })
                             .collect(),
                     }));
+                    tab.simulator.load_inst(res);
+                    if let Some(AssembleResult::Success(res)) = &mut cache.assembler_result {
+                        res.data = tab.simulator.get_memory(
+                            tab.data_return_range.0 as u32,
+                            tab.data_return_range.1 as u32 + 1,
+                        );
+                    }
                 }
                 Err(mut e) => {
                     cache.assembler_result = Some(AssembleResult::Error(
@@ -676,5 +682,9 @@ pub mod backend_api {
                 "AppHandle is not initialized!",
             )))
         }
+    }
+
+    pub fn simulator_update(res: Result<(), String>) {
+        todo!()
     }
 }
