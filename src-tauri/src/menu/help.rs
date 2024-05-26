@@ -1,4 +1,4 @@
-use tauri::{CustomMenuItem, Manager, Menu, Submenu, WindowMenuEvent};
+use tauri::{CustomMenuItem, Menu, Submenu, WindowMenuEvent};
 
 use crate::APP_HANDLE;
 
@@ -20,8 +20,8 @@ fn manual_handler(_event: &WindowMenuEvent) {
     if let Some(app_handle) = APP_HANDLE.lock().unwrap().as_ref() {
         let _window = tauri::WindowBuilder::new(
             app_handle,
-            "manual", /* the unique window label */
-            tauri::WindowUrl::App("riscv-doc.html".parse().unwrap()),
+            "manual",
+            tauri::WindowUrl::App("/doc/riscv/index.html".parse().unwrap()),
         )
         .title("Manual")
         .menu(Menu::new())

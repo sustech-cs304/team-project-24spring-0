@@ -17,6 +17,8 @@ static TEST_FILE_NAME: &str = "/foo/bar/test_file.txt";
 
 static TEST_PASSWD: &str = "fdsfs";
 
+static MAX_PROT_RETRY: usize = 1145;
+
 static TABMAP: Lazy<Mutex<Option<TabMap>>> = Lazy::new(|| Mutex::new(None));
 
 pub fn init_test_server(content: &str) -> Result<RpcServerImpl, String> {
@@ -56,7 +58,8 @@ pub fn init_test_server(content: &str) -> Result<RpcServerImpl, String> {
         )
         .unwrap();
     server.change_password(TEST_PASSWD);
-    let _ = server.set_port(get_free_port(Ipv4Addr::from_str("127.0.0.1").unwrap(), 50).unwrap());
+    let _ = server
+        .set_port(get_free_port(Ipv4Addr::from_str("127.0.0.1").unwrap(), MAX_PROT_RETRY).unwrap());
     Ok(server)
 }
 

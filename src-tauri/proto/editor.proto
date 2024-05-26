@@ -44,9 +44,8 @@ message DisconnectReply{
 }
 
 message SetCursorRequest{
-    string file = 1;
-    uint64 row = 2;
-    uint64 col = 3;
+    uint64 row = 1;
+    uint64 col = 2;
 }
 
 message SetCursorReply{

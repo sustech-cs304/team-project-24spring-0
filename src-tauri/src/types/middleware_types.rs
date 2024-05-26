@@ -1,4 +1,7 @@
-use std::{collections::HashMap, sync::Mutex};
+use std::{
+    collections::{HashMap, LinkedList},
+    sync::Mutex,
+};
 
 use ropey::Rope;
 use serde::{Deserialize, Serialize};
@@ -11,12 +14,13 @@ use crate::{
         storage::MFile,
     },
     modules::riscv::basic::interface::parser::RISCV,
-    remote::server::RpcServerImpl,
+    remote::{client::RpcClientImpl, server::RpcServerImpl, ClientCursor, Modification},
 };
 
-//TODO: add simulator and assembler as member
+pub type Cursor = LinkedList<ClientCursor>;
+
 pub struct Tab {
-    pub text: Box<dyn MFile<Rope, String>>,
+    pub text: Box<dyn MFile<Rope, Modification, Cursor>>,
     pub parser: Box<dyn Parser<RISCV>>,
     pub assembler: Box<dyn Assembler<RISCV>>,
     //pub simulator: Box<dyn Simulator<i32, i32, i32, i32>>,
@@ -28,6 +32,7 @@ pub struct Tab {
 pub struct TabMap {
     pub tabs: Mutex<HashMap<String, Tab>>,
     pub rpc_server: Mutex<RpcServerImpl>,
+    pub rpc_client: Mutex<RpcClientImpl>,
 }
 
 pub struct CurTabName {
@@ -182,5 +187,5 @@ pub enum SyscallDataType {
 pub enum FileOperation {
     Insert = 0,
     Delete = 1,
-    Cover = 2,
+    Replace = 2,
 }
