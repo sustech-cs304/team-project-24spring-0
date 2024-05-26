@@ -43,7 +43,6 @@ pub struct Instruction<IS: ParserInstSet + InstructionSetTrait> {
 
 #[derive(Clone)]
 pub enum Operand<IS: ParserInstSet + InstructionSetTrait> {
-    Reg(IS::Register),
     Operator(IS::Immediate),
 }
 

@@ -11,7 +11,7 @@ use crate::{
             Memory,
             Operand,
         },
-        parser::{ParserInst, ParserResult},
+        parser::ParserResult,
     },
     modules::riscv::{
         basic::{
@@ -22,8 +22,6 @@ use crate::{
     },
     types::middleware_types::AssemblerConfig,
 };
-pub const MAIN: u32 = 0x00400000;
-pub const DATA: u32 = 0x10010000;
 const MAX_RELATIVE_OFFSET: i32 = 0b0111_1111_1111_1111_1111;
 const MIN_RELATIVE_OFFSET: i32 = -0b1000_0000_0000_0000_0000;
 
@@ -34,9 +32,8 @@ macro_rules! modify_label {
                 $imm = *imm;
             }
             ParserRISCVImmediate::Lbl((label, handler)) => {
-                let address: u32 = u32::from(*label) - DATA + $self.data;
-                let mut line_addr: u32 =
-                    u32::from(ParserRISCVLabel::Text($start)) - MAIN + $self.main;
+                let address: u32 = u32::from(*label) + $self.data;
+                let mut line_addr: u32 = u32::from(ParserRISCVLabel::Text($start)) + $self.main;
                 match handler {
                     ParserRISCVLabelHandler::Low => $imm = get_32u_low(address),
                     ParserRISCVLabelHandler::High => $imm = get_32u_high(address),
@@ -125,9 +122,10 @@ pub struct RiscVAssembler {
 
 impl RiscVAssembler {
     pub fn new() -> Self {
+        let config = AssemblerConfig::default();
         RiscVAssembler {
-            main: MAIN,
-            data: DATA,
+            main: config.dot_text_base_address as u32,
+            data: config.dot_data_base_address as u32,
         }
     }
 }
@@ -176,9 +174,9 @@ impl Assembler<RISCV> for RiscVAssembler {
                                 | RV32IInstruction::Xor => {
                                     extract_opds!(inst.opd, R, rd, rs1, rs2);
                                     result.operands = Vec::from([
-                                        Operand::from(rd),
-                                        Operand::from(rs1),
-                                        Operand::from(rs2),
+                                        Operand::from(rd as i32),
+                                        Operand::from(rs1 as i32),
+                                        Operand::from(rs2 as i32),
                                     ]);
                                 }
                                 RV32IInstruction::Addi
@@ -206,8 +204,8 @@ impl Assembler<RISCV> for RiscVAssembler {
                                 | RV32IInstruction::Ecall => {
                                     extract_opds!(self, inst, I, rd, rs1, imm, index);
                                     result.operands = Vec::from([
-                                        Operand::from(rd),
-                                        Operand::from(rs1),
+                                        Operand::from(rd as i32),
+                                        Operand::from(rs1 as i32),
                                         Operand::from(imm),
                                     ]);
                                 }
@@ -218,14 +216,14 @@ impl Assembler<RISCV> for RiscVAssembler {
                                     extract_opds!(self, inst, S, rs1, rs2, imm, index);
                                     result.operands = Vec::from([
                                         Operand::from(imm),
-                                        Operand::from(rs1),
-                                        Operand::from(rs2),
+                                        Operand::from(rs1 as i32),
+                                        Operand::from(rs2 as i32),
                                     ]);
                                 }
                                 RV32IInstruction::Jal => {
                                     extract_opds!(inst, J, rd, imm, index, error);
                                     result.operands =
-                                        Vec::from([Operand::from(rd), Operand::from(imm)]);
+                                        Vec::from([Operand::from(rd as i32), Operand::from(imm)]);
                                 }
                                 RV32IInstruction::Beq
                                 | RV32IInstruction::Bge
@@ -235,15 +233,15 @@ impl Assembler<RISCV> for RiscVAssembler {
                                 | RV32IInstruction::Bne => {
                                     extract_opds!(inst, B, rs1, rs2, imm, index, error);
                                     result.operands = Vec::from([
-                                        Operand::from(rs1),
-                                        Operand::from(rs2),
+                                        Operand::from(rs1 as i32),
+                                        Operand::from(rs2 as i32),
                                         Operand::from(imm),
                                     ]);
                                 }
                                 RV32IInstruction::Auipc | RV32IInstruction::Lui => {
                                     extract_opds!(self, inst, U, rd, imm, index);
                                     result.operands =
-                                        Vec::from([Operand::from(rd), Operand::from(imm)]);
+                                        Vec::from([Operand::from(rd as i32), Operand::from(imm)]);
                                 }
                                 RV32IInstruction::Fence => {
                                     if let [ParserRISCVInstOpd::Imm(imm1), ParserRISCVInstOpd::Imm(imm2)] =
@@ -287,9 +285,9 @@ impl Assembler<RISCV> for RiscVAssembler {
                                 | RV32FInstruction::FsubS => {
                                     extract_opds!(inst.opd, R, rd, rs1, rs2);
                                     result.operands = Vec::from([
-                                        Operand::from(rd),
-                                        Operand::from(rs1),
-                                        Operand::from(rs2),
+                                        Operand::from(rd as i32),
+                                        Operand::from(rs1 as i32),
+                                        Operand::from(rs2 as i32),
                                     ]);
                                 }
                                 RV32FInstruction::FmaddS
@@ -298,17 +296,17 @@ impl Assembler<RISCV> for RiscVAssembler {
                                 | RV32FInstruction::FnmsubS => {
                                     extract_opds!(inst.opd, R4, rd, rs1, rs2, rs3);
                                     result.operands = Vec::from([
-                                        Operand::from(rd),
-                                        Operand::from(rs1),
-                                        Operand::from(rs2),
-                                        Operand::from(rs3),
+                                        Operand::from(rd as i32),
+                                        Operand::from(rs1 as i32),
+                                        Operand::from(rs2 as i32),
+                                        Operand::from(rs3 as i32),
                                     ]);
                                 }
                                 RV32FInstruction::Flw => {
                                     extract_opds!(self, inst, I, rd, rs1, imm, index);
                                     result.operands = Vec::from([
-                                        Operand::from(rd),
-                                        Operand::from(rs1),
+                                        Operand::from(rd as i32),
+                                        Operand::from(rs1 as i32),
                                         Operand::from(imm),
                                     ]);
                                 }
@@ -316,8 +314,8 @@ impl Assembler<RISCV> for RiscVAssembler {
                                     extract_opds!(self, inst, S, rs1, rs2, imm, index);
                                     result.operands = Vec::from([
                                         Operand::from(imm),
-                                        Operand::from(rs1),
-                                        Operand::from(rs2),
+                                        Operand::from(rs1 as i32),
+                                        Operand::from(rs2 as i32),
                                     ]);
                                 }
                             }
@@ -333,24 +331,9 @@ impl Assembler<RISCV> for RiscVAssembler {
                 }
                 Err(err) => error.extend(err),
             };
-            line.address = self.main as u32 + index as u32 * 4;
+            line.address = self.main + index as u32 * 4;
             let old_operation = line.instruction.operation;
             let new_instruction = std::mem::replace(&mut line.instruction, result);
-            let opd: Vec<ParserRISCVInstOpd> = new_instruction
-                .operands
-                .iter()
-                .map(|operand| match operand {
-                    Operand::Reg(reg) => ParserRISCVInstOpd::Reg(reg.clone()),
-                    Operand::Operator(imm) => {
-                        ParserRISCVInstOpd::Imm(ParserRISCVImmediate::Imm(imm.clone()))
-                    }
-                })
-                .collect();
-            let decompilation = ParserInst::<RISCV> {
-                line: line.line_number as usize,
-                op: old_operation,
-                opd: opd,
-            };
             results.push(line);
         }
         if error.is_empty() {

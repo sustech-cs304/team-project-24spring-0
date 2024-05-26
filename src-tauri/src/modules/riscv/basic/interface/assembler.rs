@@ -36,10 +36,6 @@ impl Display for InstructionSet<RISCV> {
 impl Display for Operand<RISCV> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Operand::Reg(reg) => {
-                write!(f, " {:?}", reg)?;
-                Ok(())
-            }
             Operand::Operator(imm) => {
                 write!(f, " {:?}", imm)?;
                 Ok(())
