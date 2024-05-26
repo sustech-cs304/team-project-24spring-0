@@ -1,7 +1,7 @@
 use crate::{
     interface::assembler::AssembleResult,
     modules::riscv::basic::interface::parser::RISCV,
-    types::middleware_types::{AssemblerConfig, SyscallDataType},
+    types::middleware_types::AssemblerConfig,
 };
 
 pub trait Simulator: Send + Sync {
@@ -15,7 +15,7 @@ pub trait Simulator: Send + Sync {
     fn reset(&mut self) -> Result<(), String>;
     fn undo(&mut self) -> Result<(), String>;
     fn set_breakpoint(&mut self, idx: usize) -> Result<(), String>;
-    fn syscall_input(&mut self, input: SyscallDataType);
+    fn syscall_input(&mut self, input: &str) -> Result<(), String>;
     fn get_register(&self) -> &[u32];
     // [begin, end]
     fn get_memory(&self, begin: u32, end: u32) -> Vec<u32>;

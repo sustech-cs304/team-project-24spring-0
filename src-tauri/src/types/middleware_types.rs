@@ -5,7 +5,6 @@ use std::{
 
 use ropey::Rope;
 use serde::{Deserialize, Serialize};
-use strum_macros::{Display, EnumMessage};
 
 use crate::{
     interface::{
@@ -121,8 +120,7 @@ pub struct SyscallOutput {
 
 #[derive(Clone, Serialize)]
 pub struct SyscallRequest {
-    pub path: String,
-    pub syscall: String,
+    pub filepath: String,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -166,22 +164,6 @@ impl Default for AssemblerConfig {
             dot_text_base_address: 0x00400000,
         }
     }
-}
-
-#[derive(EnumMessage, Display)]
-pub enum SyscallDataType {
-    #[strum(message = "Char")]
-    Char(u8),
-    #[strum(message = "String")]
-    String(Vec<u8>),
-    #[strum(message = "Int")]
-    Int(i32),
-    #[strum(message = "Long")]
-    Long(i64),
-    #[strum(message = "Float")]
-    Float(f32),
-    #[strum(message = "Double")]
-    Double(f64),
 }
 
 #[derive(Deserialize)]

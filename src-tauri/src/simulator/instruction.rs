@@ -6,7 +6,11 @@ use RV32IInstruction::*;
 use super::simulator::*;
 use crate::{
     interface::assembler::Operand,
-    modules::riscv::{basic::interface::parser::RISCV, rv32i::constants::*},
+    modules::riscv::{
+        basic::interface::parser::RISCV,
+        middleware::backend_api::syscall_output_print,
+        rv32i::constants::*,
+    },
     utility::{enum_map::EnumMap, ptr::Ptr},
 };
 
@@ -217,19 +221,72 @@ pub(super) fn ebreak_handler(arg: InstHandlerArg) -> Result<u8, String> {
 
 pub(super) fn ecall_handler(arg: InstHandlerArg) -> Result<u8, String> {
     match arg.reg(RV32IRegister::A7 as i32) {
-        1 => unimplemented!(),
-        3 => unimplemented!(),
-        4 => unimplemented!(),
-        5 => unimplemented!(),
-        6 => unimplemented!(),
-        7 => unimplemented!(),
-        8 => unimplemented!(),
+        1 => {
+            syscall_output_print(
+                arg.get_path(),
+                &((arg.reg(RV32IRegister::A0 as i32) as i32).to_string()),
+            )?;
+            Ok(STATUS_RUNNING)
+        }
+        4 => {
+            let addr = arg.reg(RV32IRegister::A0 as i32);
+            let sim = arg.sim.as_ref();
+            let mut buf = Vec::new();
+            for i in 0.. {
+                let byte = sim.mem[addr + i as u32];
+                if byte == 0 {
+                    break;
+                }
+                buf.push(byte);
+            }
+            let s = String::from_utf8(buf).unwrap();
+            syscall_output_print(arg.get_path(), &s)?;
+            Ok(STATUS_RUNNING)
+        }
+        5 => {
+            arg.sim.as_mut().wait_input = WaitStatus::Int;
+            Ok(STATUS_PAUSED)
+        }
+        8 => {
+            arg.sim.as_mut().wait_input = WaitStatus::String;
+            Ok(STATUS_PAUSED)
+        }
         10 => Ok(STATUS_STOPPED),
-        11 => unimplemented!(),
-        12 => unimplemented!(),
-        34 => unimplemented!(),
-        35 => unimplemented!(),
-        36 => unimplemented!(),
+        11 => {
+            syscall_output_print(
+                arg.get_path(),
+                &((arg.reg(RV32IRegister::A0 as i32) as u8 as char).to_string()),
+            )?;
+            Ok(STATUS_RUNNING)
+        }
+        12 => {
+            arg.sim.as_mut().wait_input = WaitStatus::Char;
+            Ok(STATUS_PAUSED)
+        }
+        34 => {
+            syscall_output_print(
+                arg.get_path(),
+                &format!("0x{:08x}", arg.sim.as_ref().reg[RV32IRegister::A0 as usize]),
+            )?;
+            Ok(STATUS_RUNNING)
+        }
+        35 => {
+            syscall_output_print(
+                arg.get_path(),
+                &format!(
+                    "0x{:032b}",
+                    arg.sim.as_ref().reg[RV32IRegister::A0 as usize]
+                ),
+            )?;
+            Ok(STATUS_RUNNING)
+        }
+        36 => {
+            syscall_output_print(
+                arg.get_path(),
+                &((arg.reg(RV32IRegister::A0 as i32) as u32).to_string()),
+            )?;
+            Ok(STATUS_RUNNING)
+        }
         _ => Err("Invalid ecall number".to_string()),
     }
 }
@@ -451,5 +508,9 @@ impl<'a> InstHandlerArg<'a> {
 
     fn pc_step(&self) {
         self.sim.as_mut().pc_idx += 1;
+    }
+
+    fn get_path(&self) -> &str {
+        &self.sim.as_ref().file
     }
 }

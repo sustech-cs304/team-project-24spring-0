@@ -10,7 +10,7 @@ use crate::{
         basic::interface::parser::{ParserRISCVInstOp, RV32IRegister, RISCV},
         middleware::backend_api::simulator_update,
     },
-    types::middleware_types::{AssemblerConfig, SyscallDataType},
+    types::middleware_types::AssemblerConfig,
     utility::ptr::Ptr,
 };
 
@@ -24,18 +24,26 @@ pub(super) const STATUS_STOPPED: u8 = 4;
 pub(super) const STATUS_STOPPING: u8 = 5;
 pub(super) const STATUS_UNDO: u8 = 6;
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub(super) enum WaitStatus {
+    Not,
+    Int,
+    String,
+    Char,
+}
+
 pub struct RISCVSimulator {
     pub(super) reg: [u32; 32],
     pub(super) pc_idx: usize,
     pub(super) mem: Memory,
     pub(super) conf: AssemblerConfig,
     pub(super) inst: Option<AssembleResult<RISCV>>,
+    pub(super) file: String,
+    pub(super) wait_input: WaitStatus,
     breakpoints: Vec<bool>,
     debug: bool,
-    wait_input: bool,
     thread: Option<std::thread::JoinHandle<()>>,
     status: AtomicU8,
-    file: String,
     history: VecDeque<History>,
 }
 
@@ -58,7 +66,7 @@ impl RISCVSimulator {
             inst: None,
             breakpoints: Vec::new(),
             debug: false,
-            wait_input: false,
+            wait_input: WaitStatus::Not,
             thread: None,
             status: AtomicU8::new(0),
             file: file.to_string(),
@@ -166,7 +174,7 @@ impl Simulator for RISCVSimulator {
     }
 
     fn resume(&mut self) -> Result<(), String> {
-        if self.wait_input {
+        if self.wait_input != WaitStatus::Not {
             return Err("Waiting for input".to_string());
         }
         if !self.cas_status(STATUS_PAUSED, STATUS_RUNNING) {
@@ -181,7 +189,7 @@ impl Simulator for RISCVSimulator {
             if !self.cas_status(STATUS_PAUSED, STATUS_RUNNING) {
                 return Err("Invalid operation".to_string());
             } else {
-                if self.wait_input {
+                if self.wait_input != WaitStatus::Not {
                     self.set_status(STATUS_PAUSED);
                     return Err("Waiting for input".to_string());
                 }
@@ -243,8 +251,39 @@ impl Simulator for RISCVSimulator {
         Ok(())
     }
 
-    fn syscall_input(&mut self, input: SyscallDataType) {
-        todo!()
+    fn syscall_input(&mut self, input: &str) -> Result<(), String> {
+        match self.wait_input {
+            WaitStatus::Not => Err("No input required".to_string()),
+            WaitStatus::Int => {
+                if let Ok(val) = input.parse::<u32>() {
+                    self.reg[RV32IRegister::A0 as usize] = val;
+                    self.wait_input = WaitStatus::Not;
+                    self.resume()
+                } else {
+                    Err("Invalid input".to_string())
+                }
+            }
+            WaitStatus::String => {
+                let addr = self.reg[RV32IRegister::A0 as usize];
+                let len = self.reg[RV32IRegister::A1 as usize];
+                if !self.in_data_segment(addr, len) {
+                    return Err("Invalid memory access".to_string());
+                }
+                let data = input.as_bytes();
+                self.mem.set_range(addr, &data[..len as usize]);
+                self.wait_input = WaitStatus::Not;
+                self.resume()
+            }
+            WaitStatus::Char => {
+                let addr = self.reg[RV32IRegister::A0 as usize];
+                if !self.in_data_segment(addr, 1) {
+                    return Err("Invalid memory access".to_string());
+                }
+                self.mem[addr] = input.as_bytes()[0];
+                self.wait_input = WaitStatus::Not;
+                self.resume()
+            }
+        }
     }
 
     fn get_register(&self) -> &[u32] {
@@ -339,7 +378,9 @@ impl RISCVSimulator {
                 res
             }
         } else {
-            unimplemented!()
+            unimplemented!(
+                "想要更多拓展? https://github.com/sustech-cs304/team-project-24spring-0点亮☆谢谢喵~"
+            )
         }
     }
 
@@ -355,7 +396,7 @@ impl RISCVSimulator {
         if let Some(t) = self.thread.take() {
             t.join().unwrap();
         }
-        self.wait_input = false;
+        self.wait_input = WaitStatus::Not;
     }
 
     fn _start(&mut self) {

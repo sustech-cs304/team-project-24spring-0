@@ -432,13 +432,6 @@ pub mod frontend_api {
     /// Send a syscall input to current tab's simulator.
     /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: State containing the map of all tabs.
-    /// - `inputType`: Type of the input, should be one of the following:
-    ///    - "Int"
-    ///    - "Float"
-    ///    - "Double"
-    ///    - "String"
-    ///    - "Char"
-    ///    - "Long"
     /// - `val`: Value of the input as a string.
     ///
     /// Returns `bool` indicating whether the syscall input was successfully
@@ -447,21 +440,11 @@ pub mod frontend_api {
     pub fn syscall_input(
         cur_tab_name: State<CurTabName>,
         tab_map: State<TabMap>,
-        inputType: &str,
         val: String,
     ) -> bool {
         let name = cur_tab_name.name.lock().unwrap().clone();
         let mut lock = tab_map.tabs.lock().unwrap();
         let tab = lock.get_mut(&name).unwrap();
-        let val = match inputType {
-            "Int" => SyscallDataType::Int(val.parse::<i32>().unwrap()),
-            "Float" => SyscallDataType::Float(val.parse::<f32>().unwrap()),
-            "Double" => SyscallDataType::Double(val.parse::<f64>().unwrap()),
-            "String" => SyscallDataType::String(val.bytes().collect()),
-            "Char" => SyscallDataType::Char(val.bytes().next().unwrap()),
-            "Long" => SyscallDataType::Long(val.parse::<i64>().unwrap()),
-            _ => return false,
-        };
         todo!("call simulator syscall_input with val");
     }
 
@@ -598,7 +581,7 @@ pub mod backend_api {
     use tauri::Manager;
 
     use crate::{
-        types::middleware_types::{SyscallDataType, SyscallOutput, SyscallRequest},
+        types::middleware_types::{SyscallOutput, SyscallRequest},
         APP_HANDLE,
     };
 
@@ -606,7 +589,8 @@ pub mod backend_api {
     /// - `pathname`: Identifier for the tab to which the output should be sent.
     /// - `output`: Output to be printed.
     ///
-    /// Returns `Option` containing an error if the event could not be emitted.
+    /// Returns `Result` indicating the success or failure of the event
+    /// emission.
     ///
     /// This function will emit a `front_syscall_print` event to the frontend,
     /// and the payload is a `SyscallOutput` containing the filepath and output
@@ -615,10 +599,7 @@ pub mod backend_api {
     /// SyscallOutput:
     /// - `filepath`: string
     /// - `data`: string
-    pub fn syscall_output_print(
-        pathname: &str,
-        output: &str,
-    ) -> Option<Box<dyn std::error::Error>> {
+    pub fn syscall_output_print(pathname: &str, output: &str) -> Result<(), String> {
         if let Some(app_handle) = APP_HANDLE.lock().unwrap().as_ref() {
             if let Ok(_) = app_handle.emit_all(
                 "front_syscall_print",
@@ -627,60 +608,41 @@ pub mod backend_api {
                     data: output.to_string(),
                 },
             ) {
-                None
+                Ok(())
             } else {
-                Some(Box::new(std::io::Error::new(
-                    std::io::ErrorKind::Other,
-                    "Failed to emit syscall output print event!",
-                )))
+                Err("Failed to emit syscall output print event!".to_string())
             }
         } else {
-            Some(Box::new(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                "AppHandle is not initialized!",
-            )))
+            Err("AppHandle is not initialized!".to_string())
         }
     }
 
-    /// Emits a syscall input request event to the frontend.
-    /// - `pathname`: Identifier for the tab to which the request should be
-    ///   sent.
-    /// - `acquire_type`: Type of the input to be acquired.
+    /// Emits a print syscall output event to the frontend.
+    /// - `pathname`: Identifier for the tab to which the output should be sent.
     ///
-    /// Returns `Option` containing an error if the event could not be emitted.
+    /// Returns `Result` indicating the success or failure of the event
+    /// emission.
     ///
-    /// This function will emit a `front_syscall_request` event to the frontend,
-    /// and the payload is one of the following string:
-    /// - "Int"
-    /// - "Float"
-    /// - "Double"
-    /// - "String"
-    /// - "Char"
-    /// - "Long"
-    pub fn syscall_input_request(
-        pathname: &str,
-        acquire_type: SyscallDataType,
-    ) -> Option<Box<dyn std::error::Error>> {
+    /// This function will emit a `front_syscall_print` event to the frontend,
+    /// and the payload is a `SyscallOutput` containing the filepath and output
+    /// to be printed.
+    ///
+    /// SyscallRequest:
+    /// - `filepath`: string
+    pub fn syscall_input_request(pathname: &str) -> Result<(), String> {
         if let Some(app_handle) = APP_HANDLE.lock().unwrap().as_ref() {
             if let Ok(_) = app_handle.emit_all(
                 "front_syscall_request",
                 SyscallRequest {
-                    path: pathname.to_string(),
-                    syscall: acquire_type.to_string(),
+                    filepath: pathname.to_string(),
                 },
             ) {
-                None
+                Ok(())
             } else {
-                Some(Box::new(std::io::Error::new(
-                    std::io::ErrorKind::Other,
-                    "Failed to emit syscall input request event!",
-                )))
+                Err("Failed to emit syscall input request event!".to_string())
             }
         } else {
-            Some(Box::new(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                "AppHandle is not initialized!",
-            )))
+            Err("AppHandle is not initialized!".to_string())
         }
     }
 
