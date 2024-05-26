@@ -1,10 +1,6 @@
 use crate::{
     interface::assembler::Operand,
-    modules::riscv::basic::interface::parser::{
-        ParserRISCVImmediate,
-        ParserRISCVLabel,
-        RISCV,
-    },
+    modules::riscv::basic::interface::parser::{ParserRISCVImmediate, ParserRISCVLabel, RISCV},
 };
 
 impl From<i32> for Operand<RISCV> {
