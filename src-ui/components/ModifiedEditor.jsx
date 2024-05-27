@@ -63,6 +63,13 @@ export default function ModifiedEditor({ fileName }) {
           end: endPosition,
         })
         console.log('Invoke modify_current_tab result: ', result)
+        // set cursor to endPosition now
+        // invoke set_cursor
+        var result = await invoke('set_cursor', {
+          filepath: fileName,
+          row: change.range.endLineNumber,
+          col: change.range.endColumn,
+        })
       }
     })
   }

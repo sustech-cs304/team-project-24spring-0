@@ -3,7 +3,8 @@ import { Table, TableHeader, TableBody, TableRow, TableColumn, TableCell } from 
 import useOutputStore from '@/utils/outputState'
 import useFileStore from '@/utils/state'
 import openAIClient from '@/utils/openAI'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import {listen} from "@tauri-apps/api/event";
 
 export default function MessageIO() {
   var outputStore = useOutputStore()
@@ -11,6 +12,34 @@ export default function MessageIO() {
   const fileState = useFileStore.getState()
   const [question, setQuestion] = useState('')
   const [answer, setAnswer] = useState('')
+  const [ioContent, setIOContent] = useState('')
+  const [ioWindowBlocked, setIOWindowBlocked] = useState(true)
+  const [acquireType, setAcquireType] = useState('')
+
+    useEffect(() => {
+      // handle backend input and output api
+      const unListenSyscallOutputPrint = listen('syscall_output_print', event => {
+        print(event);
+        var pathname = event.payload['pathname'];
+        var output = event.payload['output'];
+        setIOContent(prevContent => prevContent + '\n' + pathname + ':\n' + output);
+      });
+
+      const unListenSyscallInputRequest = listen('syscall_input_request', event => {
+        print(event);
+        var pathname = event.payload['pathname'];
+        var acquire_type = event.payload['acquire_type'];
+        setAcquireType(acquire_type);
+        setIOWindowBlocked(false);
+        setIOContent(prevContent => prevContent + '\n' + pathname + ':\n>>>');
+        setIOWindowBlocked(false);
+      }, {});
+
+      return () => {
+        unListenSyscallOutputPrint.then(dispose => dispose())
+        unListenSyscallInputRequest.then(dispose => dispose())
+      }
+    }, []);
 
   var generateOutputFromArray = array => {
     var output = ''
@@ -22,6 +51,23 @@ export default function MessageIO() {
 
   var handleClearOutput = () => {
     outputStore.clearOutput()
+  }
+
+  var handleIOInput = async (event) => {
+    // get the new input from the textarea
+    // if the new input is /n, then send the input to the backend and block the textarea
+    // else, append the new input to the textarea
+    if (event.key === 'Enter') {
+      // send the input to the backend
+      setIOWindowBlocked(true);
+      // check the acquire type
+
+      // send the input to the backend
+
+    } else {
+        // append the new input to the textarea
+        setIOContent(prevContent => prevContent + event.key);
+    }
   }
 
   var handleAskAI = async () => {
@@ -96,7 +142,10 @@ export default function MessageIO() {
                 <textarea
                   id="runiotext"
                   rows="4"
+                  readOnly={ioWindowBlocked}
                   className="h-full block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                  value={ioContent}
+                  onChange={e => setIOContent(e.target.value)}
                   placeholder="Run IO..."
                 ></textarea>
               </div>
