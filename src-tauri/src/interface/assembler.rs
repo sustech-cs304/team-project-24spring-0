@@ -41,6 +41,7 @@ pub struct Instruction<IS: ParserInstSet + InstructionSetTrait> {
     pub operands: Vec<Operand<IS>>,
 }
 
+#[allow(type_alias_bounds)]
 pub type Operand<IS: ParserInstSet + InstructionSetTrait> = IS::Immediate;
 
 pub struct Memory {
