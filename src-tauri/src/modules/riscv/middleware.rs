@@ -377,7 +377,19 @@ pub mod frontend_api {
     /// started.
     #[tauri::command]
     pub fn run(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> Optional {
-        todo!("Implement debug")
+        let name = cur_tab_name.name.lock().unwrap().clone();
+        let mut lock = tab_map.tabs.lock().unwrap();
+        let tab = lock.get_mut(&name).unwrap();
+        match tab.simulator.run() {
+            Ok(_) => Optional {
+                success: true,
+                message: String::new(),
+            },
+            Err(e) => Optional {
+                success: false,
+                message: e.to_string(),
+            },
+        }
     }
 
     /// Run the code in the currently active tab in debug mode.
@@ -388,7 +400,19 @@ pub mod frontend_api {
     /// started.
     #[tauri::command]
     pub fn debug(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> Optional {
-        todo!("Implement debug")
+        let name = cur_tab_name.name.lock().unwrap().clone();
+        let mut lock = tab_map.tabs.lock().unwrap();
+        let tab = lock.get_mut(&name).unwrap();
+        match tab.simulator.debug() {
+            Ok(_) => Optional {
+                success: true,
+                message: String::new(),
+            },
+            Err(e) => Optional {
+                success: false,
+                message: e.to_string(),
+            },
+        }
     }
 
     /// Stops the currently active tab's simulator.
@@ -398,7 +422,19 @@ pub mod frontend_api {
     /// Returns `Optional` indicating whether the stop was successful.
     #[tauri::command]
     pub fn stop(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> Optional {
-        todo!("Implement stop")
+        let name = cur_tab_name.name.lock().unwrap().clone();
+        let mut lock = tab_map.tabs.lock().unwrap();
+        let tab = lock.get_mut(&name).unwrap();
+        match tab.simulator.stop() {
+            Ok(_) => Optional {
+                success: true,
+                message: String::new(),
+            },
+            Err(e) => Optional {
+                success: false,
+                message: e.to_string(),
+            },
+        }
     }
 
     /// Resumes the currently active tab's simulator.
@@ -408,7 +444,19 @@ pub mod frontend_api {
     /// Returns `Optional` indicating whether the resume was successful.
     #[tauri::command]
     pub fn resume(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> Optional {
-        todo!("Implement resume")
+        let name = cur_tab_name.name.lock().unwrap().clone();
+        let mut lock = tab_map.tabs.lock().unwrap();
+        let tab = lock.get_mut(&name).unwrap();
+        match tab.simulator.resume() {
+            Ok(_) => Optional {
+                success: true,
+                message: String::new(),
+            },
+            Err(e) => Optional {
+                success: false,
+                message: e.to_string(),
+            },
+        }
     }
 
     /// Steps through the code in the currently active tab.
@@ -418,7 +466,19 @@ pub mod frontend_api {
     /// Returns `Optional` indicating whether the step was successful.
     #[tauri::command]
     pub fn step(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> Optional {
-        todo!("Implement step")
+        let name = cur_tab_name.name.lock().unwrap().clone();
+        let mut lock = tab_map.tabs.lock().unwrap();
+        let tab = lock.get_mut(&name).unwrap();
+        match tab.simulator.step() {
+            Ok(_) => Optional {
+                success: true,
+                message: String::new(),
+            },
+            Err(e) => Optional {
+                success: false,
+                message: e.to_string(),
+            },
+        }
     }
 
     /// Resets the state of the currently active tab's simulator.
@@ -428,7 +488,19 @@ pub mod frontend_api {
     /// Returns `Optional` indicating whether the reset was successful.
     #[tauri::command]
     pub fn reset(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> Optional {
-        todo!("Implement reset")
+        let name = cur_tab_name.name.lock().unwrap().clone();
+        let mut lock = tab_map.tabs.lock().unwrap();
+        let tab = lock.get_mut(&name).unwrap();
+        match tab.simulator.reset() {
+            Ok(_) => Optional {
+                success: true,
+                message: String::new(),
+            },
+            Err(e) => Optional {
+                success: false,
+                message: e.to_string(),
+            },
+        }
     }
 
     /// Undoes the last instruction for current activate tab's simulator.
@@ -438,29 +510,75 @@ pub mod frontend_api {
     /// Returns `Optional` indicating whether the undo was successful.
     #[tauri::command]
     pub fn undo(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> Optional {
-        todo!("Implement undo")
+        let name = cur_tab_name.name.lock().unwrap().clone();
+        let mut lock = tab_map.tabs.lock().unwrap();
+        let tab = lock.get_mut(&name).unwrap();
+        match tab.simulator.undo() {
+            Ok(_) => Optional {
+                success: true,
+                message: String::new(),
+            },
+            Err(e) => Optional {
+                success: false,
+                message: e.to_string(),
+            },
+        }
     }
 
     /// Sets a breakpoint at a specified line in the code of the current tab.
+    /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: State containing the map of all tabs.
     /// - `line`: Line number at which to set the breakpoint.
     ///
     /// Returns `Optional` indicating whether the breakpoint was successfully
     /// set.
     #[tauri::command]
-    pub fn set_breakpoint(tab_map: State<TabMap>, line: usize) -> Optional {
-        todo!("Implement setBreakPoint")
+    pub fn set_breakpoint(
+        cur_tab_name: State<CurTabName>,
+        tab_map: State<TabMap>,
+        line: u64,
+    ) -> Optional {
+        let name = cur_tab_name.name.lock().unwrap().clone();
+        let mut lock = tab_map.tabs.lock().unwrap();
+        let tab = lock.get_mut(&name).unwrap();
+        match tab.simulator.set_breakpoint(line as usize) {
+            Ok(_) => Optional {
+                success: true,
+                message: String::new(),
+            },
+            Err(e) => Optional {
+                success: false,
+                message: e.to_string(),
+            },
+        }
     }
 
     /// Removes a breakpoint at a specified line in the code of the current tab.
+    /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: State containing the map of all tabs.
     /// - `line`: Line number at which to remove the breakpoint.
     ///
     /// Returns `Optional` indicating whether the breakpoint was successfully
     /// removed.
     #[tauri::command]
-    pub fn remove_breakpoint(tab_map: State<TabMap>, line: u64) -> Optional {
-        todo!("Implement removeBreakPoint")
+    pub fn remove_breakpoint(
+        cur_tab_name: State<CurTabName>,
+        tab_map: State<TabMap>,
+        line: u64,
+    ) -> Optional {
+        let name = cur_tab_name.name.lock().unwrap().clone();
+        let mut lock = tab_map.tabs.lock().unwrap();
+        let tab = lock.get_mut(&name).unwrap();
+        match tab.simulator.remove_breakpoint(line as usize) {
+            Ok(_) => Optional {
+                success: true,
+                message: String::new(),
+            },
+            Err(e) => Optional {
+                success: false,
+                message: e.to_string(),
+            },
+        }
     }
 
     /// Send a syscall input to current tab's simulator.
@@ -479,7 +597,16 @@ pub mod frontend_api {
         let name = cur_tab_name.name.lock().unwrap().clone();
         let mut lock = tab_map.tabs.lock().unwrap();
         let tab = lock.get_mut(&name).unwrap();
-        todo!("call simulator syscall_input with val");
+        match tab.simulator.syscall_input(&val) {
+            Ok(_) => Optional {
+                success: true,
+                message: String::new(),
+            },
+            Err(e) => Optional {
+                success: false,
+                message: e.to_string(),
+            },
+        }
     }
 
     /// Updates the assembler settings for the current tab.
@@ -495,7 +622,20 @@ pub mod frontend_api {
         tab_map: State<TabMap>,
         settings: AssemblerConfig,
     ) -> Optional {
-        todo!("Implement updateAssemblerSettings");
+        let name = cur_tab_name.name.lock().unwrap().clone();
+        let mut lock = tab_map.tabs.lock().unwrap();
+        let tab = lock.get_mut(&name).unwrap();
+        if let Err(e) = tab.simulator.update_config(&settings) {
+            return Optional {
+                success: false,
+                message: e.to_string(),
+            };
+        }
+        tab.assembler.update_config(&settings);
+        Optional {
+            success: true,
+            message: String::new(),
+        }
     }
 
     /// Starts the RPC server for the current tab.
@@ -612,10 +752,12 @@ pub mod frontend_api {
 /// to emit event to the frontend, and the frontend needs to handle the event by
 /// `listen`.
 pub mod backend_api {
+    use strum::VariantArray;
     use tauri::Manager;
 
     use crate::{
-        types::middleware_types::{SyscallOutput, SyscallRequest},
+        modules::riscv::basic::interface::parser::RV32IRegister,
+        types::middleware_types::{Register, SimulatorData, SyscallOutput, SyscallRequest},
         APP_HANDLE,
     };
 
@@ -641,7 +783,31 @@ pub mod backend_api {
         reg: Vec<u32>,
         mem: Vec<u32>,
     ) -> Result<(), String> {
-        todo!()
+        if let Some(app_handle) = APP_HANDLE.lock().unwrap().as_ref() {
+            if let Ok(_) = app_handle.emit_all(
+                "front_simulator_update",
+                SimulatorData {
+                    has_current_text: pc_idx.is_some(),
+                    current_text: pc_idx.unwrap_or(0) as u64,
+                    registers: reg
+                        .iter()
+                        .enumerate()
+                        .map(|(i, &val)| Register {
+                            name: RV32IRegister::VARIANTS[i].to_string(),
+                            number: i.to_string(),
+                            value: val as u64,
+                        })
+                        .collect(),
+                    data: mem,
+                },
+            ) {
+                Ok(())
+            } else {
+                Err("Failed to emit simulator update event!".to_string())
+            }
+        } else {
+            Err("AppHandle is not initialized!".to_string())
+        }
     }
 
     /// Emits a print syscall output event to the frontend.

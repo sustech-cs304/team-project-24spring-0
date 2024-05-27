@@ -16,6 +16,7 @@ pub trait Simulator: Send + Sync {
     fn reset(&mut self) -> Result<(), String>;
     fn undo(&mut self) -> Result<(), String>;
     fn set_breakpoint(&mut self, idx: usize) -> Result<(), String>;
+    fn remove_breakpoint(&mut self, idx: usize) -> Result<(), String>;
     fn syscall_input(&mut self, input: &str) -> Result<(), String>;
     fn get_register(&self) -> &[u32];
     // [begin, end]

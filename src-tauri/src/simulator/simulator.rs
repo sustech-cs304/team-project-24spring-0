@@ -248,7 +248,15 @@ impl Simulator for RISCVSimulator {
         if idx >= self.breakpoints.len() {
             return Err("Invalid breakpoint index".to_string());
         }
-        self.breakpoints[idx] ^= true;
+        self.breakpoints[idx] = true;
+        Ok(())
+    }
+
+    fn remove_breakpoint(&mut self, idx: usize) -> Result<(), String> {
+        if idx >= self.breakpoints.len() {
+            return Err("Invalid breakpoint index".to_string());
+        }
+        self.breakpoints[idx] = false;
         Ok(())
     }
 
