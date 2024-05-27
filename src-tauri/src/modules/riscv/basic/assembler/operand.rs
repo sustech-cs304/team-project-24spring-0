@@ -1,13 +1,4 @@
-use crate::{
-    interface::assembler::Operand,
-    modules::riscv::basic::interface::parser::{ParserRISCVImmediate, ParserRISCVLabel, RISCV},
-};
-
-impl From<i32> for Operand<RISCV> {
-    fn from(imm: i32) -> Self {
-        Operand::Operator(imm)
-    }
-}
+use crate::modules::riscv::basic::interface::parser::{ParserRISCVImmediate, ParserRISCVLabel};
 
 impl From<ParserRISCVImmediate> for i32 {
     fn from(imm: ParserRISCVImmediate) -> Self {
