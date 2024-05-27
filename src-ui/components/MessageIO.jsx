@@ -4,7 +4,7 @@ import useOutputStore from '@/utils/outputState'
 import useFileStore from '@/utils/state'
 import openAIClient from '@/utils/openAI'
 import { useState, useEffect } from 'react'
-import {listen} from "@tauri-apps/api/event";
+import { listen } from '@tauri-apps/api/event'
 
 export default function MessageIO() {
   var outputStore = useOutputStore()
@@ -16,30 +16,34 @@ export default function MessageIO() {
   const [ioWindowBlocked, setIOWindowBlocked] = useState(true)
   const [acquireType, setAcquireType] = useState('')
 
-    useEffect(() => {
-      // handle backend input and output api
-      const unListenSyscallOutputPrint = listen('syscall_output_print', event => {
-        print(event);
-        var pathname = event.payload['pathname'];
-        var output = event.payload['output'];
-        setIOContent(prevContent => prevContent + '\n' + pathname + ':\n' + output);
-      });
+  useEffect(() => {
+    // handle backend input and output api
+    const unListenSyscallOutputPrint = listen('syscall_output_print', event => {
+      print(event)
+      var pathname = event.payload['pathname']
+      var output = event.payload['output']
+      setIOContent(prevContent => prevContent + '\n' + pathname + ':\n' + output)
+    })
 
-      const unListenSyscallInputRequest = listen('syscall_input_request', event => {
-        print(event);
-        var pathname = event.payload['pathname'];
-        var acquire_type = event.payload['acquire_type'];
-        setAcquireType(acquire_type);
-        setIOWindowBlocked(false);
-        setIOContent(prevContent => prevContent + '\n' + pathname + ':\n>>>');
-        setIOWindowBlocked(false);
-      }, {});
+    const unListenSyscallInputRequest = listen(
+      'syscall_input_request',
+      event => {
+        print(event)
+        var pathname = event.payload['pathname']
+        var acquire_type = event.payload['acquire_type']
+        setAcquireType(acquire_type)
+        setIOWindowBlocked(false)
+        setIOContent(prevContent => prevContent + '\n' + pathname + ':\n>>>')
+        setIOWindowBlocked(false)
+      },
+      {},
+    )
 
-      return () => {
-        unListenSyscallOutputPrint.then(dispose => dispose())
-        unListenSyscallInputRequest.then(dispose => dispose())
-      }
-    }, []);
+    return () => {
+      unListenSyscallOutputPrint.then(dispose => dispose())
+      unListenSyscallInputRequest.then(dispose => dispose())
+    }
+  }, [])
 
   var generateOutputFromArray = array => {
     var output = ''
@@ -53,20 +57,19 @@ export default function MessageIO() {
     outputStore.clearOutput()
   }
 
-  var handleIOInput = async (event) => {
+  var handleIOInput = async event => {
     // get the new input from the textarea
     // if the new input is /n, then send the input to the backend and block the textarea
     // else, append the new input to the textarea
     if (event.key === 'Enter') {
       // send the input to the backend
-      setIOWindowBlocked(true);
+      setIOWindowBlocked(true)
       // check the acquire type
 
       // send the input to the backend
-
     } else {
-        // append the new input to the textarea
-        setIOContent(prevContent => prevContent + event.key);
+      // append the new input to the textarea
+      setIOContent(prevContent => prevContent + event.key)
     }
   }
 
