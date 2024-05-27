@@ -24,7 +24,6 @@ pub struct Tab {
     pub parser: Box<dyn Parser<RISCV>>,
     pub assembler: Box<dyn Assembler<RISCV>>,
     pub simulator: Box<dyn Simulator>,
-    pub data_return_range: (u64, u64),
     pub assembly_cache: AssembleCache,
 }
 
@@ -49,6 +48,22 @@ pub struct Optional {
 pub struct CursorPosition {
     pub row: u64,
     pub col: u64,
+}
+
+/// both start and len are aligned by 4
+#[derive(Clone, Copy, Deserialize)]
+pub struct MemoryReturnRange {
+    pub start: u64,
+    pub len: u64,
+}
+
+impl Default for MemoryReturnRange {
+    fn default() -> Self {
+        Self {
+            start: 0x10010000,
+            len: 0x100,
+        }
+    }
 }
 
 #[derive(Clone, Serialize)]
@@ -95,10 +110,12 @@ pub struct AssembleCache {
 
 #[derive(Clone, Serialize)]
 pub struct SimulatorData {
+    pub success: bool,
     pub has_current_text: bool,
     pub current_text: u64,
     pub registers: Vec<Register>,
     pub data: Vec<Data>,
+    pub message: String,
 }
 
 #[derive(Clone, Serialize)]

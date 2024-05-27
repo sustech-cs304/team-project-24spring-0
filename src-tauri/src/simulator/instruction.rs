@@ -101,7 +101,7 @@ macro_rules! store_helper {
     ($arg:expr, $size:expr, $t:ty) => {{
         let addr = $arg.reg($arg[2]) + $arg[1] as u32;
         let sim = $arg.sim.as_mut();
-        if sim.in_stack_segment(addr, $size) {
+        if sim.in_data_segment(addr, $size) || sim.in_stack_segment(addr, $size) {
             let history = $arg.history.as_mut();
             history.mem_addr = addr;
             history.mem_len = $size;

@@ -1,7 +1,7 @@
 use crate::{
     interface::assembler::AssembleResult,
     modules::riscv::basic::interface::parser::RISCV,
-    types::middleware_types::AssemblerConfig,
+    types::middleware_types::{AssemblerConfig, MemoryReturnRange},
 };
 
 pub trait Simulator: Send + Sync {
@@ -19,6 +19,9 @@ pub trait Simulator: Send + Sync {
     fn remove_breakpoint(&mut self, idx: usize) -> Result<(), String>;
     fn syscall_input(&mut self, input: &str) -> Result<(), String>;
     fn get_register(&self) -> &[u32];
-    // [begin, end]
-    fn get_memory(&self, begin: u32, end: u32) -> Vec<u32>;
+    fn get_memory(&self) -> Vec<u32>;
+    fn get_pc_idx(&self) -> Option<usize>;
+    fn get_filepath(&self) -> &str;
+    fn get_memory_return_range(&self) -> MemoryReturnRange;
+    fn set_memory_return_range(&mut self, range: MemoryReturnRange) -> Result<(), String>;
 }

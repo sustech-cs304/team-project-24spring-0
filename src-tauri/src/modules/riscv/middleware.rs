@@ -37,7 +37,6 @@ pub mod frontend_api {
                     parser: Box::new(RISCVParser::new(&vec![RISCVExtension::RV32I])),
                     assembler: Box::new(RiscVAssembler::new()),
                     simulator: Box::new(RISCVSimulator::new(filepath)),
-                    data_return_range: Default::default(),
                     assembly_cache: Default::default(),
                 };
                 tab_map
@@ -230,30 +229,27 @@ pub mod frontend_api {
     /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: State containing the map of all tabs.
     /// - `start`: Start of the range (aligned to 4 bytes)
-    /// - `end`: End of the range (aligned to 4 bytes)
+    /// - `len`: Length of the range (aligned to 4 bytes)
     ///
     /// Returns `Optional` indicating the success or failure of the operation.
     #[tauri::command]
     pub fn set_return_data_range(
         cur_tab_name: State<CurTabName>,
         tab_map: State<TabMap>,
-        start: u64,
-        end: u64,
+        range: MemoryReturnRange,
     ) -> Optional {
-        if start % 4 != 0 || end % 4 != 0 {
-            Optional {
-                success: false,
-                message: "Start and end must be multiples of 4".to_string(),
-            }
-        } else {
-            let name = cur_tab_name.name.lock().unwrap().clone();
-            let mut lock = tab_map.tabs.lock().unwrap();
-            let tab = lock.get_mut(&name).unwrap();
-            tab.data_return_range = (start, end);
-            Optional {
+        let name = cur_tab_name.name.lock().unwrap().clone();
+        let mut lock = tab_map.tabs.lock().unwrap();
+        let tab = lock.get_mut(&name).unwrap();
+        match tab.simulator.set_memory_return_range(range) {
+            Ok(_) => Optional {
                 success: true,
                 message: String::new(),
-            }
+            },
+            Err(e) => Optional {
+                success: false,
+                message: e.to_string(),
+            },
         }
     }
 
@@ -756,8 +752,15 @@ pub mod backend_api {
     use tauri::Manager;
 
     use crate::{
+        interface::simulator::Simulator,
         modules::riscv::basic::interface::parser::RV32IRegister,
-        types::middleware_types::{Register, SimulatorData, SyscallOutput, SyscallRequest},
+        types::middleware_types::{
+            Optional,
+            Register,
+            SimulatorData,
+            SyscallOutput,
+            SyscallRequest,
+        },
         APP_HANDLE,
     };
 
@@ -779,17 +782,18 @@ pub mod backend_api {
     /// - `registers`: Vec<Register>
     /// - `data`: Vec<u32>
     pub fn simulator_update(
-        pc_idx: Option<usize>,
-        reg: Vec<u32>,
-        mem: Vec<u32>,
+        simulator: &mut dyn Simulator,
+        simulator_res: Optional,
     ) -> Result<(), String> {
         if let Some(app_handle) = APP_HANDLE.lock().unwrap().as_ref() {
             if let Ok(_) = app_handle.emit_all(
                 "front_simulator_update",
                 SimulatorData {
-                    has_current_text: pc_idx.is_some(),
-                    current_text: pc_idx.unwrap_or(0) as u64,
-                    registers: reg
+                    success: simulator_res.success,
+                    has_current_text: simulator.get_pc_idx().is_some(),
+                    current_text: simulator.get_pc_idx().unwrap_or(0) as u64,
+                    registers: simulator
+                        .get_register()
                         .iter()
                         .enumerate()
                         .map(|(i, &val)| Register {
@@ -798,7 +802,8 @@ pub mod backend_api {
                             value: val as u64,
                         })
                         .collect(),
-                    data: mem,
+                    data: simulator.get_memory(),
+                    message: simulator_res.message,
                 },
             ) {
                 Ok(())

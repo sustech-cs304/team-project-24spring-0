@@ -213,7 +213,6 @@ fn new_tab(event: &WindowMenuEvent, file_path: &Path) -> ResultVoid {
         parser: Box::new(RISCVParser::new(&vec![RISCVExtension::RV32I])),
         assembler: Box::new(RiscVAssembler::new()),
         simulator: Box::new(RISCVSimulator::new(file_path.to_str().unwrap())),
-        data_return_range: Default::default(),
         assembly_cache: Default::default(),
     };
     tab_map

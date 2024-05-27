@@ -5,9 +5,13 @@ use super::{
     memory::Memory,
 };
 use crate::{
+    dprintln,
     interface::{assembler::AssembleResult, simulator::Simulator},
-    modules::riscv::basic::interface::parser::{ParserRISCVInstOp, RV32IRegister, RISCV},
-    types::middleware_types::AssemblerConfig,
+    modules::riscv::{
+        basic::interface::parser::{ParserRISCVInstOp, RV32IRegister, RISCV},
+        middleware::backend_api::simulator_update,
+    },
+    types::middleware_types::{AssemblerConfig, MemoryReturnRange, Optional},
     utility::ptr::Ptr,
 };
 
@@ -42,6 +46,7 @@ pub struct RISCVSimulator {
     thread: Option<std::thread::JoinHandle<()>>,
     status: AtomicU8,
     history: VecDeque<History>,
+    mem_range: MemoryReturnRange,
 }
 
 pub(super) struct History {
@@ -68,32 +73,33 @@ impl RISCVSimulator {
             status: AtomicU8::new(0),
             file: file.to_string(),
             history: VecDeque::with_capacity(MAX_HISTORY_SIZE),
+            mem_range: Default::default(),
         }
     }
 
     pub(super) fn in_data_segment(&self, addr: u32, len: u32) -> bool {
         let data_start = self.conf.dot_data_base_address as u32;
         let data_end = self.conf.data_segment_limit_address as u32;
-        addr >= data_start && addr < data_end && addr + len <= data_end
+        addr >= data_start && addr <= data_end && addr + (len - 1) <= data_end
     }
 
     pub(super) fn in_stack_segment(&self, addr: u32, len: u32) -> bool {
         let stack_start = self.conf.stack_base_address as u32;
         let stack_end = self.conf.stack_limit_address as u32;
-        addr <= stack_start && addr > stack_end && addr + len <= stack_start
+        addr <= stack_start && addr >= stack_end && addr - (len - 1) >= stack_end
     }
 
+    // (start, len)
     pub(super) fn text_range(&self) -> (u32, u32) {
         (
             self.conf.dot_text_base_address as u32,
-            self.conf.dot_text_base_address as u32
-                + self.inst.as_ref().unwrap().instruction.len() as u32 * 4,
+            (self.inst.as_ref().unwrap().instruction.len() * 4) as u32,
         )
     }
 
     pub(super) fn to_text_idx(&self, addr: u32) -> Option<usize> {
-        let (text_start, text_end) = self.text_range();
-        if addr >= text_start && addr < text_end && addr % 4 == 0 {
+        let (text_start, text_len) = self.text_range();
+        if addr >= text_start && addr - text_start < text_len && addr % 4 == 0 {
             Some(((addr - text_start) / 4) as usize)
         } else {
             None
@@ -101,7 +107,7 @@ impl RISCVSimulator {
     }
 
     pub(super) fn to_text_addr(&self, idx: usize) -> u32 {
-        (self.conf.dot_data_base_address as usize + idx * 4) as u32
+        (self.conf.dot_text_base_address as usize + idx * 4) as u32
     }
 }
 
@@ -149,7 +155,7 @@ impl Simulator for RISCVSimulator {
         }
         self.debug = false;
         self._reset();
-        self._start();
+        self._start(None);
         Ok(())
     }
 
@@ -159,7 +165,7 @@ impl Simulator for RISCVSimulator {
         }
         self.debug = true;
         self._reset();
-        self._start();
+        self._start(None);
         Ok(())
     }
 
@@ -181,7 +187,7 @@ impl Simulator for RISCVSimulator {
         if !self.cas_status(STATUS_PAUSED, STATUS_RUNNING) {
             return Err("Simulator not paused".to_string());
         }
-        self._start();
+        self._start(None);
         Ok(())
     }
 
@@ -196,12 +202,8 @@ impl Simulator for RISCVSimulator {
                 }
             }
         }
-        let res = self._step();
-        self.set_status(STATUS_PAUSED);
-        match res {
-            Ok(_) => Ok(()),
-            Err(e) => Err(e),
-        }
+        self._start(Some(1));
+        Ok(())
     }
 
     fn reset(&mut self) -> Result<(), String> {
@@ -284,11 +286,7 @@ impl Simulator for RISCVSimulator {
                 self.resume()
             }
             WaitStatus::Char => {
-                let addr = self.reg[RV32IRegister::A0 as usize];
-                if !self.in_data_segment(addr, 1) {
-                    return Err("Invalid memory access".to_string());
-                }
-                self.mem[addr] = input.as_bytes()[0];
+                self.reg[RV32IRegister::A0 as usize] = input.as_bytes()[0] as u32;
                 self.wait_input = WaitStatus::Not;
                 self.resume()
             }
@@ -299,43 +297,77 @@ impl Simulator for RISCVSimulator {
         &self.reg
     }
 
-    fn get_memory(&self, begin: u32, end: u32) -> Vec<u32> {
-        if let (Some(begin_idx), Some(end_idx)) = (self.to_text_idx(begin), self.to_text_idx(end)) {
-            self.inst.as_ref().unwrap().instruction[begin_idx..end_idx]
+    fn get_memory(&self) -> Vec<u32> {
+        let start = self.mem_range.start as u32;
+        let len = self.mem_range.len as u32;
+        if let (Some(begin_idx), Some(end_idx)) =
+            (self.to_text_idx(start), self.to_text_idx(start + (len - 4)))
+        {
+            self.inst.as_ref().unwrap().instruction[begin_idx..=end_idx]
                 .iter()
                 .map(|inst| inst.code)
                 .collect()
-        } else if let Some(idx) = self.to_text_idx(begin) {
+        } else if let Some(idx) = self.to_text_idx(start) {
+            let text_range = self.text_range();
             let mut res = self.inst.as_ref().unwrap().instruction[idx..]
                 .iter()
                 .map(|inst| inst.code)
                 .collect::<Vec<u32>>();
             res.extend(
                 self.mem
-                    .get_range(self.text_range().1, end)
+                    .get_range(text_range.0 + text_range.1, len - 4 * (res.len() as u32))
                     .chunks(4)
                     .map(|data| u32::from_le_bytes([data[0], data[1], data[2], data[3]])),
             );
             res
-        } else if let Some(idx) = self.to_text_idx(end) {
+        } else if let Some(idx) = self.to_text_idx(start + (len - 4)) {
             let mut res = self
                 .mem
-                .get_range(begin, self.text_range().0)
+                .get_range(start, self.text_range().0 - start)
                 .chunks(4)
                 .map(|data| u32::from_le_bytes([data[0], data[1], data[2], data[3]]))
                 .collect::<Vec<u32>>();
             res.extend(
-                self.inst.as_ref().unwrap().instruction[..idx]
+                self.inst.as_ref().unwrap().instruction[..=idx]
                     .iter()
                     .map(|inst| inst.code),
             );
             res
         } else {
             self.mem
-                .get_range(begin, end)
+                .get_range(start, len)
                 .chunks(4)
                 .map(|data| u32::from_le_bytes([data[0], data[1], data[2], data[3]]))
                 .collect()
+        }
+    }
+
+    fn get_pc_idx(&self) -> Option<usize> {
+        if self.pc_idx < self.inst.as_ref().unwrap().instruction.len() {
+            Some(self.pc_idx)
+        } else {
+            None
+        }
+    }
+
+    fn get_filepath(&self) -> &str {
+        &self.file
+    }
+
+    fn get_memory_return_range(&self) -> MemoryReturnRange {
+        self.mem_range
+    }
+
+    fn set_memory_return_range(&mut self, range: MemoryReturnRange) -> Result<(), String> {
+        if range.start % 4 != 0
+            || range.len % 4 != 0
+            || range.start > u32::MAX as u64
+            || u32::MAX as u64 - range.start < range.len
+        {
+            Err("Invalid range".to_string())
+        } else {
+            self.mem_range = range;
+            Ok(())
         }
     }
 }
@@ -408,37 +440,69 @@ impl RISCVSimulator {
         self.wait_input = WaitStatus::Not;
     }
 
-    fn _start(&mut self) {
+    fn _start(&mut self, max_step: Option<usize>) {
         let self_ptr = Ptr::new(self);
-        self.thread = Some(std::thread::spawn(move || loop {
+        self.thread = Some(std::thread::spawn(move || {
+            let mut step = 0;
             let _self = self_ptr.as_mut();
             let max_pc_idx = _self.inst.as_ref().unwrap().instruction.len();
-            match _self._step() {
-                Ok(STATUS_PAUSED) => {
-                    _self.set_status(STATUS_PAUSED);
-                    _self.update(Ok(()));
-                    break;
+            loop {
+                if let Some(max_step) = max_step {
+                    if step >= max_step {
+                        _self.set_status(STATUS_PAUSED);
+                        _self.update(Optional {
+                            success: true,
+                            message: "finished running".to_string(),
+                        });
+                        break;
+                    } else {
+                        step += 1;
+                    }
                 }
-                Err(e) => {
+                match _self._step() {
+                    Ok(STATUS_PAUSED) => {
+                        _self.set_status(STATUS_PAUSED);
+                        _self.update(Optional {
+                            success: true,
+                            message: "paused".to_string(),
+                        });
+                        break;
+                    }
+                    Err(e) => {
+                        _self.set_status(STATUS_STOPPED);
+                        _self.update(Optional {
+                            success: false,
+                            message: e,
+                        });
+                        break;
+                    }
+                    _ => {}
+                }
+                if _self.pc_idx == max_pc_idx {
                     _self.set_status(STATUS_STOPPED);
-                    _self.update(Err(e));
+                    _self.update(Optional {
+                        success: true,
+                        message: "finished running".to_string(),
+                    });
                     break;
                 }
-                _ => {}
-            }
-            if _self.pc_idx == max_pc_idx {
-                _self.set_status(STATUS_STOPPED);
-                _self.update(Ok(()));
-                break;
-            }
-            if _self.get_status() != STATUS_RUNNING {
-                _self.update(Err("Simulator stopped".to_string()));
-                break;
+                if _self.get_status() != STATUS_RUNNING {
+                    _self.update(Optional {
+                        success: true,
+                        message: "stopped".to_string(),
+                    });
+                    break;
+                }
             }
         }));
     }
 
-    fn update(&self, res: Result<(), String>) {
-        todo!()
+    fn update(&mut self, res: Optional) {
+        match simulator_update(self, res) {
+            Ok(_) => {}
+            Err(e) => {
+                dprintln!("{}", e);
+            }
+        }
     }
 }

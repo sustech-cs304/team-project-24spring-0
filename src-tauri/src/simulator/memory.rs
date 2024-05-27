@@ -42,21 +42,25 @@ impl Memory {
         }
     }
 
-    pub fn get_range(&self, start: u32, end: u32) -> Vec<u8> {
+    pub fn get_range(&self, start: u32, len: u32) -> Vec<u8> {
+        if len == 0 {
+            return Vec::new();
+        }
+        let start = start as usize;
+        let end = start + (len - 1) as usize;
         let self_ptr = Ptr::new(self);
         let mut_self = self_ptr.as_mut();
-        let mut result = Vec::with_capacity((end - start) as usize);
-        let end = end - 1;
-        let start_page = Self::align(start as usize);
-        let end_page = Self::align(end as usize);
+        let mut result = Vec::with_capacity(end - start + 1);
+        let start_page = Self::align(start);
+        let end_page = Self::align(end);
         if start_page == end_page {
-            let start = Self::to_index(start as usize);
-            let end = Self::to_index(end as usize);
+            let start = Self::to_index(start);
+            let end = Self::to_index(end);
             mut_self.build_page_table(start);
             result.extend_from_slice(&self.get_page(start)[start.2..end.2]);
         } else {
             {
-                let idx = Self::to_index(start as usize);
+                let idx = Self::to_index(start);
                 mut_self.build_page_table(idx);
                 result.extend_from_slice(&self.get_page(idx)[idx.2..]);
             }
@@ -68,7 +72,7 @@ impl Memory {
                 i += PAGE_SIZE;
             }
             {
-                let idx = Self::to_index(end as usize);
+                let idx = Self::to_index(end);
                 mut_self.build_page_table(idx);
                 result.extend_from_slice(&self.get_page(idx)[..idx.2]);
             }
@@ -77,25 +81,29 @@ impl Memory {
     }
 
     pub fn set_range(&mut self, start: u32, data: &[u8]) {
+        if data.is_empty() {
+            return;
+        }
         let mut data_idx = 0;
-        let end = start + data.len() as u32;
-        let start_page = Self::align(start as usize);
-        let end_page = Self::align(end as usize);
+        let start = start as usize;
+        let end = start + data.len() as usize;
+        let start_page = Self::align(start);
+        let end_page = Self::align(end);
         unsafe {
             if start_page == end_page {
-                let idx = Self::to_index(start as usize);
+                let idx = Self::to_index(start);
                 (&mut *(self as *const Memory as *mut Memory)).build_page_table(idx);
                 self.get_page_mut(idx)[idx.2..idx.2 + data.len()].clone_from_slice(data);
             } else {
                 {
-                    let idx = Self::to_index(start as usize);
+                    let idx = Self::to_index(start);
                     (&mut *(self as *const Memory as *mut Memory)).build_page_table(idx);
                     let len = PAGE_SIZE - idx.2;
                     self.get_page_mut(idx)[idx.2..].clone_from_slice(&data[..len]);
                     data_idx += len;
                 }
-                let start_page = Self::align(start as usize) + PAGE_SIZE;
-                let end_page = Self::align(end as usize);
+                let start_page = Self::align(start) + PAGE_SIZE;
+                let end_page = Self::align(end);
                 let mut i = start_page;
                 while i < end_page {
                     let index = Self::to_index(i);
@@ -106,7 +114,7 @@ impl Memory {
                     i += PAGE_SIZE;
                 }
                 {
-                    let idx = Self::to_index(end as usize);
+                    let idx = Self::to_index(end);
                     (&mut *(self as *const Memory as *mut Memory)).build_page_table(idx);
                     self.get_page_mut(idx)[..idx.2].clone_from_slice(&data[data_idx..]);
                 }
