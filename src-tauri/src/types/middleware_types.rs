@@ -65,7 +65,6 @@ pub enum DumpResult {
 
 #[derive(Clone, Serialize)]
 pub struct AssembleSuccess {
-    pub data: Vec<Data>,
     pub text: Vec<Text>,
 }
 
@@ -95,14 +94,11 @@ pub struct AssembleCache {
 }
 
 #[derive(Clone, Serialize)]
-pub struct SimulatorResult {
-    pub success: bool,
+pub struct SimulatorData {
     pub has_current_text: bool,
     pub current_text: u64,
     pub registers: Vec<Register>,
     pub data: Vec<Data>,
-    pub has_message: bool,
-    pub message: String,
 }
 
 #[derive(Clone, Serialize)]

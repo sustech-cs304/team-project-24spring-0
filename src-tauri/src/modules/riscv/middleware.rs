@@ -229,22 +229,32 @@ pub mod frontend_api {
     /// simulator for the current tab. Default is [0, 0].
     /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: State containing the map of all tabs.
-    /// - `start`: Start of the range (included).
-    /// - `end`: End of the range (included).
+    /// - `start`: Start of the range (aligned to 4 bytes)
+    /// - `end`: End of the range (aligned to 4 bytes)
     ///
-    /// Returns `Vec<Data>` containing the data in the specified range.
+    /// Returns `Optional` indicating the success or failure of the operation.
     #[tauri::command]
     pub fn set_return_data_range(
         cur_tab_name: State<CurTabName>,
         tab_map: State<TabMap>,
         start: u64,
         end: u64,
-    ) -> Vec<Data> {
-        let name = cur_tab_name.name.lock().unwrap().clone();
-        let mut lock = tab_map.tabs.lock().unwrap();
-        let tab = lock.get_mut(&name).unwrap();
-        tab.data_return_range = (start, end);
-        todo!("call simulator to get data");
+    ) -> Optional {
+        if start % 4 != 0 || end % 4 != 0 {
+            Optional {
+                success: false,
+                message: "Start and end must be multiples of 4".to_string(),
+            }
+        } else {
+            let name = cur_tab_name.name.lock().unwrap().clone();
+            let mut lock = tab_map.tabs.lock().unwrap();
+            let tab = lock.get_mut(&name).unwrap();
+            tab.data_return_range = (start, end);
+            Optional {
+                success: true,
+                message: String::new(),
+            }
+        }
     }
 
     /// Assembles the code in the currently active tab.
@@ -279,7 +289,6 @@ pub mod frontend_api {
                         }]);
                     }
                     cache.assembler_result = Some(AssembleResult::Success(AssembleSuccess {
-                        data: Default::default(),
                         text: tab
                             .simulator
                             .get_raw_inst()
@@ -295,12 +304,6 @@ pub mod frontend_api {
                             })
                             .collect(),
                     }));
-                    if let Some(AssembleResult::Success(res)) = &mut cache.assembler_result {
-                        res.data = tab.simulator.get_memory(
-                            tab.data_return_range.0 as u32,
-                            tab.data_return_range.1 as u32 + 1,
-                        );
-                    }
                 }
                 Err(mut e) => {
                     cache.assembler_result = Some(AssembleResult::Error(
@@ -370,10 +373,10 @@ pub mod frontend_api {
     /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: State containing the map of all tabs.
     ///
-    /// Returns `SimulatorResult` indicating whether the debug session was
-    /// successfully started.
+    /// Returns `Optional` indicating whether the run session was successfully
+    /// started.
     #[tauri::command]
-    pub fn run(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> SimulatorResult {
+    pub fn run(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> Optional {
         todo!("Implement debug")
     }
 
@@ -381,20 +384,40 @@ pub mod frontend_api {
     /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: State containing the map of all tabs.
     ///
-    /// Returns `SimulatorResult` indicating whether the debug session was
-    /// successfully started.
+    /// Returns `Optional` indicating whether the debug session was successfully
+    /// started.
     #[tauri::command]
-    pub fn debug(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> SimulatorResult {
+    pub fn debug(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> Optional {
         todo!("Implement debug")
+    }
+
+    /// Stops the currently active tab's simulator.
+    /// - `cur_tab_name`: State containing the current tab name.
+    /// - `tab_map`: State containing the map of all tabs.
+    ///
+    /// Returns `Optional` indicating whether the stop was successful.
+    #[tauri::command]
+    pub fn stop(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> Optional {
+        todo!("Implement stop")
+    }
+
+    /// Resumes the currently active tab's simulator.
+    /// - `cur_tab_name`: State containing the current tab name.
+    /// - `tab_map`: State containing the map of all tabs.
+    ///
+    /// Returns `Optional` indicating whether the resume was successful.
+    #[tauri::command]
+    pub fn resume(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> Optional {
+        todo!("Implement resume")
     }
 
     /// Steps through the code in the currently active tab.
     /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: State containing the map of all tabs.
     ///
-    /// Returns `SimulatorResult` indicating whether the step was successful.
+    /// Returns `Optional` indicating whether the step was successful.
     #[tauri::command]
-    pub fn step(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> SimulatorResult {
+    pub fn step(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> Optional {
         todo!("Implement step")
     }
 
@@ -402,9 +425,9 @@ pub mod frontend_api {
     /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: State containing the map of all tabs.
     ///
-    /// Returns `SimulatorResult` indicating whether the reset was successful.
+    /// Returns `Optional` indicating whether the reset was successful.
     #[tauri::command]
-    pub fn reset(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> SimulatorResult {
+    pub fn reset(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> Optional {
         todo!("Implement reset")
     }
 
@@ -412,9 +435,9 @@ pub mod frontend_api {
     /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: State containing the map of all tabs.
     ///
-    /// Returns `SimulatorResult` indicating whether the undo was successful.
+    /// Returns `Optional` indicating whether the undo was successful.
     #[tauri::command]
-    pub fn undo(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> SimulatorResult {
+    pub fn undo(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> Optional {
         todo!("Implement undo")
     }
 
@@ -422,9 +445,10 @@ pub mod frontend_api {
     /// - `tab_map`: State containing the map of all tabs.
     /// - `line`: Line number at which to set the breakpoint.
     ///
-    /// Returns `bool` indicating whether the breakpoint was successfully set.
+    /// Returns `Optional` indicating whether the breakpoint was successfully
+    /// set.
     #[tauri::command]
-    pub fn set_breakpoint(tab_map: State<TabMap>, line: usize) -> bool {
+    pub fn set_breakpoint(tab_map: State<TabMap>, line: usize) -> Optional {
         todo!("Implement setBreakPoint")
     }
 
@@ -432,10 +456,10 @@ pub mod frontend_api {
     /// - `tab_map`: State containing the map of all tabs.
     /// - `line`: Line number at which to remove the breakpoint.
     ///
-    /// Returns `bool` indicating whether the breakpoint was successfully
+    /// Returns `Optional` indicating whether the breakpoint was successfully
     /// removed.
     #[tauri::command]
-    pub fn remove_breakpoint(tab_map: State<TabMap>, line: u64) -> bool {
+    pub fn remove_breakpoint(tab_map: State<TabMap>, line: u64) -> Optional {
         todo!("Implement removeBreakPoint")
     }
 
@@ -444,14 +468,14 @@ pub mod frontend_api {
     /// - `tab_map`: State containing the map of all tabs.
     /// - `val`: Value of the input as a string.
     ///
-    /// Returns `bool` indicating whether the syscall input was successfully
+    /// Returns `Optional` indicating whether the syscall input was successfully
     #[tauri::command]
     #[allow(non_snake_case)]
     pub fn syscall_input(
         cur_tab_name: State<CurTabName>,
         tab_map: State<TabMap>,
         val: String,
-    ) -> bool {
+    ) -> Optional {
         let name = cur_tab_name.name.lock().unwrap().clone();
         let mut lock = tab_map.tabs.lock().unwrap();
         let tab = lock.get_mut(&name).unwrap();
@@ -463,14 +487,14 @@ pub mod frontend_api {
     /// - `tab_map`: State containing the map of all tabs.
     /// - `settings`: New assembler settings to be applied.
     ///
-    /// Returns `bool` indicating whether the settings were successfully
+    /// Returns `Optional` indicating whether the settings were successfully
     /// updated.
     #[tauri::command]
     pub fn update_assembler_settings(
         cur_tab_name: State<CurTabName>,
         tab_map: State<TabMap>,
         settings: AssemblerConfig,
-    ) -> bool {
+    ) -> Optional {
         todo!("Implement updateAssemblerSettings");
     }
 
@@ -595,6 +619,31 @@ pub mod backend_api {
         APP_HANDLE,
     };
 
+    /// Emits a simulator update event to the frontend.
+    /// - `pc_idx`: Index of the program counter.
+    /// - `reg`: Register values.
+    /// - `mem`: Memory values.
+    ///
+    /// Returns `Result` indicating the success or failure of the event
+    /// emission.
+    ///
+    /// This function will emit a `front_simulator_update` event to the
+    /// frontend, and the payload is a `SimulatorData` containing the
+    /// current pc index, register and memory values.
+    ///
+    /// SimulatorData:
+    /// - `has_current_text`: bool
+    /// - `current_text`: u64
+    /// - `registers`: Vec<Register>
+    /// - `data`: Vec<u32>
+    pub fn simulator_update(
+        pc_idx: Option<usize>,
+        reg: Vec<u32>,
+        mem: Vec<u32>,
+    ) -> Result<(), String> {
+        todo!()
+    }
+
     /// Emits a print syscall output event to the frontend.
     /// - `pathname`: Identifier for the tab to which the output should be sent.
     /// - `output`: Output to be printed.
@@ -654,9 +703,5 @@ pub mod backend_api {
         } else {
             Err("AppHandle is not initialized!".to_string())
         }
-    }
-
-    pub fn simulator_update(res: Result<(), String>) {
-        todo!()
     }
 }

@@ -6,10 +6,7 @@ use super::{
 };
 use crate::{
     interface::{assembler::AssembleResult, simulator::Simulator},
-    modules::riscv::{
-        basic::interface::parser::{ParserRISCVInstOp, RV32IRegister, RISCV},
-        middleware::backend_api::simulator_update,
-    },
+    modules::riscv::basic::interface::parser::{ParserRISCVInstOp, RV32IRegister, RISCV},
     types::middleware_types::AssemblerConfig,
     utility::ptr::Ptr,
 };
@@ -407,23 +404,33 @@ impl RISCVSimulator {
         let self_ptr = Ptr::new(self);
         self.thread = Some(std::thread::spawn(move || loop {
             let _self = self_ptr.as_mut();
+            let max_pc_idx = _self.inst.as_ref().unwrap().instruction.len();
             match _self._step() {
                 Ok(STATUS_PAUSED) => {
                     _self.set_status(STATUS_PAUSED);
-                    simulator_update(Ok(()));
+                    _self.update(Ok(()));
                     break;
                 }
                 Err(e) => {
                     _self.set_status(STATUS_STOPPED);
-                    simulator_update(Err(e));
+                    _self.update(Err(e));
                     break;
                 }
                 _ => {}
             }
+            if _self.pc_idx == max_pc_idx {
+                _self.set_status(STATUS_STOPPED);
+                _self.update(Ok(()));
+                break;
+            }
             if _self.get_status() != STATUS_RUNNING {
-                simulator_update(Err("Simulator stopped".to_string()));
+                _self.update(Err("Simulator stopped".to_string()));
                 break;
             }
         }));
+    }
+
+    fn update(&self, res: Result<(), String>) {
+        todo!()
     }
 }
