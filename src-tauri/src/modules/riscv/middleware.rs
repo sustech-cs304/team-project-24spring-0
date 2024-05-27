@@ -271,9 +271,20 @@ pub mod frontend_api {
         } else {
             match tab.assembler.assemble(cache.parser_cache.clone().unwrap()) {
                 Ok(res) => {
+                    if let Err(e) = tab.simulator.load_inst(res) {
+                        return AssembleResult::Error(vec![AssembleError {
+                            line: 0,
+                            column: 0,
+                            msg: e.to_string(),
+                        }]);
+                    }
                     cache.assembler_result = Some(AssembleResult::Success(AssembleSuccess {
                         data: Default::default(),
-                        text: res
+                        text: tab
+                            .simulator
+                            .get_raw_inst()
+                            .as_ref()
+                            .unwrap()
                             .instruction
                             .iter()
                             .map(|inst| Text {
@@ -284,7 +295,6 @@ pub mod frontend_api {
                             })
                             .collect(),
                     }));
-                    tab.simulator.load_inst(res);
                     if let Some(AssembleResult::Success(res)) = &mut cache.assembler_result {
                         res.data = tab.simulator.get_memory(
                             tab.data_return_range.0 as u32,

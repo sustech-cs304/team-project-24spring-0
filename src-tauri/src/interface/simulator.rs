@@ -6,6 +6,7 @@ use crate::{
 
 pub trait Simulator: Send + Sync {
     fn load_inst(&mut self, inst: AssembleResult<RISCV>) -> Result<(), String>;
+    fn get_raw_inst(&self) -> &Option<AssembleResult<RISCV>>;
     fn update_config(&mut self, config: &AssemblerConfig) -> Result<(), String>;
     fn run(&mut self) -> Result<(), String>;
     fn debug(&mut self) -> Result<(), String>;

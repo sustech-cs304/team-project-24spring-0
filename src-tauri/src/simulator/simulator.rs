@@ -122,6 +122,10 @@ impl Simulator for RISCVSimulator {
         Ok(())
     }
 
+    fn get_raw_inst(&self) -> &Option<AssembleResult<RISCV>> {
+        &self.inst
+    }
+
     fn update_config(&mut self, config: &AssemblerConfig) -> Result<(), String> {
         let old_status;
         if !self.cas_status(STATUS_UNLOADED, STATUS_LOADING) {

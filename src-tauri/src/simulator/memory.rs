@@ -3,6 +3,8 @@ use std::{
     ops::{Index, IndexMut},
 };
 
+use crate::utility::ptr::Ptr;
+
 pub const MAX_MEMORY_SIZE: usize = 1 << 32;
 pub const PAGE_SIZE: usize = 4096;
 pub const PAGE_TABLE_ENTRY_SIZE: usize = 4;
@@ -41,34 +43,34 @@ impl Memory {
     }
 
     pub fn get_range(&self, start: u32, end: u32) -> Vec<u8> {
+        let self_ptr = Ptr::new(self);
+        let mut_self = self_ptr.as_mut();
         let mut result = Vec::with_capacity((end - start) as usize);
         let end = end - 1;
         let start_page = Self::align(start as usize);
         let end_page = Self::align(end as usize);
-        unsafe {
-            if start_page == end_page {
-                let start = Self::to_index(start as usize);
-                let end = Self::to_index(end as usize);
-                (&mut *(self as *const Memory as *mut Memory)).build_page_table(start);
-                result.extend_from_slice(&self.get_page(start)[start.2..end.2]);
-            } else {
-                {
-                    let idx = Self::to_index(start as usize);
-                    (&mut *(self as *const Memory as *mut Memory)).build_page_table(idx);
-                    result.extend_from_slice(&self.get_page(idx)[idx.2..]);
-                }
-                let mut i = start_page + PAGE_SIZE;
-                while i < end_page {
-                    let index = Self::to_index(i);
-                    (&mut *(self as *const Memory as *mut Memory)).build_page_table(index);
-                    result.extend_from_slice(self.get_page(index));
-                    i += PAGE_SIZE;
-                }
-                {
-                    let idx = Self::to_index(end as usize);
-                    (&mut *(self as *const Memory as *mut Memory)).build_page_table(idx);
-                    result.extend_from_slice(&self.get_page(idx)[..idx.2]);
-                }
+        if start_page == end_page {
+            let start = Self::to_index(start as usize);
+            let end = Self::to_index(end as usize);
+            mut_self.build_page_table(start);
+            result.extend_from_slice(&self.get_page(start)[start.2..end.2]);
+        } else {
+            {
+                let idx = Self::to_index(start as usize);
+                mut_self.build_page_table(idx);
+                result.extend_from_slice(&self.get_page(idx)[idx.2..]);
+            }
+            let mut i = start_page + PAGE_SIZE;
+            while i < end_page {
+                let index = Self::to_index(i);
+                mut_self.build_page_table(index);
+                result.extend_from_slice(self.get_page(index));
+                i += PAGE_SIZE;
+            }
+            {
+                let idx = Self::to_index(end as usize);
+                mut_self.build_page_table(idx);
+                result.extend_from_slice(&self.get_page(idx)[..idx.2]);
             }
         }
         result
@@ -171,9 +173,7 @@ impl Index<u32> for Memory {
 
     fn index(&self, index: u32) -> &Self::Output {
         let index = Self::to_index(index as usize);
-        unsafe {
-            (&mut *(self as *const Memory as *mut Memory)).build_page_table(index);
-        }
+        Ptr::new(self).as_mut().build_page_table(index);
         self.get(index)
     }
 }
