@@ -1,7 +1,9 @@
-use std::{convert::TryFrom, net::SocketAddr, sync::Mutex};
+use std::{convert::TryFrom, net::SocketAddr, sync::Mutex, time::Duration};
 
 use editor_rpc::editor_client::EditorClient;
-use tonic::transport::Endpoint;
+use tauri::async_runtime::block_on;
+use tokio::time::timeout;
+use tonic::{transport::Endpoint, Request};
 
 use crate::{interface::remote::RpcClient, types::ResultVoid};
 
@@ -11,7 +13,6 @@ pub mod editor_rpc {
 
 pub struct RpcClientImpl {
     server_addr: Mutex<SocketAddr>,
-    password: Mutex<String>,
     client: Option<EditorClient<tonic::transport::Channel>>,
 }
 
@@ -19,11 +20,11 @@ impl Default for RpcClientImpl {
     fn default() -> Self {
         Self {
             server_addr: Mutex::new(SocketAddr::new("127.0.0.1".parse().unwrap(), 0)),
-            password: Default::default(),
             client: None,
         }
     }
 }
+
 impl RpcClientImpl {
     fn should_not_running(&self) -> ResultVoid {
         if self.client.is_some() {
@@ -39,21 +40,38 @@ impl RpcClientImpl {
         Ok(())
     }
 
+    pub fn start(&mut self) -> ResultVoid {
+        self.should_not_running()?;
+        block_on(self.connect())?;
+        Ok(())
+    }
+
+    pub fn stop(&mut self) -> ResultVoid {
+        self.should_running()?;
+        self.disconnect();
+        Ok(())
+    }
+
     pub fn set_server_addr(&mut self, server_addr: SocketAddr) -> ResultVoid {
         self.should_not_running()?;
         *self.server_addr.lock().unwrap() = server_addr;
         Ok(())
     }
 
-    pub fn set_password(&mut self, password: String) -> ResultVoid {
-        self.should_not_running()?;
-        *self.password.lock().unwrap() = password;
-        Ok(())
-    }
-
-    pub fn send_authorize(&mut self) -> ResultVoid {
+    pub async fn send_authorize(&mut self, password: &str) -> ResultVoid {
         self.should_running()?;
-        //TODO
+        let req = Request::new(editor_rpc::AuthorizeRequest {
+            password: password.to_string(),
+        });
+        let res = match timeout(
+            Duration::from_secs(2),
+            self.client.as_mut().unwrap().authorize(req),
+        )
+        .await
+        {
+            Ok(res) => res?,
+            Err(_) => return Err("Timeout".into()),
+        };
         Ok(())
     }
 }

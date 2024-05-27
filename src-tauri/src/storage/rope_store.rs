@@ -101,7 +101,7 @@ impl BasicFile<Rope, Modification> for Text {
 }
 
 impl Text {
-    pub fn from_path(file_path: &Path) -> Result<Self, Box<dyn Error + Send + Sync>> {
+    pub fn from_path(file_path: &Path) -> Result<Self, Box<dyn Error>> {
         match file_io::read_file(file_path) {
             Ok(content) => match file_io::get_last_modified(file_path) {
                 Ok(last_modified) => Ok(Text {
@@ -118,7 +118,7 @@ impl Text {
         }
     }
 
-    pub fn from_path_str(file_path: &str) -> Result<Self, Box<dyn Error + Send + Sync>> {
+    pub fn from_path_str(file_path: &str) -> Result<Self, Box<dyn Error>> {
         Text::from_path(Path::new(file_path))
     }
 
@@ -138,6 +138,7 @@ impl MeragableFile<Rope, Modification, Cursor> for Text {
     fn get_version(&self) -> usize {
         self.version
     }
+
     fn merge_history(&mut self, histories: &[Modification], cursors: &mut Cursor) -> ResultVoid {
         for history in histories {
             let increase_lines = lines_count(&history.modified_content);

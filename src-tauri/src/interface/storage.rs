@@ -1,4 +1,4 @@
-use std::{error::Error, path::PathBuf};
+use std::path::PathBuf;
 
 use crate::types::ResultVoid;
 
@@ -33,9 +33,5 @@ pub trait BasicFile<D, H>: Send + Sync {
 
 pub trait MeragableFile<D, H, C>: Send + Sync {
     fn get_version(&self) -> usize;
-    fn merge_history(
-        &mut self,
-        histories: &[H],
-        cursors: &mut C,
-    ) -> Result<(), Box<dyn Error + Send + Sync>>;
+    fn merge_history(&mut self, histories: &[H], cursors: &mut C) -> ResultVoid;
 }

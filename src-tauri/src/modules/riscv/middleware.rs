@@ -1,7 +1,9 @@
 /// This module provides API functions for the frontend. Could be used by
 /// `invoke` in EMCAScript
 pub mod frontend_api {
-    use tauri::State;
+    use std::net::SocketAddr;
+
+    use tauri::{async_runtime::block_on, State};
 
     use crate::{
         interface::parser::Parser,
@@ -494,15 +496,21 @@ pub mod frontend_api {
                 message: "No tab had been opened".to_string(),
             };
         }
-        let mut rpc_lock = tab_map.rpc_server.lock().unwrap();
-        rpc_lock.stop_service();
-        rpc_lock.change_password(password);
-        if let Err(e) = rpc_lock.set_port(port) {
+        let mut server_lock = tab_map.rpc_server.lock().unwrap();
+        if server_lock.is_running() {
+            return Optional {
+                success: false,
+                message: "Server already running".to_string(),
+            };
+        } else if let Err(e) = server_lock.set_port(port) {
             return Optional {
                 success: false,
                 message: e.to_string(),
             };
-        } else if let Err(e) = rpc_lock.start_service(
+        }
+
+        server_lock.change_password(password);
+        if let Err(e) = server_lock.start_server(
             state::get_current_tab_name(&cur_tab_name),
             Ptr::new(&tab_map),
         ) {
@@ -519,7 +527,6 @@ pub mod frontend_api {
     }
 
     /// Authorize and connect to a remote RPC server as client.
-    /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: State containing the map of all tabs.
     /// - `ip`: IPV4 address of the remote server.
     /// - `port`: Port number of the remote server.
@@ -527,14 +534,43 @@ pub mod frontend_api {
     ///
     /// Returns `Optional` indicating the success or failure of the connection.
     #[tauri::command]
-    pub fn authorize(
-        cur_tab_name: State<CurTabName>,
+    pub fn authorize_share_client(
         tab_map: State<TabMap>,
         ip: String,
         port: u16,
         password: String,
     ) -> Optional {
-        todo!("Implement authorize as client");
+        let mut client = tab_map.rpc_client.lock().unwrap();
+        let addr: SocketAddr = match format!("{}:{}", ip, port).parse() {
+            Ok(val) => val,
+            Err(_) => {
+                return Optional {
+                    success: false,
+                    message: "Invalid IP or port".to_string(),
+                }
+            }
+        };
+        if let Err(e) = client.set_server_addr(addr) {
+            return Optional {
+                success: false,
+                message: e.to_string(),
+            };
+        } else if let Err(e) = client.start() {
+            return Optional {
+                success: false,
+                message: e.to_string(),
+            };
+        }
+        match block_on(client.send_authorize(&password)) {
+            Ok(_) => Optional {
+                success: true,
+                message: String::new(),
+            },
+            Err(e) => Optional {
+                success: false,
+                message: e.to_string(),
+            },
+        }
         //TODO:@Vollate
     }
 
@@ -549,7 +585,7 @@ pub mod frontend_api {
         if !server.is_running() {
             false
         } else {
-            server.stop_service();
+            server.stop_server();
             true
         }
     }

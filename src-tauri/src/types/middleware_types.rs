@@ -39,7 +39,7 @@ pub struct CurTabName {
     pub name: Mutex<String>,
 }
 
-#[derive(Clone, Serialize, Default)]
+#[derive(Debug, Clone, Serialize, Default)]
 pub struct Optional {
     pub success: bool,
     pub message: String,

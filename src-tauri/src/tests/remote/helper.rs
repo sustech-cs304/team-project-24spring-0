@@ -52,7 +52,7 @@ pub fn init_test_server(content: &str) -> Result<RpcServerImpl, String> {
     }
     let mut server = RpcServerImpl::default();
     let _ = server
-        .start_service(
+        .start_server(
             TEST_FILE_NAME.to_string(),
             Ptr::new(TABMAP.lock().unwrap().as_ref().unwrap()),
         )

@@ -77,7 +77,7 @@ fn main() {
             frontend_api::update_assembler_settings,
             frontend_api::start_share_server,
             frontend_api::stop_share_server,
-            frontend_api::authorize
+            frontend_api::authorize_share_client
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
