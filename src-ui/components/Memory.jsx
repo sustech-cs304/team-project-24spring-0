@@ -27,7 +27,7 @@ export default function Memory({ fileName }) {
   for (var i = 0; i < 8; i++) {
     var row = [baseAddress + 0x20 * i]
     for (var j = 0; j < 8; j++) {
-      row.push(currentFile.memory[i][j])
+      row.push(currentFile.memory[i+8*j])
     }
     rows.push(row)
   }

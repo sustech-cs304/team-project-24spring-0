@@ -64,38 +64,14 @@ export default function Home() {
           { name: 'pc', number: '32', value: 0}
         ],
         memory: [
-          [
-            0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
-            0x00000000,
-          ],
-          [
-            0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
-            0x00000000,
-          ],
-          [
-            0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
-            0x00000000,
-          ],
-          [
-            0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
-            0x00000000,
-          ],
-          [
-            0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
-            0x00000000,
-          ],
-          [
-            0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
-            0x00000000,
-          ],
-          [
-            0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
-            0x00000000,
-          ],
-          [
-            0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
-            0x00000000,
-          ],
+          0, 0, 0, 0, 0, 0, 0, 0,
+          0, 0, 0, 0, 0, 0, 0, 0,
+          0, 0, 0, 0, 0, 0, 0, 0,
+          0, 0, 0, 0, 0, 0, 0, 0,
+          0, 0, 0, 0, 0, 0, 0, 0,
+          0, 0, 0, 0, 0, 0, 0, 0,
+          0, 0, 0, 0, 0, 0, 0, 0,
+          0, 0, 0, 0, 0, 0, 0, 0
         ],
         baseAddress: 0x10010000,
       })
@@ -148,14 +124,14 @@ export default function Home() {
       const outputStore = useOutputStore.getState()
       if (event.payload['success'] === false) {
         outputStore.addOutput("Simulator Update Failed. Message: " + event.payload['message'])
-        return
+      } else {
+        outputStore.addOutput("Simulator Updated Successfully")
       }
-      console.log('simulator update event received', event.payload)
 
         const state = useFileStore.getState()
         const file = state.files.find(file => file.fileName === state.currentFile)
         file.register = event.payload['registers']
-        // file.memory = event.payload['data']
+        file.memory = event.payload['data']
         if(event.payload['has_current_text']) {
           file.runLines = event.payload['current_text']
         }

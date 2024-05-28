@@ -19,22 +19,20 @@ export default function MessageIO() {
   useEffect(() => {
     // handle backend input and output api
     const unListenSyscallOutputPrint = listen('front_syscall_print', event => {
-      // print(event)
-      var pathname = event.payload['pathname']
-      var output = event.payload['output']
-      setIOContent(prevContent => prevContent + '\n' + pathname + ':\n' + output)
+      var filepath = event.payload['filepath']
+      var output = event.payload['data']
+      setIOContent(prevContent => prevContent + '\nFile ' + filepath + ' output:\n' + output)
     })
 
     const unListenSyscallInputRequest = listen(
       'front_syscall_request',
       event => {
         // print(event)
-        var pathname = event.payload['pathname']
+        var filepath = event.payload['filepath']
         var acquire_type = event.payload['acquire_type']
         setAcquireType(acquire_type)
         setIOWindowBlocked(false)
-        setIOContent(prevContent => prevContent + '\n' + pathname + ':\n>>>')
-        setIOWindowBlocked(false)
+        setIOContent(prevContent => prevContent + '\n' + filepath + ':\n>>>')
       },
       {},
     )
@@ -55,6 +53,10 @@ export default function MessageIO() {
 
   var handleClearOutput = () => {
     outputStore.clearOutput()
+  }
+
+  var handleClearIO = () => {
+    setIOContent('')
   }
 
   var handleIOInput = async event => {
@@ -141,17 +143,35 @@ export default function MessageIO() {
         <Tab key="runio" title="Run IO" className="grow h-full">
           <Card className="h-full">
             <CardBody>
-              <div className="h-full w-full items-center">
+              <div className="h-full w-full relative">
                 <textarea
-                  id="runiotext"
-                  rows="4"
-                  readOnly={ioWindowBlocked}
-                  className="h-full block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                  value={ioContent}
-                  onChange={e => setIOContent(e.target.value)}
-                  placeholder="Run IO..."
+                    id="runiotext"
+                    rows="4"
+                    readOnly={ioWindowBlocked}
+                    className="h-full block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                    value={ioContent}
+                    onChange={e => setIOContent(e.target.value)}
+                    placeholder="Run IO..."
                 ></textarea>
+                <div className="absolute right-2 top-2 fill-gray-300 hover:fill-gray-500">
+                  <button onClick={() => handleClearIO()}>
+                    <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        x="0px"
+                        y="0px"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 30 30"
+                    >
+                      <path
+                          d="M6 8v16c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V8H6zM24 4h-6c0-.6-.4-1-1-1h-4c-.6 0-1 .4-1 1H6C5.4 4 5 4.4 5 5s.4 1 1 1h18c.6 0 1-.4 1-1S24.6 4 24 4z"></path>
+                    </svg>
+                  </button>
+                </div>
               </div>
+              {/*<div className="h-full w-full items-center">*/}
+              {/*  */}
+              {/*</div>*/}
             </CardBody>
           </Card>
         </Tab>
@@ -160,27 +180,27 @@ export default function MessageIO() {
             <CardBody>
               <div className="h-full w-full items-center flex flex-row gap-2">
                 <textarea
-                  id="askAI"
-                  rows="4"
-                  className="h-full block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                  value={question}
-                  onChange={e => setQuestion(e.target.value)}
-                  placeholder="Ask AI about your code"
+                    id="askAI"
+                    rows="4"
+                    className="h-full block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                    value={question}
+                    onChange={e => setQuestion(e.target.value)}
+                    placeholder="Ask AI about your code"
                 ></textarea>
                 <Button
-                  className="h-full"
-                  size="sm"
-                  color="primary"
-                  disabled={fileState.files.length <= 0}
-                  onClick={() => handleAskAI()}
+                    className="h-full"
+                    size="sm"
+                    color="primary"
+                    disabled={fileState.files.length <= 0}
+                    onClick={() => handleAskAI()}
                 >
                   Send
                 </Button>
                 <textarea
-                  id="AIAnswer"
-                  rows="4"
-                  readOnly
-                  className="h-full block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                    id="AIAnswer"
+                    rows="4"
+                    readOnly
+                    className="h-full block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                   value={answer}
                   placeholder="AI Response"
                 ></textarea>
