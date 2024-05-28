@@ -2,7 +2,6 @@ import Code from '@/components/Code'
 import { Tab, Tabs } from '@nextui-org/react'
 import { Button, ButtonGroup } from '@nextui-org/react'
 import { invoke } from '@tauri-apps/api/tauri'
-import handleStimulatorResult from '@/utils/handleStimulatorResult'
 
 import useFileStore from '@/utils/state'
 import useOutputStore from '@/utils/outputState'
@@ -61,50 +60,15 @@ export default function MultifileCode() {
     }
   }
 
-  const handleDebug = async () => {
-    let result = await invoke('debug')
-    console.log('Invoke handle debug result: ', result)
+  const handleSimulatorOperation = async (name) => {
+    const result = await invoke(name);
+    console.log(name, result);
 
-    await handleStimulatorResult(result, 'Debug', state, outputStore)
-  }
-
-  const handleRun = async () => {
-    let result = await invoke('run')
-    console.log('Invoke handle run result: ', result)
-
-    await handleStimulatorResult(result, 'Run', state, outputStore)
-  }
-
-  var handleStep = async () => {
-    console.log('Step Executed')
-    const result = await invoke('step')
-    console.log(result)
-
-    await handleStimulatorResult(result, 'Step', state, outputStore)
-  }
-
-  var handleResume = async () => {
-    console.log('Resume Executed')
-    const result = await invoke('resume')
-    console.log(result)
-
-    await handleStimulatorResult(result, 'Resume', state, outputStore)
-  }
-
-  var handleReset = async () => {
-    console.log('Reset Executed')
-    const result = await invoke('reset')
-    console.log(result)
-
-    await handleStimulatorResult(result, 'Reset', state, outputStore)
-  }
-
-  var handleUndo = async () => {
-    console.log('Undo Executed')
-    const result = await invoke('undo')
-    console.log(result)
-
-    await handleStimulatorResult(result, 'Undo', state, outputStore)
+    if (result.success) {
+      outputStore.addOutput(name + ' Succeded!')
+    } else {
+      outputStore.addOutput(name + ' Failed! Reason: ' + result.message);
+    }
   }
 
   return (
@@ -125,22 +89,22 @@ export default function MultifileCode() {
                 <Button color="success" size="sm" onClick={() => handleAssembly(file.fileName)}>
                   Assembly
                 </Button>
-                <Button color="primary" size="sm" onClick={() => handleRun()}>
+                <Button color="primary" size="sm" onClick={() => handleSimulatorOperation("run")}>
                   Run
                 </Button>
-                <Button color="secondary" size="sm" onClick={() => handleDebug()}>
+                <Button color="secondary" size="sm" onClick={() => handleSimulatorOperation("debug")}>
                   Debug
                 </Button>
-                <Button color="primary" size="sm" className="w-full" onClick={() => handleStep()}>
+                <Button color="primary" size="sm" className="w-full" onClick={() => handleSimulatorOperation("step")}>
                   Step
                 </Button>
-                <Button color="secondary" size="sm" className="w-full" onClick={() => handleResume()}>
+                <Button color="secondary" size="sm" className="w-full" onClick={() => handleSimulatorOperation("resume")}>
                   Resume
                 </Button>
-                <Button color="primary" size="sm" className="w-full" onClick={() => handleUndo()}>
+                <Button color="primary" size="sm" className="w-full" onClick={() => handleSimulatorOperation("undo")}>
                   Undo
                 </Button>
-                <Button color="secondary" size="sm" className="w-full" onClick={() => handleReset()}>
+                <Button color="secondary" size="sm" className="w-full" onClick={() => handleSimulatorOperation("reset")}>
                   Reset
                 </Button>
                 <Button color="danger" size="sm" onClick={() => deleteFile(file.fileName)}>

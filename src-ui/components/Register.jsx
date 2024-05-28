@@ -5,6 +5,10 @@ import { Tabs, Tab, Card, CardBody } from '@nextui-org/react'
 import { Table, TableHeader, TableBody, TableRow, TableColumn, TableCell } from '@nextui-org/react'
 import useFileStore from '@/utils/state'
 
+function toHex(decimal) {
+  return '0x' + decimal.toString(16).padStart(8, '0');
+}
+
 export default function Register() {
   const fileStore = useFileStore()
   const files = useFileStore(state => state.files)
@@ -20,7 +24,7 @@ export default function Register() {
             <TableRow key={index}>
               <TableCell>{currentFile.register[index].name}</TableCell>
               <TableCell>{currentFile.register[index].number}</TableCell>
-              <TableCell>{currentFile.register[index].value}</TableCell>
+              <TableCell>{toHex(currentFile.register[index].value)}</TableCell>
             </TableRow>
           ))}
         </TableBody>
