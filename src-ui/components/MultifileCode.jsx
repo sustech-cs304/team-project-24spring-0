@@ -71,6 +71,16 @@ export default function MultifileCode() {
     }
   }
 
+  const getRunButtonisDisabled = () => {
+    const currentFile = state.files.find(file => file.fileName === state.currentFile);
+    return currentFile.assembly.length === 0;
+  }
+
+  const getDebugButtonisDisabled = () => {
+    const currentFile = state.files.find(file => file.fileName === state.currentFile);
+    return currentFile.assembly.length === 0;
+  }
+
   return (
     <Tabs size="small" aria-label="Files">
       {files.map(file => (
@@ -89,10 +99,10 @@ export default function MultifileCode() {
                 <Button color="success" size="sm" onClick={() => handleAssembly(file.fileName)}>
                   Assembly
                 </Button>
-                <Button color="primary" size="sm" onClick={() => handleSimulatorOperation("run")}>
+                <Button color="primary" size="sm" isDisabled={getRunButtonisDisabled()} onClick={() => handleSimulatorOperation("run")}>
                   Run
                 </Button>
-                <Button color="secondary" size="sm" onClick={() => handleSimulatorOperation("debug")}>
+                <Button color="secondary" size="sm" isDisabled={getDebugButtonisDisabled()} onClick={() => handleSimulatorOperation("debug")}>
                   Debug
                 </Button>
                 <Button color="primary" size="sm" className="w-full" onClick={() => handleSimulatorOperation("step")}>
