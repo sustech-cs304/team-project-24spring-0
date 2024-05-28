@@ -226,6 +226,7 @@ pub(super) fn ecall_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, Stri
                 arg.get_path(),
                 &((arg.reg(RV32IRegister::A0 as i32) as i32).to_string()),
             )?;
+            arg.pc_step();
             Ok(SimulatorStatus::Running)
         }
         4 => {
@@ -241,6 +242,7 @@ pub(super) fn ecall_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, Stri
             }
             let s = String::from_utf8(buf).unwrap();
             syscall_output_print(arg.get_path(), &s)?;
+            arg.pc_step();
             Ok(SimulatorStatus::Running)
         }
         5 => {
@@ -257,6 +259,7 @@ pub(super) fn ecall_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, Stri
                 arg.get_path(),
                 &((arg.reg(RV32IRegister::A0 as i32) as u8 as char).to_string()),
             )?;
+            arg.pc_step();
             Ok(SimulatorStatus::Running)
         }
         12 => {
@@ -268,6 +271,7 @@ pub(super) fn ecall_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, Stri
                 arg.get_path(),
                 &format!("0x{:08x}", arg.sim.as_ref().reg[RV32IRegister::A0 as usize]),
             )?;
+            arg.pc_step();
             Ok(SimulatorStatus::Running)
         }
         35 => {
@@ -278,6 +282,7 @@ pub(super) fn ecall_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, Stri
                     arg.sim.as_ref().reg[RV32IRegister::A0 as usize]
                 ),
             )?;
+            arg.pc_step();
             Ok(SimulatorStatus::Running)
         }
         36 => {
@@ -285,6 +290,7 @@ pub(super) fn ecall_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, Stri
                 arg.get_path(),
                 &((arg.reg(RV32IRegister::A0 as i32) as u32).to_string()),
             )?;
+            arg.pc_step();
             Ok(SimulatorStatus::Running)
         }
         _ => Err("Invalid ecall number".to_string()),
