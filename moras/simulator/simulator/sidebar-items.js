@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["RiscVSimulator"]};
+window.SIDEBAR_ITEMS = {"constant":["MAX_HISTORY_SIZE"],"enum":["SimulatorStatus","WaitStatus"],"struct":["History","RISCVSimulator"]};

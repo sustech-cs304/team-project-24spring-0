@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/types/middleware_types.rs`."><title>middleware_types.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="moras" data-themes="" data-resource-suffix="" data-rustdoc-version="1.80.0-nightly (bdbbb6c6a 2024-05-26)" data-channel="nightly" data-search-js="search-d52510db62a78183.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/types/middleware_types.rs`."><title>middleware_types.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="moras" data-themes="" data-resource-suffix="" data-rustdoc-version="1.80.0-nightly (84b40fc90 2024-05-27)" data-channel="nightly" data-search-js="search-d52510db62a78183.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -186,9 +186,6 @@
 <a href="#186" id="186">186</a>
 <a href="#187" id="187">187</a>
 <a href="#188" id="188">188</a>
-<a href="#189" id="189">189</a>
-<a href="#190" id="190">190</a>
-<a href="#191" id="191">191</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::{
     collections::{HashMap, LinkedList},
     sync::Mutex,
@@ -196,12 +193,12 @@
 
 <span class="kw">use </span>ropey::Rope;
 <span class="kw">use </span>serde::{Deserialize, Serialize};
-<span class="kw">use </span>strum_macros::{Display, EnumMessage};
 
 <span class="kw">use crate</span>::{
     interface::{
         assembler::Assembler,
         parser::{Parser, ParserResult},
+        simulator::Simulator,
         storage::MFile,
     },
     modules::riscv::basic::interface::parser::RISCV,
@@ -214,8 +211,7 @@
     <span class="kw">pub </span>text: Box&lt;<span class="kw">dyn </span>MFile&lt;Rope, Modification, Cursor&gt;&gt;,
     <span class="kw">pub </span>parser: Box&lt;<span class="kw">dyn </span>Parser&lt;RISCV&gt;&gt;,
     <span class="kw">pub </span>assembler: Box&lt;<span class="kw">dyn </span>Assembler&lt;RISCV&gt;&gt;,
-    <span class="comment">//pub simulator: Box&lt;dyn Simulator&lt;i32, i32, i32, i32&gt;&gt;,
-    </span><span class="kw">pub </span>data_return_range: (u64, u64),
+    <span class="kw">pub </span>simulator: Box&lt;<span class="kw">dyn </span>Simulator&gt;,
     <span class="kw">pub </span>assembly_cache: AssembleCache,
 }
 
@@ -242,6 +238,22 @@
     <span class="kw">pub </span>col: u64,
 }
 
+<span class="doccomment">/// both start and len are aligned by 4
+</span><span class="attr">#[derive(Clone, Copy, Deserialize)]
+</span><span class="kw">pub struct </span>MemoryReturnRange {
+    <span class="kw">pub </span>start: u64,
+    <span class="kw">pub </span>len: u64,
+}
+
+<span class="kw">impl </span>Default <span class="kw">for </span>MemoryReturnRange {
+    <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            start: <span class="number">0x10010000</span>,
+            len: <span class="number">0x100</span>,
+        }
+    }
+}
+
 <span class="attr">#[derive(Clone, Serialize)]
 </span><span class="kw">pub enum </span>AssembleResult {
     Success(AssembleSuccess),
@@ -256,7 +268,6 @@
 
 <span class="attr">#[derive(Clone, Serialize)]
 </span><span class="kw">pub struct </span>AssembleSuccess {
-    <span class="kw">pub </span>data: Vec&lt;Data&gt;,
     <span class="kw">pub </span>text: Vec&lt;Text&gt;,
 }
 
@@ -268,7 +279,7 @@
     <span class="kw">pub </span>basic: String,
 }
 
-<span class="kw">pub type </span>Data = u8;
+<span class="kw">pub type </span>Data = u32;
 
 <span class="attr">#[derive(Clone, Serialize)]
 </span><span class="kw">pub struct </span>AssembleError {
@@ -286,13 +297,13 @@
 }
 
 <span class="attr">#[derive(Clone, Serialize)]
-</span><span class="kw">pub struct </span>SimulatorResult {
+</span><span class="kw">pub struct </span>SimulatorData {
+    <span class="kw">pub </span>filepath: String,
     <span class="kw">pub </span>success: bool,
     <span class="kw">pub </span>has_current_text: bool,
     <span class="kw">pub </span>current_text: u64,
     <span class="kw">pub </span>registers: Vec&lt;Register&gt;,
     <span class="kw">pub </span>data: Vec&lt;Data&gt;,
-    <span class="kw">pub </span>has_message: bool,
     <span class="kw">pub </span>message: String,
 }
 
@@ -311,8 +322,7 @@
 
 <span class="attr">#[derive(Clone, Serialize)]
 </span><span class="kw">pub struct </span>SyscallRequest {
-    <span class="kw">pub </span>path: String,
-    <span class="kw">pub </span>syscall: String,
+    <span class="kw">pub </span>filepath: String,
 }
 
 <span class="attr">#[derive(Clone, Serialize, Deserialize)]
@@ -356,22 +366,6 @@
             dot_text_base_address: <span class="number">0x00400000</span>,
         }
     }
-}
-
-<span class="attr">#[derive(EnumMessage, Display)]
-</span><span class="kw">pub enum </span>SyscallDataType {
-    <span class="attr">#[strum(message = <span class="string">"Char"</span>)]
-    </span>Char(u8),
-    <span class="attr">#[strum(message = <span class="string">"String"</span>)]
-    </span>String(Vec&lt;u8&gt;),
-    <span class="attr">#[strum(message = <span class="string">"Int"</span>)]
-    </span>Int(i32),
-    <span class="attr">#[strum(message = <span class="string">"Long"</span>)]
-    </span>Long(i64),
-    <span class="attr">#[strum(message = <span class="string">"Float"</span>)]
-    </span>Float(f32),
-    <span class="attr">#[strum(message = <span class="string">"Double"</span>)]
-    </span>Double(f64),
 }
 
 <span class="attr">#[derive(Deserialize)]

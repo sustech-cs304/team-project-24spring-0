@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["bus","cpu","dram","simulator"]};
+window.SIDEBAR_ITEMS = {"mod":["instruction","memory","simulator"]};

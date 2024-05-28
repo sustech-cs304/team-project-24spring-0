@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["FIRST_PAGE_SHIFT","MAX_MEMORY_SIZE","PAGE_SIZE","PAGE_TABLE_COUNT","PAGE_TABLE_ENTRY_COUNT","PAGE_TABLE_ENTRY_SIZE","SECOND_PAGE_SHIFT"],"struct":["Memory"],"type":["FirstPageTable","Page","SecondPageTable"]};
