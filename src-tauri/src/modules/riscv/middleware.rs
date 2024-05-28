@@ -293,7 +293,7 @@ pub mod frontend_api {
                             .instruction
                             .iter()
                             .map(|inst| AssembleText {
-                                line: inst.line_number + 1,
+                                line: inst.line_number,
                                 address: inst.address,
                                 code: inst.code,
                                 basic: inst.basic.to_string(),
