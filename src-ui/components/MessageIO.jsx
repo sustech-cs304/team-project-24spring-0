@@ -66,7 +66,6 @@ export default function MessageIO() {
       // inputContent is the last part of string after ">>> "
       const inputStartIndex = ioContent.lastIndexOf(">>> ") + 4;
       const inputContent = ioContent.slice(inputStartIndex);
-      console.log(inputContent)
       // send the input to the backend
       const result = await invoke('syscall_input', {val: inputContent});
       console.log("syscall_input", result);

@@ -12,6 +12,7 @@ import {
 } from '@nextui-org/react'
 import useFileStore from '@/utils/state'
 import { invoke } from '@tauri-apps/api/tauri'
+import outputState from "@/utils/outputState";
 
 
 
@@ -21,6 +22,7 @@ export default function Memory({ fileName }) {
   const fileStore = useFileStore()
   const files = useFileStore(state => state.files)
   const currentFile = files.find(file => file.fileName === fileName)
+  const outputStore = outputState()
 
   // concate address to currentFile.memory
   var baseAddress = currentFile.baseAddress
@@ -39,13 +41,19 @@ export default function Memory({ fileName }) {
 
   async function handleMemoryRangeChange(offset){
     // update baseAddress of currentFile
-    currentFile.baseAddress = baseAddress + offset
     // invoke set_return_data_range
     const result = await invoke('set_return_data_range', { range:{
       start: currentFile.baseAddress,
       len: 0x20 * 8
       } })
     console.log('set_return_data_range', result)
+    if (result.success){
+      fileStore.changeBaseAddress(fileName, currentFile.baseAddress + offset)
+      outputStore.addOutput('Memory range change success')
+    } else {
+        outputStore.addOutput('Memory range change failed')
+      outputStore.addOutput('Message: ' + result.message)
+    }
   }
 
   return (

@@ -3,7 +3,6 @@ import { create } from 'zustand'
 // file = { fileName, code }
 // fileName should be unique when adding a file
 const useFileStore = create(set => ({
-  // files: [{fileName: '/untitled.S', code: 'Hello, world!', original: "Hello, world!", assembly: "hello! Test", runLines: ['r1']}],
   files: [],
   currentFile: '/untitled.S',
   addFile: file => set(state => ({ files: [...state.files, file] })),
@@ -23,6 +22,18 @@ const useFileStore = create(set => ({
       files: state.files.map(file =>
         file.fileName === fileName ? { ...file, selectedLines } : file,
       ),
+    })),
+    changeMemory: (fileName, memory) =>
+    set(state => ({
+      files: state.files.map(file =>
+        file.fileName === fileName ? { ...file, memory } : file,
+      ),
+    })),
+    changeBaseAddress: (fileName, baseAddress) =>
+    set(state => ({
+        files: state.files.map(file =>
+            file.fileName === fileName ? {...file, baseAddress} : file,
+        ),
     })),
 }))
 
