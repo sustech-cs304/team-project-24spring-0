@@ -268,11 +268,11 @@
 
 <span class="attr">#[derive(Clone, Serialize)]
 </span><span class="kw">pub struct </span>AssembleSuccess {
-    <span class="kw">pub </span>text: Vec&lt;Text&gt;,
+    <span class="kw">pub </span>text: Vec&lt;AssembleText&gt;,
 }
 
 <span class="attr">#[derive(Clone, Serialize)]
-</span><span class="kw">pub struct </span>Text {
+</span><span class="kw">pub struct </span>AssembleText {
     <span class="kw">pub </span>line: u64,
     <span class="kw">pub </span>address: u32,
     <span class="kw">pub </span>code: u32,

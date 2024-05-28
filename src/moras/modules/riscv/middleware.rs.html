@@ -877,7 +877,6 @@
 <a href="#877" id="877">877</a>
 <a href="#878" id="878">878</a>
 <a href="#879" id="879">879</a>
-<a href="#880" id="880">880</a>
 </pre></div><pre class="rust"><code><span class="doccomment">/// This module provides API functions for the frontend. Could be used by
 /// `invoke` in EMCAScript
 </span><span class="kw">pub mod </span>frontend_api {
@@ -1172,8 +1171,8 @@
                             .unwrap()
                             .instruction
                             .iter()
-                            .map(|inst| Text {
-                                line: inst.line_number + <span class="number">1</span>,
+                            .map(|inst| AssembleText {
+                                line: inst.line_number,
                                 address: inst.address,
                                 code: inst.code,
                                 basic: inst.basic.to_string(),
@@ -1735,9 +1734,8 @@
     /// Returns `Result` indicating the success or failure of the event
     /// emission.
     ///
-    /// This function will emit a `front_syscall_print` event to the frontend,
-    /// and the payload is a `SyscallOutput` containing the filepath and output
-    /// to be printed.
+    /// This function will emit a `front_syscall_request` event to the frontend,
+    /// and the payload is a `SyscallRequest` containing the filepath.
     ///
     /// [SyscallRequest](crate::types::middleware_types::SyscallRequest):
     /// - `filepath`: string
