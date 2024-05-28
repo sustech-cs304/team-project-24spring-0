@@ -11,6 +11,7 @@ import {
   TableRow,
 } from '@nextui-org/react'
 import useFileStore from '@/utils/state'
+import { invoke } from '@tauri-apps/api/tauri'
 
 
 
@@ -34,6 +35,17 @@ export default function Memory({ fileName }) {
 
   function toHex(decimal) {
     return '0x' + decimal.toString(16).padStart(8, '0');
+  }
+
+  async function handleMemoryRangeChange(offset){
+    // update baseAddress of currentFile
+    currentFile.baseAddress = baseAddress + offset
+    // invoke set_return_data_range
+    const result = await invoke('set_return_data_range', { range:{
+      start: currentFile.baseAddress,
+      len: 0x20 * 8
+      } })
+    console.log('set_return_data_range', result)
   }
 
   return (
@@ -64,10 +76,10 @@ export default function Memory({ fileName }) {
           </tbody>
         </table>
         <ButtonGroup className="w-full pt-2">
-          <Button color="success" className="w-full">
+          <Button color="success" className="w-full" onClick={() => handleMemoryRangeChange(-0x20 * 8)}>
             Previous
           </Button>
-          <Button color="danger" className="w-full">
+          <Button color="danger" className="w-full" onClick={() => handleMemoryRangeChange(0x20 * 8)}>
             Next
           </Button>
         </ButtonGroup>

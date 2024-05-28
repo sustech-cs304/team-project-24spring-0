@@ -5,6 +5,7 @@ import useFileStore from '@/utils/state'
 import openAIClient from '@/utils/openAI'
 import { useState, useEffect } from 'react'
 import { listen } from '@tauri-apps/api/event'
+import {invoke} from "@tauri-apps/api/tauri";
 
 export default function MessageIO() {
   var outputStore = useOutputStore()
@@ -14,25 +15,24 @@ export default function MessageIO() {
   const [answer, setAnswer] = useState('')
   const [ioContent, setIOContent] = useState('')
   const [ioWindowBlocked, setIOWindowBlocked] = useState(true)
-  const [acquireType, setAcquireType] = useState('')
+
 
   useEffect(() => {
     // handle backend input and output api
     const unListenSyscallOutputPrint = listen('front_syscall_print', event => {
       var filepath = event.payload['filepath']
       var output = event.payload['data']
-      setIOContent(prevContent => prevContent + '\nFile ' + filepath + ' output:\n' + output)
+      setIOContent(prevContent => prevContent + 'File ' + filepath + ' output:\n' + output + "\n")
     })
 
     const unListenSyscallInputRequest = listen(
       'front_syscall_request',
       event => {
         // print(event)
-        var filepath = event.payload['filepath']
-        var acquire_type = event.payload['acquire_type']
-        setAcquireType(acquire_type)
+        console.log('front_syscall_request', event)
+        let filepath = event.payload['filepath']
         setIOWindowBlocked(false)
-        setIOContent(prevContent => prevContent + '\n' + filepath + ':\n>>>')
+        setIOContent(prevContent => prevContent + 'Input for ' + filepath + ':\n>>> ')
       },
       {},
     )
@@ -60,18 +60,24 @@ export default function MessageIO() {
   }
 
   var handleIOInput = async event => {
-    // get the new input from the textarea
-    // if the new input is /n, then send the input to the backend and block the textarea
-    // else, append the new input to the textarea
-    if (event.key === 'Enter') {
-      // send the input to the backend
+      setIOContent(event.target.value)
+    if (event.nativeEvent.inputType === "insertLineBreak") {
       setIOWindowBlocked(true)
-      // check the acquire type
-
+      // inputContent is the last part of string after ">>> "
+      const inputStartIndex = ioContent.lastIndexOf(">>> ") + 4;
+      const inputContent = ioContent.slice(inputStartIndex);
+      console.log(inputContent)
       // send the input to the backend
-    } else {
-      // append the new input to the textarea
-      setIOContent(prevContent => prevContent + event.key)
+      const result = await invoke('syscall_input', {val: inputContent});
+      console.log("syscall_input", result);
+      if (result.success){
+        setIOContent(prevContent => prevContent + 'Syscall input: ' + inputContent + ' successfully.\n')
+      } else {
+        setIOContent(prevContent => prevContent + 'Syscall input: ' + inputContent + ' failed.\n')
+        setIOContent(prevContent => prevContent + 'Error message: ' + result.message + "\n")
+        setIOContent(prevContent => prevContent + 'Try again. >>> ')
+        setIOWindowBlocked(false)
+      }
     }
   }
 
@@ -150,7 +156,7 @@ export default function MessageIO() {
                     readOnly={ioWindowBlocked}
                     className="h-full block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                     value={ioContent}
-                    onChange={e => setIOContent(e.target.value)}
+                    onChange={handleIOInput}
                     placeholder="Run IO..."
                 ></textarea>
                 <div className="absolute right-2 top-2 fill-gray-300 hover:fill-gray-500">
