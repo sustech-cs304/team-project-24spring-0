@@ -8,7 +8,7 @@ use crate::{
     interface::assembler::Operand,
     modules::riscv::{
         basic::interface::parser::RISCV,
-        middleware::backend_api::syscall_output_print,
+        middleware::backend_api::{syscall_input_request, syscall_output_print},
         rv32i::constants::*,
     },
     utility::{enum_map::EnumMap, ptr::Ptr},
@@ -247,10 +247,12 @@ pub(super) fn ecall_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, Stri
         }
         5 => {
             arg.sim.as_mut().wait_input = WaitStatus::Int;
+            syscall_input_request(arg.get_path())?;
             Ok(SimulatorStatus::Paused)
         }
         8 => {
             arg.sim.as_mut().wait_input = WaitStatus::String;
+            syscall_input_request(arg.get_path())?;
             Ok(SimulatorStatus::Paused)
         }
         10 => Ok(SimulatorStatus::Stopped),
@@ -264,6 +266,7 @@ pub(super) fn ecall_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, Stri
         }
         12 => {
             arg.sim.as_mut().wait_input = WaitStatus::Char;
+            syscall_input_request(arg.get_path())?;
             Ok(SimulatorStatus::Paused)
         }
         34 => {
