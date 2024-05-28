@@ -73,12 +73,20 @@ export default function MultifileCode() {
 
   const getRunButtonisDisabled = () => {
     const currentFile = state.files.find(file => file.fileName === state.currentFile);
-    return currentFile.assembly.length === 0;
+    if (currentFile && currentFile.assembly.length != 0) {
+        console.log(currentFile)
+        console.log(currentFile.assembly.length)
+        return false;
+    }
+    return true;
   }
 
   const getDebugButtonisDisabled = () => {
     const currentFile = state.files.find(file => file.fileName === state.currentFile);
-    return currentFile.assembly.length === 0;
+    if (currentFile && currentFile.assembly.length != 0) {
+      return false;
+    }
+    return true;
   }
 
   return (
