@@ -443,6 +443,7 @@ impl RISCVSimulator {
             self.history.push_back(history);
             if matches!(res, Ok(SimulatorStatus::Running))
                 && self.debug
+                && self.pc_idx < self.breakpoints.len()
                 && self.breakpoints[self.pc_idx]
             {
                 Ok(SimulatorStatus::Paused)
