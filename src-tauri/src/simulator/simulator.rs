@@ -286,6 +286,7 @@ impl Simulator for RISCVSimulator {
                 if let Ok(val) = input.parse::<u32>() {
                     self.reg[RV32IRegister::A0 as usize] = val;
                     self.wait_input = WaitStatus::Not;
+                    self.pc_idx += 1;
                     self.resume()
                 } else {
                     Err("Invalid input".to_string())
@@ -300,11 +301,13 @@ impl Simulator for RISCVSimulator {
                 let data = input.as_bytes();
                 self.mem.set_range(addr, &data[..len as usize]);
                 self.wait_input = WaitStatus::Not;
+                self.pc_idx += 1;
                 self.resume()
             }
             WaitStatus::Char => {
                 self.reg[RV32IRegister::A0 as usize] = input.as_bytes()[0] as u32;
                 self.wait_input = WaitStatus::Not;
+                self.pc_idx += 1;
                 self.resume()
             }
         }
