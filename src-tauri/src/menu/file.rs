@@ -16,6 +16,7 @@ use crate::{
         assembler::RiscVAssembler,
         parser::{RISCVExtension, RISCVParser},
     },
+    simulator::simulator::RISCVSimulator,
     storage::rope_store,
     types::{
         menu_types,
@@ -211,8 +212,7 @@ fn new_tab(event: &WindowMenuEvent, file_path: &Path) -> ResultVoid {
         text: Box::new(content),
         parser: Box::new(RISCVParser::new(&vec![RISCVExtension::RV32I])),
         assembler: Box::new(RiscVAssembler::new()),
-        //simulator: Box::new(Default::default()),
-        data_return_range: Default::default(),
+        simulator: Box::new(RISCVSimulator::new(file_path.to_str().unwrap())),
         assembly_cache: Default::default(),
     };
     tab_map

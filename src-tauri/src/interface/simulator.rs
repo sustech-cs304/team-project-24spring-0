@@ -1,14 +1,27 @@
-use crate::types::middleware_types::SyscallDataType;
+use crate::{
+    interface::assembler::AssembleResult,
+    modules::riscv::basic::interface::parser::RISCV,
+    types::middleware_types::{AssemblerConfig, MemoryReturnRange},
+};
 
-pub trait Simulator<EXR, REG, ERR>: Send + Sync {
-    fn load_inst(&mut self, ir: &EXR) -> Result<(), ERR>;
-    fn run(&mut self) -> Result<REG, ERR>;
-    fn debug(&mut self) -> Result<REG, ERR>;
-    fn step(&mut self) -> Result<REG, ERR>;
-    fn stop(&mut self) -> Result<(), ERR>;
-    fn reset(&mut self) -> Result<REG, ERR>;
-    fn undo(&mut self) -> Result<REG, ERR>;
-    fn set_breakpoint(&mut self, line_number: u64) -> Result<(), ERR>;
-    fn remove_breakpoint(&mut self, line_number: u64) -> Result<(), ERR>;
-    fn syscall_input(&mut self, input: SyscallDataType);
+pub trait Simulator: Send + Sync {
+    fn load_inst(&mut self, inst: AssembleResult<RISCV>) -> Result<(), String>;
+    fn get_raw_inst(&self) -> &Option<AssembleResult<RISCV>>;
+    fn update_config(&mut self, config: &AssemblerConfig) -> Result<(), String>;
+    fn run(&mut self) -> Result<(), String>;
+    fn debug(&mut self) -> Result<(), String>;
+    fn stop(&mut self) -> Result<(), String>;
+    fn resume(&mut self) -> Result<(), String>;
+    fn step(&mut self) -> Result<(), String>;
+    fn reset(&mut self) -> Result<(), String>;
+    fn undo(&mut self) -> Result<(), String>;
+    fn set_breakpoint(&mut self, idx: usize) -> Result<(), String>;
+    fn remove_breakpoint(&mut self, idx: usize) -> Result<(), String>;
+    fn syscall_input(&mut self, input: &str) -> Result<(), String>;
+    fn get_register(&self) -> &[u32];
+    fn get_memory(&self) -> Vec<u32>;
+    fn get_pc_idx(&self) -> Option<usize>;
+    fn get_filepath(&self) -> &str;
+    fn get_memory_return_range(&self) -> MemoryReturnRange;
+    fn set_memory_return_range(&mut self, range: MemoryReturnRange) -> Result<(), String>;
 }
