@@ -384,6 +384,14 @@ impl Simulator for RISCVSimulator {
             Err("Invalid range".to_string())
         } else {
             self.mem_range = range;
+            if self.get_status() == SimulatorStatus::Stopped
+                || self.get_status() == SimulatorStatus::Paused
+            {
+                self.update(Optional {
+                    success: true,
+                    message: "memory return range updated".to_string(),
+                });
+            }
             Ok(())
         }
     }
