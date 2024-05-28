@@ -35,7 +35,7 @@ export default function MultifileCode() {
     console.log('Invoke handle assembly result: ', result)
     if (result.Success) {
       const outputStore = useOutputStore.getState()
-      outputStore.addOutput('Assembly Result: \n' + result.Success.text.join('\n'))
+      outputStore.addOutput('Assembly Successfully!');
       const currentFile = state.files.find(file => file.fileName === fileName)
       state.updateFile(
         currentFile.fileName,

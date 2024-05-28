@@ -49,12 +49,12 @@ export default function ModifiedEditor({ fileName }) {
         var op = change.text.length > 0 ? `Insert` : `Delete`
         var text = change.text
         var startPosition = {
-          row: change.range.startLineNumber,
-          col: change.range.startColumn,
+          row: change.range.startLineNumber-1,
+          col: change.range.startColumn-1,
         }
         var endPosition = {
-          row: change.range.endLineNumber,
-          col: change.range.endColumn,
+          row: change.range.endLineNumber-1,
+          col: change.range.endColumn-1,
         }
         var result = await invoke('modify_current_tab', {
           op: op.toString(),
@@ -67,9 +67,10 @@ export default function ModifiedEditor({ fileName }) {
         // invoke set_cursor
         var result = await invoke('set_cursor', {
           filepath: fileName,
-          row: change.range.endLineNumber,
-          col: change.range.endColumn,
-        })
+          row: change.range.endLineNumber-1,
+          col: change.range.endColumn-1,
+        });
+
       }
     })
   }
@@ -91,19 +92,26 @@ export default function ModifiedEditor({ fileName }) {
         className="overflow-hidden h-full"
         value={file.code}
         onMount={handleEditorDidMount}
+        onChange={async (value, event) => {state.updateFile(fileName, value, file.original, file.assembly, file.runLines, file.register, file.memory, file.baseAddress)}}
         options={{ hover: { enabled: true } }}
         beforeMount={LoadMonacoConfig}
       />
       <div className="absolute right-2 top-0 flex-row gap-2">
-        <button className="bg-gray-100 rounded-2xl hover:bg-gray-200" onClick={handleClickedRun}>
-          <Image alt="run icon" src="/icons/run.svg" width={16} height={16} />
-        </button>
+        {/*<button className="bg-gray-100 rounded-2xl hover:bg-gray-200" onClick={handleClickedRun}>*/}
+        {/*  <Image alt="run icon" src="/icons/run.svg" width={16} height={16} />*/}
+        {/*</button>*/}
       </div>
     </div>
   )
 }
 
 function LoadMonacoConfig(monaco) {
+  // check whether the language is registered or not
+    if (monaco.languages.getLanguages().some(({ id }) => id === language_id)) {
+        return
+    }
+
+
   monaco.languages.register({ id: language_id })
 
   monaco.languages.setMonarchTokensProvider(language_id, getRiscvMonarchTokensProvider())
