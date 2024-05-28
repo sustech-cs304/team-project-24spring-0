@@ -292,8 +292,8 @@ pub mod frontend_api {
                             .unwrap()
                             .instruction
                             .iter()
-                            .map(|inst| Text {
-                                line: inst.line_number + 1,
+                            .map(|inst| AssembleText {
+                                line: inst.line_number,
                                 address: inst.address,
                                 code: inst.code,
                                 basic: inst.basic.to_string(),
@@ -855,9 +855,8 @@ pub mod backend_api {
     /// Returns `Result` indicating the success or failure of the event
     /// emission.
     ///
-    /// This function will emit a `front_syscall_print` event to the frontend,
-    /// and the payload is a `SyscallOutput` containing the filepath and output
-    /// to be printed.
+    /// This function will emit a `front_syscall_request` event to the frontend,
+    /// and the payload is a `SyscallRequest` containing the filepath.
     ///
     /// [SyscallRequest](crate::types::middleware_types::SyscallRequest):
     /// - `filepath`: string

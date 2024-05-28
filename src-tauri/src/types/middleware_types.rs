@@ -80,11 +80,11 @@ pub enum DumpResult {
 
 #[derive(Clone, Serialize)]
 pub struct AssembleSuccess {
-    pub text: Vec<Text>,
+    pub text: Vec<AssembleText>,
 }
 
 #[derive(Clone, Serialize)]
-pub struct Text {
+pub struct AssembleText {
     pub line: u64,
     pub address: u32,
     pub code: u32,
