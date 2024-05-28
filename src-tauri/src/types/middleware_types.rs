@@ -85,10 +85,10 @@ pub struct AssembleSuccess {
 
 #[derive(Clone, Serialize)]
 pub struct Text {
+    pub line: u64,
     pub address: u32,
     pub code: u32,
     pub basic: String,
-    pub source: String,
 }
 
 pub type Data = u32;

@@ -49,6 +49,12 @@ export default function CodeLineTable({ fileName }) {
     }
   }
 
+  var getCodeAccordingToLine = line => {
+    var code = file.code;
+    var lines = code.split('\n');
+    return lines[line - 1];
+  }
+
   return (
     <div className="flex flex-col gap-2">
       <Table
@@ -60,19 +66,19 @@ export default function CodeLineTable({ fileName }) {
         onSelectionChange={handleSelectionChange}
       >
         <TableHeader>
-          <TableColumn>Line</TableColumn>
           <TableColumn>Address</TableColumn>
           <TableColumn>Code</TableColumn>
           <TableColumn>Basic</TableColumn>
+          <TableColumn>Source</TableColumn>
           <TableColumn>Run</TableColumn>
         </TableHeader>
         <TableBody>
           {lines.map((line, index) => (
             <TableRow key={index}>
-              <TableCell>{line.source}</TableCell>
               <TableCell>{line.address}</TableCell>
               <TableCell>{line.code}</TableCell>
               <TableCell>{line.basic}</TableCell>
+              <TableCell>{line.line + ": " + getCodeAccordingToLine(line.line)}</TableCell>
               <TableCell>{file.runLines === index ? '⬅️' : ''}</TableCell>
             </TableRow>
           ))}
