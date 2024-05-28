@@ -12,6 +12,8 @@ import {
 } from '@nextui-org/react'
 import useFileStore from '@/utils/state'
 
+
+
 export default function Memory({ fileName }) {
   var base = 0x10010000
 
@@ -28,6 +30,10 @@ export default function Memory({ fileName }) {
       row.push(currentFile.memory[i][j])
     }
     rows.push(row)
+  }
+
+  function toHex(decimal) {
+    return '0x' + decimal.toString(16).padStart(8, '0');
   }
 
   return (
@@ -51,7 +57,7 @@ export default function Memory({ fileName }) {
             {rows.map((row, index) => (
               <tr key={index}>
                 {row.map((cell, index) => (
-                  <td key={index}>{cell.toString(16)}</td>
+                  <td key={index}>{toHex(cell)}</td>
                 ))}
               </tr>
             ))}
