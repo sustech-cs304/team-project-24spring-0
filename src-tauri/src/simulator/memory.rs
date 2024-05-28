@@ -47,10 +47,10 @@ impl Memory {
             return Vec::new();
         }
         let start = start as usize;
-        let end = start + (len - 1) as usize;
+        let end = start + len as usize;
         let self_ptr = Ptr::new(self);
         let mut_self = self_ptr.as_mut();
-        let mut result = Vec::with_capacity(end - start + 1);
+        let mut result = Vec::with_capacity(len as usize);
         let start_page = Self::align(start);
         let end_page = Self::align(end);
         if start_page == end_page {
