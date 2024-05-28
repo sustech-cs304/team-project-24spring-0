@@ -5,12 +5,12 @@ use std::{
 
 use ropey::Rope;
 use serde::{Deserialize, Serialize};
-use strum_macros::{Display, EnumMessage};
 
 use crate::{
     interface::{
         assembler::Assembler,
         parser::{Parser, ParserResult},
+        simulator::Simulator,
         storage::MFile,
     },
     modules::riscv::basic::interface::parser::RISCV,
@@ -23,8 +23,7 @@ pub struct Tab {
     pub text: Box<dyn MFile<Rope, Modification, Cursor>>,
     pub parser: Box<dyn Parser<RISCV>>,
     pub assembler: Box<dyn Assembler<RISCV>>,
-    //pub simulator: Box<dyn Simulator<i32, i32, i32, i32>>,
-    pub data_return_range: (u64, u64),
+    pub simulator: Box<dyn Simulator>,
     pub assembly_cache: AssembleCache,
 }
 
@@ -51,6 +50,22 @@ pub struct CursorPosition {
     pub col: u64,
 }
 
+/// both start and len are aligned by 4
+#[derive(Clone, Copy, Deserialize)]
+pub struct MemoryReturnRange {
+    pub start: u64,
+    pub len: u64,
+}
+
+impl Default for MemoryReturnRange {
+    fn default() -> Self {
+        Self {
+            start: 0x10010000,
+            len: 0x100,
+        }
+    }
+}
+
 #[derive(Clone, Serialize)]
 pub enum AssembleResult {
     Success(AssembleSuccess),
@@ -65,19 +80,18 @@ pub enum DumpResult {
 
 #[derive(Clone, Serialize)]
 pub struct AssembleSuccess {
-    pub data: Vec<Data>,
-    pub text: Vec<Text>,
+    pub text: Vec<AssembleText>,
 }
 
 #[derive(Clone, Serialize)]
-pub struct Text {
+pub struct AssembleText {
     pub line: u64,
     pub address: u32,
     pub code: u32,
     pub basic: String,
 }
 
-pub type Data = u8;
+pub type Data = u32;
 
 #[derive(Clone, Serialize)]
 pub struct AssembleError {
@@ -95,13 +109,13 @@ pub struct AssembleCache {
 }
 
 #[derive(Clone, Serialize)]
-pub struct SimulatorResult {
+pub struct SimulatorData {
+    pub filepath: String,
     pub success: bool,
     pub has_current_text: bool,
     pub current_text: u64,
     pub registers: Vec<Register>,
     pub data: Vec<Data>,
-    pub has_message: bool,
     pub message: String,
 }
 
@@ -120,8 +134,7 @@ pub struct SyscallOutput {
 
 #[derive(Clone, Serialize)]
 pub struct SyscallRequest {
-    pub path: String,
-    pub syscall: String,
+    pub filepath: String,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -165,22 +178,6 @@ impl Default for AssemblerConfig {
             dot_text_base_address: 0x00400000,
         }
     }
-}
-
-#[derive(EnumMessage, Display)]
-pub enum SyscallDataType {
-    #[strum(message = "Char")]
-    Char(u8),
-    #[strum(message = "String")]
-    String(Vec<u8>),
-    #[strum(message = "Int")]
-    Int(i32),
-    #[strum(message = "Long")]
-    Long(i64),
-    #[strum(message = "Float")]
-    Float(f32),
-    #[strum(message = "Double")]
-    Double(f64),
 }
 
 #[derive(Deserialize)]

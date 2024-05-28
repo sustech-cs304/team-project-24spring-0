@@ -94,7 +94,7 @@ unsafe impl<'a> Sync for Symbol<'_> {}
 pub enum RISCVToken<'a> {
     #[token(",")]
     Comma,
-    #[token("\n", |lex| lex.extras.0 += 1; lex.extras.1 = lex.span().end;)]
+    #[regex(r"[\r\n]|[\r]|[\n]", |lex| lex.extras.0 += 1; lex.extras.1 = lex.span().end;)]
     Newline,
     #[token(":")]
     Colon,

@@ -8,6 +8,7 @@ use crate::{
         parser::{RISCVExtension, RISCVParser},
     },
     remote::{client::RpcClientImpl, server::RpcServerImpl, utils::get_free_port},
+    simulator::simulator::RISCVSimulator,
     storage::rope_store,
     types::middleware_types::{Tab, TabMap},
     utility::ptr::Ptr,
@@ -30,19 +31,24 @@ pub fn init_test_server(content: &str) -> Result<RpcServerImpl, String> {
         let content = rope_store::Text::from_str(
             PathBuf::from_str(TEST_FILE_NAME).unwrap().as_path(),
             content,
-        );
-        let mut static_lock = TABMAP.lock().unwrap();
-        let static_tabmap = static_lock.as_mut().unwrap();
-        let mut static_tab = static_tabmap.tabs.lock().unwrap();
-        let tab = Tab {
-            text: Box::new(content),
-            parser: Box::new(RISCVParser::new(&vec![RISCVExtension::RV32I])),
-            assembler: Box::new(RiscVAssembler::new()),
-            //simulator: Box::new(Default::default()),
-            data_return_range: Default::default(),
-            assembly_cache: Default::default(),
-        };
-        static_tab.insert(TEST_FILE_NAME.to_string(), tab);
+        ) {
+            Ok(content) => {
+                let mut static_lock = TABMAP.lock().unwrap();
+                let static_tabmap = static_lock.as_mut().unwrap();
+                let mut static_tab = static_tabmap.tabs.lock().unwrap();
+                let tab = Tab {
+                    text: Box::new(content),
+                    parser: Box::new(RISCVParser::new(&vec![RISCVExtension::RV32I])),
+                    assembler: Box::new(RiscVAssembler::new()),
+                    simulator: Box::new(RISCVSimulator::new(TEST_FILE_NAME)),
+                    assembly_cache: Default::default(),
+                };
+                static_tab.insert(TEST_FILE_NAME.to_string(), tab);
+            }
+            Err(e) => {
+                return Err(e);
+            }
+        }
     }
     let mut server = RpcServerImpl::default();
     let _ = server

@@ -1,4 +1,4 @@
-pub mod bus;
-pub mod cpu;
-pub mod dram;
+#[allow(arithmetic_overflow)]
+mod instruction;
+mod memory;
 pub mod simulator;
