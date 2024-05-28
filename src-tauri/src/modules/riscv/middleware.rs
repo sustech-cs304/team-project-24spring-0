@@ -1,9 +1,9 @@
 /// This module provides API functions for the frontend. Could be used by
 /// `invoke` in EMCAScript
 pub mod frontend_api {
-    use std::net::SocketAddr;
+    use std::{net::SocketAddr, path::Path};
 
-    use tauri::{async_runtime::block_on, State};
+    use tauri::{async_runtime::block_on, State, Window};
 
     use crate::{
         interface::parser::Parser,
@@ -15,7 +15,10 @@ pub mod frontend_api {
         remote::{Modification, OpRange},
         storage::rope_store,
         types::middleware_types::*,
-        utility::{ptr::Ptr, state_helper::state},
+        utility::{
+            ptr::Ptr,
+            state_helper::state::{self, set_current_tab_name},
+        },
     };
 
     /// Creates a new tab with content loaded from a specified file path.
@@ -527,6 +530,7 @@ pub mod frontend_api {
     }
 
     /// Authorize and connect to a remote RPC server as client.
+    /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: State containing the map of all tabs.
     /// - `ip`: IPV4 address of the remote server.
     /// - `port`: Port number of the remote server.
@@ -535,6 +539,8 @@ pub mod frontend_api {
     /// Returns `Optional` indicating the success or failure of the connection.
     #[tauri::command]
     pub fn authorize_share_client(
+        window: Window,
+        cur_tab_name: State<CurTabName>,
         tab_map: State<TabMap>,
         ip: String,
         port: u16,
@@ -550,6 +556,7 @@ pub mod frontend_api {
                 }
             }
         };
+
         if let Err(e) = client.set_server_addr(addr) {
             return Optional {
                 success: false,
@@ -561,17 +568,41 @@ pub mod frontend_api {
                 message: e.to_string(),
             };
         }
+
         match block_on(client.send_authorize(&password)) {
-            Ok(_) => Optional {
-                success: true,
-                message: String::new(),
-            },
+            Ok(val) => {
+                let client_text = rope_store::Text::from_str(Path::new(&val.0), &val.2);
+                let client_tab = Tab {
+                    text: Box::new(client_text),
+                    parser: Box::new(RISCVParser::new(&vec![RISCVExtension::RV32I])),
+                    assembler: Box::new(RiscVAssembler::new()),
+                    data_return_range: Default::default(),
+                    assembly_cache: Default::default(),
+                };
+                tab_map
+                    .tabs
+                    .lock()
+                    .unwrap()
+                    .insert(val.0.clone(), client_tab);
+                set_current_tab_name(&cur_tab_name, &val.0);
+                if let Err(e) = window.emit("front_share_client", {}) {
+                    return Optional {
+                        success: false,
+                        message: e.to_string(),
+                    };
+                } else {
+                    Optional {
+                        success: true,
+                        message: String::new(),
+                    }
+                }
+                //TODO:@Vollate
+            }
             Err(e) => Optional {
                 success: false,
                 message: e.to_string(),
             },
         }
-        //TODO:@Vollate
     }
 
     /// Stop the share server for the current tab.

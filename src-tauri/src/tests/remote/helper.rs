@@ -27,28 +27,22 @@ pub fn init_test_server(content: &str) -> Result<RpcServerImpl, String> {
             let mut static_lock = TABMAP.lock().unwrap();
             *static_lock = Some(TabMap::default());
         }
-        match rope_store::Text::from_str(
+        let content = rope_store::Text::from_str(
             PathBuf::from_str(TEST_FILE_NAME).unwrap().as_path(),
             content,
-        ) {
-            Ok(content) => {
-                let mut static_lock = TABMAP.lock().unwrap();
-                let static_tabmap = static_lock.as_mut().unwrap();
-                let mut static_tab = static_tabmap.tabs.lock().unwrap();
-                let tab = Tab {
-                    text: Box::new(content),
-                    parser: Box::new(RISCVParser::new(&vec![RISCVExtension::RV32I])),
-                    assembler: Box::new(RiscVAssembler::new()),
-                    //simulator: Box::new(Default::default()),
-                    data_return_range: Default::default(),
-                    assembly_cache: Default::default(),
-                };
-                static_tab.insert(TEST_FILE_NAME.to_string(), tab);
-            }
-            Err(e) => {
-                return Err(e);
-            }
-        }
+        );
+        let mut static_lock = TABMAP.lock().unwrap();
+        let static_tabmap = static_lock.as_mut().unwrap();
+        let mut static_tab = static_tabmap.tabs.lock().unwrap();
+        let tab = Tab {
+            text: Box::new(content),
+            parser: Box::new(RISCVParser::new(&vec![RISCVExtension::RV32I])),
+            assembler: Box::new(RiscVAssembler::new()),
+            //simulator: Box::new(Default::default()),
+            data_return_range: Default::default(),
+            assembly_cache: Default::default(),
+        };
+        static_tab.insert(TEST_FILE_NAME.to_string(), tab);
     }
     let mut server = RpcServerImpl::default();
     let _ = server

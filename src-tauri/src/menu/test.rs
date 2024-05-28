@@ -40,6 +40,8 @@ pub fn event_handler(event: WindowMenuEvent) {
         "oo" => {
             let window = event.window();
             let res = authorize_share_client(
+                window.to_owned(),
+                window.state::<CurTabName>(),
                 window.state::<TabMap>(),
                 "127.0.0.1".to_string(),
                 11451,

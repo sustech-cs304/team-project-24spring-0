@@ -122,15 +122,15 @@ impl Text {
         Text::from_path(Path::new(file_path))
     }
 
-    pub fn from_str(file_path: &Path, text: &str) -> Result<Self, String> {
-        Ok(Text {
+    pub fn from_str(file_path: &Path, text: &str) -> Self {
+        Text {
             share_status: Default::default(),
             data: Box::new(Rope::from_str(text)),
             path: file_path.to_path_buf(),
             version: 0,
             dirty: false,
             last_modified: std::time::SystemTime::now(),
-        })
+        }
     }
 }
 

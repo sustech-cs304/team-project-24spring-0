@@ -58,21 +58,49 @@ impl RpcClientImpl {
         Ok(())
     }
 
-    pub async fn send_authorize(&mut self, password: &str) -> ResultVoid {
+    pub async fn send_authorize(
+        &mut self,
+        password: &str,
+    ) -> Result<(String, u64, String), Box<dyn std::error::Error>> {
         self.should_running()?;
-        let req = Request::new(editor_rpc::AuthorizeRequest {
+        let request = Request::new(editor_rpc::AuthorizeRequest {
             password: password.to_string(),
         });
-        let res = match timeout(
+        let reply = match timeout(
             Duration::from_secs(2),
-            self.client.as_mut().unwrap().authorize(req),
+            self.client.as_mut().unwrap().authorize(request),
         )
         .await
         {
-            Ok(res) => res?,
+            Ok(reply) => reply?,
             Err(_) => return Err("Timeout".into()),
         };
-        Ok(())
+        let reply_ref = reply.get_ref();
+        if reply_ref.success {
+            Ok((
+                reply_ref.file_name.to_owned(),
+                reply_ref.version,
+                reply_ref.content.to_owned(),
+            ))
+        } else {
+            Err("Authorize failed".into())
+        }
+    }
+
+    pub async fn send_disconnect(&mut self) -> ResultVoid {
+        todo!();
+    }
+
+    pub async fn send_set_cursor(&mut self) -> ResultVoid {
+        todo!();
+    }
+
+    pub async fn send_get_content(&mut self) -> ResultVoid {
+        todo!();
+    }
+
+    pub async fn send_update_content(&mut self) -> ResultVoid {
+        todo!();
     }
 }
 

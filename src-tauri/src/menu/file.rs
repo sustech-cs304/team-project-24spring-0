@@ -73,38 +73,64 @@ pub fn event_handler(event: WindowMenuEvent) {
 fn open_handler(event: WindowMenuEvent) {
     let picker = FileDialogBuilder::new();
     picker.pick_file(move |file_path| match file_path {
-        Some(file_path) => match new_tab(&event, file_path.as_path()) {
-            Ok(_) => {
-                let name = get_current_tab_name(&event);
-                let tab_map = event.window().state::<TabMap>();
-                let lock = tab_map.tabs.lock().unwrap();
-                let tab = lock.get(&name).unwrap();
-                let content = tab.text.to_string();
-                event
-                    .window()
-                    .emit(
-                        "front_file_open",
-                        menu_types::OpenFile {
-                            file_path: file_path.to_str().unwrap().to_owned(),
-                            content,
-                        },
+        Some(file_path) => {
+            if let Some(_) = event
+                .window()
+                .state::<TabMap>()
+                .tabs
+                .lock()
+                .unwrap()
+                .get(file_path.to_str().unwrap())
+            {
+                display_dialog(
+                    MessageDialogKind::Info,
+                    MessageDialogButtons::Ok,
+                    format!(
+                        "{} has already opened",
+                        file_path.file_name().unwrap().to_str().unwrap()
                     )
-                    .unwrap();
+                    .as_str(),
+                    format!("Full path: {}", file_path.to_str().unwrap()).as_str(),
+                    |_| {},
+                );
+                return;
             }
-            Err(e) => display_dialog(
-                MessageDialogKind::Info,
-                MessageDialogButtons::Ok,
-                format!("Failed to open {:?}", file_path.file_name().unwrap()).as_str(),
-                &e.to_string(),
-                |_| {},
-            ),
-        },
+            match new_tab(&event, file_path.as_path()) {
+                Ok(_) => {
+                    let name = get_current_tab_name(&event);
+                    let tab_map = event.window().state::<TabMap>();
+                    let lock = tab_map.tabs.lock().unwrap();
+                    let tab = lock.get(&name).unwrap();
+                    let content = tab.text.to_string();
+                    event
+                        .window()
+                        .emit(
+                            "front_file_open",
+                            menu_types::OpenFile {
+                                file_path: file_path.to_str().unwrap().to_owned(),
+                                content,
+                            },
+                        )
+                        .unwrap();
+                }
+                Err(e) => display_dialog(
+                    MessageDialogKind::Info,
+                    MessageDialogButtons::Ok,
+                    format!("Failed to open {}", file_path.to_str().unwrap()).as_str(),
+                    &e.to_string(),
+                    |_| {},
+                ),
+            }
+        }
         _ => {}
     });
 }
 
 /// event emit: front_file_save
-/// payload: String
+/// payload: String fn save_handler(event: &WindowMenuEvent) { let name =
+/// get_current_tab_name(&event); let tab_map =
+/// event.window().state::<TabMap>(); let mut lock =
+/// tab_map.tabs.lock().unwrap();
 fn save_handler(event: &WindowMenuEvent) {
     let name = get_current_tab_name(&event);
     let tab_map = event.window().state::<TabMap>();
