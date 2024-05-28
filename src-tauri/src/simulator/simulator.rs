@@ -149,12 +149,12 @@ impl Simulator for RISCVSimulator {
         self.conf = config.clone();
         if old_status == SimulatorStatus::Stopped {
             self._reset();
+            self.update(Optional {
+                success: true,
+                message: "config updated".to_string(),
+            });
         }
         self.set_status(old_status);
-        self.update(Optional {
-            success: true,
-            message: "config updated".to_string(),
-        });
         Ok(())
     }
 
