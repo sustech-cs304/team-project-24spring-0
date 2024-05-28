@@ -49,11 +49,14 @@ export default function CodeLineTable({ fileName }) {
     }
   }
 
-  var getCodeAccordingToLine = line => {
-    var code = file.code;
-    var lines = code.split('\n');
-    return lines[line - 1];
-  }
+  var code = file.code;
+  var codeLines = code.split('\n');
+
+  // a function that can change a decimal number to a hexadecimal number
+  // the output should be like 0x00000000 (8 characters)
+    function toHex(decimal) {
+        return '0x' + decimal.toString(16).padStart(8, '0');
+    }
 
   return (
     <div className="flex flex-col gap-2">
@@ -75,10 +78,10 @@ export default function CodeLineTable({ fileName }) {
         <TableBody>
           {lines.map((line, index) => (
             <TableRow key={index}>
-              <TableCell>{line.address}</TableCell>
-              <TableCell>{line.code}</TableCell>
+              <TableCell>{toHex(line.address)}</TableCell>
+              <TableCell>{toHex(line.code)}</TableCell>
               <TableCell>{line.basic}</TableCell>
-              <TableCell>{line.line + ": " + getCodeAccordingToLine(line.line)}</TableCell>
+              <TableCell>{line.line + ": " + codeLines[line.line-1]}</TableCell>
               <TableCell>{file.runLines === index ? '⬅️' : ''}</TableCell>
             </TableRow>
           ))}

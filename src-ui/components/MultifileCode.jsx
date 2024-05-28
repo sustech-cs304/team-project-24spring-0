@@ -83,6 +83,22 @@ export default function MultifileCode() {
     await handleStimulatorResult(result, 'Step', state, outputStore)
   }
 
+  var handleResume = async () => {
+    console.log('Resume Executed')
+    const result = await invoke('resume')
+    console.log(result)
+
+    await handleStimulatorResult(result, 'Resume', state, outputStore)
+  }
+
+  var handleReset = async () => {
+    console.log('Reset Executed')
+    const result = await invoke('reset')
+    console.log(result)
+
+    await handleStimulatorResult(result, 'Reset', state, outputStore)
+  }
+
   var handleUndo = async () => {
     console.log('Undo Executed')
     const result = await invoke('undo')
@@ -115,11 +131,17 @@ export default function MultifileCode() {
                 <Button color="secondary" size="sm" onClick={() => handleDebug()}>
                   Debug
                 </Button>
-                <Button color="success" size="sm" className="w-full" onClick={() => handleStep()}>
+                <Button color="primary" size="sm" className="w-full" onClick={() => handleStep()}>
                   Step
                 </Button>
-                <Button color="warning" size="sm" className="w-full" onClick={() => handleUndo()}>
+                <Button color="secondary" size="sm" className="w-full" onClick={() => handleResume()}>
+                  Resume
+                </Button>
+                <Button color="primary" size="sm" className="w-full" onClick={() => handleUndo()}>
                   Undo
+                </Button>
+                <Button color="secondary" size="sm" className="w-full" onClick={() => handleReset()}>
+                  Reset
                 </Button>
                 <Button color="danger" size="sm" onClick={() => deleteFile(file.fileName)}>
                   Close

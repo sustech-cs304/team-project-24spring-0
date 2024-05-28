@@ -33,6 +33,6 @@ export default async function handleStimulatorResult(result, name, state, output
     // console.log('updated file')
     // console.log(currentFile)
   } else {
-    outputState.addOutput(name + ' Failed! Reason: ' + result.error);
+    outputState.addOutput(name + ' Failed! Reason: ' + result.message);
   }
 }
