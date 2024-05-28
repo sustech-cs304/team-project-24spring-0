@@ -133,7 +133,9 @@ export default function Home() {
         file.register = event.payload['registers']
         file.memory = event.payload['data']
         if(event.payload['has_current_text']) {
-          file.runLines = ""
+          file.runLines = event.payload['current_text']
+        } else {
+          file.runLines = ''
         }
         state.updateFile(
           state.currentFile,
