@@ -7,6 +7,7 @@ import { Card, CardBody, Textarea } from '@nextui-org/react'
 import { useEffect } from 'react'
 import { listen } from '@tauri-apps/api/event'
 import useFileStore from '@/utils/state'
+import useOutputStore from '@/utils/outputState'
 
 export default function Home() {
   useEffect(() => {
@@ -131,10 +132,50 @@ export default function Home() {
       )
     })
 
+    const unListenedSimulatorUpdate = listen('front_simulator_update', event => {
+      // the payload is a SimulatorData containing the current pc index, register and memory values.
+      //
+      //     SimulatorData:
+      //
+      // filepath: string
+      // success: bool
+      // has_current_text: bool
+      // current_text: u64
+      // registers: Vec<Register>
+      // data: Vec
+      // message: string
+      console.log('simulator update event received', event.payload)
+      const outputStore = useOutputStore.getState()
+      if (event.payload['success'] === false) {
+        outputStore.addOutput("Simulator Update Failed. Message: " + event.payload['message'])
+        return
+      }
+      console.log('simulator update event received', event.payload)
+
+        const state = useFileStore.getState()
+        const file = state.files.find(file => file.fileName === state.currentFile)
+        file.register = event.payload['registers']
+        // file.memory = event.payload['data']
+        if(event.payload['has_current_text']) {
+          file.runLines = event.payload['current_text']
+        }
+        state.updateFile(
+          state.currentFile,
+          file.code,
+          file.code,
+          file.assembly,
+          file.runLines,
+          file.register,
+          file.memory,
+          file.baseAddress,
+        )
+    })
+
     return () => {
       unListenedFileOpen.then(dispose => dispose())
       unListenedFileSave.then(dispose => dispose())
       unListenedFileSaveAs.then(dispose => dispose())
+      unListenedSimulatorUpdate.then(dispose => dispose())
     }
   }, [])
 

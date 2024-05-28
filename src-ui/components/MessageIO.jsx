@@ -18,7 +18,7 @@ export default function MessageIO() {
 
   useEffect(() => {
     // handle backend input and output api
-    const unListenSyscallOutputPrint = listen('syscall_output_print', event => {
+    const unListenSyscallOutputPrint = listen('front_syscall_print', event => {
       print(event)
       var pathname = event.payload['pathname']
       var output = event.payload['output']
@@ -26,7 +26,7 @@ export default function MessageIO() {
     })
 
     const unListenSyscallInputRequest = listen(
-      'syscall_input_request',
+      'front_syscall_request',
       event => {
         print(event)
         var pathname = event.payload['pathname']
