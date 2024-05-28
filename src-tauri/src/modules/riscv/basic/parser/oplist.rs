@@ -82,7 +82,7 @@ pub fn idx_handler(
 // used with idx_handler_high, i = u20 << 12 + i12, get the i12 imm
 pub fn idx_handler_imm_low(opd: ParserRISCVInstOpd) -> ParserRISCVInstOpd {
     if let ParserRISCVInstOpd::Imm(ParserRISCVImmediate::Imm(i)) = opd {
-        ParserRISCVInstOpd::Imm(ParserRISCVImmediate::Imm(get_32u_low(i)))
+        ParserRISCVInstOpd::Imm(ParserRISCVImmediate::Imm(get_32u_low(i as u32)))
     } else {
         opd
     }
@@ -90,7 +90,7 @@ pub fn idx_handler_imm_low(opd: ParserRISCVInstOpd) -> ParserRISCVInstOpd {
 // used with idx_handler_low, i = u20 << 12 + i12, get the u20 imm
 pub fn idx_handler_imm_high(opd: ParserRISCVInstOpd) -> ParserRISCVInstOpd {
     if let ParserRISCVInstOpd::Imm(ParserRISCVImmediate::Imm(i)) = opd {
-        ParserRISCVInstOpd::Imm(ParserRISCVImmediate::Imm(get_32u_high(i)))
+        ParserRISCVInstOpd::Imm(ParserRISCVImmediate::Imm(get_32u_high(i as u32)))
     } else {
         opd
     }

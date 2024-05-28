@@ -12,7 +12,7 @@ use std::{cmp::Ordering, net::SocketAddr};
 
 use server::editor_rpc::{ContentPosition, OperationType, Pos, UpdateContentRequest};
 
-use crate::middleware_types::CursorPosition;
+use crate::{middleware_types::CursorPosition, types::middleware_types::FileOperation};
 
 pub trait GetCmpType {
     type Type: Clone;
@@ -21,33 +21,44 @@ pub trait GetCmpType {
 }
 
 #[derive(Clone)]
-struct OpRange {
-    start: CursorPosition,
-    end: CursorPosition,
+pub struct OpRange {
+    pub start: CursorPosition,
+    pub end: CursorPosition,
 }
 
 #[derive(Clone)]
-struct History {
-    version: u64,
-    op: OperationType,
-    op_range: OpRange,
-    modified_content: String,
+pub struct Modification {
+    pub version: u64,
+    pub op: OperationType,
+    pub op_range: OpRange,
+    pub modified_content: String,
 }
 
 #[derive(Clone, Debug)]
-struct ClientCursor {
-    ip: SocketAddr,
-    row: u64,
-    col: u64,
+pub struct ClientCursor {
+    pub addr: SocketAddr,
+    pub row: u64,
+    pub col: u64,
 }
 
-struct CursorCMP(ClientCursor);
+struct CursorAsc(ClientCursor);
+
+pub struct CursorRowEq(ClientCursor);
 
 impl Into<Pos> for CursorPosition {
     fn into(self) -> Pos {
         Pos {
             row: self.row,
             col: self.col,
+        }
+    }
+}
+
+impl From<Pos> for CursorPosition {
+    fn from(pos: Pos) -> Self {
+        CursorPosition {
+            row: pos.row,
+            col: pos.col,
         }
     }
 }
@@ -61,7 +72,16 @@ impl Into<ContentPosition> for OpRange {
     }
 }
 
-impl Into<UpdateContentRequest> for History {
+impl From<ContentPosition> for OpRange {
+    fn from(pos: ContentPosition) -> Self {
+        OpRange {
+            start: pos.start.unwrap().into(),
+            end: pos.end.unwrap().into(),
+        }
+    }
+}
+
+impl Into<UpdateContentRequest> for Modification {
     fn into(self) -> UpdateContentRequest {
         UpdateContentRequest {
             version: self.version,
@@ -72,39 +92,77 @@ impl Into<UpdateContentRequest> for History {
     }
 }
 
-impl GetCmpType for CursorCMP {
+impl From<UpdateContentRequest> for Modification {
+    fn from(req: UpdateContentRequest) -> Self {
+        Modification {
+            version: req.version,
+            op: req.op(),
+            op_range: req.op_range.unwrap().into(),
+            modified_content: req.modified_content,
+        }
+    }
+}
+
+impl GetCmpType for CursorAsc {
     type Type = ClientCursor;
 
     fn new(t: &Self::Type) -> Self {
-        CursorCMP { 0: t.clone() }
+        CursorAsc { 0: t.clone() }
     }
 }
 
-impl PartialEq for CursorCMP {
+impl PartialEq for CursorAsc {
     fn eq(&self, other: &Self) -> bool {
-        self.0.ip == other.0.ip
+        self.0.addr == other.0.addr
     }
 }
 
-impl Eq for CursorCMP {}
+impl Eq for CursorAsc {}
 
-impl PartialOrd for CursorCMP {
+impl PartialOrd for CursorAsc {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Option::Some(
             self.0
                 .row
                 .cmp(&other.0.row)
                 .then(self.0.col.cmp(&other.0.col))
-                .then(self.0.ip.cmp(&other.0.ip)),
+                .then(self.0.addr.cmp(&other.0.addr)),
         )
     }
 }
-impl Ord for CursorCMP {
+
+impl Ord for CursorAsc {
     fn cmp(&self, other: &Self) -> Ordering {
         self.0
             .row
             .cmp(&other.0.row)
             .then(self.0.col.cmp(&other.0.col))
-            .then(self.0.ip.cmp(&other.0.ip))
+            .then(self.0.addr.cmp(&other.0.addr))
+    }
+}
+
+impl GetCmpType for CursorRowEq {
+    type Type = ClientCursor;
+
+    fn new(t: &Self::Type) -> Self {
+        CursorRowEq { 0: t.clone() }
+    }
+}
+
+impl PartialEq for CursorRowEq {
+    fn eq(&self, other: &Self) -> bool {
+        self.0.row == other.0.row
+    }
+}
+
+impl Eq for CursorRowEq {}
+
+impl Into<OperationType> for FileOperation {
+    fn into(self) -> OperationType {
+        match self {
+            FileOperation::Insert => OperationType::Insert,
+            FileOperation::Delete => OperationType::Delete,
+            FileOperation::Replace => OperationType::Replace,
+        }
     }
 }

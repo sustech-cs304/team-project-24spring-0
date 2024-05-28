@@ -44,6 +44,7 @@ fn main() {
         .manage(middleware_types::TabMap {
             tabs: Default::default(),
             rpc_server: Default::default(),
+            rpc_client: Default::default(),
         })
         .manage(middleware_types::CurTabName {
             name: Default::default(),
@@ -64,10 +65,12 @@ fn main() {
             frontend_api::set_cursor,
             frontend_api::set_return_data_range,
             frontend_api::assembly,
+            frontend_api::dump,
             frontend_api::run,
             frontend_api::debug,
+            frontend_api::stop,
+            frontend_api::resume,
             frontend_api::step,
-            frontend_api::dump,
             frontend_api::undo,
             frontend_api::reset,
             frontend_api::set_breakpoint,

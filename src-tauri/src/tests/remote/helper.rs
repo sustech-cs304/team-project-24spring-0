@@ -8,6 +8,7 @@ use crate::{
         parser::{RISCVExtension, RISCVParser},
     },
     remote::{client::RpcClientImpl, server::RpcServerImpl, utils::get_free_port},
+    simulator::simulator::RISCVSimulator,
     storage::rope_store,
     types::middleware_types::{Tab, TabMap},
     utility::ptr::Ptr,
@@ -16,6 +17,8 @@ use crate::{
 static TEST_FILE_NAME: &str = "/foo/bar/test_file.txt";
 
 static TEST_PASSWD: &str = "fdsfs";
+
+static MAX_PROT_RETRY: usize = 1145;
 
 static TABMAP: Lazy<Mutex<Option<TabMap>>> = Lazy::new(|| Mutex::new(None));
 
@@ -37,8 +40,7 @@ pub fn init_test_server(content: &str) -> Result<RpcServerImpl, String> {
                     text: Box::new(content),
                     parser: Box::new(RISCVParser::new(&vec![RISCVExtension::RV32I])),
                     assembler: Box::new(RiscVAssembler::new()),
-                    //simulator: Box::new(Default::default()),
-                    data_return_range: Default::default(),
+                    simulator: Box::new(RISCVSimulator::new(TEST_FILE_NAME)),
                     assembly_cache: Default::default(),
                 };
                 static_tab.insert(TEST_FILE_NAME.to_string(), tab);
@@ -56,7 +58,8 @@ pub fn init_test_server(content: &str) -> Result<RpcServerImpl, String> {
         )
         .unwrap();
     server.change_password(TEST_PASSWD);
-    let _ = server.set_port(get_free_port(Ipv4Addr::from_str("127.0.0.1").unwrap(), 50).unwrap());
+    let _ = server
+        .set_port(get_free_port(Ipv4Addr::from_str("127.0.0.1").unwrap(), MAX_PROT_RETRY).unwrap());
     Ok(server)
 }
 
