@@ -584,7 +584,6 @@ pub mod frontend_api {
     ///
     /// Returns `Optional` indicating whether the syscall input was successfully
     #[tauri::command]
-    #[allow(non_snake_case)]
     pub fn syscall_input(
         cur_tab_name: State<CurTabName>,
         tab_map: State<TabMap>,
@@ -765,9 +764,8 @@ pub mod backend_api {
     };
 
     /// Emits a simulator update event to the frontend.
-    /// - `pc_idx`: Index of the program counter.
-    /// - `reg`: Register values.
-    /// - `mem`: Memory values.
+    /// - `simulator`: Simulator instance to update the its state.
+    /// - `simulator_res`: Result of the simulator operation.
     ///
     /// Returns `Result` indicating the success or failure of the event
     /// emission.
@@ -776,11 +774,14 @@ pub mod backend_api {
     /// frontend, and the payload is a `SimulatorData` containing the
     /// current pc index, register and memory values.
     ///
-    /// SimulatorData:
+    /// [SimulatorData](crate::types::middleware_types::SimulatorData):
+    /// - `filepath`: string
+    /// - `success`: bool
     /// - `has_current_text`: bool
     /// - `current_text`: u64
-    /// - `registers`: Vec<Register>
+    /// - `registers`: Vec<[Register](crate::types::middleware_types::Register)>
     /// - `data`: Vec<u32>
+    /// - `message`: string
     pub fn simulator_update(
         simulator: &mut dyn Simulator,
         simulator_res: Optional,
@@ -789,6 +790,7 @@ pub mod backend_api {
             if let Ok(_) = app_handle.emit_all(
                 "front_simulator_update",
                 SimulatorData {
+                    filepath: simulator.get_filepath().to_string(),
                     success: simulator_res.success,
                     has_current_text: simulator.get_pc_idx().is_some(),
                     current_text: simulator.get_pc_idx().unwrap_or(0) as u64,
@@ -826,7 +828,7 @@ pub mod backend_api {
     /// and the payload is a `SyscallOutput` containing the filepath and output
     /// to be printed.
     ///
-    /// SyscallOutput:
+    /// [SyscallOutput](crate::types::middleware_types::SyscallOutput):
     /// - `filepath`: string
     /// - `data`: string
     pub fn syscall_output_print(pathname: &str, output: &str) -> Result<(), String> {
@@ -857,7 +859,7 @@ pub mod backend_api {
     /// and the payload is a `SyscallOutput` containing the filepath and output
     /// to be printed.
     ///
-    /// SyscallRequest:
+    /// [SyscallRequest](crate::types::middleware_types::SyscallRequest):
     /// - `filepath`: string
     pub fn syscall_input_request(pathname: &str) -> Result<(), String> {
         if let Some(app_handle) = APP_HANDLE.lock().unwrap().as_ref() {

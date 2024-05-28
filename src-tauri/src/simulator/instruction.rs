@@ -14,7 +14,7 @@ use crate::{
     utility::{enum_map::EnumMap, ptr::Ptr},
 };
 
-type InstHandler = fn(InstHandlerArg) -> Result<u8, String>;
+type InstHandler = fn(InstHandlerArg) -> Result<SimulatorStatus, String>;
 pub(super) struct InstHandlerArg<'a> {
     pub sim: Ptr<RISCVSimulator>,
     pub args: &'a Vec<Operand<RISCV>>,
@@ -90,7 +90,7 @@ macro_rules! load_helper {
             }
             *$arg.reg_mut($arg[0]) = unsafe { std::mem::transmute::<_, $t>(buf) as u32 };
             $arg.pc_step();
-            Ok(STATUS_RUNNING)
+            Ok(SimulatorStatus::Running)
         } else {
             Err("Invalid memory access".to_string())
         }
@@ -111,122 +111,122 @@ macro_rules! store_helper {
                 sim.mem[addr + i as u32] = buf[i];
             }
             $arg.pc_step();
-            Ok(STATUS_RUNNING)
+            Ok(SimulatorStatus::Running)
         } else {
             Err("Invalid memory access".to_string())
         }
     }};
 }
 
-pub(super) fn add_handler(arg: InstHandlerArg) -> Result<u8, String> {
+pub(super) fn add_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, String> {
     *arg.reg_mut(arg[0]) = arg.reg(arg[1]) + arg.reg(arg[2]);
     arg.pc_step();
-    Ok(STATUS_RUNNING)
+    Ok(SimulatorStatus::Running)
 }
 
-pub(super) fn addi_handler(arg: InstHandlerArg) -> Result<u8, String> {
+pub(super) fn addi_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, String> {
     *arg.reg_mut(arg[0]) = arg.reg(arg[1]) + arg[2] as u32;
     arg.pc_step();
-    Ok(STATUS_RUNNING)
+    Ok(SimulatorStatus::Running)
 }
 
-pub(super) fn and_handler(arg: InstHandlerArg) -> Result<u8, String> {
+pub(super) fn and_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, String> {
     *arg.reg_mut(arg[0]) = arg.reg(arg[1]) & arg.reg(arg[2]);
     arg.pc_step();
-    Ok(STATUS_RUNNING)
+    Ok(SimulatorStatus::Running)
 }
 
-pub(super) fn andi_handler(arg: InstHandlerArg) -> Result<u8, String> {
+pub(super) fn andi_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, String> {
     *arg.reg_mut(arg[0]) = arg.reg(arg[1]) & arg[2] as u32;
     arg.pc_step();
-    Ok(STATUS_RUNNING)
+    Ok(SimulatorStatus::Running)
 }
 
-pub(super) fn auipc_handler(arg: InstHandlerArg) -> Result<u8, String> {
+pub(super) fn auipc_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, String> {
     *arg.reg_mut(arg[0]) = arg.pc() + arg[1] as u32;
     arg.pc_step();
-    Ok(STATUS_RUNNING)
+    Ok(SimulatorStatus::Running)
 }
 
-pub(super) fn beq_handler(arg: InstHandlerArg) -> Result<u8, String> {
+pub(super) fn beq_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, String> {
     if arg.reg(arg[0]) == arg.reg(arg[1]) {
         jump_helper(&arg, arg[2] as u32)?;
     }
-    Ok(STATUS_RUNNING)
+    Ok(SimulatorStatus::Running)
 }
 
-pub(super) fn bge_handler(arg: InstHandlerArg) -> Result<u8, String> {
+pub(super) fn bge_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, String> {
     if arg.reg(arg[0]) as i32 >= arg.reg(arg[1]) as i32 {
         jump_helper(&arg, arg[2] as u32)?;
     }
-    Ok(STATUS_RUNNING)
+    Ok(SimulatorStatus::Running)
 }
 
-pub(super) fn bgeu_handler(arg: InstHandlerArg) -> Result<u8, String> {
+pub(super) fn bgeu_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, String> {
     if arg.reg(arg[0]) >= arg.reg(arg[1]) {
         jump_helper(&arg, arg[2] as u32)?;
     }
-    Ok(STATUS_RUNNING)
+    Ok(SimulatorStatus::Running)
 }
 
-pub(super) fn blt_handler(arg: InstHandlerArg) -> Result<u8, String> {
+pub(super) fn blt_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, String> {
     if (arg.reg(arg[0]) as i32) < (arg.reg(arg[1]) as i32) {
         jump_helper(&arg, arg[2] as u32)?;
     }
-    Ok(STATUS_RUNNING)
+    Ok(SimulatorStatus::Running)
 }
 
-pub(super) fn bltu_handler(arg: InstHandlerArg) -> Result<u8, String> {
+pub(super) fn bltu_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, String> {
     if arg.reg(arg[0]) < arg.reg(arg[1]) {
         jump_helper(&arg, arg[2] as u32)?;
     }
-    Ok(STATUS_RUNNING)
+    Ok(SimulatorStatus::Running)
 }
 
-pub(super) fn bne_handler(arg: InstHandlerArg) -> Result<u8, String> {
+pub(super) fn bne_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, String> {
     if arg.reg(arg[0]) != arg.reg(arg[1]) {
         jump_helper(&arg, arg[2] as u32)?;
     }
-    Ok(STATUS_RUNNING)
+    Ok(SimulatorStatus::Running)
 }
 
-pub(super) fn csrrc_handler(arg: InstHandlerArg) -> Result<u8, String> {
+pub(super) fn csrrc_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, String> {
     unimplemented!();
 }
 
-pub(super) fn csrrci_handler(arg: InstHandlerArg) -> Result<u8, String> {
+pub(super) fn csrrci_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, String> {
     unimplemented!();
 }
 
-pub(super) fn csrrs_handler(arg: InstHandlerArg) -> Result<u8, String> {
+pub(super) fn csrrs_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, String> {
     unimplemented!();
 }
 
-pub(super) fn csrrsi_handler(arg: InstHandlerArg) -> Result<u8, String> {
+pub(super) fn csrrsi_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, String> {
     unimplemented!();
 }
 
-pub(super) fn csrrw_handler(arg: InstHandlerArg) -> Result<u8, String> {
+pub(super) fn csrrw_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, String> {
     unimplemented!();
 }
 
-pub(super) fn csrrwi_handler(arg: InstHandlerArg) -> Result<u8, String> {
+pub(super) fn csrrwi_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, String> {
     unimplemented!();
 }
 
-pub(super) fn ebreak_handler(arg: InstHandlerArg) -> Result<u8, String> {
+pub(super) fn ebreak_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, String> {
     arg.pc_step();
-    Ok(STATUS_PAUSED)
+    Ok(SimulatorStatus::Paused)
 }
 
-pub(super) fn ecall_handler(arg: InstHandlerArg) -> Result<u8, String> {
+pub(super) fn ecall_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, String> {
     match arg.reg(RV32IRegister::A7 as i32) {
         1 => {
             syscall_output_print(
                 arg.get_path(),
                 &((arg.reg(RV32IRegister::A0 as i32) as i32).to_string()),
             )?;
-            Ok(STATUS_RUNNING)
+            Ok(SimulatorStatus::Running)
         }
         4 => {
             let addr = arg.reg(RV32IRegister::A0 as i32);
@@ -241,34 +241,34 @@ pub(super) fn ecall_handler(arg: InstHandlerArg) -> Result<u8, String> {
             }
             let s = String::from_utf8(buf).unwrap();
             syscall_output_print(arg.get_path(), &s)?;
-            Ok(STATUS_RUNNING)
+            Ok(SimulatorStatus::Running)
         }
         5 => {
             arg.sim.as_mut().wait_input = WaitStatus::Int;
-            Ok(STATUS_PAUSED)
+            Ok(SimulatorStatus::Paused)
         }
         8 => {
             arg.sim.as_mut().wait_input = WaitStatus::String;
-            Ok(STATUS_PAUSED)
+            Ok(SimulatorStatus::Paused)
         }
-        10 => Ok(STATUS_STOPPED),
+        10 => Ok(SimulatorStatus::Stopped),
         11 => {
             syscall_output_print(
                 arg.get_path(),
                 &((arg.reg(RV32IRegister::A0 as i32) as u8 as char).to_string()),
             )?;
-            Ok(STATUS_RUNNING)
+            Ok(SimulatorStatus::Running)
         }
         12 => {
             arg.sim.as_mut().wait_input = WaitStatus::Char;
-            Ok(STATUS_PAUSED)
+            Ok(SimulatorStatus::Paused)
         }
         34 => {
             syscall_output_print(
                 arg.get_path(),
                 &format!("0x{:08x}", arg.sim.as_ref().reg[RV32IRegister::A0 as usize]),
             )?;
-            Ok(STATUS_RUNNING)
+            Ok(SimulatorStatus::Running)
         }
         35 => {
             syscall_output_print(
@@ -278,184 +278,184 @@ pub(super) fn ecall_handler(arg: InstHandlerArg) -> Result<u8, String> {
                     arg.sim.as_ref().reg[RV32IRegister::A0 as usize]
                 ),
             )?;
-            Ok(STATUS_RUNNING)
+            Ok(SimulatorStatus::Running)
         }
         36 => {
             syscall_output_print(
                 arg.get_path(),
                 &((arg.reg(RV32IRegister::A0 as i32) as u32).to_string()),
             )?;
-            Ok(STATUS_RUNNING)
+            Ok(SimulatorStatus::Running)
         }
         _ => Err("Invalid ecall number".to_string()),
     }
 }
 
-pub(super) fn fence_handler(arg: InstHandlerArg) -> Result<u8, String> {
+pub(super) fn fence_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, String> {
     arg.pc_step();
-    Ok(STATUS_RUNNING)
+    Ok(SimulatorStatus::Running)
 }
 
-pub(super) fn fence_i_handler(arg: InstHandlerArg) -> Result<u8, String> {
+pub(super) fn fence_i_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, String> {
     arg.pc_step();
-    Ok(STATUS_RUNNING)
+    Ok(SimulatorStatus::Running)
 }
 
-pub(super) fn jal_handler(arg: InstHandlerArg) -> Result<u8, String> {
+pub(super) fn jal_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, String> {
     let pc = arg.pc();
     *arg.reg_mut(arg[0]) = pc + 4;
     jump_helper(&arg, pc + arg[1] as u32)?;
-    Ok(STATUS_RUNNING)
+    Ok(SimulatorStatus::Running)
 }
 
-pub(super) fn jalr_handler(arg: InstHandlerArg) -> Result<u8, String> {
+pub(super) fn jalr_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, String> {
     *arg.reg_mut(arg[0]) = arg.pc() + 4;
     jump_helper(&arg, (arg.reg(arg[1]) + arg[2] as u32) & !1)?;
-    Ok(STATUS_RUNNING)
+    Ok(SimulatorStatus::Running)
 }
 
-pub(super) fn lb_handler(arg: InstHandlerArg) -> Result<u8, String> {
+pub(super) fn lb_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, String> {
     load_helper!(arg, 1, i8)
 }
 
-pub(super) fn lbu_handler(arg: InstHandlerArg) -> Result<u8, String> {
+pub(super) fn lbu_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, String> {
     load_helper!(arg, 1, u8)
 }
 
-pub(super) fn lh_handler(arg: InstHandlerArg) -> Result<u8, String> {
+pub(super) fn lh_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, String> {
     load_helper!(arg, 2, i16)
 }
 
-pub(super) fn lhu_handler(arg: InstHandlerArg) -> Result<u8, String> {
+pub(super) fn lhu_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, String> {
     load_helper!(arg, 2, u16)
 }
 
-pub(super) fn lui_handler(arg: InstHandlerArg) -> Result<u8, String> {
+pub(super) fn lui_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, String> {
     *arg.reg_mut(arg[0]) = (arg[1] << 12) as u32;
     arg.pc_step();
-    Ok(STATUS_RUNNING)
+    Ok(SimulatorStatus::Running)
 }
 
-pub(super) fn lw_handler(arg: InstHandlerArg) -> Result<u8, String> {
+pub(super) fn lw_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, String> {
     load_helper!(arg, 4, u32)
 }
 
-pub(super) fn or_handler(arg: InstHandlerArg) -> Result<u8, String> {
+pub(super) fn or_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, String> {
     *arg.reg_mut(arg[0]) = arg.reg(arg[1]) | arg.reg(arg[2]);
     arg.pc_step();
-    Ok(STATUS_RUNNING)
+    Ok(SimulatorStatus::Running)
 }
 
-pub(super) fn ori_handler(arg: InstHandlerArg) -> Result<u8, String> {
+pub(super) fn ori_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, String> {
     *arg.reg_mut(arg[0]) = arg.reg(arg[1]) | arg[2] as u32;
     arg.pc_step();
-    Ok(STATUS_RUNNING)
+    Ok(SimulatorStatus::Running)
 }
 
-pub(super) fn sb_handler(arg: InstHandlerArg) -> Result<u8, String> {
+pub(super) fn sb_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, String> {
     store_helper!(arg, 1, u8)
 }
 
-pub(super) fn sh_handler(arg: InstHandlerArg) -> Result<u8, String> {
+pub(super) fn sh_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, String> {
     store_helper!(arg, 2, u16)
 }
 
-pub(super) fn sll_handler(arg: InstHandlerArg) -> Result<u8, String> {
+pub(super) fn sll_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, String> {
     *arg.reg_mut(arg[0]) = arg.reg(arg[1]) << (arg.reg(arg[2]) & 0x1f);
     arg.pc_step();
-    Ok(STATUS_RUNNING)
+    Ok(SimulatorStatus::Running)
 }
 
-pub(super) fn slli_handler(arg: InstHandlerArg) -> Result<u8, String> {
+pub(super) fn slli_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, String> {
     *arg.reg_mut(arg[0]) = arg.reg(arg[1]) << arg[2];
     arg.pc_step();
-    Ok(STATUS_RUNNING)
+    Ok(SimulatorStatus::Running)
 }
 
-pub(super) fn slt_handler(arg: InstHandlerArg) -> Result<u8, String> {
+pub(super) fn slt_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, String> {
     *arg.reg_mut(arg[0]) = if (arg.reg(arg[1]) as i32) < (arg.reg(arg[2]) as i32) {
         1
     } else {
         0
     };
     arg.pc_step();
-    Ok(STATUS_RUNNING)
+    Ok(SimulatorStatus::Running)
 }
 
-pub(super) fn slti_handler(arg: InstHandlerArg) -> Result<u8, String> {
+pub(super) fn slti_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, String> {
     *arg.reg_mut(arg[0]) = if (arg.reg(arg[1]) as i32) < arg[2] as i32 {
         1
     } else {
         0
     };
     arg.pc_step();
-    Ok(STATUS_RUNNING)
+    Ok(SimulatorStatus::Running)
 }
 
-pub(super) fn sltiu_handler(arg: InstHandlerArg) -> Result<u8, String> {
+pub(super) fn sltiu_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, String> {
     *arg.reg_mut(arg[0]) = if arg.reg(arg[1]) < arg[2] as u32 {
         1
     } else {
         0
     };
     arg.pc_step();
-    Ok(STATUS_RUNNING)
+    Ok(SimulatorStatus::Running)
 }
 
-pub(super) fn sltu_handler(arg: InstHandlerArg) -> Result<u8, String> {
+pub(super) fn sltu_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, String> {
     *arg.reg_mut(arg[0]) = if arg.reg(arg[1]) < arg.reg(arg[2]) {
         1
     } else {
         0
     };
     arg.pc_step();
-    Ok(STATUS_RUNNING)
+    Ok(SimulatorStatus::Running)
 }
 
-pub(super) fn sra_handler(arg: InstHandlerArg) -> Result<u8, String> {
+pub(super) fn sra_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, String> {
     *arg.reg_mut(arg[0]) = (arg.reg(arg[1]) as i32 >> (arg.reg(arg[2]) & 0x1f)) as u32;
     arg.pc_step();
-    Ok(STATUS_RUNNING)
+    Ok(SimulatorStatus::Running)
 }
 
-pub(super) fn srai_handler(arg: InstHandlerArg) -> Result<u8, String> {
+pub(super) fn srai_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, String> {
     *arg.reg_mut(arg[0]) = (arg.reg(arg[1]) as i32 >> arg[2] as i32) as u32;
     arg.pc_step();
-    Ok(STATUS_RUNNING)
+    Ok(SimulatorStatus::Running)
 }
 
-pub(super) fn srl_handler(arg: InstHandlerArg) -> Result<u8, String> {
+pub(super) fn srl_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, String> {
     *arg.reg_mut(arg[0]) = arg.reg(arg[1]) >> (arg.reg(arg[2]) & 0x1f);
     arg.pc_step();
-    Ok(STATUS_RUNNING)
+    Ok(SimulatorStatus::Running)
 }
 
-pub(super) fn srli_handler(arg: InstHandlerArg) -> Result<u8, String> {
+pub(super) fn srli_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, String> {
     *arg.reg_mut(arg[0]) = arg.reg(arg[1]) >> arg[2];
     arg.pc_step();
-    Ok(STATUS_RUNNING)
+    Ok(SimulatorStatus::Running)
 }
 
-pub(super) fn sub_handler(arg: InstHandlerArg) -> Result<u8, String> {
+pub(super) fn sub_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, String> {
     *arg.reg_mut(arg[0]) = arg.reg(arg[1]) - arg.reg(arg[2]);
     arg.pc_step();
-    Ok(STATUS_RUNNING)
+    Ok(SimulatorStatus::Running)
 }
 
-pub(super) fn sw_handler(arg: InstHandlerArg) -> Result<u8, String> {
+pub(super) fn sw_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, String> {
     store_helper!(arg, 4, u32)
 }
 
-pub(super) fn xor_handler(arg: InstHandlerArg) -> Result<u8, String> {
+pub(super) fn xor_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, String> {
     *arg.reg_mut(arg[0]) = arg.reg(arg[1]) ^ arg.reg(arg[2]);
     arg.pc_step();
-    Ok(STATUS_RUNNING)
+    Ok(SimulatorStatus::Running)
 }
 
-pub(super) fn xori_handler(arg: InstHandlerArg) -> Result<u8, String> {
+pub(super) fn xori_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, String> {
     *arg.reg_mut(arg[0]) = arg.reg(arg[1]) ^ arg[2] as u32;
     arg.pc_step();
-    Ok(STATUS_RUNNING)
+    Ok(SimulatorStatus::Running)
 }
 
 fn jump_helper(arg: &InstHandlerArg, offset: u32) -> Result<(), String> {

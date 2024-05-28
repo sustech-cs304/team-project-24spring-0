@@ -1,5 +1,7 @@
 use std::{collections::VecDeque, sync::atomic::AtomicU8};
 
+use strum::VariantArray;
+
 use super::{
     instruction::{InstHandlerArg, INST_HANDLER_MAP},
     memory::Memory,
@@ -17,13 +19,16 @@ use crate::{
 
 pub const MAX_HISTORY_SIZE: usize = 100;
 
-pub(super) const STATUS_UNLOADED: u8 = 0;
-pub(super) const STATUS_LOADING: u8 = 1;
-pub(super) const STATUS_RUNNING: u8 = 2;
-pub(super) const STATUS_PAUSED: u8 = 3;
-pub(super) const STATUS_STOPPED: u8 = 4;
-pub(super) const STATUS_STOPPING: u8 = 5;
-pub(super) const STATUS_UNDO: u8 = 6;
+#[derive(Clone, Copy, PartialEq, Eq, VariantArray)]
+pub(super) enum SimulatorStatus {
+    Unloaded = 0,
+    Loading = 1,
+    Running = 2,
+    Paused = 3,
+    Stopped = 4,
+    Stopping = 5,
+    Undo = 6,
+}
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub(super) enum WaitStatus {
@@ -113,15 +118,15 @@ impl RISCVSimulator {
 
 impl Simulator for RISCVSimulator {
     fn load_inst(&mut self, inst: AssembleResult<RISCV>) -> Result<(), String> {
-        if !self.cas_status(STATUS_UNLOADED, STATUS_LOADING)
-            && !self.cas_status(STATUS_STOPPED, STATUS_LOADING)
+        if !self.cas_status(SimulatorStatus::Unloaded, SimulatorStatus::Loading)
+            && !self.cas_status(SimulatorStatus::Stopped, SimulatorStatus::Loading)
         {
             return Err("Simulator is still running".to_string());
         }
         self.breakpoints = vec![false; inst.instruction.len()];
         self.inst = Some(inst);
         self._reset();
-        self.set_status(STATUS_STOPPED);
+        self.set_status(SimulatorStatus::Stopped);
         Ok(())
     }
 
@@ -131,10 +136,10 @@ impl Simulator for RISCVSimulator {
 
     fn update_config(&mut self, config: &AssemblerConfig) -> Result<(), String> {
         let old_status;
-        if !self.cas_status(STATUS_UNLOADED, STATUS_LOADING) {
-            old_status = STATUS_UNLOADED;
-        } else if !self.cas_status(STATUS_STOPPED, STATUS_LOADING) {
-            old_status = STATUS_STOPPED;
+        if !self.cas_status(SimulatorStatus::Unloaded, SimulatorStatus::Loading) {
+            old_status = SimulatorStatus::Unloaded;
+        } else if !self.cas_status(SimulatorStatus::Stopped, SimulatorStatus::Loading) {
+            old_status = SimulatorStatus::Stopped;
         } else {
             return Err("Simulator is still running".to_string());
         }
@@ -142,7 +147,7 @@ impl Simulator for RISCVSimulator {
             return Err("Invalid text base address".to_string());
         }
         self.conf = config.clone();
-        if old_status == STATUS_STOPPED {
+        if old_status == SimulatorStatus::Stopped {
             self._reset();
         }
         self.set_status(old_status);
@@ -150,7 +155,7 @@ impl Simulator for RISCVSimulator {
     }
 
     fn run(&mut self) -> Result<(), String> {
-        if !self.cas_status(STATUS_STOPPED, STATUS_RUNNING) {
+        if !self.cas_status(SimulatorStatus::Stopped, SimulatorStatus::Running) {
             return Err("Invalid operation".to_string());
         }
         self.debug = false;
@@ -160,7 +165,7 @@ impl Simulator for RISCVSimulator {
     }
 
     fn debug(&mut self) -> Result<(), String> {
-        if !self.cas_status(STATUS_STOPPED, STATUS_RUNNING) {
+        if !self.cas_status(SimulatorStatus::Stopped, SimulatorStatus::Running) {
             return Err("Invalid operation".to_string());
         }
         self.debug = true;
@@ -170,13 +175,13 @@ impl Simulator for RISCVSimulator {
     }
 
     fn stop(&mut self) -> Result<(), String> {
-        if !self.cas_status(STATUS_RUNNING, STATUS_STOPPING) {
+        if !self.cas_status(SimulatorStatus::Running, SimulatorStatus::Stopping) {
             return Err("Simulator not running".to_string());
         }
         if let Some(t) = self.thread.take() {
             t.join().unwrap();
         }
-        self.set_status(STATUS_STOPPED);
+        self.set_status(SimulatorStatus::Stopped);
         Ok(())
     }
 
@@ -184,7 +189,7 @@ impl Simulator for RISCVSimulator {
         if self.wait_input != WaitStatus::Not {
             return Err("Waiting for input".to_string());
         }
-        if !self.cas_status(STATUS_PAUSED, STATUS_RUNNING) {
+        if !self.cas_status(SimulatorStatus::Paused, SimulatorStatus::Running) {
             return Err("Simulator not paused".to_string());
         }
         self._start(None);
@@ -192,12 +197,12 @@ impl Simulator for RISCVSimulator {
     }
 
     fn step(&mut self) -> Result<(), String> {
-        if !self.cas_status(STATUS_STOPPED, STATUS_RUNNING) {
-            if !self.cas_status(STATUS_PAUSED, STATUS_RUNNING) {
+        if !self.cas_status(SimulatorStatus::Stopped, SimulatorStatus::Running) {
+            if !self.cas_status(SimulatorStatus::Paused, SimulatorStatus::Running) {
                 return Err("Invalid operation".to_string());
             } else {
                 if self.wait_input != WaitStatus::Not {
-                    self.set_status(STATUS_PAUSED);
+                    self.set_status(SimulatorStatus::Paused);
                     return Err("Waiting for input".to_string());
                 }
             }
@@ -207,13 +212,13 @@ impl Simulator for RISCVSimulator {
     }
 
     fn reset(&mut self) -> Result<(), String> {
-        if !self.cas_status(STATUS_STOPPED, STATUS_STOPPING)
-            && !self.cas_status(STATUS_PAUSED, STATUS_STOPPING)
+        if !self.cas_status(SimulatorStatus::Stopped, SimulatorStatus::Stopping)
+            && !self.cas_status(SimulatorStatus::Paused, SimulatorStatus::Stopping)
         {
             return Err("Invalid operation".to_string());
         }
         self._reset();
-        self.set_status(STATUS_STOPPED);
+        self.set_status(SimulatorStatus::Stopped);
         Ok(())
     }
 
@@ -221,14 +226,14 @@ impl Simulator for RISCVSimulator {
         if self.history.is_empty() {
             return Err("No history".to_string());
         }
-        if self.cas_status(STATUS_STOPPED, STATUS_UNDO) {
+        if self.cas_status(SimulatorStatus::Stopped, SimulatorStatus::Undo) {
             if self.history.is_empty() {
-                self.set_status(STATUS_STOPPED);
+                self.set_status(SimulatorStatus::Stopped);
                 return Err("No history".to_string());
             }
-        } else if self.cas_status(STATUS_PAUSED, STATUS_UNDO) {
+        } else if self.cas_status(SimulatorStatus::Paused, SimulatorStatus::Undo) {
             if self.history.is_empty() {
-                self.set_status(STATUS_PAUSED);
+                self.set_status(SimulatorStatus::Paused);
                 return Err("No history".to_string());
             }
         } else {
@@ -242,7 +247,7 @@ impl Simulator for RISCVSimulator {
         if h.mem_len != 0 {
             self.mem.set_range(h.mem_addr, &h.mem[..h.mem_len as usize]);
         }
-        self.set_status(STATUS_PAUSED);
+        self.set_status(SimulatorStatus::Paused);
         Ok(())
     }
 
@@ -373,27 +378,27 @@ impl Simulator for RISCVSimulator {
 }
 
 impl RISCVSimulator {
-    fn get_status(&self) -> u8 {
-        self.status.load(std::sync::atomic::Ordering::Acquire)
+    fn get_status(&self) -> SimulatorStatus {
+        SimulatorStatus::VARIANTS[self.status.load(std::sync::atomic::Ordering::Acquire) as usize]
     }
 
-    fn set_status(&self, status: u8) {
+    fn set_status(&self, status: SimulatorStatus) {
         self.status
-            .store(status, std::sync::atomic::Ordering::Release);
+            .store(status as u8, std::sync::atomic::Ordering::Release);
     }
 
-    fn cas_status(&self, current: u8, new: u8) -> bool {
+    fn cas_status(&self, current: SimulatorStatus, new: SimulatorStatus) -> bool {
         self.status
             .compare_exchange(
-                current,
-                new,
+                current as u8,
+                new as u8,
                 std::sync::atomic::Ordering::AcqRel,
                 std::sync::atomic::Ordering::Acquire,
             )
             .is_ok()
     }
 
-    fn _step(&mut self) -> Result<u8, String> {
+    fn _step(&mut self) -> Result<SimulatorStatus, String> {
         let inst = &self.inst.as_ref().unwrap().instruction[self.pc_idx].instruction;
         if let ParserRISCVInstOp::RV32I(op) = inst.operation {
             let mut history = History {
@@ -413,8 +418,11 @@ impl RISCVSimulator {
                 self.history.pop_front();
             }
             self.history.push_back(history);
-            if matches!(res, Ok(STATUS_RUNNING)) && self.debug && self.breakpoints[self.pc_idx] {
-                Ok(STATUS_PAUSED)
+            if matches!(res, Ok(SimulatorStatus::Running))
+                && self.debug
+                && self.breakpoints[self.pc_idx]
+            {
+                Ok(SimulatorStatus::Paused)
             } else {
                 res
             }
@@ -449,7 +457,7 @@ impl RISCVSimulator {
             loop {
                 if let Some(max_step) = max_step {
                     if step >= max_step {
-                        _self.set_status(STATUS_PAUSED);
+                        _self.set_status(SimulatorStatus::Paused);
                         _self.update(Optional {
                             success: true,
                             message: "finished running".to_string(),
@@ -460,8 +468,8 @@ impl RISCVSimulator {
                     }
                 }
                 match _self._step() {
-                    Ok(STATUS_PAUSED) => {
-                        _self.set_status(STATUS_PAUSED);
+                    Ok(SimulatorStatus::Paused) => {
+                        _self.set_status(SimulatorStatus::Paused);
                         _self.update(Optional {
                             success: true,
                             message: "paused".to_string(),
@@ -469,7 +477,7 @@ impl RISCVSimulator {
                         break;
                     }
                     Err(e) => {
-                        _self.set_status(STATUS_STOPPED);
+                        _self.set_status(SimulatorStatus::Stopped);
                         _self.update(Optional {
                             success: false,
                             message: e,
@@ -479,14 +487,14 @@ impl RISCVSimulator {
                     _ => {}
                 }
                 if _self.pc_idx == max_pc_idx {
-                    _self.set_status(STATUS_STOPPED);
+                    _self.set_status(SimulatorStatus::Stopped);
                     _self.update(Optional {
                         success: true,
                         message: "finished running".to_string(),
                     });
                     break;
                 }
-                if _self.get_status() != STATUS_RUNNING {
+                if _self.get_status() != SimulatorStatus::Running {
                     _self.update(Optional {
                         success: true,
                         message: "stopped".to_string(),
