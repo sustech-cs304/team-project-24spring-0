@@ -34,44 +34,39 @@ export default function Home() {
           { name: 'sp', number: '2', value: 0 },
           { name: 'gp', number: '3', value: 0 },
           { name: 'tp', number: '4', value: 0 },
-            { name: 't0', number: '5', value: 0 },
-            { name: 't1', number: '6', value: 0 },
-            { name: 't2', number: '7', value: 0 },
-            { name: 's0', number: '8', value: 0 },
-            { name: 's1', number: '9', value: 0 },
-            { name: 'a0', number: '10', value: 0 },
-            { name: 'a1', number: '11', value: 0 },
-            { name: 'a2', number: '12', value: 0 },
-            { name: 'a3', number: '13', value: 0 },
-            { name: 'a4', number: '14', value: 0 },
-            { name: 'a5', number: '15', value: 0 },
-            { name: 'a6', number: '16', value: 0 },
-            { name: 'a7', number: '17', value: 0 },
-            { name: 's2', number: '18', value: 0 },
-            { name: 's3', number: '19', value: 0 },
-            { name: 's4', number: '20', value: 0 },
-            { name: 's5', number: '21', value: 0 },
-            { name: 's6', number: '22', value: 0 },
-            { name: 's7', number: '23', value: 0 },
-            { name: 's8', number: '24', value: 0 },
-            { name: 's9', number: '25', value: 0 },
-            { name: 's10', number: '26', value: 0 },
-            { name: 's11', number: '27', value: 0 },
-            { name: 't3', number: '28', value: 0 },
-            { name: 't4', number: '29', value: 0 },
-            { name: 't5', number: '30', value: 0 },
-            { name: 't6', number: '31', value: 0 },
-          { name: 'pc', number: '32', value: 0}
+          { name: 't0', number: '5', value: 0 },
+          { name: 't1', number: '6', value: 0 },
+          { name: 't2', number: '7', value: 0 },
+          { name: 's0', number: '8', value: 0 },
+          { name: 's1', number: '9', value: 0 },
+          { name: 'a0', number: '10', value: 0 },
+          { name: 'a1', number: '11', value: 0 },
+          { name: 'a2', number: '12', value: 0 },
+          { name: 'a3', number: '13', value: 0 },
+          { name: 'a4', number: '14', value: 0 },
+          { name: 'a5', number: '15', value: 0 },
+          { name: 'a6', number: '16', value: 0 },
+          { name: 'a7', number: '17', value: 0 },
+          { name: 's2', number: '18', value: 0 },
+          { name: 's3', number: '19', value: 0 },
+          { name: 's4', number: '20', value: 0 },
+          { name: 's5', number: '21', value: 0 },
+          { name: 's6', number: '22', value: 0 },
+          { name: 's7', number: '23', value: 0 },
+          { name: 's8', number: '24', value: 0 },
+          { name: 's9', number: '25', value: 0 },
+          { name: 's10', number: '26', value: 0 },
+          { name: 's11', number: '27', value: 0 },
+          { name: 't3', number: '28', value: 0 },
+          { name: 't4', number: '29', value: 0 },
+          { name: 't5', number: '30', value: 0 },
+          { name: 't6', number: '31', value: 0 },
+          { name: 'pc', number: '32', value: 0 },
         ],
         memory: [
-          0, 0, 0, 0, 0, 0, 0, 0,
-          0, 0, 0, 0, 0, 0, 0, 0,
-          0, 0, 0, 0, 0, 0, 0, 0,
-          0, 0, 0, 0, 0, 0, 0, 0,
-          0, 0, 0, 0, 0, 0, 0, 0,
-          0, 0, 0, 0, 0, 0, 0, 0,
-          0, 0, 0, 0, 0, 0, 0, 0,
-          0, 0, 0, 0, 0, 0, 0, 0
+          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+          0, 0, 0, 0,
         ],
         baseAddress: 0x10010000,
       })
@@ -123,30 +118,30 @@ export default function Home() {
       console.log('simulator update event received', event.payload)
       const outputStore = useOutputStore.getState()
       if (event.payload['success'] === false) {
-        outputStore.addOutput("Simulator Update Failed. Message: " + event.payload['message'])
+        outputStore.addOutput('Simulator Update Failed. Message: ' + event.payload['message'])
       } else {
-        outputStore.addOutput("Simulator Updated Successfully")
+        outputStore.addOutput('Simulator Updated Successfully')
       }
 
-        const state = useFileStore.getState()
-        const file = state.files.find(file => file.fileName === state.currentFile)
-        file.register = event.payload['registers']
-        file.memory = event.payload['data']
-        if(event.payload['has_current_text']) {
-          file.runLines = event.payload['current_text']
-        } else {
-          file.runLines = ''
-        }
-        state.updateFile(
-          state.currentFile,
-          file.code,
-          file.code,
-          file.assembly,
-          file.runLines,
-          file.register,
-          file.memory,
-          file.baseAddress,
-        )
+      const state = useFileStore.getState()
+      const file = state.files.find(file => file.fileName === state.currentFile)
+      file.register = event.payload['registers']
+      file.memory = event.payload['data']
+      if (event.payload['has_current_text']) {
+        file.runLines = event.payload['current_text']
+      } else {
+        file.runLines = ''
+      }
+      state.updateFile(
+        state.currentFile,
+        file.code,
+        file.code,
+        file.assembly,
+        file.runLines,
+        file.register,
+        file.memory,
+        file.baseAddress,
+      )
     })
 
     return () => {

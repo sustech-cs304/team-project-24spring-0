@@ -34,7 +34,7 @@ export default function MultifileCode() {
     console.log('Invoke handle assembly result: ', result)
     if (result.Success) {
       const outputStore = useOutputStore.getState()
-      outputStore.addOutput('Assembly Successfully!');
+      outputStore.addOutput('Assembly Successfully!')
       const currentFile = state.files.find(file => file.fileName === fileName)
       state.updateFile(
         currentFile.fileName,
@@ -60,33 +60,33 @@ export default function MultifileCode() {
     }
   }
 
-  const handleSimulatorOperation = async (name) => {
-    const result = await invoke(name);
-    console.log(name, result);
+  const handleSimulatorOperation = async name => {
+    const result = await invoke(name)
+    console.log(name, result)
 
     if (result.success) {
       outputStore.addOutput(name + ' Succeded!')
     } else {
-      outputStore.addOutput(name + ' Failed! Reason: ' + result.message);
+      outputStore.addOutput(name + ' Failed! Reason: ' + result.message)
     }
   }
 
   const getRunButtonisDisabled = () => {
-    const currentFile = state.files.find(file => file.fileName === state.currentFile);
+    const currentFile = state.files.find(file => file.fileName === state.currentFile)
     if (currentFile && currentFile.assembly.length != 0) {
-        console.log(currentFile)
-        console.log(currentFile.assembly.length)
-        return false;
+      console.log(currentFile)
+      console.log(currentFile.assembly.length)
+      return false
     }
-    return true;
+    return true
   }
 
   const getDebugButtonisDisabled = () => {
-    const currentFile = state.files.find(file => file.fileName === state.currentFile);
+    const currentFile = state.files.find(file => file.fileName === state.currentFile)
     if (currentFile && currentFile.assembly.length != 0) {
-      return false;
+      return false
     }
-    return true;
+    return true
   }
 
   return (
@@ -107,22 +107,52 @@ export default function MultifileCode() {
                 <Button color="success" size="sm" onClick={() => handleAssembly(file.fileName)}>
                   Assembly
                 </Button>
-                <Button color="primary" size="sm" isDisabled={getRunButtonisDisabled()} onClick={() => handleSimulatorOperation("run")}>
+                <Button
+                  color="primary"
+                  size="sm"
+                  isDisabled={getRunButtonisDisabled()}
+                  onClick={() => handleSimulatorOperation('run')}
+                >
                   Run
                 </Button>
-                <Button color="secondary" size="sm" isDisabled={getDebugButtonisDisabled()} onClick={() => handleSimulatorOperation("debug")}>
+                <Button
+                  color="secondary"
+                  size="sm"
+                  isDisabled={getDebugButtonisDisabled()}
+                  onClick={() => handleSimulatorOperation('debug')}
+                >
                   Debug
                 </Button>
-                <Button color="primary" size="sm" className="w-full" onClick={() => handleSimulatorOperation("step")}>
+                <Button
+                  color="primary"
+                  size="sm"
+                  className="w-full"
+                  onClick={() => handleSimulatorOperation('step')}
+                >
                   Step
                 </Button>
-                <Button color="secondary" size="sm" className="w-full" onClick={() => handleSimulatorOperation("resume")}>
+                <Button
+                  color="secondary"
+                  size="sm"
+                  className="w-full"
+                  onClick={() => handleSimulatorOperation('resume')}
+                >
                   Resume
                 </Button>
-                <Button color="primary" size="sm" className="w-full" onClick={() => handleSimulatorOperation("undo")}>
+                <Button
+                  color="primary"
+                  size="sm"
+                  className="w-full"
+                  onClick={() => handleSimulatorOperation('undo')}
+                >
                   Undo
                 </Button>
-                <Button color="secondary" size="sm" className="w-full" onClick={() => handleSimulatorOperation("reset")}>
+                <Button
+                  color="secondary"
+                  size="sm"
+                  className="w-full"
+                  onClick={() => handleSimulatorOperation('reset')}
+                >
                   Reset
                 </Button>
                 <Button color="danger" size="sm" onClick={() => deleteFile(file.fileName)}>

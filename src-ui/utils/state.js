@@ -23,17 +23,15 @@ const useFileStore = create(set => ({
         file.fileName === fileName ? { ...file, selectedLines } : file,
       ),
     })),
-    changeMemory: (fileName, memory) =>
+  changeMemory: (fileName, memory) =>
+    set(state => ({
+      files: state.files.map(file => (file.fileName === fileName ? { ...file, memory } : file)),
+    })),
+  changeBaseAddress: (fileName, baseAddress) =>
     set(state => ({
       files: state.files.map(file =>
-        file.fileName === fileName ? { ...file, memory } : file,
+        file.fileName === fileName ? { ...file, baseAddress } : file,
       ),
-    })),
-    changeBaseAddress: (fileName, baseAddress) =>
-    set(state => ({
-        files: state.files.map(file =>
-            file.fileName === fileName ? {...file, baseAddress} : file,
-        ),
     })),
 }))
 

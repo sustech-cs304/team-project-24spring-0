@@ -6,7 +6,7 @@ import { Table, TableHeader, TableBody, TableRow, TableColumn, TableCell } from 
 import useFileStore from '@/utils/state'
 
 function toHex(decimal) {
-  return '0x' + decimal.toString(16).padStart(8, '0');
+  return '0x' + decimal.toString(16).padStart(8, '0')
 }
 
 export default function Register() {

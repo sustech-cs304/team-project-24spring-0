@@ -12,9 +12,7 @@ import {
 } from '@nextui-org/react'
 import useFileStore from '@/utils/state'
 import { invoke } from '@tauri-apps/api/tauri'
-import outputState from "@/utils/outputState";
-
-
+import outputState from '@/utils/outputState'
 
 export default function Memory({ fileName }) {
   var base = 0x10010000
@@ -30,28 +28,30 @@ export default function Memory({ fileName }) {
   for (var i = 0; i < 8; i++) {
     var row = [baseAddress + 0x20 * i]
     for (var j = 0; j < 8; j++) {
-      row.push(currentFile.memory[i+8*j])
+      row.push(currentFile.memory[i + 8 * j])
     }
     rows.push(row)
   }
 
   function toHex(decimal) {
-    return '0x' + decimal.toString(16).padStart(8, '0');
+    return '0x' + decimal.toString(16).padStart(8, '0')
   }
 
-  async function handleMemoryRangeChange(offset){
+  async function handleMemoryRangeChange(offset) {
     // update baseAddress of currentFile
     // invoke set_return_data_range
-    const result = await invoke('set_return_data_range', { range:{
-      start: currentFile.baseAddress,
-      len: 0x20 * 8
-      } })
+    const result = await invoke('set_return_data_range', {
+      range: {
+        start: currentFile.baseAddress,
+        len: 0x20 * 8,
+      },
+    })
     console.log('set_return_data_range', result)
-    if (result.success){
+    if (result.success) {
       fileStore.changeBaseAddress(fileName, currentFile.baseAddress + offset)
       outputStore.addOutput('Memory range change success')
     } else {
-        outputStore.addOutput('Memory range change failed')
+      outputStore.addOutput('Memory range change failed')
       outputStore.addOutput('Message: ' + result.message)
     }
   }
@@ -84,10 +84,18 @@ export default function Memory({ fileName }) {
           </tbody>
         </table>
         <ButtonGroup className="w-full pt-2">
-          <Button color="success" className="w-full" onClick={() => handleMemoryRangeChange(-0x20 * 8)}>
+          <Button
+            color="success"
+            className="w-full"
+            onClick={() => handleMemoryRangeChange(-0x20 * 8)}
+          >
             Previous
           </Button>
-          <Button color="danger" className="w-full" onClick={() => handleMemoryRangeChange(0x20 * 8)}>
+          <Button
+            color="danger"
+            className="w-full"
+            onClick={() => handleMemoryRangeChange(0x20 * 8)}
+          >
             Next
           </Button>
         </ButtonGroup>
