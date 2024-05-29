@@ -2,6 +2,7 @@ use std::{
     error::Error,
     net::{IpAddr, Ipv4Addr, SocketAddr},
     path::{Path, PathBuf},
+    sync::{Arc, Condvar, Mutex},
     time::SystemTime,
 };
 
@@ -10,23 +11,28 @@ use ropey::Rope;
 use crate::{
     interface::storage::{
         BasicFile,
-        FileShareStatus,
-        FileShareStatus::{Client, Host, Private},
+        FileShareStatus::{self, Client, Host, Private},
         MFile,
         MeragableFile,
     },
     io::file_io,
     middleware_types::Cursor,
     remote::{
-        server::editor_rpc::OperationType,
+        server::{editor_rpc::OperationType, RpcServerImpl},
         utils::priority_lsit::get_cursor,
         ClientCursor,
         CursorRowEq,
         Modification,
     },
     types::ResultVoid,
-    utility::text_helper::lines_count,
+    utility::text_helper::{all_to_lf, lines_count},
 };
+
+pub struct ConcurrencyShare {
+    condition_pair: Arc<(Mutex<bool>, Condvar)>,
+    update_thread: Option<std::thread::JoinHandle<()>>,
+    shared_server: Arc<RpcServerImpl>,
+}
 
 pub struct Text {
     share_status: FileShareStatus,
@@ -35,6 +41,7 @@ pub struct Text {
     version: usize,
     dirty: bool,
     last_modified: SystemTime,
+    concurrent_share: Option<ConcurrencyShare>,
 }
 
 impl BasicFile<Rope, Modification> for Text {
@@ -92,7 +99,8 @@ impl BasicFile<Rope, Modification> for Text {
                 Ok(())
             }
             Host => {
-                todo!("perform function change");
+                todo!();
+                //self.merge_history(&vec![modify.clone()], cursors);
             }
             Client => {
                 todo!("perform function change");
@@ -108,10 +116,11 @@ impl Text {
                 Ok(last_modified) => Ok(Text {
                     share_status: Default::default(),
                     data: Box::new(Rope::from_str(&content)),
-                    path: PathBuf::from(file_path),
+                    path: PathBuf::from(&all_to_lf(&content)),
                     version: 0,
                     dirty: false,
                     last_modified,
+                    concurrent_share: None,
                 }),
                 Err(e) => Err(e),
             },
@@ -131,6 +140,7 @@ impl Text {
             version: 0,
             dirty: false,
             last_modified: SystemTime::now(),
+            concurrent_share: None,
         }
     }
 }
@@ -145,6 +155,7 @@ impl MeragableFile<Rope, Modification, Cursor> for Text {
     }
 
     fn merge_history(&mut self, modifies: &[Modification], cursors: &mut Cursor) -> ResultVoid {
+        self.lock();
         for modify in modifies {
             let increase_lines = lines_count(&modify.modified_content);
             let raw_rope = self.data.as_mut();
@@ -197,6 +208,7 @@ impl MeragableFile<Rope, Modification, Cursor> for Text {
             }
         }
         self.dirty = true;
+        self.unlock();
         Ok(())
     }
 
@@ -209,6 +221,33 @@ impl MeragableFile<Rope, Modification, Cursor> for Text {
         } else {
             false
         }
+    }
+
+    fn lock(&mut self) {
+        let cs = self
+            .concurrent_share
+            .as_ref()
+            .unwrap()
+            .condition_pair
+            .clone();
+        let (lock, cvar) = &*cs;
+        let mut val = lock.lock().unwrap();
+        while !*val {
+            val = cvar.wait(val).unwrap();
+        }
+    }
+
+    fn unlock(&mut self) {
+        let cs = self
+            .concurrent_share
+            .as_ref()
+            .unwrap()
+            .condition_pair
+            .clone();
+        let (lock, cvar) = &*cs;
+        let mut val = lock.lock().unwrap();
+        *val = true;
+        cvar.notify_one();
     }
 }
 

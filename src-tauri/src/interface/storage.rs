@@ -38,4 +38,8 @@ pub trait MeragableFile<D, H, C>: Send + Sync {
     fn merge_history(&mut self, histories: &[H], cursors: &mut C) -> ResultVoid;
 
     fn change_share_status(&mut self, status: FileShareStatus) -> bool;
+
+    fn lock(&mut self);
+
+    fn unlock(&mut self);
 }
