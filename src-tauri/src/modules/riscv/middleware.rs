@@ -317,7 +317,7 @@ pub mod frontend_api {
         }
     }
 
-    /// Placeholder for a function to dump data from all tabs.
+    /// Dump the code in the currently active tab.
     /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: State containing the map of all tabs.
     ///
