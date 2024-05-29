@@ -11,26 +11,26 @@ use ropey::Rope;
 use crate::{
     interface::storage::{
         BasicFile,
-        FileShareStatus::{self, Client, Host, Private},
+        FileShareStatus::{self, Client, Private, Server},
+        HistorianFile,
         MFile,
-        MeragableFile,
     },
     io::file_io,
     remote::{
-        server::{editor_rpc::OperationType, RpcServerImpl},
+        server::editor_rpc::OperationType,
         utils::priority_lsit::get_cursor,
         ClientCursor,
         CursorRowEq,
         Modification,
     },
-    types::{rpc_types::Cursor, ResultVoid},
+    types::{rpc_types::CursorList, ResultVoid},
     utility::text_helper::{all_to_lf, lines_count},
 };
 
 pub struct ConcurrencyShare {
     condition_pair: Arc<(Mutex<bool>, Condvar)>,
     update_thread: Option<std::thread::JoinHandle<()>>,
-    shared_server: Arc<RpcServerImpl>,
+    cursor_list: Arc<Mutex<CursorList>>,
 }
 
 pub struct Text {
@@ -97,12 +97,14 @@ impl BasicFile<Rope, Modification> for Text {
                 self.dirty = true;
                 Ok(())
             }
-            Host => {
-                todo!();
-                //self.merge_history(&vec![modify.clone()], cursors);
+            Server => {
+                let cursor_list = self.concurrent_share.as_ref().unwrap().cursor_list.clone();
+                self.merge_history(&vec![modify.clone()], &mut cursor_list.lock().unwrap())?;
+                Ok(())
             }
             Client => {
                 todo!("perform function change");
+                Ok(())
             }
         }
     }
@@ -144,7 +146,7 @@ impl Text {
     }
 }
 
-impl MeragableFile<Rope, Modification, Cursor> for Text {
+impl HistorianFile<Rope, Modification, CursorList> for Text {
     fn get_version(&self) -> usize {
         self.version
     }
@@ -153,7 +155,7 @@ impl MeragableFile<Rope, Modification, Cursor> for Text {
         self.share_status.clone()
     }
 
-    fn merge_history(&mut self, modifies: &[Modification], cursors: &mut Cursor) -> ResultVoid {
+    fn merge_history(&mut self, modifies: &[Modification], cursors: &mut CursorList) -> ResultVoid {
         self.lock();
         for modify in modifies {
             let increase_lines = lines_count(&modify.modified_content);
@@ -212,8 +214,8 @@ impl MeragableFile<Rope, Modification, Cursor> for Text {
     }
 
     fn change_share_status(&mut self, status: FileShareStatus) -> bool {
-        if self.share_status == Host && status == Private
-            || self.share_status == Private && status == Host
+        if self.share_status == Server && status == Private
+            || self.share_status == Private && status == Server
         {
             self.share_status = status;
             true
@@ -250,4 +252,4 @@ impl MeragableFile<Rope, Modification, Cursor> for Text {
     }
 }
 
-impl MFile<Rope, Modification, Cursor> for Text {}
+impl MFile<Rope, Modification, CursorList> for Text {}

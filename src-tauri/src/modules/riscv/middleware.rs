@@ -6,7 +6,13 @@ pub mod frontend_api {
     use tauri::{async_runtime::block_on, State, Window};
 
     use crate::{
-        interface::parser::Parser,
+        interface::{
+            parser::Parser,
+            storage::{
+                FileShareStatus::{Client, Private, Server},
+                HistorianFile,
+            },
+        },
         io::file_io,
         modules::riscv::basic::interface::{
             assembler::RiscVAssembler,
@@ -21,7 +27,7 @@ pub mod frontend_api {
         },
         utility::{
             ptr::Ptr,
-            state_helper::state::{self, set_current_tab_name},
+            state_helper::state::{self, get_current_tab_name, set_current_tab_name},
         },
     };
 
@@ -130,22 +136,38 @@ pub mod frontend_api {
         }
     }
 
-    /// Sets the cursor position in the tab associated with the given file path.
-    /// This could be useful for live sharing of code.
+    /// Sets the cursor position in current tab associated with the given file
+    /// path. This could be useful for live sharing of code.
+    /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: Current state of all open tabs.
-    /// - `filepath`: Path to the file associated with the tab to update.
+    /// - `rpc_state`: State containing the RPC server/client.
     /// - `row`: Row number of the cursor.
     /// - `col`: Column number of the cursor.
     ///
-    /// Returns `bool` indicating whether the cursor was successfully set.
+    /// Returns `Optional` indicating the success or failure of the operation.
     #[tauri::command]
-    pub fn set_cursor(rpc_state: State<RpcState>, filepath: &str, row: u64, col: u64) -> bool {
-        let mut server = rpc_state.rpc_server.lock().unwrap();
-        if server.is_running() {
-            server.set_host_cursor(row, col);
-            true
-        } else {
-            false
+    pub fn set_cursor(
+        cur_tab_name: State<CurTabName>,
+        tab_map: State<TabMap>,
+        rpc_state: State<RpcState>,
+        row: u64,
+        col: u64,
+    ) -> Optional {
+        let mut tabs = tab_map.tabs.lock().unwrap();
+        let mut tab = tabs.get_mut(&get_current_tab_name(&cur_tab_name)).unwrap();
+        match tab.text.get_share_status() {
+            Server => {
+                let mut server = rpc_state.rpc_server.lock().unwrap();
+                server.set_host_cursor(row, col);
+            }
+            Client => {
+                todo!("@Vollate");
+            }
+            Private => {}
+        }
+        Optional {
+            success: true,
+            message: String::new(),
         }
     }
 
@@ -657,12 +679,14 @@ pub mod frontend_api {
         port: u16,
         password: &str,
     ) -> Optional {
-        if tab_map.tabs.lock().unwrap().len() == 0 {
+        let mut tabs_lock = tab_map.tabs.lock().unwrap();
+        if tabs_lock.len() == 0 {
             return Optional {
                 success: false,
                 message: "No tab had been opened".to_string(),
             };
         }
+
         let mut server_lock = rpc_state.rpc_server.lock().unwrap();
         if server_lock.is_running() {
             return Optional {
@@ -687,6 +711,10 @@ pub mod frontend_api {
                 message: e.to_string(),
             }
         } else {
+            let mut tab = tabs_lock
+                .get_mut(&get_current_tab_name(&cur_tab_name))
+                .unwrap();
+            tab.text.change_share_status(Server);
             Optional {
                 success: true,
                 message: String::new(),
@@ -738,7 +766,8 @@ pub mod frontend_api {
 
         match block_on(client.send_authorize(&password)) {
             Ok(val) => {
-                let client_text = rope_store::Text::from_str(Path::new(&val.0), &val.2);
+                let mut client_text = rope_store::Text::from_str(Path::new(&val.0), &val.2);
+                client_text.change_share_status(Client);
                 let client_tab = Tab {
                     text: Box::new(client_text),
                     parser: Box::new(RISCVParser::new(&vec![RISCVExtension::RV32I])),
@@ -752,7 +781,7 @@ pub mod frontend_api {
                     .unwrap()
                     .insert(val.0.clone(), client_tab);
                 set_current_tab_name(&cur_tab_name, &val.0);
-                if let Err(e) = window.emit("front_share_client", {}) {
+                if let Err(e) = window.emit("front_share_client", { /*@Vollate*/ }) {
                     return Optional {
                         success: false,
                         message: e.to_string(),
@@ -772,16 +801,26 @@ pub mod frontend_api {
     }
 
     /// Stop the share server for the current tab.
+    /// - `cur_tab_name`: State containing the current tab name.
+    /// - `tab_map`: State containing the map of all tabs.
+    /// - `rpc_state`: State containing the RPC server/client.
     ///
     /// Returns `bool` indicating the success or failure, failure means the
     /// server is not running.
     #[tauri::command]
-    pub fn stop_share_server(rpc_state: State<RpcState>) -> bool {
+    pub fn stop_share_server(
+        cur_tab_name: State<CurTabName>,
+        tab_map: State<TabMap>,
+        rpc_state: State<RpcState>,
+    ) -> bool {
         let mut server = rpc_state.rpc_server.lock().unwrap();
         if !server.is_running() {
             false
         } else {
             server.stop_server();
+            let mut tabs = tab_map.tabs.lock().unwrap();
+            let mut tab = tabs.get_mut(&get_current_tab_name(&cur_tab_name)).unwrap();
+            tab.text.change_share_status(Private);
             true
         }
     }

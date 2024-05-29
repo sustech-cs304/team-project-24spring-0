@@ -12,11 +12,11 @@ use crate::{
     },
     modules::riscv::basic::interface::parser::RISCV,
     remote::Modification,
-    types::rpc_types::Cursor,
+    types::rpc_types::CursorList,
 };
 
 pub struct Tab {
-    pub text: Box<dyn MFile<Rope, Modification, Cursor>>,
+    pub text: Box<dyn MFile<Rope, Modification, CursorList>>,
     pub parser: Box<dyn Parser<RISCV>>,
     pub assembler: Box<dyn Assembler<RISCV>>,
     pub simulator: Box<dyn Simulator>,

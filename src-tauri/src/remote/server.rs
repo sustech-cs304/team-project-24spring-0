@@ -35,7 +35,7 @@ use crate::{
     interface::remote::RpcServer,
     types::{
         middleware_types::{Tab, TabMap},
-        rpc_types::Cursor,
+        rpc_types::CursorList,
         ResultVoid,
     },
     utility::ptr::Ptr,
@@ -51,7 +51,7 @@ struct ServerHandle {
     version: atomic::AtomicUsize,
     password: Mutex<String>,
     clients: Mutex<Vec<SocketAddr>>,
-    cursor_lsit: Arc<Mutex<Cursor>>,
+    cursor_lsit: Arc<Mutex<CursorList>>,
     history: Mutex<Vec<Modification>>,
 }
 
@@ -78,8 +78,8 @@ impl ServerHandle {
     /// Handle logic current tab wht a `&mut Tab` as lambda parameter.
     /// Only use to bypass the fucking borrow checker.
     fn handle_with_cur_tab<F, R>(&self, handle: F) -> Result<R, String>
-    where
-        F: Fn(&mut Tab) -> Result<R, String>,
+        where
+            F: Fn(&mut Tab) -> Result<R, String>,
     {
         let map_state_lock = self.map_state.lock().unwrap();
         match map_state_lock.1 {
@@ -94,8 +94,8 @@ impl ServerHandle {
     }
 
     fn handle_rpc_with_cur_tab<F, R>(&self, handle: F) -> Result<Response<R>, Status>
-    where
-        F: Fn(&mut Tab) -> Result<R, String>,
+        where
+            F: Fn(&mut Tab) -> Result<R, String>,
     {
         match self.handle_with_cur_tab(handle) {
             Ok(success) => Ok(Response::new(success)),
@@ -113,8 +113,8 @@ impl ServerHandle {
     }
 
     fn get_history_since<T>(&self, version: usize) -> Vec<T>
-    where
-        Modification: Into<T> + Clone,
+        where
+            Modification: Into<T> + Clone,
     {
         let lock = self.history.lock().unwrap();
         lock[version..]
@@ -177,8 +177,9 @@ impl Editor for Arc<Mutex<ServerHandle>> {
             .position(|x| *x == request.remote_addr().unwrap())
         {
             clients.remove(pos);
+            success = true;
             let mut cursor_lock = handler.cursor_lsit.lock().unwrap();
-            success = list_check_and_del::<CursorAsc>(
+            _ = list_check_and_del::<CursorAsc>(
                 &mut cursor_lock,
                 &ClientCursor {
                     addr: request.remote_addr().unwrap(),
@@ -311,7 +312,7 @@ impl RpcServerImpl {
         &mut self,
         cur_tab_name: String,
         tab_map: Ptr<TabMap>,
-        cursor_list: &Arc<Mutex<Cursor>>,
+        cursor_list: &Arc<Mutex<CursorList>>,
     ) -> ResultVoid {
         if self.is_running() {
             return Err("Server already running".into());

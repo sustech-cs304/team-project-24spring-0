@@ -15,10 +15,10 @@ pub struct RpcState {
 
 #[derive(Default)]
 pub struct CursorListState {
-    pub cursors: Arc<Mutex<Cursor>>,
+    pub cursors: Arc<Mutex<CursorList>>,
 }
 
-pub type Cursor = LinkedList<ClientCursor>;
+pub type CursorList = LinkedList<ClientCursor>;
 
 #[derive(Clone, Deserialize)]
 pub struct CursorPosition {

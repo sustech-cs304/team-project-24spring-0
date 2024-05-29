@@ -2,6 +2,7 @@ use std::path::Path;
 
 use tauri::{
     api::dialog::{FileDialogBuilder, MessageDialogButtons, MessageDialogKind},
+    async_runtime::block_on,
     CustomMenuItem,
     Manager,
     Menu,
@@ -11,6 +12,8 @@ use tauri::{
 
 use super::display_dialog;
 use crate::{
+    dprintln,
+    interface::storage::FileShareStatus::{Client, Server},
     io::file_io,
     modules::riscv::basic::interface::{
         assembler::RiscVAssembler,
@@ -21,6 +24,7 @@ use crate::{
     types::{
         menu_types,
         middleware_types::{Tab, TabMap},
+        rpc_types::RpcState,
         ResultVoid,
     },
     utility::{
@@ -205,7 +209,7 @@ fn close_handler(event: &WindowMenuEvent) {
     let mut lock = tab_map.tabs.lock().unwrap();
     match lock.get_mut(&name) {
         Some(tab) => {
-            dirty_close_checker(event, &name, tab);
+            close_checker(event, &name, tab);
         }
         None => {}
     }
@@ -222,7 +226,7 @@ fn exit_handler(event: &WindowMenuEvent) {
     let tab_map = window.state::<TabMap>();
     let mut lock = tab_map.tabs.lock().unwrap();
     for (name, tab) in lock.iter_mut() {
-        dirty_close_checker(event, name, tab);
+        close_checker(event, name, tab);
     }
     window.app_handle().exit(0);
 }
@@ -255,10 +259,33 @@ fn new_tab(event: &WindowMenuEvent, file_path: &Path) -> ResultVoid {
 /// If user choose not to save, close the tab directly.
 ///
 /// This function will emit a `front_close_tab` event to the window.
-fn dirty_close_checker(event: &WindowMenuEvent, name: &str, tab: &mut Tab) {
+fn close_checker(event: &WindowMenuEvent, name: &str, tab: &mut Tab) {
+    let window = event.window();
     let tab_ptr = Ptr::new(tab);
     let event_ptr = Ptr::new(event);
-    if tab.text.is_dirty() {
+    let mut text = &mut tab.text;
+    let share_status = text.get_share_status();
+    if share_status == Server {
+        window
+            .state::<RpcState>()
+            .rpc_server
+            .lock()
+            .unwrap()
+            .stop_server();
+    } else if share_status == Client {
+        if let Err(e) = block_on(
+            window
+                .state::<RpcState>()
+                .rpc_client
+                .lock()
+                .unwrap()
+                .send_disconnect(),
+        ) {
+            dprintln!("{}", e.to_string());
+        }
+        return;
+    }
+    if text.is_dirty() {
         display_dialog(
             MessageDialogKind::Warning,
             MessageDialogButtons::YesNo,
