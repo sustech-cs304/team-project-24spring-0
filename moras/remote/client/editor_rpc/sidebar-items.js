@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["OperationType"],"mod":["editor_client","editor_server"],"struct":["AuthorizeReply","AuthorizeRequest","ContentPosition","DisconnectReply","DisconnectRequest","GetContentReply","GetContentRequest","Pos","SetCursorReply","SetCursorRequest","UpdateContentReply","UpdateContentRequest"]};

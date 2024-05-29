@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/modules/riscv/middleware.rs`."><title>middleware.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="moras" data-themes="" data-resource-suffix="" data-rustdoc-version="1.80.0-nightly (84b40fc90 2024-05-27)" data-channel="nightly" data-search-js="search-d52510db62a78183.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/modules/riscv/middleware.rs`."><title>middleware.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="moras" data-themes="" data-resource-suffix="" data-rustdoc-version="1.80.0-nightly (da159eb33 2024-05-28)" data-channel="nightly" data-search-js="search-d52510db62a78183.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -877,10 +877,78 @@
 <a href="#877" id="877">877</a>
 <a href="#878" id="878">878</a>
 <a href="#879" id="879">879</a>
+<a href="#880" id="880">880</a>
+<a href="#881" id="881">881</a>
+<a href="#882" id="882">882</a>
+<a href="#883" id="883">883</a>
+<a href="#884" id="884">884</a>
+<a href="#885" id="885">885</a>
+<a href="#886" id="886">886</a>
+<a href="#887" id="887">887</a>
+<a href="#888" id="888">888</a>
+<a href="#889" id="889">889</a>
+<a href="#890" id="890">890</a>
+<a href="#891" id="891">891</a>
+<a href="#892" id="892">892</a>
+<a href="#893" id="893">893</a>
+<a href="#894" id="894">894</a>
+<a href="#895" id="895">895</a>
+<a href="#896" id="896">896</a>
+<a href="#897" id="897">897</a>
+<a href="#898" id="898">898</a>
+<a href="#899" id="899">899</a>
+<a href="#900" id="900">900</a>
+<a href="#901" id="901">901</a>
+<a href="#902" id="902">902</a>
+<a href="#903" id="903">903</a>
+<a href="#904" id="904">904</a>
+<a href="#905" id="905">905</a>
+<a href="#906" id="906">906</a>
+<a href="#907" id="907">907</a>
+<a href="#908" id="908">908</a>
+<a href="#909" id="909">909</a>
+<a href="#910" id="910">910</a>
+<a href="#911" id="911">911</a>
+<a href="#912" id="912">912</a>
+<a href="#913" id="913">913</a>
+<a href="#914" id="914">914</a>
+<a href="#915" id="915">915</a>
+<a href="#916" id="916">916</a>
+<a href="#917" id="917">917</a>
+<a href="#918" id="918">918</a>
+<a href="#919" id="919">919</a>
+<a href="#920" id="920">920</a>
+<a href="#921" id="921">921</a>
+<a href="#922" id="922">922</a>
+<a href="#923" id="923">923</a>
+<a href="#924" id="924">924</a>
+<a href="#925" id="925">925</a>
+<a href="#926" id="926">926</a>
+<a href="#927" id="927">927</a>
+<a href="#928" id="928">928</a>
+<a href="#929" id="929">929</a>
+<a href="#930" id="930">930</a>
+<a href="#931" id="931">931</a>
+<a href="#932" id="932">932</a>
+<a href="#933" id="933">933</a>
+<a href="#934" id="934">934</a>
+<a href="#935" id="935">935</a>
+<a href="#936" id="936">936</a>
+<a href="#937" id="937">937</a>
+<a href="#938" id="938">938</a>
+<a href="#939" id="939">939</a>
+<a href="#940" id="940">940</a>
+<a href="#941" id="941">941</a>
+<a href="#942" id="942">942</a>
+<a href="#943" id="943">943</a>
+<a href="#944" id="944">944</a>
+<a href="#945" id="945">945</a>
 </pre></div><pre class="rust"><code><span class="doccomment">/// This module provides API functions for the frontend. Could be used by
 /// `invoke` in EMCAScript
 </span><span class="kw">pub mod </span>frontend_api {
-    <span class="kw">use </span>tauri::State;
+    <span class="kw">use </span>std::{net::SocketAddr, path::Path};
+
+    <span class="kw">use </span>tauri::{async_runtime::block_on, State, Window};
 
     <span class="kw">use crate</span>::{
         interface::parser::Parser,
@@ -893,7 +961,10 @@
         simulator::simulator::RISCVSimulator,
         storage::rope_store,
         types::middleware_types::<span class="kw-2">*</span>,
-        utility::{ptr::Ptr, state_helper::state},
+        utility::{
+            ptr::Ptr,
+            state_helper::state::{<span class="self">self</span>, set_current_tab_name},
+        },
     };
 
     <span class="doccomment">/// Creates a new tab with content loaded from a specified file path.
@@ -1083,7 +1154,7 @@
         }
     }
 
-    <span class="doccomment">/// Writes data in specific tab to the file file path.
+    <span class="doccomment">/// Writes data in specific tab to the file path.
     /// - `filepath`: Path to the file where data should be written.
     /// - `data`: Content to write to the file.
     ///
@@ -1531,27 +1602,33 @@
                 message: <span class="string">"No tab had been opened"</span>.to_string(),
             };
         }
-        <span class="kw">let </span><span class="kw-2">mut </span>rpc_lock = tab_map.rpc_server.lock().unwrap();
-        rpc_lock.stop_service();
-        rpc_lock.change_password(password);
-        <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = rpc_lock.set_port(port) {
+        <span class="kw">let </span><span class="kw-2">mut </span>server_lock = tab_map.rpc_server.lock().unwrap();
+        <span class="kw">if </span>server_lock.is_running() {
+            <span class="kw">return </span>Optional {
+                success: <span class="bool-val">false</span>,
+                message: <span class="string">"Server already running"</span>.to_string(),
+            };
+        } <span class="kw">else if let </span><span class="prelude-val">Err</span>(e) = server_lock.set_port(port) {
             <span class="kw">return </span>Optional {
                 success: <span class="bool-val">false</span>,
                 message: e.to_string(),
             };
-        } <span class="kw">else if let </span><span class="prelude-val">Err</span>(e) = rpc_lock.start_service(
+        }
+
+        server_lock.change_password(password);
+        <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = server_lock.start_server(
             state::get_current_tab_name(<span class="kw-2">&amp;</span>cur_tab_name),
             Ptr::new(<span class="kw-2">&amp;</span>tab_map),
         ) {
-            <span class="kw">return </span>Optional {
+            Optional {
                 success: <span class="bool-val">false</span>,
                 message: e.to_string(),
-            };
+            }
         } <span class="kw">else </span>{
-            <span class="kw">return </span>Optional {
+            Optional {
                 success: <span class="bool-val">true</span>,
                 message: String::new(),
-            };
+            }
         }
     }
 
@@ -1564,16 +1641,71 @@
     ///
     /// Returns `Optional` indicating the success or failure of the connection.
     </span><span class="attr">#[tauri::command]
-    </span><span class="kw">pub fn </span>authorize(
+    </span><span class="kw">pub fn </span>authorize_share_client(
+        window: Window,
         cur_tab_name: State&lt;CurTabName&gt;,
         tab_map: State&lt;TabMap&gt;,
         ip: String,
         port: u16,
         password: String,
     ) -&gt; Optional {
-        <span class="macro">todo!</span>(<span class="string">"Implement authorize as client"</span>);
-        <span class="comment">//TODO:@Vollate
-    </span>}
+        <span class="kw">let </span><span class="kw-2">mut </span>client = tab_map.rpc_client.lock().unwrap();
+        <span class="kw">let </span>addr: SocketAddr = <span class="kw">match </span><span class="macro">format!</span>(<span class="string">"{}:{}"</span>, ip, port).parse() {
+            <span class="prelude-val">Ok</span>(val) =&gt; val,
+            <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; {
+                <span class="kw">return </span>Optional {
+                    success: <span class="bool-val">false</span>,
+                    message: <span class="string">"Invalid IP or port"</span>.to_string(),
+                };
+            }
+        };
+
+        <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = client.set_server_addr(addr) {
+            <span class="kw">return </span>Optional {
+                success: <span class="bool-val">false</span>,
+                message: e.to_string(),
+            };
+        } <span class="kw">else if let </span><span class="prelude-val">Err</span>(e) = client.start() {
+            <span class="kw">return </span>Optional {
+                success: <span class="bool-val">false</span>,
+                message: e.to_string(),
+            };
+        }
+
+        <span class="kw">match </span>block_on(client.send_authorize(<span class="kw-2">&amp;</span>password)) {
+            <span class="prelude-val">Ok</span>(val) =&gt; {
+                <span class="kw">let </span>client_text = rope_store::Text::from_str(Path::new(<span class="kw-2">&amp;</span>val.<span class="number">0</span>), <span class="kw-2">&amp;</span>val.<span class="number">2</span>);
+                <span class="kw">let </span>client_tab = Tab {
+                    text: Box::new(client_text),
+                    parser: Box::new(RISCVParser::new(<span class="kw-2">&amp;</span><span class="macro">vec!</span>[RISCVExtension::RV32I])),
+                    assembler: Box::new(RiscVAssembler::new()),
+                    simulator: Box::new(RISCVSimulator::new(<span class="kw-2">&amp;</span>val.<span class="number">0</span>)),
+                    assembly_cache: Default::default(),
+                };
+                tab_map
+                    .tabs
+                    .lock()
+                    .unwrap()
+                    .insert(val.<span class="number">0</span>.clone(), client_tab);
+                set_current_tab_name(<span class="kw-2">&amp;</span>cur_tab_name, <span class="kw-2">&amp;</span>val.<span class="number">0</span>);
+                <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = window.emit(<span class="string">"front_share_client"</span>, {}) {
+                    <span class="kw">return </span>Optional {
+                        success: <span class="bool-val">false</span>,
+                        message: e.to_string(),
+                    };
+                } <span class="kw">else </span>{
+                    Optional {
+                        success: <span class="bool-val">true</span>,
+                        message: String::new(),
+                    }
+                }
+            }
+            <span class="prelude-val">Err</span>(e) =&gt; Optional {
+                success: <span class="bool-val">false</span>,
+                message: e.to_string(),
+            },
+        }
+    }
 
     <span class="doccomment">/// Stop the share server for the current tab.
     /// - `tab_map`: State containing the map of all tabs.
@@ -1586,7 +1718,7 @@
         <span class="kw">if </span>!server.is_running() {
             <span class="bool-val">false
         </span>} <span class="kw">else </span>{
-            server.stop_service();
+            server.stop_server();
             <span class="bool-val">true
         </span>}
     }

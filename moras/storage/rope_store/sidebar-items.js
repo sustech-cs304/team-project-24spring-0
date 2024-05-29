@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["Text"]};
+window.SIDEBAR_ITEMS = {"struct":["ConcurrencyShare","Text"]};
