@@ -275,7 +275,7 @@
 </span><span class="kw">pub enum </span>RISCVToken&lt;<span class="lifetime">'a</span>&gt; {
     <span class="attr">#[token(<span class="string">","</span>)]
     </span>Comma,
-    <span class="attr">#[regex(<span class="string">r"[\r\n]|[\r]|[\n]"</span>, |lex| lex.extras.<span class="number">0 </span>+= <span class="number">1</span>; lex.extras.<span class="number">1 </span>= lex.span().end;)]
+    <span class="attr">#[token(<span class="string">"\n"</span>, |lex| lex.extras.<span class="number">0 </span>+= <span class="number">1</span>; lex.extras.<span class="number">1 </span>= lex.span().end;)]
     </span>Newline,
     <span class="attr">#[token(<span class="string">":"</span>)]
     </span>Colon,

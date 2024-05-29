@@ -252,6 +252,7 @@
 <a href="#252" id="252">252</a>
 <a href="#253" id="253">253</a>
 <a href="#254" id="254">254</a>
+<a href="#255" id="255">255</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::{
     error::Error,
     net::{IpAddr, Ipv4Addr, SocketAddr},
@@ -329,6 +330,7 @@
     }
 
     <span class="kw">fn </span>handle_modify(<span class="kw-2">&amp;mut </span><span class="self">self</span>, modify: <span class="kw-2">&amp;</span>Modification) -&gt; ResultVoid {
+        <span class="kw">let </span>modified_content = all_to_lf(<span class="kw-2">&amp;</span>modify.modified_content);
         <span class="kw">match </span><span class="kw-2">&amp;</span><span class="self">self</span>.share_status {
             Private =&gt; {
                 <span class="kw">let </span>raw_rope = <span class="self">self</span>.data.as_mut();
@@ -339,14 +341,14 @@
                     raw_rope.line_to_char(range.end.row <span class="kw">as </span>usize) + range.end.col <span class="kw">as </span>usize;
                 <span class="kw">match </span>modify.op {
                     OperationType::Insert =&gt; {
-                        raw_rope.insert(start_idx, <span class="kw-2">&amp;</span>modify.modified_content);
+                        raw_rope.insert(start_idx, <span class="kw-2">&amp;</span>modified_content);
                     }
                     OperationType::Delete =&gt; {
                         raw_rope.remove(start_idx..end_idx);
                     }
                     OperationType::Replace =&gt; {
                         raw_rope.remove(start_idx..end_idx);
-                        raw_rope.insert(start_idx, <span class="kw-2">&amp;</span>modify.modified_content);
+                        raw_rope.insert(start_idx, <span class="kw-2">&amp;</span>modified_content);
                     }
                 }
                 <span class="self">self</span>.dirty = <span class="bool-val">true</span>;
@@ -369,8 +371,8 @@
             <span class="prelude-val">Ok</span>(content) =&gt; <span class="kw">match </span>file_io::get_last_modified(file_path) {
                 <span class="prelude-val">Ok</span>(last_modified) =&gt; <span class="prelude-val">Ok</span>(Text {
                     share_status: Default::default(),
-                    data: Box::new(Rope::from_str(<span class="kw-2">&amp;</span>content)),
-                    path: PathBuf::from(<span class="kw-2">&amp;</span>all_to_lf(<span class="kw-2">&amp;</span>content)),
+                    data: Box::new(Rope::from_str(<span class="kw-2">&amp;</span>all_to_lf(<span class="kw-2">&amp;</span>content))),
+                    path: PathBuf::from(file_path),
                     version: <span class="number">0</span>,
                     dirty: <span class="bool-val">false</span>,
                     last_modified,
