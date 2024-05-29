@@ -33,7 +33,10 @@ use super::{
 use crate::{
     dprintln,
     interface::remote::RpcServer,
-    types::middleware_types::{Cursor, Tab, TabMap},
+    types::{
+        middleware_types::{Cursor, Tab, TabMap},
+        ResultVoid,
+    },
     utility::ptr::Ptr,
 };
 
@@ -214,19 +217,19 @@ impl Editor for Arc<Mutex<ServerHandle>> {
         return handler.handle_rpc_with_cur_tab(
             |tab: &mut Tab| -> Result<GetContentReply, String> {
                 if request.get_ref().full_content {
-                    return Ok(editor_rpc::GetContentReply {
+                    return Ok(GetContentReply {
                         history: vec![],
                         full_content: tab.text.to_string(),
                     });
                 } else if request.get_ref().version
                     == handler.version.load(atomic::Ordering::Relaxed) as u64
                 {
-                    Ok(editor_rpc::GetContentReply {
+                    Ok(GetContentReply {
                         history: vec![],
                         full_content: String::new(),
                     })
                 } else {
-                    Ok(editor_rpc::GetContentReply {
+                    Ok(GetContentReply {
                         history: handler.get_history_since(request.get_ref().version as usize),
                         full_content: String::new(),
                     })
@@ -295,7 +298,7 @@ impl Editor for Arc<Mutex<ServerHandle>> {
 pub struct RpcServerImpl {
     port: AtomicU16,
     tokio_runtime: tokio::runtime::Runtime,
-    server_handle: Option<JoinHandle<()>>,
+    rpc_server_handle: Option<JoinHandle<()>>,
     shared_handler: Arc<Mutex<ServerHandle>>,
 }
 
@@ -303,20 +306,16 @@ impl RpcServerImpl {
     /// Start the service with a tab map.
     ///
     /// If the server is already running, return an error.
-    pub fn start_service(
-        &mut self,
-        cur_tab_name: String,
-        tab_map: Ptr<TabMap>,
-    ) -> Result<(), Box<dyn std::error::Error>> {
-        self.shared_handler.lock().unwrap().map_state = Mutex::new((cur_tab_name, Some(tab_map)));
+    pub fn start_server(&mut self, cur_tab_name: String, tab_map: Ptr<TabMap>) -> ResultVoid {
         if self.is_running() {
             return Err("Server already running".into());
         }
+        self.shared_handler.lock().unwrap().map_state = Mutex::new((cur_tab_name, Some(tab_map)));
         self.start()?;
         Ok(())
     }
 
-    pub fn stop_service(&mut self) {
+    pub fn stop_server(&mut self) {
         self.stop();
     }
 
@@ -339,7 +338,7 @@ impl RpcServerImpl {
 
     /// Check if the server is running.
     pub fn is_running(&self) -> bool {
-        self.server_handle.is_some()
+        self.rpc_server_handle.is_some()
     }
 
     /// Get the port of the server.
@@ -370,7 +369,7 @@ impl Default for RpcServerImpl {
                 .enable_all()
                 .build()
                 .unwrap(),
-            server_handle: None,
+            rpc_server_handle: None,
             shared_handler: Arc::new(Mutex::new(Default::default())),
         }
     }
@@ -378,7 +377,7 @@ impl Default for RpcServerImpl {
 
 impl RpcServer for RpcServerImpl {
     fn start(&mut self) -> Result<(), Box<dyn Error>> {
-        if self.server_handle.is_some() {
+        if self.rpc_server_handle.is_some() {
             return Err("Server already running".into());
         }
         let addr = format!("0.0.0.0:{}", self.port.load(atomic::Ordering::Relaxed))
@@ -394,12 +393,12 @@ impl RpcServer for RpcServerImpl {
                 .await
                 .unwrap();
         });
-        self.server_handle = Some(server_handle);
+        self.rpc_server_handle = Some(server_handle);
         Ok(())
     }
 
     fn stop(&mut self) {
-        if let Some(handle) = self.server_handle.take() {
+        if let Some(handle) = self.rpc_server_handle.take() {
             handle.abort();
         }
     }
