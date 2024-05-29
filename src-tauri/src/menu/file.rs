@@ -166,7 +166,7 @@ fn save_as_handler(event: WindowMenuEvent) {
         let tab = lock.get(&name).unwrap();
         tab.text.to_string()
     };
-    let picker = tauri::api::dialog::FileDialogBuilder::new();
+    let picker = FileDialogBuilder::new();
     picker.save_file(move |file_path| match file_path {
         Some(file_path) => match file_io::write_file(file_path.as_path(), &content) {
             Ok(_) => {

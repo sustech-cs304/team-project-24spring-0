@@ -641,10 +641,7 @@ fn process_code(
         ParserResultText::Align(..) => {}
     }
     if error.is_empty() {
-        Ok(ProcessResult {
-            code: line,
-            basic: basic,
-        })
+        Ok(ProcessResult { code: line, basic })
     } else {
         Err(error)
     }

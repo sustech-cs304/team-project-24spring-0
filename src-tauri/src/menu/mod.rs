@@ -39,7 +39,7 @@ macro_rules! create_menu {
                 }
             )+
                 else {
-                    println!("unknow menu event: {:?}", event.menu_item_id());
+                    println!("unknown menu event: {:?}", event.menu_item_id());
                 }
         }
     };

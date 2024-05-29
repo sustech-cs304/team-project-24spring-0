@@ -830,7 +830,7 @@ pub mod backend_api {
     };
 
     /// Emits a simulator update event to the frontend.
-    /// - `simulator`: Simulator instance to update the its state.
+    /// - `simulator`: Simulator instance to update its state.
     /// - `simulator_res`: Result of the simulator operation.
     ///
     /// Returns `Result` indicating the success or failure of the event

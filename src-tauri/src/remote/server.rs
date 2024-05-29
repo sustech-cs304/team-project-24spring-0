@@ -75,7 +75,7 @@ impl ServerHandle {
     }
 
     /// Handle logic current tab wht a `&mut Tab` as lambda parameter.
-    /// Only use to bypass the fxxking borrow checker.
+    /// Only use to bypass the fucking borrow checker.
     fn handle_with_cur_tab<F, R>(&self, handle: F) -> Result<R, String>
     where
         F: Fn(&mut Tab) -> Result<R, String>,
@@ -88,16 +88,16 @@ impl ServerHandle {
                 let mut tab = tabs_lock.get_mut(&map_state_lock.0).unwrap();
                 handle(&mut tab)
             }
-            None => Err("TabMap has not been iniitilized".to_string()),
+            None => Err("TabMap has not been initialized".to_string()),
         }
     }
 
-    fn handle_rpc_with_cur_tab<F, R>(&self, handle: F) -> Result<tonic::Response<R>, Status>
+    fn handle_rpc_with_cur_tab<F, R>(&self, handle: F) -> Result<Response<R>, Status>
     where
         F: Fn(&mut Tab) -> Result<R, String>,
     {
         match self.handle_with_cur_tab(handle) {
-            Ok(success) => Ok(tonic::Response::new(success)),
+            Ok(success) => Ok(Response::new(success)),
             Err(err) => Err(Status::internal(err)),
         }
     }
@@ -290,7 +290,7 @@ impl Editor for Arc<Mutex<ServerHandle>> {
                     })),
                 }
             }
-            None => Err(Status::internal("TabMap have not been iniitilized")),
+            None => Err(Status::internal("TabMap have not been initialized")),
         }
     }
 }
@@ -322,7 +322,7 @@ impl RpcServerImpl {
     /// Set the port for the server.
     ///
     /// If the server is already running, return an error.
-    pub fn set_port(&mut self, port: u16) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn set_port(&mut self, port: u16) -> Result<(), Box<dyn Error>> {
         if self.is_running() {
             return Err("Server already running".into());
         }
