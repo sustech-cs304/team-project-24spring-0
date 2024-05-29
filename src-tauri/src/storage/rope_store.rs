@@ -16,7 +16,6 @@ use crate::{
         MeragableFile,
     },
     io::file_io,
-    middleware_types::Cursor,
     remote::{
         server::{editor_rpc::OperationType, RpcServerImpl},
         utils::priority_lsit::get_cursor,
@@ -24,7 +23,7 @@ use crate::{
         CursorRowEq,
         Modification,
     },
-    types::ResultVoid,
+    types::{rpc_types::Cursor, ResultVoid},
     utility::text_helper::{all_to_lf, lines_count},
 };
 

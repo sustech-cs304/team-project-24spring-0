@@ -1,8 +1,8 @@
-use std::{error::Error, net::Ipv4Addr, path::PathBuf, str::FromStr, sync::Mutex};
+use std::{error::Error, net::Ipv4Addr, path::PathBuf, str::FromStr};
 
-use once_cell::sync::Lazy;
 use tauri::async_runtime::block_on;
 
+use super::{CURSOR_LIST, TAB_MAP};
 use crate::{
     interface::remote::RpcClient,
     modules::riscv::basic::interface::{
@@ -17,19 +17,17 @@ use crate::{
     utility::ptr::Ptr,
 };
 
-static TABMAP: Lazy<Mutex<Option<TabMap>>> = Lazy::new(|| Mutex::new(None));
-
 pub fn init_test_server(content: &str) -> Result<RpcServerImpl, Box<dyn Error>> {
-    if TABMAP.lock().unwrap().as_ref().is_none() {
+    if TAB_MAP.lock().unwrap().as_ref().is_none() {
         {
-            let mut static_lock = TABMAP.lock().unwrap();
+            let mut static_lock = TAB_MAP.lock().unwrap();
             *static_lock = Some(TabMap::default());
         }
         let content = rope_store::Text::from_str(
             PathBuf::from_str(TEST_FILE_NAME).unwrap().as_path(),
             content,
         );
-        let mut static_lock = TABMAP.lock().unwrap();
+        let mut static_lock = TAB_MAP.lock().unwrap();
         let static_tabmap = static_lock.as_mut().unwrap();
         let mut static_tab = static_tabmap.tabs.lock().unwrap();
         let tab = Tab {
@@ -41,6 +39,10 @@ pub fn init_test_server(content: &str) -> Result<RpcServerImpl, Box<dyn Error>> 
         };
         static_tab.insert(TEST_FILE_NAME.to_string(), tab);
     }
+    if CURSOR_LIST.lock().unwrap().is_none() {
+        let mut static_lock = CURSOR_LIST.lock().unwrap();
+        *static_lock = Some(Default::default());
+    }
     let mut server = RpcServerImpl::default();
 
     server.change_password(TEST_PASSWD);
@@ -49,7 +51,8 @@ pub fn init_test_server(content: &str) -> Result<RpcServerImpl, Box<dyn Error>> 
     server
         .start_server(
             TEST_FILE_NAME.to_string(),
-            Ptr::new(TABMAP.lock().unwrap().as_ref().unwrap()),
+            Ptr::new(TAB_MAP.lock().unwrap().as_ref().unwrap()),
+            &CURSOR_LIST.lock().unwrap().as_ref().unwrap().cursors,
         )
         .unwrap();
     Ok(server)

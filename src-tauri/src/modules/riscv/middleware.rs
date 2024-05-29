@@ -15,7 +15,10 @@ pub mod frontend_api {
         remote::{Modification, OpRange},
         simulator::simulator::RISCVSimulator,
         storage::rope_store,
-        types::middleware_types::*,
+        types::{
+            middleware_types::*,
+            rpc_types::{CursorListState, CursorPosition, FileOperation, RpcState},
+        },
         utility::{
             ptr::Ptr,
             state_helper::state::{self, set_current_tab_name},
@@ -136,8 +139,8 @@ pub mod frontend_api {
     ///
     /// Returns `bool` indicating whether the cursor was successfully set.
     #[tauri::command]
-    pub fn set_cursor(tab_map: State<TabMap>, filepath: &str, row: u64, col: u64) -> bool {
-        let mut server = tab_map.rpc_server.lock().unwrap();
+    pub fn set_cursor(rpc_state: State<RpcState>, filepath: &str, row: u64, col: u64) -> bool {
+        let mut server = rpc_state.rpc_server.lock().unwrap();
         if server.is_running() {
             server.set_host_cursor(row, col);
             true
@@ -641,6 +644,7 @@ pub mod frontend_api {
     /// Starts the RPC server for the current tab.
     /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: State containing the map of all tabs.
+    /// - `rpc_state`: State containing the RPC server/client.
     /// - `password`: Password to be used for the RPC server.
     ///
     /// Returns `Optional` indicating the success or failure of the RPC server
@@ -648,6 +652,8 @@ pub mod frontend_api {
     pub fn start_share_server(
         cur_tab_name: State<CurTabName>,
         tab_map: State<TabMap>,
+        rpc_state: State<RpcState>,
+        cursor_list: State<CursorListState>,
         port: u16,
         password: &str,
     ) -> Optional {
@@ -657,7 +663,7 @@ pub mod frontend_api {
                 message: "No tab had been opened".to_string(),
             };
         }
-        let mut server_lock = tab_map.rpc_server.lock().unwrap();
+        let mut server_lock = rpc_state.rpc_server.lock().unwrap();
         if server_lock.is_running() {
             return Optional {
                 success: false,
@@ -674,6 +680,7 @@ pub mod frontend_api {
         if let Err(e) = server_lock.start_server(
             state::get_current_tab_name(&cur_tab_name),
             Ptr::new(&tab_map),
+            &cursor_list.cursors,
         ) {
             Optional {
                 success: false,
@@ -690,6 +697,7 @@ pub mod frontend_api {
     /// Authorize and connect to a remote RPC server as client.
     /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: State containing the map of all tabs.
+    /// - `rpc_state`: State containing the RPC server/client.
     /// - `ip`: IPV4 address of the remote server.
     /// - `port`: Port number of the remote server.
     /// - `password`: Password to be used for the connection.
@@ -700,11 +708,12 @@ pub mod frontend_api {
         window: Window,
         cur_tab_name: State<CurTabName>,
         tab_map: State<TabMap>,
+        rpc_state: State<RpcState>,
         ip: String,
         port: u16,
         password: String,
     ) -> Optional {
-        let mut client = tab_map.rpc_client.lock().unwrap();
+        let mut client = rpc_state.rpc_client.lock().unwrap();
         let addr: SocketAddr = match format!("{}:{}", ip, port).parse() {
             Ok(val) => val,
             Err(_) => {
@@ -763,13 +772,12 @@ pub mod frontend_api {
     }
 
     /// Stop the share server for the current tab.
-    /// - `tab_map`: State containing the map of all tabs.
     ///
     /// Returns `bool` indicating the success or failure, failure means the
     /// server is not running.
     #[tauri::command]
-    pub fn stop_share_server(tab_map: State<TabMap>) -> bool {
-        let mut server = tab_map.rpc_server.lock().unwrap();
+    pub fn stop_share_server(rpc_state: State<RpcState>) -> bool {
+        let mut server = rpc_state.rpc_server.lock().unwrap();
         if !server.is_running() {
             false
         } else {

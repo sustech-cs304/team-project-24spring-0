@@ -33,7 +33,7 @@ use std::sync::{Arc, Mutex};
 use modules::riscv::middleware::frontend_api;
 use once_cell::sync::Lazy;
 use tauri::{AppHandle, Manager};
-use types::middleware_types;
+use types::{middleware_types, rpc_types};
 
 static APP_HANDLE: Lazy<Arc<Mutex<Option<AppHandle>>>> = Lazy::new(|| Arc::new(Mutex::new(None)));
 
@@ -43,11 +43,16 @@ fn main() {
         .on_menu_event(menu::event_handler)
         .manage(middleware_types::TabMap {
             tabs: Default::default(),
-            rpc_server: Default::default(),
-            rpc_client: Default::default(),
         })
         .manage(middleware_types::CurTabName {
             name: Default::default(),
+        })
+        .manage(rpc_types::CursorListState {
+            cursors: Arc::new(Default::default()),
+        })
+        .manage(rpc_types::RpcState {
+            rpc_server: Default::default(),
+            rpc_client: Default::default(),
         })
         .setup(|app| {
             let app_handle = app.app_handle();

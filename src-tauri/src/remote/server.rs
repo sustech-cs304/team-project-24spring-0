@@ -34,7 +34,8 @@ use crate::{
     dprintln,
     interface::remote::RpcServer,
     types::{
-        middleware_types::{Cursor, Tab, TabMap},
+        middleware_types::{Tab, TabMap},
+        rpc_types::Cursor,
         ResultVoid,
     },
     utility::ptr::Ptr,
@@ -50,7 +51,7 @@ struct ServerHandle {
     version: atomic::AtomicUsize,
     password: Mutex<String>,
     clients: Mutex<Vec<SocketAddr>>,
-    cursor_pos: Mutex<Cursor>,
+    cursor_lsit: Arc<Mutex<Cursor>>,
     history: Mutex<Vec<Modification>>,
 }
 
@@ -63,7 +64,7 @@ impl ServerHandle {
 
     /// Update host cursor position.
     fn set_host_cursor(&mut self, row: u64, col: u64, port: u16) {
-        let mut lock = self.cursor_pos.lock().unwrap();
+        let mut lock = self.cursor_lsit.lock().unwrap();
         list_insert_or_replace_asc::<CursorAsc>(
             &mut *lock,
             ClientCursor {
@@ -176,7 +177,7 @@ impl Editor for Arc<Mutex<ServerHandle>> {
             .position(|x| *x == request.remote_addr().unwrap())
         {
             clients.remove(pos);
-            let mut cursor_lock = handler.cursor_pos.lock().unwrap();
+            let mut cursor_lock = handler.cursor_lsit.lock().unwrap();
             success = list_check_and_del::<CursorAsc>(
                 &mut cursor_lock,
                 &ClientCursor {
@@ -195,7 +196,7 @@ impl Editor for Arc<Mutex<ServerHandle>> {
     ) -> Result<Response<SetCursorReply>, Status> {
         let handler = self.lock().unwrap();
         handler.check_ip_authorized(request.remote_addr().unwrap())?;
-        let mut cursor_lock = handler.cursor_pos.lock().unwrap();
+        let mut cursor_lock = handler.cursor_lsit.lock().unwrap();
         list_insert_or_replace_asc::<CursorAsc>(
             &mut *cursor_lock,
             ClientCursor {
@@ -250,7 +251,7 @@ impl Editor for Arc<Mutex<ServerHandle>> {
                 let tab_map = tab_map_ptr.as_ref();
                 let mut tabs_lock = tab_map.tabs.lock().unwrap();
                 let tab = tabs_lock.get_mut(&map_state_lock.0).unwrap();
-                let cursor_lock = handler.cursor_pos.lock().unwrap();
+                let cursor_lock = handler.cursor_lsit.lock().unwrap();
                 let request_ref = request.get_ref();
                 let content_position = request_ref.op_range.clone().unwrap();
                 let start = content_position.start.unwrap();
@@ -278,7 +279,7 @@ impl Editor for Arc<Mutex<ServerHandle>> {
                 // handle operation
                 match tab.text.merge_history(
                     &vec![Modification::from(request_ref.clone())],
-                    &mut *handler.cursor_pos.lock().unwrap(),
+                    &mut *handler.cursor_lsit.lock().unwrap(),
                 ) {
                     Ok(_) => Ok(Response::new(UpdateContentReply {
                         success: true,
@@ -306,11 +307,17 @@ impl RpcServerImpl {
     /// Start the service with a tab map.
     ///
     /// If the server is already running, return an error.
-    pub fn start_server(&mut self, cur_tab_name: String, tab_map: Ptr<TabMap>) -> ResultVoid {
+    pub fn start_server(
+        &mut self,
+        cur_tab_name: String,
+        tab_map: Ptr<TabMap>,
+        cursor_list: &Arc<Mutex<Cursor>>,
+    ) -> ResultVoid {
         if self.is_running() {
             return Err("Server already running".into());
         }
         self.shared_handler.lock().unwrap().map_state = Mutex::new((cur_tab_name, Some(tab_map)));
+        self.shared_handler.lock().unwrap().cursor_lsit = cursor_list.clone();
         self.start()?;
         Ok(())
     }
