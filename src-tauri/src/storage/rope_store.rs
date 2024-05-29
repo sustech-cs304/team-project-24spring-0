@@ -75,6 +75,7 @@ impl BasicFile<Rope, Modification> for Text {
     }
 
     fn handle_modify(&mut self, modify: &Modification) -> ResultVoid {
+        let modified_content = all_to_lf(&modify.modified_content);
         match &self.share_status {
             Private => {
                 let raw_rope = self.data.as_mut();
@@ -85,14 +86,14 @@ impl BasicFile<Rope, Modification> for Text {
                     raw_rope.line_to_char(range.end.row as usize) + range.end.col as usize;
                 match modify.op {
                     OperationType::Insert => {
-                        raw_rope.insert(start_idx, &modify.modified_content);
+                        raw_rope.insert(start_idx, &modified_content);
                     }
                     OperationType::Delete => {
                         raw_rope.remove(start_idx..end_idx);
                     }
                     OperationType::Replace => {
                         raw_rope.remove(start_idx..end_idx);
-                        raw_rope.insert(start_idx, &modify.modified_content);
+                        raw_rope.insert(start_idx, &modified_content);
                     }
                 }
                 self.dirty = true;
@@ -115,8 +116,8 @@ impl Text {
             Ok(content) => match file_io::get_last_modified(file_path) {
                 Ok(last_modified) => Ok(Text {
                     share_status: Default::default(),
-                    data: Box::new(Rope::from_str(&content)),
-                    path: PathBuf::from(&all_to_lf(&content)),
+                    data: Box::new(Rope::from_str(&all_to_lf(&content))),
+                    path: PathBuf::from(file_path),
                     version: 0,
                     dirty: false,
                     last_modified,
