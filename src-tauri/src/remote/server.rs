@@ -217,19 +217,19 @@ impl Editor for Arc<Mutex<ServerHandle>> {
         return handler.handle_rpc_with_cur_tab(
             |tab: &mut Tab| -> Result<GetContentReply, String> {
                 if request.get_ref().full_content {
-                    return Ok(editor_rpc::GetContentReply {
+                    return Ok(GetContentReply {
                         history: vec![],
                         full_content: tab.text.to_string(),
                     });
                 } else if request.get_ref().version
                     == handler.version.load(atomic::Ordering::Relaxed) as u64
                 {
-                    Ok(editor_rpc::GetContentReply {
+                    Ok(GetContentReply {
                         history: vec![],
                         full_content: String::new(),
                     })
                 } else {
-                    Ok(editor_rpc::GetContentReply {
+                    Ok(GetContentReply {
                         history: handler.get_history_since(request.get_ref().version as usize),
                         full_content: String::new(),
                     })

@@ -209,7 +209,7 @@ pub mod frontend_api {
         }
     }
 
-    /// Writes data in specific tab to the file file path.
+    /// Writes data in specific tab to the file path.
     /// - `filepath`: Path to the file where data should be written.
     /// - `data`: Content to write to the file.
     ///
@@ -675,15 +675,15 @@ pub mod frontend_api {
             state::get_current_tab_name(&cur_tab_name),
             Ptr::new(&tab_map),
         ) {
-            return Optional {
+            Optional {
                 success: false,
                 message: e.to_string(),
-            };
+            }
         } else {
-            return Optional {
+            Optional {
                 success: true,
                 message: String::new(),
-            };
+            }
         }
     }
 
@@ -711,7 +711,7 @@ pub mod frontend_api {
                 return Optional {
                     success: false,
                     message: "Invalid IP or port".to_string(),
-                }
+                };
             }
         };
 
@@ -754,7 +754,6 @@ pub mod frontend_api {
                         message: String::new(),
                     }
                 }
-                //TODO:@Vollate
             }
             Err(e) => Optional {
                 success: false,
