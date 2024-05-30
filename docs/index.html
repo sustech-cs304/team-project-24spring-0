@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Moras User Guide</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta name="description" content="Description">
+    <meta name="viewport"
+        content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <link rel="icon" href="assets/favicon.ico" type="image/x-icon" />
+    <link rel="shortcut icon" href="assets/favicon.ico" type="image/x-icon" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/docsify-themeable@0/dist/css/theme-simple.css">
+    <style>
+        :root {
+            --base-font-weight                                 : border;
+            --theme-color                                      : purple;
+            --cover-color                                      : ;
+            --cover-margin                                     : 0 auto;
+            --cover-max-width                                  : 40em;
+            --cover-text-align                                 : center;
+            --cover-background-blend-mode                      : ;
+            --cover-background-color                           : ;
+            --cover-background-mask-opacity                    : 0.8;
+            --cover-background-position                        : center center;
+            --cover-background-repeat                          : no-repeat;
+            --cover-background-size                            : cover;
+            --cover-heading-color                              : var(--theme-color);
+            --cover-heading-font-size                          : var(--font-size-xxl);
+            --cover-heading-font-weight                        : border;
+            --cover-button-background--hover                   : ;
+            --navbar-root-background--hover                 : ;
+            --navbar-menu-link-border-color--hover          : ;
+            --sidebar-name-font-weight                    : border;
+            --sidebar-name-font-size                      : var(--font-size-xxl);
+            --base-background-color: #f7f6f8;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app">LOADING...</div>
+    <script>
+        window.$docsify = {
+            name: 'Moras',
+            repo: 'https://github.com/sustech-cs304/team-project-24spring-0',
+            loadSidebar: true,
+            sidebarDisplayLevel: 2,
+            alias: {
+            '/.*/_sidebar.md': '/_sidebar.md'
+            },
+            loadNavbar: true,
+            coverpage: true,
+            onlyCover: true,
+            maxLevel: 5,
+            subMaxLevel: 3,
+            mergeNavbar: true,
+            auto2top: true,
+            latex: {
+            inlineMath   : [['$', '$'], ['\\(', '\\)']],
+            displayMath  : [['$$', '$$']],
+            customOptions: {}
+          },
+            pagination: {
+            previousText: 'Previous',
+            nextText: 'Next',
+           },
+            search: {
+                paths: 'auto',
+                placeholder: '搜索',
+                placeholder: {
+                    '/zh-cn/': '搜索',
+                    '/': 'Type to search'
+                },
+                noData: '找不到结果',
+                depth: 4,
+                hideOtherSidebarContent: false,
+                namespace: 'Docsify-Guide',
+            },
+
+            count:{
+                countable: true,
+                position: 'top',
+                margin: '10px',
+                float: 'right',
+                fontsize:'0.9em',
+                color:'rgb(90,90,90)',
+                language:'english',
+                isExpected: true
+            }
+        }
+    </script>
+    <script src="//cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="//cdn.jsdelivr.net/npm/docsify-latex@0"></script>
+    <script src="//cdn.jsdelivr.net/npm/docsify/lib/docsify.min.js"></script>
+    <script src="//cdn.jsdelivr.net/npm/docsify/lib/plugins/emoji.min.js"></script>
+    <script src="//cdn.jsdelivr.net/npm/docsify/lib/plugins/zoom-image.min.js"></script>
+    <script src="//cdn.jsdelivr.net/npm/docsify/lib/plugins/search.min.js"></script>
+
+  <script src="//cdn.jsdelivr.net/npm/prismjs@latest/components/prism-bash.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/prismjs@latest/components/prism-python.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/docsify-pagination@latest/dist/docsify-pagination.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/docsify-copy-code"></script>
+  <script src="//cdn.jsdelivr.net/npm/docsify/lib/plugins/zoom-image.min.js"></script>
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk/dist/gitalk.css">
+
+  <script src="//cdn.jsdelivr.net/npm/docsify/lib/plugins/gitalk.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.js"></script>
+<!--  <script>-->
+<!--    const gitalk = new Gitalk({-->
+<!--      clientID: 'Github Application Client ID',-->
+<!--      clientSecret: 'Github Application Client Secret',-->
+<!--      repo: 'Github repo',-->
+<!--      owner: 'Github repo owner',-->
+<!--      admin: ['Github repo collaborators, only these guys can initialize github issues'],-->
+<!--      distractionFreeMode: true-->
+<!--    })-->
+<!--  </script>-->
+  <script src="//unpkg.com/docsify-count/dist/countable.js"></script>
+  
+
+</body>
+</html>
