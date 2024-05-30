@@ -2,6 +2,7 @@ import Code from '@/components/CodeCard'
 import { Tab, Tabs } from '@nextui-org/react'
 import { Button, ButtonGroup } from '@nextui-org/react'
 import { invoke } from '@tauri-apps/api/tauri'
+import React, { useState } from 'react'
 
 import useFileStore from '@/utils/state'
 import useOutputStore from '@/utils/outputState'
@@ -10,6 +11,7 @@ export default function MultifileCode() {
   const state = useFileStore()
   const files = useFileStore(state => state.files)
   const outputStore = useOutputStore.getState()
+  const [runStarted, setRunStarted] = useState(false)
 
   const deleteFile = async fileName => {
     state.deleteFile(fileName)
@@ -22,15 +24,7 @@ export default function MultifileCode() {
 
   const handleAssembly = async fileName => {
     let result = await invoke('assembly')
-    // let result = {
-    //     Success: {
-    //         data: [],
-    //         text: [
-    //             'add x1, x2, x3',
-    //             'add x2, x1, x4',
-    //         ]
-    //     },
-    // };
+
     console.log('Invoke handle assembly result: ', result)
     if (result.Success) {
       const outputStore = useOutputStore.getState()
@@ -66,28 +60,56 @@ export default function MultifileCode() {
 
     if (result.success) {
       outputStore.addOutput(name + ' Succeded!')
+      if (name === 'reset') {
+        setRunStarted(false);
+      } else if (name === `run` || name === `debug` || name === `step`) {
+        setRunStarted(true);
+      }
     } else {
+      setRunStarted(false);
       outputStore.addOutput(name + ' Failed! Reason: ' + result.message)
     }
   }
 
-  const getRunButtonisDisabled = () => {
+  const getAssemblyButtonisDisabled = () => {
     const currentFile = state.files.find(file => file.fileName === state.currentFile)
-    if (currentFile && currentFile.assembly.length != 0) {
-      console.log(currentFile)
-      console.log(currentFile.assembly.length)
+    if (currentFile && currentFile.code.length != 0) {
       return false
     }
     return true
   }
 
-  const getDebugButtonisDisabled = () => {
+  const getRunDebugStepButtonDisabled = () => {
+    const currentFile = state.files.find(file => file.fileName === state.currentFile)
+    if (currentFile && currentFile.assembly.length != 0) {
+      if (runStarted && currentFile.runLines.length == 0) {
+        return true;
+      }
+      return false;
+    }
+    return true;
+  }
+
+  const getResumeButtonisDisabled = () => {
+    return false
+  }
+
+  const getUndoButtonisDisabled = () => {
+    return !runStarted;
+  }
+
+  const getResetButtonisDisabled = () => {
     const currentFile = state.files.find(file => file.fileName === state.currentFile)
     if (currentFile && currentFile.assembly.length != 0) {
       return false
     }
     return true
   }
+
+  const getCloseButtonisDisabled = () => {
+    return false
+  }
+
 
   return (
     <Tabs size="small" aria-label="Files">
@@ -104,13 +126,13 @@ export default function MultifileCode() {
             <Code fileName={file.fileName} />
             <div className="absolute right-4 top-2 flex-row gap-2">
               <ButtonGroup>
-                <Button color="success" size="sm" onClick={() => handleAssembly(file.fileName)}>
+                <Button color="success" size="sm" isDisabled={getAssemblyButtonisDisabled()} onClick={() => handleAssembly(file.fileName)}>
                   Assembly
                 </Button>
                 <Button
                   color="primary"
                   size="sm"
-                  isDisabled={getRunButtonisDisabled()}
+                  isDisabled={getRunDebugStepButtonDisabled()}
                   onClick={() => handleSimulatorOperation('run')}
                 >
                   Run
@@ -118,7 +140,7 @@ export default function MultifileCode() {
                 <Button
                   color="secondary"
                   size="sm"
-                  isDisabled={getDebugButtonisDisabled()}
+                  isDisabled={getRunDebugStepButtonDisabled()}
                   onClick={() => handleSimulatorOperation('debug')}
                 >
                   Debug
@@ -127,6 +149,7 @@ export default function MultifileCode() {
                   color="primary"
                   size="sm"
                   className="w-full"
+                  isDisabled={getRunDebugStepButtonDisabled()}
                   onClick={() => handleSimulatorOperation('step')}
                 >
                   Step
@@ -135,6 +158,7 @@ export default function MultifileCode() {
                   color="secondary"
                   size="sm"
                   className="w-full"
+                  isDisabled={getResumeButtonisDisabled()}
                   onClick={() => handleSimulatorOperation('resume')}
                 >
                   Resume
@@ -143,6 +167,7 @@ export default function MultifileCode() {
                   color="primary"
                   size="sm"
                   className="w-full"
+                  isDisabled={getUndoButtonisDisabled()}
                   onClick={() => handleSimulatorOperation('undo')}
                 >
                   Undo
@@ -151,11 +176,12 @@ export default function MultifileCode() {
                   color="secondary"
                   size="sm"
                   className="w-full"
+                  isDisabled={getResetButtonisDisabled()}
                   onClick={() => handleSimulatorOperation('reset')}
                 >
                   Reset
                 </Button>
-                <Button color="danger" size="sm" onClick={() => deleteFile(file.fileName)}>
+                <Button color="danger" size="sm" isDisabled={getCloseButtonisDisabled()} onClick={() => deleteFile(file.fileName)}>
                   Close
                 </Button>
               </ButtonGroup>
