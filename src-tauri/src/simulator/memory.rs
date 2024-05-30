@@ -86,7 +86,7 @@ impl Memory {
         }
         let mut data_idx = 0;
         let start = start as usize;
-        let end = start + data.len() as usize;
+        let end = start + data.len();
         let start_page = Self::align(start);
         let end_page = Self::align(end);
         unsafe {

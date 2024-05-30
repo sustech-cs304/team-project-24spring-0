@@ -184,7 +184,7 @@ impl RpcClientImpl {
 
 impl RpcClient for RpcClientImpl {
     async fn connect(&mut self) -> Result<(), Box<dyn Error>> {
-        let uri = format!("http://{}", self.server_addr.lock().unwrap());
+        let uri = format!("https://{}", self.server_addr.lock().unwrap());
         let endpoint = Endpoint::try_from(uri)?;
         let client = EditorClient::connect(endpoint).await?;
         self.client = Some(client);

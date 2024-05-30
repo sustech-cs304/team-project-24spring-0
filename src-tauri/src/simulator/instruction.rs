@@ -291,7 +291,7 @@ pub(super) fn ecall_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, Stri
         36 => {
             syscall_output_print(
                 arg.get_path(),
-                &((arg.reg(RV32IRegister::A0 as i32) as u32).to_string()),
+                &((arg.reg(RV32IRegister::A0 as i32)).to_string()),
             )?;
             arg.pc_step();
             Ok(SimulatorStatus::Running)

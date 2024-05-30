@@ -20,8 +20,9 @@ where
     E: Copy,
     F: Fn(&D) -> (E, V),
 {
-    assert!(
-        std::mem::size_of::<E>() == 1,
+    assert_eq!(
+        std::mem::size_of::<E>(),
+        1,
         "Size of {} must be 1",
         std::any::type_name::<E>()
     );
@@ -33,8 +34,9 @@ where
     E: Copy,
     F: Fn(&mut D) -> (E, V),
 {
-    assert!(
-        std::mem::size_of::<E>() == 1,
+    assert_eq!(
+        std::mem::size_of::<E>(),
+        1,
         "Size of {} must be 1",
         std::any::type_name::<E>()
     );

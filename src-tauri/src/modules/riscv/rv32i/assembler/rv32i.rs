@@ -31,7 +31,7 @@ impl RV32I {
             .builder()
             .imm(imm.try_into().unwrap())
             .rs1(rs1.into())
-            .funct3((0b000 as u32).try_into().unwrap())
+            .funct3((0b000u32).try_into().unwrap())
             .rd(rd.into())
             .build()
             .unwrap()

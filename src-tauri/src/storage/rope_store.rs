@@ -1,6 +1,5 @@
 use std::{
     error::Error,
-    net::{IpAddr, Ipv4Addr, SocketAddr},
     path::{Path, PathBuf},
     sync::{Arc, Condvar, Mutex},
     time::SystemTime,
@@ -11,27 +10,21 @@ use ropey::Rope;
 use crate::{
     interface::storage::{
         BasicFile,
-        FileShareStatus::{self, Client, Host, Private},
+        FileShareStatus::{self, Client, Private, Server},
+        HistorianFile,
         MFile,
-        MeragableFile,
     },
     io::file_io,
-    middleware_types::Cursor,
-    remote::{
-        server::{editor_rpc::OperationType, RpcServerImpl},
-        utils::priority_lsit::get_cursor,
-        ClientCursor,
-        CursorRowEq,
-        Modification,
-    },
-    types::ResultVoid,
+    remote::{server::editor_rpc::OperationType, Modification},
+    types::{rpc_types::CursorList, ResultVoid},
     utility::text_helper::{all_to_lf, lines_count},
+    CURSOR_LIST,
 };
 
 pub struct ConcurrencyShare {
     condition_pair: Arc<(Mutex<bool>, Condvar)>,
     update_thread: Option<std::thread::JoinHandle<()>>,
-    shared_server: Arc<RpcServerImpl>,
+    cursor_list: Option<Arc<Mutex<CursorList>>>,
 }
 
 pub struct Text {
@@ -84,6 +77,7 @@ impl BasicFile<Rope, Modification> for Text {
                     raw_rope.line_to_char(range.start.row as usize) + range.start.col as usize;
                 let end_idx =
                     raw_rope.line_to_char(range.end.row as usize) + range.end.col as usize;
+
                 match modify.op {
                     OperationType::Insert => {
                         raw_rope.insert(start_idx, &modified_content);
@@ -99,12 +93,44 @@ impl BasicFile<Rope, Modification> for Text {
                 self.dirty = true;
                 Ok(())
             }
-            Host => {
-                todo!();
-                //self.merge_history(&vec![modify.clone()], cursors);
+            Server => {
+                let cursor_list = self
+                    .concurrent_share
+                    .as_ref()
+                    .unwrap()
+                    .cursor_list
+                    .as_ref()
+                    .unwrap()
+                    .clone();
+                self.merge_history(&vec![modify.clone()], &mut cursor_list.lock().unwrap())?;
+                self.dirty = true;
+                Ok(())
             }
             Client => {
-                todo!("perform function change");
+                self.lock();
+                let raw_rope = self.data.as_mut();
+                let range = &modify.op_range;
+                let start_idx =
+                    raw_rope.line_to_char(range.start.row as usize) + range.start.col as usize;
+                let end_idx =
+                    raw_rope.line_to_char(range.end.row as usize) + range.end.col as usize;
+
+                match modify.op {
+                    OperationType::Insert => {
+                        raw_rope.insert(start_idx, &modified_content);
+                    }
+                    OperationType::Delete => {
+                        raw_rope.remove(start_idx..end_idx);
+                    }
+                    OperationType::Replace => {
+                        raw_rope.remove(start_idx..end_idx);
+                        raw_rope.insert(start_idx, &modified_content);
+                    }
+                }
+                self.version += 1;
+                self.dirty = true;
+                self.unlock();
+                Ok(())
             }
         }
     }
@@ -146,7 +172,7 @@ impl Text {
     }
 }
 
-impl MeragableFile<Rope, Modification, Cursor> for Text {
+impl HistorianFile<Rope, Modification, CursorList> for Text {
     fn get_version(&self) -> usize {
         self.version
     }
@@ -155,7 +181,7 @@ impl MeragableFile<Rope, Modification, Cursor> for Text {
         self.share_status.clone()
     }
 
-    fn merge_history(&mut self, modifies: &[Modification], cursors: &mut Cursor) -> ResultVoid {
+    fn merge_history(&mut self, modifies: &[Modification], cursors: &mut CursorList) -> ResultVoid {
         self.lock();
         for modify in modifies {
             let increase_lines = lines_count(&modify.modified_content);
@@ -164,59 +190,79 @@ impl MeragableFile<Rope, Modification, Cursor> for Text {
             let start_idx =
                 raw_rope.line_to_char(range.start.row as usize) + range.start.col as usize;
             let end_idx = raw_rope.line_to_char(range.end.row as usize) + range.end.col as usize;
-            let mut changed_lines;
+            // let mut changed_lines;
+
             match modify.op {
                 OperationType::Insert => {
                     raw_rope.insert(start_idx, &modify.modified_content);
-                    changed_lines = increase_lines;
+                    // changed_lines = increase_lines;
                 }
                 OperationType::Delete => {
                     raw_rope.remove(start_idx..end_idx);
-                    changed_lines = (range.end.row - range.start.row) as usize;
+                    // changed_lines = (range.end.row - range.start.row) as
+                    // usize;
                 }
                 OperationType::Replace => {
                     raw_rope.remove(start_idx..end_idx);
                     raw_rope.insert(start_idx, &modify.modified_content);
-                    changed_lines = increase_lines - (range.end.row - range.start.row) as usize;
+                    // changed_lines = increase_lines - (range.end.row -
+                    // range.start.row) as usize;
                 }
             }
-            let mut cursors_to_update = get_cursor::<CursorRowEq>(
-                cursors,
-                &ClientCursor {
-                    addr: SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), 0),
-                    row: range.start.row,
-                    col: range.start.col,
-                },
-            )
-            .unwrap();
-            if changed_lines == 0 {
-                cursors_to_update.current().unwrap().col +=
-                    modify.op_range.end.col - modify.op_range.start.col;
-            } else {
-                cursors_to_update.current().unwrap().col += {
-                    let idx = modify.modified_content.rfind("\n").unwrap();
-                    (modify.modified_content.len() - idx - 1) as u64
-                };
-                loop {
-                    cursors_to_update.move_next();
-                    match cursors_to_update.current() {
-                        Some(cursor) => {
-                            cursor.row += changed_lines as u64;
-                        }
-                        None => break,
-                    }
-                }
-            }
+
+            // let mut cursors_to_update = get_cursor::<CursorRowEq>(
+            //     cursors,
+            //     &ClientCursor {
+            //         addr: SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0,
+            // 1)), 0),         row: range.start.row,
+            //         col: range.start.col,
+            //     },
+            // )
+            // .unwrap();
+            //
+            // if changed_lines == 0 {
+            //     cursors_to_update.current().unwrap().col +=
+            //         modify.op_range.end.col - modify.op_range.start.col;
+            // } else {
+            //     cursors_to_update.current().unwrap().col += {
+            //         let idx = modify.modified_content.rfind("\n").unwrap();
+            //         (modify.modified_content.len() - idx - 1) as u64
+            //     };
+            //     loop {
+            //         cursors_to_update.move_next();
+            //         match cursors_to_update.current() {
+            //             Some(cursor) => {
+            //                 cursor.row += changed_lines as u64;
+            //             }
+            //             None => break,
+            //         }
+            //     }
+            // }
         }
         self.dirty = true;
+        self.version += modifies.len();
         self.unlock();
         Ok(())
     }
 
     fn change_share_status(&mut self, status: FileShareStatus) -> bool {
-        if self.share_status == Host && status == Private
-            || self.share_status == Private && status == Host
-        {
+        if self.share_status == Server && status == Private {
+            self.share_status = status;
+            true
+        } else if self.share_status == Private && status == Server {
+            self.concurrent_share = Some(ConcurrencyShare {
+                condition_pair: Arc::new((Mutex::new(true), Condvar::new())),
+                update_thread: None,
+                cursor_list: Some(CURSOR_LIST.clone()),
+            });
+            self.share_status = status;
+            true
+        } else if self.share_status == Private && status == Client {
+            self.concurrent_share = Some(ConcurrencyShare {
+                condition_pair: Arc::new((Mutex::new(true), Condvar::new())),
+                update_thread: None,
+                cursor_list: None,
+            });
             self.share_status = status;
             true
         } else {
@@ -233,9 +279,12 @@ impl MeragableFile<Rope, Modification, Cursor> for Text {
             .clone();
         let (lock, cvar) = &*cs;
         let mut val = lock.lock().unwrap();
+
         while !*val {
             val = cvar.wait(val).unwrap();
         }
+
+        *val = false;
     }
 
     fn unlock(&mut self) {
@@ -252,4 +301,4 @@ impl MeragableFile<Rope, Modification, Cursor> for Text {
     }
 }
 
-impl MFile<Rope, Modification, Cursor> for Text {}
+impl MFile<Rope, Modification, CursorList> for Text {}

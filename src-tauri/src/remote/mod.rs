@@ -12,7 +12,7 @@ use std::{cmp::Ordering, net::SocketAddr};
 
 use server::editor_rpc::{ContentPosition, OperationType, Pos, UpdateContentRequest};
 
-use crate::{middleware_types::CursorPosition, types::middleware_types::FileOperation};
+use crate::types::rpc_types::{CursorPosition, FileOperation};
 
 pub trait GetCmpType {
     type Type: Clone;

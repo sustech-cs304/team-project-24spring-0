@@ -2,15 +2,15 @@ use std::path::PathBuf;
 
 use crate::types::ResultVoid;
 
-#[derive(Default, PartialEq, Clone)]
+#[derive(Default, PartialEq, Clone, Debug)]
 pub enum FileShareStatus {
     #[default]
     Private,
-    Host,
+    Server,
     Client,
 }
 
-pub trait MFile<D, H, C>: BasicFile<D, H> + MeragableFile<D, H, C> {}
+pub trait MFile<D, H, C>: BasicFile<D, H> + HistorianFile<D, H, C> {}
 
 pub trait BasicFile<D, H>: Send + Sync {
     fn get_path(&self) -> &PathBuf;
@@ -30,7 +30,7 @@ pub trait BasicFile<D, H>: Send + Sync {
     fn handle_modify(&mut self, history: &H) -> ResultVoid;
 }
 
-pub trait MeragableFile<D, H, C>: Send + Sync {
+pub trait HistorianFile<D, H, C>: Send + Sync {
     fn get_version(&self) -> usize;
 
     fn get_share_status(&self) -> FileShareStatus;
