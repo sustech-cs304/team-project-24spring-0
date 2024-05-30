@@ -805,7 +805,7 @@ pub mod frontend_api {
     ///
     /// Will emit event `front_share_client`
     /// - [payload](crate::types::menu_types::OpenShareFile)
-    /// 
+    ///
     /// Returns `Optional` indicating the success or failure of the connection.
     #[tauri::command]
     pub fn authorize_share_client(
