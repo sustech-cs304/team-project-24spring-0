@@ -12,15 +12,8 @@ import useOutputStore from '@/utils/outputState'
 export default function Home() {
   useEffect(() => {
     const unListenedFileOpen = listen('front_file_open', event => {
-      console.log('file open event received')
       // setOutput(prevOutput => prevOutput + '\nEvent received:\n' + JSON.stringify(event.payload));
       const state = useFileStore.getState()
-      for (let file of state.files) {
-        if (file.fileName === event.payload['file_path']) {
-          return
-        }
-      }
-      console.log('file open event received')
 
       state.addFile({
         fileName: event.payload['file_path'],
@@ -71,7 +64,7 @@ export default function Home() {
         baseAddress: 0x10010000,
         started: false,
         paused: false,
-        share: false
+        shared: false
       })
       // return event.payload;
     })

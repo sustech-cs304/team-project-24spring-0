@@ -33,6 +33,11 @@ const useFileStore = create(set => ({
         file.fileName === fileName ? { ...file, baseAddress } : file,
       ),
     })),
+    setStarted: (fileName, started) => set(state => ({
+        files: state.files.map(file =>
+            file.fileName === fileName ? { ...file, started } : file,
+        ),
+        })),
 }))
 
 export default useFileStore

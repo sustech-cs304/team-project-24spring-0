@@ -11,7 +11,6 @@ export default function MultifileCode() {
   const state = useFileStore()
   const files = useFileStore(state => state.files)
   const outputStore = useOutputStore.getState()
-  const [runStarted, setRunStarted] = useState(false)
 
   const deleteFile = async fileName => {
     state.deleteFile(fileName)
@@ -60,17 +59,35 @@ export default function MultifileCode() {
   const handleSimulatorOperation = async name => {
     const result = await invoke(name)
     console.log(name, result)
+    const currentFile = state.files.find(file => file.fileName === state.currentFile)
 
     if (result.success) {
       outputStore.addOutput(name + ' Succeded!')
-      if (name === 'reset') {
-        setRunStarted(false);
+      if (name === 'reset' || name === 'stop') {
+        state.setStarted(currentFile.fileName, false)
       } else if (name === `run` || name === `debug` || name === `step`) {
-        setRunStarted(true);
+        state.setStarted(currentFile.fileName, true)
       }
     } else {
-      setRunStarted(false);
+      state.setStarted(currentFile.fileName, false)
       outputStore.addOutput(name + ' Failed! Reason: ' + result.message)
+    }
+  }
+
+  const handleDump = async () => {
+    var result = await invoke('dump');
+    console.log('Invoke handle dump result: ', result);
+    if ('Success' in result) {
+        const outputStore = useOutputStore.getState();
+        outputStore.addOutput('Dump Successfully!');
+    } else {
+      const outputStore = useOutputStore.getState()
+      var i = 0
+      for (var error of result.Error) {
+        outputStore.addOutput(
+            'Error ' + i + ' at line ' + error.line + ', column ' + error.column + ': ' + error.msg,
+        )
+      }
     }
   }
 
@@ -88,7 +105,7 @@ export default function MultifileCode() {
       if (currentFile.paused) {
         return false;
       }
-      if (runStarted && currentFile.runLines.length == 0) {
+      if (currentFile.started && currentFile.runLines.length == 0) {
         return true;
       }
       return false;
@@ -106,10 +123,13 @@ export default function MultifileCode() {
 
   const getUndoButtonisDisabled = () => {
     const currentFile = state.files.find(file => file.fileName === state.currentFile)
-    if (currentFile && currentFile.paused) {
-      return true
+    if (!currentFile){
+      return true;
     }
-    return !runStarted;
+    // if (currentFile.paused) {
+    //   return true
+    // }
+    return !currentFile.started || currentFile.paused;
   }
 
   const getResetButtonisDisabled = () => {
@@ -124,9 +144,14 @@ export default function MultifileCode() {
     return false
   }
 
+  const getDumpButtonisDisabled = () => {
+    const currentFile = state.files.find(file => file.fileName === state.currentFile)
+    return !(currentFile && currentFile.assembly.length != 0)
+  }
+
   const getStopButtonisDisabled = () => {
     const currentFile = state.files.find(file => file.fileName === state.currentFile)
-    if (currentFile && currentFile.assembly.length != 0) {
+    if (currentFile && currentFile.started) {
       return false
     }
     return true
@@ -146,7 +171,7 @@ export default function MultifileCode() {
         >
           <div className="h-full w-full relative">
             <Code fileName={file.fileName} />
-            <div className="absolute right-4 top-2 flex-row gap-2">
+            <div className="absolute right-4 top-1 flex-row gap-2">
               <ButtonGroup>
                 <Button color="success" size="sm" isDisabled={getAssemblyButtonisDisabled()} onClick={() => handleAssembly(file.fileName)}>
                   Assembly
@@ -207,8 +232,8 @@ export default function MultifileCode() {
                     color="primary"
                     size="sm"
                     className="w-full"
-                    isDisabled={getResetButtonisDisabled()}
-                    onClick={() => handleSimulatorOperation('reset')}
+                    isDisabled={getStopButtonisDisabled()}
+                    onClick={() => handleSimulatorOperation('stop')}
                 >
                   Stop
                 </Button>
@@ -216,7 +241,8 @@ export default function MultifileCode() {
                     color="info"
                     size="sm"
                     className="w-full"
-                    onClick={() => handleSimulatorOperation('reset')}
+                    isDisabled={getDumpButtonisDisabled()}
+                    onClick={() => handleDump()}
                 >
                   Dump
                 </Button>
