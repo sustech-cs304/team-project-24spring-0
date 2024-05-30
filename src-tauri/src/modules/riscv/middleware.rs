@@ -256,6 +256,7 @@ pub mod frontend_api {
         let code = tab.text.to_string();
         let cache = &mut tab.assembly_cache;
         if cache.code != code {
+            cache.parser_cache = Default::default();
             cache.parser_result = Default::default();
             cache.assembler_result = Default::default();
         }
