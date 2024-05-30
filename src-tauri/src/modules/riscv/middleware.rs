@@ -75,22 +75,7 @@ pub mod frontend_api {
         filepath: &str,
     ) -> Optional {
         if *cur_tab_name.name.lock().unwrap() == filepath {
-            let lock = tab_map.tabs.lock().unwrap();
-            if lock.len() == 1 {
-                return Optional {
-                    success: true,
-                    message: "".to_string(),
-                };
-            } else {
-                let mut iter = lock.iter();
-                loop {
-                    let (new_name, _) = iter.next().unwrap();
-                    if new_name != filepath {
-                        *cur_tab_name.name.lock().unwrap() = new_name.clone();
-                        break;
-                    }
-                }
-            }
+            cur_tab_name.name.lock().unwrap().clear();
         }
         match tab_map.tabs.lock().unwrap().remove(filepath) {
             Some(_) => Optional {
@@ -843,6 +828,7 @@ pub mod backend_api {
     /// [SimulatorData](crate::types::middleware_types::SimulatorData):
     /// - `filepath`: string
     /// - `success`: bool
+    /// - `paused`: bool
     /// - `has_current_text`: bool
     /// - `current_text`: u64
     /// - `registers`: Vec<[Register](crate::types::middleware_types::Register)>
@@ -851,6 +837,7 @@ pub mod backend_api {
     pub fn simulator_update(
         simulator: &mut dyn Simulator,
         simulator_res: Optional,
+        paused: bool,
     ) -> Result<(), String> {
         if let Some(app_handle) = APP_HANDLE.lock().unwrap().as_ref() {
             if let Ok(_) = app_handle.emit_all(
@@ -858,6 +845,7 @@ pub mod backend_api {
                 SimulatorData {
                     filepath: simulator.get_filepath().to_string(),
                     success: simulator_res.success,
+                    paused,
                     has_current_text: simulator.get_pc_idx().is_some(),
                     current_text: simulator.get_pc_idx().unwrap_or(0) as u64,
                     registers: simulator
