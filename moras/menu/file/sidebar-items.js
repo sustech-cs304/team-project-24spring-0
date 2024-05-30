@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["close_handler","dirty_close_checker","event_handler","exit_handler","new","new_tab","open_handler","save_as_handler","save_handler","share_handler"]};
+window.SIDEBAR_ITEMS = {"fn":["close_checker","close_handler","event_handler","exit_handler","new","new_tab","open_handler","save_as_handler","save_handler","share_handler"]};

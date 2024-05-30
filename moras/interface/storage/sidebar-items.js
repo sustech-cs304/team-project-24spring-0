@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["FileShareStatus"],"trait":["BasicFile","MFile","MeragableFile"]};
+window.SIDEBAR_ITEMS = {"enum":["FileShareStatus"],"trait":["BasicFile","HistorianFile","MFile"]};

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["CloseTab","OpenFile"]};
+window.SIDEBAR_ITEMS = {"struct":["CloseTab","OpenFile","OpenShareFile"]};

@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/modules/riscv/middleware.rs`."><title>middleware.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="moras" data-themes="" data-resource-suffix="" data-rustdoc-version="1.80.0-nightly (da159eb33 2024-05-28)" data-channel="nightly" data-search-js="search-d52510db62a78183.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/modules/riscv/middleware.rs`."><title>middleware.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="moras" data-themes="" data-resource-suffix="" data-rustdoc-version="1.80.0-nightly (debd22da6 2024-05-29)" data-channel="nightly" data-search-js="search-d52510db62a78183.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -943,6 +943,133 @@
 <a href="#943" id="943">943</a>
 <a href="#944" id="944">944</a>
 <a href="#945" id="945">945</a>
+<a href="#946" id="946">946</a>
+<a href="#947" id="947">947</a>
+<a href="#948" id="948">948</a>
+<a href="#949" id="949">949</a>
+<a href="#950" id="950">950</a>
+<a href="#951" id="951">951</a>
+<a href="#952" id="952">952</a>
+<a href="#953" id="953">953</a>
+<a href="#954" id="954">954</a>
+<a href="#955" id="955">955</a>
+<a href="#956" id="956">956</a>
+<a href="#957" id="957">957</a>
+<a href="#958" id="958">958</a>
+<a href="#959" id="959">959</a>
+<a href="#960" id="960">960</a>
+<a href="#961" id="961">961</a>
+<a href="#962" id="962">962</a>
+<a href="#963" id="963">963</a>
+<a href="#964" id="964">964</a>
+<a href="#965" id="965">965</a>
+<a href="#966" id="966">966</a>
+<a href="#967" id="967">967</a>
+<a href="#968" id="968">968</a>
+<a href="#969" id="969">969</a>
+<a href="#970" id="970">970</a>
+<a href="#971" id="971">971</a>
+<a href="#972" id="972">972</a>
+<a href="#973" id="973">973</a>
+<a href="#974" id="974">974</a>
+<a href="#975" id="975">975</a>
+<a href="#976" id="976">976</a>
+<a href="#977" id="977">977</a>
+<a href="#978" id="978">978</a>
+<a href="#979" id="979">979</a>
+<a href="#980" id="980">980</a>
+<a href="#981" id="981">981</a>
+<a href="#982" id="982">982</a>
+<a href="#983" id="983">983</a>
+<a href="#984" id="984">984</a>
+<a href="#985" id="985">985</a>
+<a href="#986" id="986">986</a>
+<a href="#987" id="987">987</a>
+<a href="#988" id="988">988</a>
+<a href="#989" id="989">989</a>
+<a href="#990" id="990">990</a>
+<a href="#991" id="991">991</a>
+<a href="#992" id="992">992</a>
+<a href="#993" id="993">993</a>
+<a href="#994" id="994">994</a>
+<a href="#995" id="995">995</a>
+<a href="#996" id="996">996</a>
+<a href="#997" id="997">997</a>
+<a href="#998" id="998">998</a>
+<a href="#999" id="999">999</a>
+<a href="#1000" id="1000">1000</a>
+<a href="#1001" id="1001">1001</a>
+<a href="#1002" id="1002">1002</a>
+<a href="#1003" id="1003">1003</a>
+<a href="#1004" id="1004">1004</a>
+<a href="#1005" id="1005">1005</a>
+<a href="#1006" id="1006">1006</a>
+<a href="#1007" id="1007">1007</a>
+<a href="#1008" id="1008">1008</a>
+<a href="#1009" id="1009">1009</a>
+<a href="#1010" id="1010">1010</a>
+<a href="#1011" id="1011">1011</a>
+<a href="#1012" id="1012">1012</a>
+<a href="#1013" id="1013">1013</a>
+<a href="#1014" id="1014">1014</a>
+<a href="#1015" id="1015">1015</a>
+<a href="#1016" id="1016">1016</a>
+<a href="#1017" id="1017">1017</a>
+<a href="#1018" id="1018">1018</a>
+<a href="#1019" id="1019">1019</a>
+<a href="#1020" id="1020">1020</a>
+<a href="#1021" id="1021">1021</a>
+<a href="#1022" id="1022">1022</a>
+<a href="#1023" id="1023">1023</a>
+<a href="#1024" id="1024">1024</a>
+<a href="#1025" id="1025">1025</a>
+<a href="#1026" id="1026">1026</a>
+<a href="#1027" id="1027">1027</a>
+<a href="#1028" id="1028">1028</a>
+<a href="#1029" id="1029">1029</a>
+<a href="#1030" id="1030">1030</a>
+<a href="#1031" id="1031">1031</a>
+<a href="#1032" id="1032">1032</a>
+<a href="#1033" id="1033">1033</a>
+<a href="#1034" id="1034">1034</a>
+<a href="#1035" id="1035">1035</a>
+<a href="#1036" id="1036">1036</a>
+<a href="#1037" id="1037">1037</a>
+<a href="#1038" id="1038">1038</a>
+<a href="#1039" id="1039">1039</a>
+<a href="#1040" id="1040">1040</a>
+<a href="#1041" id="1041">1041</a>
+<a href="#1042" id="1042">1042</a>
+<a href="#1043" id="1043">1043</a>
+<a href="#1044" id="1044">1044</a>
+<a href="#1045" id="1045">1045</a>
+<a href="#1046" id="1046">1046</a>
+<a href="#1047" id="1047">1047</a>
+<a href="#1048" id="1048">1048</a>
+<a href="#1049" id="1049">1049</a>
+<a href="#1050" id="1050">1050</a>
+<a href="#1051" id="1051">1051</a>
+<a href="#1052" id="1052">1052</a>
+<a href="#1053" id="1053">1053</a>
+<a href="#1054" id="1054">1054</a>
+<a href="#1055" id="1055">1055</a>
+<a href="#1056" id="1056">1056</a>
+<a href="#1057" id="1057">1057</a>
+<a href="#1058" id="1058">1058</a>
+<a href="#1059" id="1059">1059</a>
+<a href="#1060" id="1060">1060</a>
+<a href="#1061" id="1061">1061</a>
+<a href="#1062" id="1062">1062</a>
+<a href="#1063" id="1063">1063</a>
+<a href="#1064" id="1064">1064</a>
+<a href="#1065" id="1065">1065</a>
+<a href="#1066" id="1066">1066</a>
+<a href="#1067" id="1067">1067</a>
+<a href="#1068" id="1068">1068</a>
+<a href="#1069" id="1069">1069</a>
+<a href="#1070" id="1070">1070</a>
+<a href="#1071" id="1071">1071</a>
+<a href="#1072" id="1072">1072</a>
 </pre></div><pre class="rust"><code><span class="doccomment">/// This module provides API functions for the frontend. Could be used by
 /// `invoke` in EMCAScript
 </span><span class="kw">pub mod </span>frontend_api {
@@ -951,8 +1078,16 @@
     <span class="kw">use </span>tauri::{async_runtime::block_on, State, Window};
 
     <span class="kw">use crate</span>::{
-        interface::parser::Parser,
+        dprintln,
+        interface::{
+            parser::Parser,
+            storage::{
+                FileShareStatus::{Client, Private, Server},
+                HistorianFile,
+            },
+        },
         io::file_io,
+        menu::file::close_checker,
         modules::riscv::basic::interface::{
             assembler::RiscVAssembler,
             parser::{RISCVExtension, RISCVParser, RISCV},
@@ -960,11 +1095,16 @@
         remote::{Modification, OpRange},
         simulator::simulator::RISCVSimulator,
         storage::rope_store,
-        types::middleware_types::<span class="kw-2">*</span>,
+        types::{
+            menu_types::OpenShareFile,
+            middleware_types::<span class="kw-2">*</span>,
+            rpc_types::{CursorPosition, FileOperation, RpcState},
+        },
         utility::{
             ptr::Ptr,
-            state_helper::state::{<span class="self">self</span>, set_current_tab_name},
+            state_helper::state::{<span class="self">self</span>, get_current_tab_name, set_current_tab_name},
         },
+        CURSOR_LIST,
     };
 
     <span class="doccomment">/// Creates a new tab with content loaded from a specified file path.
@@ -1007,6 +1147,7 @@
     }
 
     <span class="doccomment">/// Closes the tab associated with the given file path.
+    /// - `window`: Window handle.
     /// - `cur_name`: Current name of the tab in focus.
     /// - `tab_map`: Current state of all open tabs.
     /// - `filepath`: Path to the file associated with the tab to close.
@@ -1015,37 +1156,26 @@
     /// success, return the new tab to focus on, else return error message.
     </span><span class="attr">#[tauri::command]
     </span><span class="kw">pub fn </span>close_tab(
+        window: Window,
         cur_tab_name: State&lt;CurTabName&gt;,
         tab_map: State&lt;TabMap&gt;,
         filepath: <span class="kw-2">&amp;</span>str,
     ) -&gt; Optional {
-        <span class="kw">if </span><span class="kw-2">*</span>cur_tab_name.name.lock().unwrap() == filepath {
-            <span class="kw">let </span>lock = tab_map.tabs.lock().unwrap();
-            <span class="kw">if </span>lock.len() == <span class="number">1 </span>{
-                <span class="kw">return </span>Optional {
-                    success: <span class="bool-val">true</span>,
-                    message: <span class="string">""</span>.to_string(),
-                };
-            } <span class="kw">else </span>{
-                <span class="kw">let </span><span class="kw-2">mut </span>iter = lock.iter();
-                <span class="kw">loop </span>{
-                    <span class="kw">let </span>(new_name, <span class="kw">_</span>) = iter.next().unwrap();
-                    <span class="kw">if </span>new_name != filepath {
-                        <span class="kw-2">*</span>cur_tab_name.name.lock().unwrap() = new_name.clone();
-                        <span class="kw">break</span>;
-                    }
-                }
-            }
-        }
-        <span class="kw">match </span>tab_map.tabs.lock().unwrap().remove(filepath) {
-            <span class="prelude-val">Some</span>(<span class="kw">_</span>) =&gt; Optional {
-                success: <span class="bool-val">true</span>,
-                message: cur_tab_name.name.lock().unwrap().clone(),
-            },
+        <span class="kw">let </span><span class="kw-2">mut </span>tabs = tab_map.tabs.lock().unwrap();
+        <span class="kw">match </span>tabs.get_mut(filepath) {
             <span class="prelude-val">None </span>=&gt; Optional {
                 success: <span class="bool-val">false</span>,
                 message: <span class="string">"Tab not found"</span>.to_string(),
             },
+            <span class="prelude-val">Some</span>(tab) =&gt; {
+                close_checker(<span class="kw-2">&amp;</span>window, filepath, tab);
+                tabs.remove(filepath);
+                cur_tab_name.name.lock().unwrap().clear();
+                Optional {
+                    success: <span class="bool-val">true</span>,
+                    message: String::new(),
+                }
+            }
         }
     }
 
@@ -1072,38 +1202,69 @@
         </span>}
     }
 
-    <span class="doccomment">/// Sets the cursor position in the tab associated with the given file path.
-    /// This could be useful for live sharing of code.
+    <span class="doccomment">/// Sets the cursor position in current tab associated with the given file
+    /// path. This could be useful for live sharing of code.
+    /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: Current state of all open tabs.
-    /// - `filepath`: Path to the file associated with the tab to update.
+    /// - `rpc_state`: State containing the RPC server/client.
     /// - `row`: Row number of the cursor.
     /// - `col`: Column number of the cursor.
     ///
-    /// Returns `bool` indicating whether the cursor was successfully set.
+    /// Returns `Optional` indicating the success or failure of the operation.
+    ///
+    /// # Deprecated
+    /// This function is deprecated and will be removed in the future. The
+    /// feature of set cursor is no longer supported.
     </span><span class="attr">#[tauri::command]
-    </span><span class="kw">pub fn </span>set_cursor(tab_map: State&lt;TabMap&gt;, filepath: <span class="kw-2">&amp;</span>str, row: u64, col: u64) -&gt; bool {
-        <span class="kw">let </span><span class="kw-2">mut </span>server = tab_map.rpc_server.lock().unwrap();
-        <span class="kw">if </span>server.is_running() {
-            server.set_host_cursor(row, col);
-            <span class="bool-val">true
-        </span>} <span class="kw">else </span>{
-            <span class="bool-val">false
-        </span>}
+    #[deprecated(
+        since = <span class="string">"0.1.0"</span>,
+        note = <span class="string">"This function is deprecated and will be removed in the future. The feature of set cursor is no longer supported."
+    </span>)]
+    </span><span class="kw">pub fn </span>set_cursor(
+        cur_tab_name: State&lt;CurTabName&gt;,
+        tab_map: State&lt;TabMap&gt;,
+        rpc_state: State&lt;RpcState&gt;,
+        row: u64,
+        col: u64,
+    ) -&gt; Optional {
+        <span class="kw">let </span><span class="kw-2">mut </span>tabs = tab_map.tabs.lock().unwrap();
+        <span class="kw">let </span><span class="kw-2">mut </span>tab = tabs.get_mut(<span class="kw-2">&amp;</span>get_current_tab_name(<span class="kw-2">&amp;</span>cur_tab_name)).unwrap();
+        <span class="kw">match </span>tab.text.get_share_status() {
+            Server =&gt; {
+                <span class="kw">let </span><span class="kw-2">mut </span>server = rpc_state.rpc_server.lock().unwrap();
+                server.set_host_cursor(row, col);
+            }
+            Client =&gt; {
+                <span class="macro">todo!</span>(<span class="string">""</span>);
+            }
+            Private =&gt; {}
+        }
+        Optional {
+            success: <span class="bool-val">true</span>,
+            message: String::new(),
+        }
     }
 
     <span class="doccomment">/// Updates the content of the tab associated with the given file path.
+    /// - `window`: Window handle.
     /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: Current state of all open tabs.
+    /// - `rpc_state`: State containing the RPC server/client.
     /// - `op`: File operation to be performed.
     /// - `start`: Starting position of the content to be updated.
     /// - `end`: Ending position of the content to be updated.
     /// - `content`: New content to be inserted.
     ///
+    /// Will emit event: `front_update_content`
+    /// - [payload](crate::types::middleware_types::UpdateContent)
+    ///
     /// Returns `Optional` indicating the success or failure of the update.
     </span><span class="attr">#[tauri::command]
     </span><span class="kw">pub fn </span>modify_current_tab(
+        window: Window,
         cur_tab_name: State&lt;CurTabName&gt;,
         tab_map: State&lt;TabMap&gt;,
+        rpc_state: State&lt;RpcState&gt;,
         op: FileOperation,
         start: CursorPosition,
         end: CursorPosition,
@@ -1112,20 +1273,85 @@
         <span class="kw">let </span>filepath = cur_tab_name.name.lock().unwrap().clone();
         <span class="kw">match </span>tab_map.tabs.lock().unwrap().get_mut(<span class="kw-2">&amp;</span>filepath) {
             <span class="prelude-val">Some</span>(tab) =&gt; {
-                <span class="kw">match </span>tab.text.handle_modify(<span class="kw-2">&amp;</span>Modification {
-                    op: op.into(),
-                    op_range: OpRange { start, end },
-                    version: tab.text.get_version() <span class="kw">as </span>u64,
-                    modified_content: content.to_owned(),
-                }) {
-                    <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; Optional {
+                <span class="kw">if </span>tab.text.get_share_status() != Client {
+                    <span class="kw">match </span>tab.text.handle_modify(<span class="kw-2">&amp;</span>Modification {
+                        op: op.into(),
+                        op_range: OpRange { start, end },
+                        version: tab.text.get_version() <span class="kw">as </span>u64,
+                        modified_content: content.to_owned(),
+                    }) {
+                        <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; Optional {
+                            success: <span class="bool-val">true</span>,
+                            message: String::new(),
+                        },
+                        <span class="prelude-val">Err</span>(e) =&gt; Optional {
+                            success: <span class="bool-val">false</span>,
+                            message: e.to_string(),
+                        },
+                    }
+                } <span class="kw">else </span>{
+                    <span class="kw">let </span><span class="kw-2">mut </span>client = rpc_state.rpc_client.lock().unwrap();
+                    <span class="kw">for _ in </span><span class="number">1</span>..<span class="number">10 </span>{
+                        <span class="kw">match </span>block_on(client.send_update_content(
+                            tab.text.get_version() <span class="kw">as </span>u64,
+                            <span class="kw-2">&amp;</span>Modification {
+                                op: op.clone().into(),
+                                op_range: OpRange {
+                                    start: start.clone(),
+                                    end: end.clone(),
+                                },
+                                version: tab.text.get_version() <span class="kw">as </span>u64,
+                                modified_content: content.to_owned(),
+                            },
+                        )) {
+                            <span class="prelude-val">Ok</span>(res) =&gt; {
+                                <span class="kw">if </span>res.success {
+                                    tab.text
+                                        .handle_modify(<span class="kw-2">&amp;</span>Modification {
+                                            op: op.into(),
+                                            op_range: OpRange { start, end },
+                                            version: <span class="number">0</span>,
+                                            modified_content: content.to_owned(),
+                                        })
+                                        .unwrap();
+                                    <span class="kw">return </span>Optional {
+                                        success: <span class="bool-val">true</span>,
+                                        message: String::new(),
+                                    };
+                                } <span class="kw">else </span>{
+                                    <span class="kw">let </span>reply = block_on(
+                                        client.send_get_content(tab.text.get_version() <span class="kw">as </span>u64),
+                                    )
+                                    .unwrap();
+                                    <span class="kw">for </span>h <span class="kw">in </span>reply.history {
+                                        tab.text.handle_modify(<span class="kw-2">&amp;</span>h.clone().into()).unwrap();
+                                        <span class="kw">let </span>op_range = h.op_range.as_ref().unwrap();
+                                        <span class="kw">let </span>start = op_range.start.as_ref().unwrap();
+                                        <span class="kw">let </span>end = op_range.end.as_ref().unwrap();
+                                        <span class="kw">let _ </span>= window.emit(
+                                            <span class="string">"front_update_content"</span>,
+                                            UpdateContent {
+                                                file_name: get_current_tab_name(<span class="kw-2">&amp;</span>cur_tab_name),
+                                                op: h.op.clone() <span class="kw">as </span>u8,
+                                                start: (start.row, start.col),
+                                                end: (end.row, end.col),
+                                                content: h.modified_content.clone(),
+                                            },
+                                        );
+                                    }
+                                    <span class="kw">continue</span>;
+                                }
+                            }
+                            <span class="prelude-val">Err</span>(e) =&gt; {
+                                <span class="macro">dprintln!</span>(<span class="string">"Failed to send modify request: {}"</span>, e);
+                                <span class="kw">break</span>;
+                            }
+                        }
+                    }
+                    Optional {
                         success: <span class="bool-val">true</span>,
                         message: String::new(),
-                    },
-                    <span class="prelude-val">Err</span>(e) =&gt; Optional {
-                        success: <span class="bool-val">false</span>,
-                        message: e.to_string(),
-                    },
+                    }
                 }
             }
             <span class="prelude-val">None </span>=&gt; Optional {
@@ -1586,6 +1812,7 @@
     <span class="doccomment">/// Starts the RPC server for the current tab.
     /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: State containing the map of all tabs.
+    /// - `rpc_state`: State containing the RPC server/client.
     /// - `password`: Password to be used for the RPC server.
     ///
     /// Returns `Optional` indicating the success or failure of the RPC server
@@ -1593,16 +1820,19 @@
     </span><span class="kw">pub fn </span>start_share_server(
         cur_tab_name: State&lt;CurTabName&gt;,
         tab_map: State&lt;TabMap&gt;,
+        rpc_state: State&lt;RpcState&gt;,
         port: u16,
         password: <span class="kw-2">&amp;</span>str,
     ) -&gt; Optional {
-        <span class="kw">if </span>tab_map.tabs.lock().unwrap().len() == <span class="number">0 </span>{
+        <span class="kw">let </span><span class="kw-2">mut </span>tabs_lock = tab_map.tabs.lock().unwrap();
+        <span class="kw">if </span>tabs_lock.len() == <span class="number">0 </span>{
             <span class="kw">return </span>Optional {
                 success: <span class="bool-val">false</span>,
                 message: <span class="string">"No tab had been opened"</span>.to_string(),
             };
         }
-        <span class="kw">let </span><span class="kw-2">mut </span>server_lock = tab_map.rpc_server.lock().unwrap();
+
+        <span class="kw">let </span><span class="kw-2">mut </span>server_lock = rpc_state.rpc_server.lock().unwrap();
         <span class="kw">if </span>server_lock.is_running() {
             <span class="kw">return </span>Optional {
                 success: <span class="bool-val">false</span>,
@@ -1619,12 +1849,17 @@
         <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = server_lock.start_server(
             state::get_current_tab_name(<span class="kw-2">&amp;</span>cur_tab_name),
             Ptr::new(<span class="kw-2">&amp;</span>tab_map),
+            <span class="kw-2">&amp;</span>CURSOR_LIST,
         ) {
             Optional {
                 success: <span class="bool-val">false</span>,
                 message: e.to_string(),
             }
         } <span class="kw">else </span>{
+            <span class="kw">let </span><span class="kw-2">mut </span>tab = tabs_lock
+                .get_mut(<span class="kw-2">&amp;</span>get_current_tab_name(<span class="kw-2">&amp;</span>cur_tab_name))
+                .unwrap();
+            tab.text.change_share_status(Server);
             Optional {
                 success: <span class="bool-val">true</span>,
                 message: String::new(),
@@ -1635,9 +1870,13 @@
     <span class="doccomment">/// Authorize and connect to a remote RPC server as client.
     /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: State containing the map of all tabs.
+    /// - `rpc_state`: State containing the RPC server/client.
     /// - `ip`: IPV4 address of the remote server.
     /// - `port`: Port number of the remote server.
     /// - `password`: Password to be used for the connection.
+    ///
+    /// Will emit event `front_share_client`
+    /// - [payload](crate::types::menu_types::OpenShareFile)
     ///
     /// Returns `Optional` indicating the success or failure of the connection.
     </span><span class="attr">#[tauri::command]
@@ -1645,11 +1884,12 @@
         window: Window,
         cur_tab_name: State&lt;CurTabName&gt;,
         tab_map: State&lt;TabMap&gt;,
+        rpc_state: State&lt;RpcState&gt;,
         ip: String,
         port: u16,
         password: String,
     ) -&gt; Optional {
-        <span class="kw">let </span><span class="kw-2">mut </span>client = tab_map.rpc_client.lock().unwrap();
+        <span class="kw">let </span><span class="kw-2">mut </span>client = rpc_state.rpc_client.lock().unwrap();
         <span class="kw">let </span>addr: SocketAddr = <span class="kw">match </span><span class="macro">format!</span>(<span class="string">"{}:{}"</span>, ip, port).parse() {
             <span class="prelude-val">Ok</span>(val) =&gt; val,
             <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; {
@@ -1674,7 +1914,12 @@
 
         <span class="kw">match </span>block_on(client.send_authorize(<span class="kw-2">&amp;</span>password)) {
             <span class="prelude-val">Ok</span>(val) =&gt; {
-                <span class="kw">let </span>client_text = rope_store::Text::from_str(Path::new(<span class="kw-2">&amp;</span>val.<span class="number">0</span>), <span class="kw-2">&amp;</span>val.<span class="number">2</span>);
+                <span class="kw">let </span><span class="kw-2">mut </span>client_text = rope_store::Text::from_str(Path::new(<span class="kw-2">&amp;</span>val.<span class="number">0</span>), <span class="kw-2">&amp;</span>val.<span class="number">2</span>);
+                client_text.change_share_status(Client);
+                <span class="kw">let </span>emit_val = OpenShareFile {
+                    file_path: val.<span class="number">0</span>.clone(),
+                    content: val.<span class="number">2</span>,
+                };
                 <span class="kw">let </span>client_tab = Tab {
                     text: Box::new(client_text),
                     parser: Box::new(RISCVParser::new(<span class="kw-2">&amp;</span><span class="macro">vec!</span>[RISCVExtension::RV32I])),
@@ -1688,7 +1933,7 @@
                     .unwrap()
                     .insert(val.<span class="number">0</span>.clone(), client_tab);
                 set_current_tab_name(<span class="kw-2">&amp;</span>cur_tab_name, <span class="kw-2">&amp;</span>val.<span class="number">0</span>);
-                <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = window.emit(<span class="string">"front_share_client"</span>, {}) {
+                <span class="kw">if let </span><span class="prelude-val">Err</span>(e) = window.emit(<span class="string">"front_share_client"</span>, emit_val) {
                     <span class="kw">return </span>Optional {
                         success: <span class="bool-val">false</span>,
                         message: e.to_string(),
@@ -1708,17 +1953,26 @@
     }
 
     <span class="doccomment">/// Stop the share server for the current tab.
+    /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: State containing the map of all tabs.
+    /// - `rpc_state`: State containing the RPC server/client.
     ///
     /// Returns `bool` indicating the success or failure, failure means the
     /// server is not running.
     </span><span class="attr">#[tauri::command]
-    </span><span class="kw">pub fn </span>stop_share_server(tab_map: State&lt;TabMap&gt;) -&gt; bool {
-        <span class="kw">let </span><span class="kw-2">mut </span>server = tab_map.rpc_server.lock().unwrap();
+    </span><span class="kw">pub fn </span>stop_share_server(
+        cur_tab_name: State&lt;CurTabName&gt;,
+        tab_map: State&lt;TabMap&gt;,
+        rpc_state: State&lt;RpcState&gt;,
+    ) -&gt; bool {
+        <span class="kw">let </span><span class="kw-2">mut </span>server = rpc_state.rpc_server.lock().unwrap();
         <span class="kw">if </span>!server.is_running() {
             <span class="bool-val">false
         </span>} <span class="kw">else </span>{
             server.stop_server();
+            <span class="kw">let </span><span class="kw-2">mut </span>tabs = tab_map.tabs.lock().unwrap();
+            <span class="kw">let </span><span class="kw-2">mut </span>tab = tabs.get_mut(<span class="kw-2">&amp;</span>get_current_tab_name(<span class="kw-2">&amp;</span>cur_tab_name)).unwrap();
+            tab.text.change_share_status(Private);
             <span class="bool-val">true
         </span>}
     }
@@ -1775,7 +2029,7 @@
     };
 
     <span class="doccomment">/// Emits a simulator update event to the frontend.
-    /// - `simulator`: Simulator instance to update the its state.
+    /// - `simulator`: Simulator instance to update its state.
     /// - `simulator_res`: Result of the simulator operation.
     ///
     /// Returns `Result` indicating the success or failure of the event

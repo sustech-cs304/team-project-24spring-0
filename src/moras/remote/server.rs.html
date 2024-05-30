@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/remote/server.rs`."><title>server.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="moras" data-themes="" data-resource-suffix="" data-rustdoc-version="1.80.0-nightly (da159eb33 2024-05-28)" data-channel="nightly" data-search-js="search-d52510db62a78183.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/remote/server.rs`."><title>server.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="moras" data-themes="" data-resource-suffix="" data-rustdoc-version="1.80.0-nightly (debd22da6 2024-05-29)" data-channel="nightly" data-search-js="search-d52510db62a78183.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -403,6 +403,16 @@
 <a href="#403" id="403">403</a>
 <a href="#404" id="404">404</a>
 <a href="#405" id="405">405</a>
+<a href="#406" id="406">406</a>
+<a href="#407" id="407">407</a>
+<a href="#408" id="408">408</a>
+<a href="#409" id="409">409</a>
+<a href="#410" id="410">410</a>
+<a href="#411" id="411">411</a>
+<a href="#412" id="412">412</a>
+<a href="#413" id="413">413</a>
+<a href="#414" id="414">414</a>
+<a href="#415" id="415">415</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::{
     error::Error,
     net::SocketAddr,
@@ -439,7 +449,8 @@
     dprintln,
     interface::remote::RpcServer,
     types::{
-        middleware_types::{Cursor, Tab, TabMap},
+        middleware_types::{Tab, TabMap},
+        rpc_types::CursorList,
         ResultVoid,
     },
     utility::ptr::Ptr,
@@ -455,7 +466,7 @@
     version: atomic::AtomicUsize,
     password: Mutex&lt;String&gt;,
     clients: Mutex&lt;Vec&lt;SocketAddr&gt;&gt;,
-    cursor_pos: Mutex&lt;Cursor&gt;,
+    cursor_lsit: Arc&lt;Mutex&lt;CursorList&gt;&gt;,
     history: Mutex&lt;Vec&lt;Modification&gt;&gt;,
 }
 
@@ -468,7 +479,7 @@
 
     <span class="doccomment">/// Update host cursor position.
     </span><span class="kw">fn </span>set_host_cursor(<span class="kw-2">&amp;mut </span><span class="self">self</span>, row: u64, col: u64, port: u16) {
-        <span class="kw">let </span><span class="kw-2">mut </span>lock = <span class="self">self</span>.cursor_pos.lock().unwrap();
+        <span class="kw">let </span><span class="kw-2">mut </span>lock = <span class="self">self</span>.cursor_lsit.lock().unwrap();
         list_insert_or_replace_asc::&lt;CursorAsc&gt;(
             <span class="kw-2">&amp;mut *</span>lock,
             ClientCursor {
@@ -480,7 +491,7 @@
     }
 
     <span class="doccomment">/// Handle logic current tab wht a `&amp;mut Tab` as lambda parameter.
-    /// Only use to bypass the fxxking borrow checker.
+    /// Only use to bypass the fucking borrow checker.
     </span><span class="kw">fn </span>handle_with_cur_tab&lt;F, R&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, handle: F) -&gt; <span class="prelude-ty">Result</span>&lt;R, String&gt;
     <span class="kw">where
         </span>F: Fn(<span class="kw-2">&amp;mut </span>Tab) -&gt; <span class="prelude-ty">Result</span>&lt;R, String&gt;,
@@ -493,16 +504,16 @@
                 <span class="kw">let </span><span class="kw-2">mut </span>tab = tabs_lock.get_mut(<span class="kw-2">&amp;</span>map_state_lock.<span class="number">0</span>).unwrap();
                 handle(<span class="kw-2">&amp;mut </span>tab)
             }
-            <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Err</span>(<span class="string">"TabMap has not been iniitilized"</span>.to_string()),
+            <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Err</span>(<span class="string">"TabMap has not been initialized"</span>.to_string()),
         }
     }
 
-    <span class="kw">fn </span>handle_rpc_with_cur_tab&lt;F, R&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, handle: F) -&gt; <span class="prelude-ty">Result</span>&lt;tonic::Response&lt;R&gt;, Status&gt;
+    <span class="kw">fn </span>handle_rpc_with_cur_tab&lt;F, R&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, handle: F) -&gt; <span class="prelude-ty">Result</span>&lt;Response&lt;R&gt;, Status&gt;
     <span class="kw">where
         </span>F: Fn(<span class="kw-2">&amp;mut </span>Tab) -&gt; <span class="prelude-ty">Result</span>&lt;R, String&gt;,
     {
         <span class="kw">match </span><span class="self">self</span>.handle_with_cur_tab(handle) {
-            <span class="prelude-val">Ok</span>(success) =&gt; <span class="prelude-val">Ok</span>(tonic::Response::new(success)),
+            <span class="prelude-val">Ok</span>(success) =&gt; <span class="prelude-val">Ok</span>(Response::new(success)),
             <span class="prelude-val">Err</span>(err) =&gt; <span class="prelude-val">Err</span>(Status::internal(err)),
         }
     }
@@ -581,8 +592,9 @@
             .position(|x| <span class="kw-2">*</span>x == request.remote_addr().unwrap())
         {
             clients.remove(pos);
-            <span class="kw">let </span><span class="kw-2">mut </span>cursor_lock = handler.cursor_pos.lock().unwrap();
-            success = list_check_and_del::&lt;CursorAsc&gt;(
+            success = <span class="bool-val">true</span>;
+            <span class="kw">let </span><span class="kw-2">mut </span>cursor_lock = handler.cursor_lsit.lock().unwrap();
+            <span class="kw">_ </span>= list_check_and_del::&lt;CursorAsc&gt;(
                 <span class="kw-2">&amp;mut </span>cursor_lock,
                 <span class="kw-2">&amp;</span>ClientCursor {
                     addr: request.remote_addr().unwrap(),
@@ -600,7 +612,7 @@
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Response&lt;SetCursorReply&gt;, Status&gt; {
         <span class="kw">let </span>handler = <span class="self">self</span>.lock().unwrap();
         handler.check_ip_authorized(request.remote_addr().unwrap())<span class="question-mark">?</span>;
-        <span class="kw">let </span><span class="kw-2">mut </span>cursor_lock = handler.cursor_pos.lock().unwrap();
+        <span class="kw">let </span><span class="kw-2">mut </span>cursor_lock = handler.cursor_lsit.lock().unwrap();
         list_insert_or_replace_asc::&lt;CursorAsc&gt;(
             <span class="kw-2">&amp;mut *</span>cursor_lock,
             ClientCursor {
@@ -655,10 +667,11 @@
                 <span class="kw">let </span>tab_map = tab_map_ptr.as_ref();
                 <span class="kw">let </span><span class="kw-2">mut </span>tabs_lock = tab_map.tabs.lock().unwrap();
                 <span class="kw">let </span>tab = tabs_lock.get_mut(<span class="kw-2">&amp;</span>map_state_lock.<span class="number">0</span>).unwrap();
-                <span class="kw">let </span>cursor_lock = handler.cursor_pos.lock().unwrap();
+                <span class="kw">let </span>cursor_lock = handler.cursor_lsit.lock().unwrap();
                 <span class="kw">let </span>request_ref = request.get_ref();
                 <span class="kw">let </span>content_position = request_ref.op_range.clone().unwrap();
                 <span class="kw">let </span>start = content_position.start.unwrap();
+                <span class="kw">let </span>end = content_position.end.unwrap();
 
                 <span class="comment">// check version correct(up to date)
                 </span><span class="kw">if </span>request_ref.version != handler.version.load(atomic::Ordering::Relaxed) <span class="kw">as </span>u64 {
@@ -672,6 +685,7 @@
                 </span><span class="kw">for </span>cursor <span class="kw">in </span><span class="kw-2">&amp;*</span>cursor_lock {
                     <span class="kw">if </span>cursor.addr == request.remote_addr().unwrap()
                         &amp;&amp; (start.row != cursor.row || start.col != cursor.col)
+                        &amp;&amp; (end.row != cursor.row || end.col != cursor.col)
                     {
                         <span class="kw">return </span><span class="prelude-val">Ok</span>(Response::new(UpdateContentReply {
                             success: <span class="bool-val">false</span>,
@@ -683,7 +697,7 @@
                 <span class="comment">// handle operation
                 </span><span class="kw">match </span>tab.text.merge_history(
                     <span class="kw-2">&amp;</span><span class="macro">vec!</span>[Modification::from(request_ref.clone())],
-                    <span class="kw-2">&amp;mut *</span>handler.cursor_pos.lock().unwrap(),
+                    <span class="kw-2">&amp;mut *</span>handler.cursor_lsit.lock().unwrap(),
                 ) {
                     <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(Response::new(UpdateContentReply {
                         success: <span class="bool-val">true</span>,
@@ -695,7 +709,7 @@
                     })),
                 }
             }
-            <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Err</span>(Status::internal(<span class="string">"TabMap have not been iniitilized"</span>)),
+            <span class="prelude-val">None </span>=&gt; <span class="prelude-val">Err</span>(Status::internal(<span class="string">"TabMap have not been initialized"</span>)),
         }
     }
 }
@@ -711,11 +725,17 @@
     <span class="doccomment">/// Start the service with a tab map.
     ///
     /// If the server is already running, return an error.
-    </span><span class="kw">pub fn </span>start_server(<span class="kw-2">&amp;mut </span><span class="self">self</span>, cur_tab_name: String, tab_map: Ptr&lt;TabMap&gt;) -&gt; ResultVoid {
+    </span><span class="kw">pub fn </span>start_server(
+        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+        cur_tab_name: String,
+        tab_map: Ptr&lt;TabMap&gt;,
+        cursor_list: <span class="kw-2">&amp;</span>Arc&lt;Mutex&lt;CursorList&gt;&gt;,
+    ) -&gt; ResultVoid {
         <span class="kw">if </span><span class="self">self</span>.is_running() {
             <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="string">"Server already running"</span>.into());
         }
         <span class="self">self</span>.shared_handler.lock().unwrap().map_state = Mutex::new((cur_tab_name, <span class="prelude-val">Some</span>(tab_map)));
+        <span class="self">self</span>.shared_handler.lock().unwrap().cursor_lsit = cursor_list.clone();
         <span class="self">self</span>.start()<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(())
     }
@@ -727,7 +747,7 @@
     <span class="doccomment">/// Set the port for the server.
     ///
     /// If the server is already running, return an error.
-    </span><span class="kw">pub fn </span>set_port(<span class="kw-2">&amp;mut </span><span class="self">self</span>, port: u16) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>std::error::Error&gt;&gt; {
+    </span><span class="kw">pub fn </span>set_port(<span class="kw-2">&amp;mut </span><span class="self">self</span>, port: u16) -&gt; <span class="prelude-ty">Result</span>&lt;(), Box&lt;<span class="kw">dyn </span>Error&gt;&gt; {
         <span class="kw">if </span><span class="self">self</span>.is_running() {
             <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="string">"Server already running"</span>.into());
         }

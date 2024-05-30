@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/storage/rope_store.rs`."><title>rope_store.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="moras" data-themes="" data-resource-suffix="" data-rustdoc-version="1.80.0-nightly (da159eb33 2024-05-28)" data-channel="nightly" data-search-js="search-d52510db62a78183.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/storage/rope_store.rs`."><title>rope_store.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="moras" data-themes="" data-resource-suffix="" data-rustdoc-version="1.80.0-nightly (debd22da6 2024-05-29)" data-channel="nightly" data-search-js="search-d52510db62a78183.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -253,9 +253,57 @@
 <a href="#253" id="253">253</a>
 <a href="#254" id="254">254</a>
 <a href="#255" id="255">255</a>
+<a href="#256" id="256">256</a>
+<a href="#257" id="257">257</a>
+<a href="#258" id="258">258</a>
+<a href="#259" id="259">259</a>
+<a href="#260" id="260">260</a>
+<a href="#261" id="261">261</a>
+<a href="#262" id="262">262</a>
+<a href="#263" id="263">263</a>
+<a href="#264" id="264">264</a>
+<a href="#265" id="265">265</a>
+<a href="#266" id="266">266</a>
+<a href="#267" id="267">267</a>
+<a href="#268" id="268">268</a>
+<a href="#269" id="269">269</a>
+<a href="#270" id="270">270</a>
+<a href="#271" id="271">271</a>
+<a href="#272" id="272">272</a>
+<a href="#273" id="273">273</a>
+<a href="#274" id="274">274</a>
+<a href="#275" id="275">275</a>
+<a href="#276" id="276">276</a>
+<a href="#277" id="277">277</a>
+<a href="#278" id="278">278</a>
+<a href="#279" id="279">279</a>
+<a href="#280" id="280">280</a>
+<a href="#281" id="281">281</a>
+<a href="#282" id="282">282</a>
+<a href="#283" id="283">283</a>
+<a href="#284" id="284">284</a>
+<a href="#285" id="285">285</a>
+<a href="#286" id="286">286</a>
+<a href="#287" id="287">287</a>
+<a href="#288" id="288">288</a>
+<a href="#289" id="289">289</a>
+<a href="#290" id="290">290</a>
+<a href="#291" id="291">291</a>
+<a href="#292" id="292">292</a>
+<a href="#293" id="293">293</a>
+<a href="#294" id="294">294</a>
+<a href="#295" id="295">295</a>
+<a href="#296" id="296">296</a>
+<a href="#297" id="297">297</a>
+<a href="#298" id="298">298</a>
+<a href="#299" id="299">299</a>
+<a href="#300" id="300">300</a>
+<a href="#301" id="301">301</a>
+<a href="#302" id="302">302</a>
+<a href="#303" id="303">303</a>
+<a href="#304" id="304">304</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::{
     error::Error,
-    net::{IpAddr, Ipv4Addr, SocketAddr},
     path::{Path, PathBuf},
     sync::{Arc, Condvar, Mutex},
     time::SystemTime,
@@ -266,27 +314,21 @@
 <span class="kw">use crate</span>::{
     interface::storage::{
         BasicFile,
-        FileShareStatus::{<span class="self">self</span>, Client, Host, Private},
+        FileShareStatus::{<span class="self">self</span>, Client, Private, Server},
+        HistorianFile,
         MFile,
-        MeragableFile,
     },
     io::file_io,
-    middleware_types::Cursor,
-    remote::{
-        server::{editor_rpc::OperationType, RpcServerImpl},
-        utils::priority_lsit::get_cursor,
-        ClientCursor,
-        CursorRowEq,
-        Modification,
-    },
-    types::ResultVoid,
+    remote::{server::editor_rpc::OperationType, Modification},
+    types::{rpc_types::CursorList, ResultVoid},
     utility::text_helper::{all_to_lf, lines_count},
+    CURSOR_LIST,
 };
 
 <span class="kw">pub struct </span>ConcurrencyShare {
     condition_pair: Arc&lt;(Mutex&lt;bool&gt;, Condvar)&gt;,
     update_thread: <span class="prelude-ty">Option</span>&lt;std::thread::JoinHandle&lt;()&gt;&gt;,
-    shared_server: Arc&lt;RpcServerImpl&gt;,
+    cursor_list: <span class="prelude-ty">Option</span>&lt;Arc&lt;Mutex&lt;CursorList&gt;&gt;&gt;,
 }
 
 <span class="kw">pub struct </span>Text {
@@ -339,6 +381,7 @@
                     raw_rope.line_to_char(range.start.row <span class="kw">as </span>usize) + range.start.col <span class="kw">as </span>usize;
                 <span class="kw">let </span>end_idx =
                     raw_rope.line_to_char(range.end.row <span class="kw">as </span>usize) + range.end.col <span class="kw">as </span>usize;
+
                 <span class="kw">match </span>modify.op {
                     OperationType::Insert =&gt; {
                         raw_rope.insert(start_idx, <span class="kw-2">&amp;</span>modified_content);
@@ -354,12 +397,44 @@
                 <span class="self">self</span>.dirty = <span class="bool-val">true</span>;
                 <span class="prelude-val">Ok</span>(())
             }
-            Host =&gt; {
-                <span class="macro">todo!</span>();
-                <span class="comment">//self.merge_history(&amp;vec![modify.clone()], cursors);
-            </span>}
+            Server =&gt; {
+                <span class="kw">let </span>cursor_list = <span class="self">self
+                    </span>.concurrent_share
+                    .as_ref()
+                    .unwrap()
+                    .cursor_list
+                    .as_ref()
+                    .unwrap()
+                    .clone();
+                <span class="self">self</span>.merge_history(<span class="kw-2">&amp;</span><span class="macro">vec!</span>[modify.clone()], <span class="kw-2">&amp;mut </span>cursor_list.lock().unwrap())<span class="question-mark">?</span>;
+                <span class="self">self</span>.dirty = <span class="bool-val">true</span>;
+                <span class="prelude-val">Ok</span>(())
+            }
             Client =&gt; {
-                <span class="macro">todo!</span>(<span class="string">"perform function change"</span>);
+                <span class="self">self</span>.lock();
+                <span class="kw">let </span>raw_rope = <span class="self">self</span>.data.as_mut();
+                <span class="kw">let </span>range = <span class="kw-2">&amp;</span>modify.op_range;
+                <span class="kw">let </span>start_idx =
+                    raw_rope.line_to_char(range.start.row <span class="kw">as </span>usize) + range.start.col <span class="kw">as </span>usize;
+                <span class="kw">let </span>end_idx =
+                    raw_rope.line_to_char(range.end.row <span class="kw">as </span>usize) + range.end.col <span class="kw">as </span>usize;
+
+                <span class="kw">match </span>modify.op {
+                    OperationType::Insert =&gt; {
+                        raw_rope.insert(start_idx, <span class="kw-2">&amp;</span>modified_content);
+                    }
+                    OperationType::Delete =&gt; {
+                        raw_rope.remove(start_idx..end_idx);
+                    }
+                    OperationType::Replace =&gt; {
+                        raw_rope.remove(start_idx..end_idx);
+                        raw_rope.insert(start_idx, <span class="kw-2">&amp;</span>modified_content);
+                    }
+                }
+                <span class="self">self</span>.version += <span class="number">1</span>;
+                <span class="self">self</span>.dirty = <span class="bool-val">true</span>;
+                <span class="self">self</span>.unlock();
+                <span class="prelude-val">Ok</span>(())
             }
         }
     }
@@ -401,7 +476,7 @@
     }
 }
 
-<span class="kw">impl </span>MeragableFile&lt;Rope, Modification, Cursor&gt; <span class="kw">for </span>Text {
+<span class="kw">impl </span>HistorianFile&lt;Rope, Modification, CursorList&gt; <span class="kw">for </span>Text {
     <span class="kw">fn </span>get_version(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
         <span class="self">self</span>.version
     }
@@ -410,7 +485,7 @@
         <span class="self">self</span>.share_status.clone()
     }
 
-    <span class="kw">fn </span>merge_history(<span class="kw-2">&amp;mut </span><span class="self">self</span>, modifies: <span class="kw-2">&amp;</span>[Modification], cursors: <span class="kw-2">&amp;mut </span>Cursor) -&gt; ResultVoid {
+    <span class="kw">fn </span>merge_history(<span class="kw-2">&amp;mut </span><span class="self">self</span>, modifies: <span class="kw-2">&amp;</span>[Modification], cursors: <span class="kw-2">&amp;mut </span>CursorList) -&gt; ResultVoid {
         <span class="self">self</span>.lock();
         <span class="kw">for </span>modify <span class="kw">in </span>modifies {
             <span class="kw">let </span>increase_lines = lines_count(<span class="kw-2">&amp;</span>modify.modified_content);
@@ -419,59 +494,79 @@
             <span class="kw">let </span>start_idx =
                 raw_rope.line_to_char(range.start.row <span class="kw">as </span>usize) + range.start.col <span class="kw">as </span>usize;
             <span class="kw">let </span>end_idx = raw_rope.line_to_char(range.end.row <span class="kw">as </span>usize) + range.end.col <span class="kw">as </span>usize;
-            <span class="kw">let </span><span class="kw-2">mut </span>changed_lines;
-            <span class="kw">match </span>modify.op {
+            <span class="comment">// let mut changed_lines;
+
+            </span><span class="kw">match </span>modify.op {
                 OperationType::Insert =&gt; {
                     raw_rope.insert(start_idx, <span class="kw-2">&amp;</span>modify.modified_content);
-                    changed_lines = increase_lines;
-                }
+                    <span class="comment">// changed_lines = increase_lines;
+                </span>}
                 OperationType::Delete =&gt; {
                     raw_rope.remove(start_idx..end_idx);
-                    changed_lines = (range.end.row - range.start.row) <span class="kw">as </span>usize;
-                }
+                    <span class="comment">// changed_lines = (range.end.row - range.start.row) as
+                    // usize;
+                </span>}
                 OperationType::Replace =&gt; {
                     raw_rope.remove(start_idx..end_idx);
                     raw_rope.insert(start_idx, <span class="kw-2">&amp;</span>modify.modified_content);
-                    changed_lines = increase_lines - (range.end.row - range.start.row) <span class="kw">as </span>usize;
-                }
+                    <span class="comment">// changed_lines = increase_lines - (range.end.row -
+                    // range.start.row) as usize;
+                </span>}
             }
-            <span class="kw">let </span><span class="kw-2">mut </span>cursors_to_update = get_cursor::&lt;CursorRowEq&gt;(
-                cursors,
-                <span class="kw-2">&amp;</span>ClientCursor {
-                    addr: SocketAddr::new(IpAddr::V4(Ipv4Addr::new(<span class="number">127</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">1</span>)), <span class="number">0</span>),
-                    row: range.start.row,
-                    col: range.start.col,
-                },
-            )
-            .unwrap();
-            <span class="kw">if </span>changed_lines == <span class="number">0 </span>{
-                cursors_to_update.current().unwrap().col +=
-                    modify.op_range.end.col - modify.op_range.start.col;
-            } <span class="kw">else </span>{
-                cursors_to_update.current().unwrap().col += {
-                    <span class="kw">let </span>idx = modify.modified_content.rfind(<span class="string">"\n"</span>).unwrap();
-                    (modify.modified_content.len() - idx - <span class="number">1</span>) <span class="kw">as </span>u64
-                };
-                <span class="kw">loop </span>{
-                    cursors_to_update.move_next();
-                    <span class="kw">match </span>cursors_to_update.current() {
-                        <span class="prelude-val">Some</span>(cursor) =&gt; {
-                            cursor.row += changed_lines <span class="kw">as </span>u64;
-                        }
-                        <span class="prelude-val">None </span>=&gt; <span class="kw">break</span>,
-                    }
-                }
-            }
-        }
+
+            <span class="comment">// let mut cursors_to_update = get_cursor::&lt;CursorRowEq&gt;(
+            //     cursors,
+            //     &amp;ClientCursor {
+            //         addr: SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0,
+            // 1)), 0),         row: range.start.row,
+            //         col: range.start.col,
+            //     },
+            // )
+            // .unwrap();
+            //
+            // if changed_lines == 0 {
+            //     cursors_to_update.current().unwrap().col +=
+            //         modify.op_range.end.col - modify.op_range.start.col;
+            // } else {
+            //     cursors_to_update.current().unwrap().col += {
+            //         let idx = modify.modified_content.rfind("\n").unwrap();
+            //         (modify.modified_content.len() - idx - 1) as u64
+            //     };
+            //     loop {
+            //         cursors_to_update.move_next();
+            //         match cursors_to_update.current() {
+            //             Some(cursor) =&gt; {
+            //                 cursor.row += changed_lines as u64;
+            //             }
+            //             None =&gt; break,
+            //         }
+            //     }
+            // }
+        </span>}
         <span class="self">self</span>.dirty = <span class="bool-val">true</span>;
+        <span class="self">self</span>.version += modifies.len();
         <span class="self">self</span>.unlock();
         <span class="prelude-val">Ok</span>(())
     }
 
     <span class="kw">fn </span>change_share_status(<span class="kw-2">&amp;mut </span><span class="self">self</span>, status: FileShareStatus) -&gt; bool {
-        <span class="kw">if </span><span class="self">self</span>.share_status == Host &amp;&amp; status == Private
-            || <span class="self">self</span>.share_status == Private &amp;&amp; status == Host
-        {
+        <span class="kw">if </span><span class="self">self</span>.share_status == Server &amp;&amp; status == Private {
+            <span class="self">self</span>.share_status = status;
+            <span class="bool-val">true
+        </span>} <span class="kw">else if </span><span class="self">self</span>.share_status == Private &amp;&amp; status == Server {
+            <span class="self">self</span>.concurrent_share = <span class="prelude-val">Some</span>(ConcurrencyShare {
+                condition_pair: Arc::new((Mutex::new(<span class="bool-val">true</span>), Condvar::new())),
+                update_thread: <span class="prelude-val">None</span>,
+                cursor_list: <span class="prelude-val">Some</span>(CURSOR_LIST.clone()),
+            });
+            <span class="self">self</span>.share_status = status;
+            <span class="bool-val">true
+        </span>} <span class="kw">else if </span><span class="self">self</span>.share_status == Private &amp;&amp; status == Client {
+            <span class="self">self</span>.concurrent_share = <span class="prelude-val">Some</span>(ConcurrencyShare {
+                condition_pair: Arc::new((Mutex::new(<span class="bool-val">true</span>), Condvar::new())),
+                update_thread: <span class="prelude-val">None</span>,
+                cursor_list: <span class="prelude-val">None</span>,
+            });
             <span class="self">self</span>.share_status = status;
             <span class="bool-val">true
         </span>} <span class="kw">else </span>{
@@ -488,9 +583,12 @@
             .clone();
         <span class="kw">let </span>(lock, cvar) = <span class="kw-2">&amp;*</span>cs;
         <span class="kw">let </span><span class="kw-2">mut </span>val = lock.lock().unwrap();
+
         <span class="kw">while </span>!<span class="kw-2">*</span>val {
             val = cvar.wait(val).unwrap();
         }
+
+        <span class="kw-2">*</span>val = <span class="bool-val">false</span>;
     }
 
     <span class="kw">fn </span>unlock(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
@@ -507,5 +605,5 @@
     }
 }
 
-<span class="kw">impl </span>MFile&lt;Rope, Modification, Cursor&gt; <span class="kw">for </span>Text {}
+<span class="kw">impl </span>MFile&lt;Rope, Modification, CursorList&gt; <span class="kw">for </span>Text {}
 </code></pre></div></section></main></body></html>
