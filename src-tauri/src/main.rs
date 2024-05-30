@@ -66,7 +66,6 @@ fn main() {
             frontend_api::modify_current_tab,
             frontend_api::read_tab,
             frontend_api::write_tab,
-            frontend_api::set_cursor,
             frontend_api::set_return_data_range,
             frontend_api::assembly,
             frontend_api::dump,
