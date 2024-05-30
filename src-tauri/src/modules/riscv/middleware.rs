@@ -75,6 +75,7 @@ pub mod frontend_api {
     }
 
     /// Closes the tab associated with the given file path.
+    /// - `window`: Window handle.
     /// - `cur_name`: Current name of the tab in focus.
     /// - `tab_map`: Current state of all open tabs.
     /// - `filepath`: Path to the file associated with the tab to close.
@@ -88,42 +89,24 @@ pub mod frontend_api {
         tab_map: State<TabMap>,
         filepath: &str,
     ) -> Optional {
-        if *cur_tab_name.name.lock().unwrap() == filepath {
-            let tabs = tab_map.tabs.lock().unwrap();
-            if tabs.len() == 0 {
-                return Optional {
-                    success: false,
-                    message: "No tab has been opened".to_string(),
-                };
-            } else if tabs.len() > 1 {
-                let mut iter = tabs.iter();
-                loop {
-                    let (new_name, _) = iter.next().unwrap();
-                    if new_name != filepath {
-                        *cur_tab_name.name.lock().unwrap() = new_name.clone();
-                        break;
-                    }
-                }
-            }
-        }
         let mut tabs = tab_map.tabs.lock().unwrap();
-        let mut tab = tabs.get_mut(filepath).unwrap();
-
-        close_checker(&window, filepath, tab);
-
-        match tabs.remove(filepath) {
-            Some(_) => Optional {
-                success: true,
-                message: cur_tab_name.name.lock().unwrap().clone(),
-            },
+        match tabs.get_mut(filepath) {
             None => Optional {
                 success: false,
                 message: "Tab not found".to_string(),
             },
+            Some(tab) => {
+                close_checker(&window, filepath, tab);
+                tabs.remove(filepath);
+                cur_tab_name.name.lock().unwrap().clear();
+                Optional {
+                    success: true,
+                    message: String::new(),
+                }
+            }
         }
     }
 
-    #[allow(non_snake_case)]
     /// Changes the current tab to the one specified by the new path.
     /// - `cur_name`: Current name of the tab in focus.
     /// - `newpath`: Path to the file associated with the new tab to focus.
@@ -133,7 +116,6 @@ pub mod frontend_api {
     /// The only case where it would fail is if the tab with the specified
     /// path does not exist in opened tabs.
     #[tauri::command]
-    #[allow(non_snake_case)]
     pub fn change_current_tab(
         cur_tab_name: State<CurTabName>,
         tab_map: State<TabMap>,
@@ -192,6 +174,7 @@ pub mod frontend_api {
     }
 
     /// Updates the content of the tab associated with the given file path.
+    /// - `window`: Window handle.
     /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: Current state of all open tabs.
     /// - `rpc_state`: State containing the RPC server/client.
@@ -200,7 +183,7 @@ pub mod frontend_api {
     /// - `end`: Ending position of the content to be updated.
     /// - `content`: New content to be inserted.
     ///
-    /// - event that may emit: front_update_content
+    /// Will emit event: `front_update_content`
     /// - [payload](crate::types::middleware_types::UpdateContent)
     ///
     /// Returns `Optional` indicating the success or failure of the update.
@@ -820,8 +803,9 @@ pub mod frontend_api {
     /// - `port`: Port number of the remote server.
     /// - `password`: Password to be used for the connection.
     ///
-    /// - Will emit event `front_share_client`
+    /// Will emit event `front_share_client`
     /// - [payload](crate::types::menu_types::OpenShareFile)
+    /// 
     /// Returns `Optional` indicating the success or failure of the connection.
     #[tauri::command]
     pub fn authorize_share_client(
@@ -981,7 +965,7 @@ pub mod backend_api {
     ///
     /// This function will emit a `front_simulator_update` event to the
     /// frontend, and the payload is a `SimulatorData` containing the
-    /// current pc index, register 5and memory values.
+    /// current pc index, register and memory values.
     ///
     /// [SimulatorData](crate::types::middleware_types::SimulatorData):
     /// - `filepath`: string
