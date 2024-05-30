@@ -3,7 +3,7 @@
 pub mod frontend_api {
     use std::{net::SocketAddr, path::Path};
 
-    use tauri::{async_runtime::block_on, Manager, State, Window};
+    use tauri::{async_runtime::block_on, State, Window};
 
     use crate::{
         dprintln,
@@ -199,6 +199,9 @@ pub mod frontend_api {
     /// - `start`: Starting position of the content to be updated.
     /// - `end`: Ending position of the content to be updated.
     /// - `content`: New content to be inserted.
+    ///
+    /// - event that may emit: front_update_content
+    /// - [payload](crate::types::middleware_types::UpdateContent)
     ///
     /// Returns `Optional` indicating the success or failure of the update.
     #[tauri::command]
@@ -817,6 +820,8 @@ pub mod frontend_api {
     /// - `port`: Port number of the remote server.
     /// - `password`: Password to be used for the connection.
     ///
+    /// - Will emit event `front_share_client`
+    /// - [payload](crate::types::menu_types::OpenShareFile)
     /// Returns `Optional` indicating the success or failure of the connection.
     #[tauri::command]
     pub fn authorize_share_client(

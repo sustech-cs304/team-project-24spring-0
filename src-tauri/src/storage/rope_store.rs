@@ -8,7 +8,6 @@ use std::{
 use ropey::Rope;
 
 use crate::{
-    dprintln,
     interface::storage::{
         BasicFile,
         FileShareStatus::{self, Client, Private, Server},
