@@ -13,27 +13,42 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/docsify-themeable@0/dist/css/theme-simple.css">
     <style>
         :root {
-            --base-font-weight                                 : border;
-            --theme-color                                      : purple;
-            --cover-color                                      : ;
-            --cover-margin                                     : 0 auto;
-            --cover-max-width                                  : 40em;
-            --cover-text-align                                 : center;
-            --cover-background-blend-mode                      : ;
-            --cover-background-color                           : ;
-            --cover-background-mask-opacity                    : 0.8;
-            --cover-background-position                        : center center;
-            --cover-background-repeat                          : no-repeat;
-            --cover-background-size                            : cover;
-            --cover-heading-color                              : var(--theme-color);
-            --cover-heading-font-size                          : var(--font-size-xxl);
-            --cover-heading-font-weight                        : border;
-            --cover-button-background--hover                   : ;
-            --navbar-root-background--hover                 : ;
-            --navbar-menu-link-border-color--hover          : ;
-            --sidebar-name-font-weight                    : border;
-            --sidebar-name-font-size                      : var(--font-size-xxl);
-            --base-background-color: #f7f6f8;
+            --modular-scale                                     : 1.333;
+            --modular-scale--2                                  : calc(var(--modular-scale--1) / var(--modular-scale));
+            --modular-scale--1                                  : calc(var(--modular-scale-1) / var(--modular-scale));
+            --modular-scale-1                                   : 1rem;
+            --modular-scale-2                                   : calc(var(--modular-scale-1) * var(--modular-scale));
+            --modular-scale-3                                   : calc(var(--modular-scale-2) * var(--modular-scale));
+            --modular-scale-4                                   : calc(var(--modular-scale-3) * var(--modular-scale));
+            --modular-scale-5                                   : calc(var(--modular-scale-4) * var(--modular-scale));
+            --font-size-xxxl                                    : var(--modular-scale-5);
+            --font-size-xxl                                     : var(--modular-scale-4);
+            --font-size-xl                                      : var(--modular-scale-3);
+            --font-size-l                                       : var(--modular-scale-2);
+            --font-size-m                                       : var(--modular-scale-1);
+            --font-size-s                                       : var(--modular-scale--1);
+            --font-size-xs                                      : var(--modular-scale--2);
+            --base-font-weight                                  : border;
+            --theme-color                                       : purple;
+            --cover-color                                       : ;
+            --cover-margin                                      : 0 auto;
+            --cover-max-width                                   : 40em;
+            --cover-text-align                                  : center;
+            --cover-background-blend-mode                       : ;
+            --cover-background-color                            : ;
+            --cover-background-mask-opacity                     : 0.8;
+            --cover-background-position                         : center center;
+            --cover-background-repeat                           : no-repeat;
+            --cover-background-size                             : cover;
+            --cover-heading-color                               : var(--theme-color);
+            --cover-heading-font-size                           : var(--font-size-xxl);
+            --cover-heading-font-weight                         : border;
+            --cover-button-background--hover                    : ;
+            --navbar-root-background--hover                     : ;
+            --navbar-menu-link-border-color--hover              : ;
+            --sidebar-name-font-weight                          : border;
+            --sidebar-name-font-size                            : var(--font-size-xxl);
+            --base-background-color                             : #f7f6f8;
         }
     </style>
 </head>
@@ -67,7 +82,6 @@
            },
             search: {
                 paths: 'auto',
-                placeholder: '搜索',
                 placeholder: {
                     '/zh-cn/': '搜索',
                     '/': 'Type to search'
