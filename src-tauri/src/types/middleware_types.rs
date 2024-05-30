@@ -112,6 +112,7 @@ pub struct AssembleCache {
 pub struct SimulatorData {
     pub filepath: String,
     pub success: bool,
+    pub paused: bool,
     pub has_current_text: bool,
     pub current_text: u64,
     pub registers: Vec<Register>,

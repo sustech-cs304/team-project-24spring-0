@@ -201,6 +201,9 @@ impl Simulator for RISCVSimulator {
     }
 
     fn step(&mut self) -> Result<(), String> {
+        if self.pc_idx >= self.inst.as_ref().unwrap().instruction.len() {
+            return Err("Simulator finished".to_string());
+        }
         if !self.cas_status(SimulatorStatus::Stopped, SimulatorStatus::Running) {
             if !self.cas_status(SimulatorStatus::Paused, SimulatorStatus::Running) {
                 return Err("Invalid operation".to_string());
@@ -530,7 +533,8 @@ impl RISCVSimulator {
     }
 
     fn update(&mut self, res: Optional) {
-        match simulator_update(self, res) {
+        let paused = self.get_status() == SimulatorStatus::Paused;
+        match simulator_update(self, res, paused) {
             Ok(_) => {}
             Err(e) => {
                 dprintln!("{}", e);
