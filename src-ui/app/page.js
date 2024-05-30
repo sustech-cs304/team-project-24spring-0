@@ -69,6 +69,7 @@ export default function Home() {
           0, 0, 0, 0,
         ],
         baseAddress: 0x10010000,
+        paused: false,
       })
       // return event.payload;
     })
@@ -85,6 +86,7 @@ export default function Home() {
         file.register,
         file.memory,
         file.baseAddress,
+        file.paused,
       )
     })
 
@@ -100,6 +102,7 @@ export default function Home() {
         file.register,
         file.memory,
         file.baseAddress,
+        file.paused,
       )
     })
 
@@ -141,6 +144,7 @@ export default function Home() {
         file.register,
         file.memory,
         file.baseAddress,
+        event.payload['paused']
       )
     })
 

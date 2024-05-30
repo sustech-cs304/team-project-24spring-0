@@ -39,6 +39,7 @@ export default function MultifileCode() {
         currentFile.register,
         currentFile.memory,
         currentFile.baseAddress,
+        currentFile.paused
       )
       console.log('updated file')
       console.log(currentFile)
@@ -82,6 +83,9 @@ export default function MultifileCode() {
   const getRunDebugStepButtonDisabled = () => {
     const currentFile = state.files.find(file => file.fileName === state.currentFile)
     if (currentFile && currentFile.assembly.length != 0) {
+      if (currentFile.paused) {
+        return false;
+      }
       if (runStarted && currentFile.runLines.length == 0) {
         return true;
       }
@@ -91,10 +95,18 @@ export default function MultifileCode() {
   }
 
   const getResumeButtonisDisabled = () => {
-    return false
+    const currentFile = state.files.find(file => file.fileName === state.currentFile)
+    if (currentFile && currentFile.paused) {
+      return false
+    }
+    return true
   }
 
   const getUndoButtonisDisabled = () => {
+    const currentFile = state.files.find(file => file.fileName === state.currentFile)
+    if (currentFile && currentFile.paused) {
+      return true
+    }
     return !runStarted;
   }
 
