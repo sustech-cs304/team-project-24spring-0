@@ -286,6 +286,13 @@ pub fn close_checker(window: &Window, name: &str, tab: &mut Tab) {
         ) {
             dprintln!("{}", e.to_string());
         }
+        window
+            .state::<RpcState>()
+            .rpc_client
+            .lock()
+            .unwrap()
+            .stop()
+            .unwrap();
         return;
     }
     if text.is_dirty() {

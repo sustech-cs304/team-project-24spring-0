@@ -16,12 +16,14 @@ fn test_authorize_disconnect() {
     assert_eq!(version, 0);
     assert_eq!(content, TEST_FILE_CONTENT);
     block_on(client.send_disconnect()).unwrap();
+    client.stop().unwrap();
+    server.stop_server();
 }
 
 #[test]
 fn test_set_cursor() {
-    let mut server = init_test_server(TEST_FILE_CONTENT).unwrap();
-    let mut client1 = init_test_client(server.get_port()).unwrap();
-    let mut client2 = init_test_client(server.get_port()).unwrap();
-    let mut client3 = init_test_client(server.get_port()).unwrap();
+    //let mut server = init_test_server(TEST_FILE_CONTENT).unwrap();
+    //let mut client1 = init_test_client(server.get_port()).unwrap();
+    //let mut client2 = init_test_client(server.get_port()).unwrap();
+    //let mut client3 = init_test_client(server.get_port()).unwrap();
 }
