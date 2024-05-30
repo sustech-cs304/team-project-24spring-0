@@ -32,6 +32,7 @@ use crate::{
         ptr::Ptr,
         state_helper::event::{get_current_tab_name, set_current_tab_name},
     },
+    APP_HANDLE,
 };
 
 pub fn new() -> Submenu {
@@ -195,10 +196,12 @@ fn save_as_handler(event: WindowMenuEvent) {
 }
 
 fn share_handler(event: &WindowMenuEvent) {
+    let handle_lock = APP_HANDLE.lock().unwrap();
+    let app_handle = handle_lock.as_ref().unwrap();
     let _window = tauri::WindowBuilder::new(
-        &event.window().app_handle(),
-        "live_share", /* the unique window label */
-        tauri::WindowUrl::External("http://localhost:3000/share".parse().unwrap()),
+        app_handle,
+        "live_share",
+        tauri::WindowUrl::App("/share".parse().unwrap()),
     )
     .title("Live Share")
     .menu(Menu::new())

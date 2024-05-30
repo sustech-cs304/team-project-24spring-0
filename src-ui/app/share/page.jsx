@@ -109,7 +109,7 @@ export default function Share() {
       return
     }
 
-    var result = await invoke('authorize', {
+    var result = await invoke('authorize_share_client', {
       ip: ip,
       port: port2,
       password: password2,
