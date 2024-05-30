@@ -69,7 +69,9 @@ export default function Home() {
           0, 0, 0, 0,
         ],
         baseAddress: 0x10010000,
+        started: false,
         paused: false,
+        share: false
       })
       // return event.payload;
     })
@@ -86,7 +88,9 @@ export default function Home() {
         file.register,
         file.memory,
         file.baseAddress,
+        file.started,
         file.paused,
+          file.shared
       )
     })
 
@@ -102,7 +106,9 @@ export default function Home() {
         file.register,
         file.memory,
         file.baseAddress,
+        file.started,
         file.paused,
+          file.shared
       )
     })
 
@@ -144,7 +150,9 @@ export default function Home() {
         file.register,
         file.memory,
         file.baseAddress,
-        event.payload['paused']
+        file.started,
+        event.payload['paused'],
+          file.shared
       )
     })
 

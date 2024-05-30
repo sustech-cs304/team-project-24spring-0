@@ -94,7 +94,9 @@ export default function ModifiedEditor({ fileName }) {
             file.register,
             file.memory,
             file.baseAddress,
-            file.paused
+            file.started,
+            file.paused,
+              file.shared
           )
         }}
         options={{ hover: { enabled: true } }}

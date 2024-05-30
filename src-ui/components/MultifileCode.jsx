@@ -39,7 +39,9 @@ export default function MultifileCode() {
         currentFile.register,
         currentFile.memory,
         currentFile.baseAddress,
-        currentFile.paused
+        currentFile.started,
+        currentFile.paused,
+          currentFile.shared
       )
       console.log('updated file')
       console.log(currentFile)
@@ -122,6 +124,14 @@ export default function MultifileCode() {
     return false
   }
 
+  const getStopButtonisDisabled = () => {
+    const currentFile = state.files.find(file => file.fileName === state.currentFile)
+    if (currentFile && currentFile.assembly.length != 0) {
+      return false
+    }
+    return true
+  }
+
 
   return (
     <Tabs size="small" aria-label="Files">
@@ -192,6 +202,23 @@ export default function MultifileCode() {
                   onClick={() => handleSimulatorOperation('reset')}
                 >
                   Reset
+                </Button>
+                <Button
+                    color="primary"
+                    size="sm"
+                    className="w-full"
+                    isDisabled={getResetButtonisDisabled()}
+                    onClick={() => handleSimulatorOperation('reset')}
+                >
+                  Stop
+                </Button>
+                <Button
+                    color="info"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => handleSimulatorOperation('reset')}
+                >
+                  Dump
                 </Button>
                 <Button color="danger" size="sm" isDisabled={getCloseButtonisDisabled()} onClick={() => deleteFile(file.fileName)}>
                   Close

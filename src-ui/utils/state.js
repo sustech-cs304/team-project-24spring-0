@@ -8,11 +8,11 @@ const useFileStore = create(set => ({
   addFile: file => set(state => ({ files: [...state.files, file] })),
   deleteFile: fileName =>
     set(state => ({ files: state.files.filter(file => file.fileName !== fileName) })),
-  updateFile: (fileName, code, original, assembly, runLines, register, memory, baseAddress, paused) =>
+  updateFile: (fileName, code, original, assembly, runLines, register, memory, baseAddress, started, paused, shared) =>
     set(state => ({
       files: state.files.map(file =>
         file.fileName === fileName
-          ? { fileName, code, original, assembly, runLines, register, memory, baseAddress, paused }
+          ? { fileName, code, original, assembly, runLines, register, memory, baseAddress, started, paused, shared }
           : file,
       ),
     })),
