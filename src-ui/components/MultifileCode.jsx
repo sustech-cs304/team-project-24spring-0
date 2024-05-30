@@ -164,6 +164,7 @@ export default function MultifileCode() {
         <Tab
           key={file.fileName}
           title={
+            (file.shared ? '[Shared] ' : '') +
             file.fileName.split('/').pop().split('\\').pop() +
             (file.code != file.original ? ' *' : '')
           }

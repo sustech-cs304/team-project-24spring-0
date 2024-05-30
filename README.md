@@ -15,3 +15,6 @@
 
 [Link](https://sustech-cs304.github.io/team-project-24spring-0/moras/)
 
+## 开启多个实例
+
+注意！因为distDir不能重复，之前多开会有NextJS加载不上的问题，现在每次开启Moras都会在src-ui下生成一个数字的文件夹作为distDir，记得及时清理。
