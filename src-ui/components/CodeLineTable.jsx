@@ -81,7 +81,7 @@ export default function CodeLineTable({ fileName }) {
               <TableCell>{toHex(line.address)}</TableCell>
               <TableCell>{toHex(line.code)}</TableCell>
               <TableCell>{line.basic}</TableCell>
-              <TableCell>{line.line + ': ' + codeLines[line.line - 1]}</TableCell>
+              <TableCell>{(line.line+1) + ': ' + codeLines[line.line]}</TableCell>
               <TableCell>{file.runLines === index ? '⬅️' : ''}</TableCell>
             </TableRow>
           ))}

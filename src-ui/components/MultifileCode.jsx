@@ -1,4 +1,4 @@
-import Code from '@/components/Code'
+import Code from '@/components/CodeCard'
 import { Tab, Tabs } from '@nextui-org/react'
 import { Button, ButtonGroup } from '@nextui-org/react'
 import { invoke } from '@tauri-apps/api/tauri'

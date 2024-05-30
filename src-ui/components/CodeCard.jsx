@@ -49,13 +49,6 @@ export default function Code({ fileName }) {
             </CardBody>
           </Card>
         </Tab>
-        <Tab key="test" title="Test" className="h-full">
-          <Card className="h-full">
-            <CardBody>
-              <TestPage />
-            </CardBody>
-          </Card>
-        </Tab>
       </Tabs>
     </div>
   )
