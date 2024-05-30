@@ -8,7 +8,7 @@ use crate::{
     },
     types::{
         middleware_types::{CurTabName, TabMap},
-        rpc_types::{CursorListState, RpcState},
+        rpc_types::RpcState,
     },
 };
 
@@ -31,14 +31,17 @@ pub fn event_handler(event: WindowMenuEvent) {
                 window.state::<CurTabName>(),
                 window.state::<TabMap>(),
                 window.state::<RpcState>(),
-                window.state::<CursorListState>(),
                 11451,
                 "foo",
             );
         }
         "bar" => {
             let window = event.window();
-            if !stop_share_server(window.state::<RpcState>()) {
+            if !stop_share_server(
+                window.state::<CurTabName>(),
+                window.state::<TabMap>(),
+                window.state::<RpcState>(),
+            ) {
                 println!("Share server is not running.");
             }
         }

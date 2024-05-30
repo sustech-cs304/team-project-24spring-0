@@ -1,4 +1,4 @@
-mod file;
+pub(crate) mod file;
 mod help;
 mod setting;
 mod test;
@@ -9,7 +9,7 @@ use tauri::{
     WindowMenuEvent,
 };
 
-fn display_dialog(
+pub(crate) fn display_dialog(
     kind: MessageDialogKind,
     buttons: MessageDialogButtons,
     title: &str,

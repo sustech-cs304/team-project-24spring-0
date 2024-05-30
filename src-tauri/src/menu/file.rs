@@ -7,6 +7,7 @@ use tauri::{
     Manager,
     Menu,
     Submenu,
+    Window,
     WindowMenuEvent,
 };
 
@@ -137,8 +138,11 @@ fn open_handler(event: WindowMenuEvent) {
 /// event.window().state::<TabMap>(); let mut lock =
 /// tab_map.tabs.lock().unwrap();
 fn save_handler(event: &WindowMenuEvent) {
-    let name = get_current_tab_name(&event);
     let tab_map = event.window().state::<TabMap>();
+    if tab_map.tabs.lock().unwrap().len() == 0 {
+        return;
+    }
+    let name = get_current_tab_name(&event);
     let mut lock = tab_map.tabs.lock().unwrap();
     let tab = lock.get_mut(&name).unwrap();
     match tab.text.save() {
@@ -209,7 +213,7 @@ fn close_handler(event: &WindowMenuEvent) {
     let mut lock = tab_map.tabs.lock().unwrap();
     match lock.get_mut(&name) {
         Some(tab) => {
-            close_checker(event, &name, tab);
+            close_checker(event.window(), &name, tab);
         }
         None => {}
     }
@@ -226,7 +230,7 @@ fn exit_handler(event: &WindowMenuEvent) {
     let tab_map = window.state::<TabMap>();
     let mut lock = tab_map.tabs.lock().unwrap();
     for (name, tab) in lock.iter_mut() {
-        close_checker(event, name, tab);
+        close_checker(event.window(), name, tab);
     }
     window.app_handle().exit(0);
 }
@@ -259,10 +263,9 @@ fn new_tab(event: &WindowMenuEvent, file_path: &Path) -> ResultVoid {
 /// If user choose not to save, close the tab directly.
 ///
 /// This function will emit a `front_close_tab` event to the window.
-fn close_checker(event: &WindowMenuEvent, name: &str, tab: &mut Tab) {
-    let window = event.window();
+pub fn close_checker(window: &Window, name: &str, tab: &mut Tab) {
     let tab_ptr = Ptr::new(tab);
-    let event_ptr = Ptr::new(event);
+    let window_ptr = Ptr::new(window);
     let mut text = &mut tab.text;
     let share_status = text.get_share_status();
     if share_status == Server {
@@ -311,8 +314,7 @@ fn close_checker(event: &WindowMenuEvent, name: &str, tab: &mut Tab) {
                         }
                     }
                 }
-                let event = event_ptr.as_ref();
-                let _ = event.window().emit("front_close_tab", true);
+                let _ = window_ptr.as_mut().emit("front_close_tab", true);
             },
         )
     }

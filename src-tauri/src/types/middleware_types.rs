@@ -167,3 +167,13 @@ impl Default for AssemblerConfig {
         }
     }
 }
+
+/// Use for event `front_update_content`
+#[derive(Clone, Serialize)]
+pub struct UpdateContent {
+    pub file_name: String,
+    pub op: u8,
+    pub start: (u64, u64),
+    pub end: (u64, u64),
+    pub content: String,
+}

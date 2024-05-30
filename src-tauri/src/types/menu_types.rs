@@ -7,6 +7,12 @@ pub struct OpenFile {
 }
 
 #[derive(Clone, Serialize)]
+pub struct OpenShareFile {
+    pub file_path: String,
+    pub content: String,
+}
+
+#[derive(Clone, Serialize)]
 pub struct CloseTab {
     pub file_path: String,
 }

@@ -1,4 +1,3 @@
-// Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(
     debug_assertions,
     allow(dead_code),
@@ -8,6 +7,7 @@
     allow(unreachable_code),
     allow(unused_macros)
 )]
+// Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 #![feature(linked_list_cursors)]
 
@@ -36,6 +36,8 @@ use tauri::{AppHandle, Manager};
 use types::{middleware_types, rpc_types};
 
 static APP_HANDLE: Lazy<Arc<Mutex<Option<AppHandle>>>> = Lazy::new(|| Arc::new(Mutex::new(None)));
+static CURSOR_LIST: Lazy<Arc<Mutex<rpc_types::CursorList>>> =
+    Lazy::new(|| Arc::new(Mutex::new(Default::default())));
 
 fn main() {
     tauri::Builder::default()
@@ -46,9 +48,6 @@ fn main() {
         })
         .manage(middleware_types::CurTabName {
             name: Default::default(),
-        })
-        .manage(rpc_types::CursorListState {
-            cursors: Arc::new(Default::default()),
         })
         .manage(rpc_types::RpcState {
             rpc_server: Default::default(),

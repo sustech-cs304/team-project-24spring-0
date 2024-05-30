@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use crate::types::ResultVoid;
 
-#[derive(Default, PartialEq, Clone)]
+#[derive(Default, PartialEq, Clone, Debug)]
 pub enum FileShareStatus {
     #[default]
     Private,

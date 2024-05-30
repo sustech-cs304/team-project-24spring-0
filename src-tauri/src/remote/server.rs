@@ -78,8 +78,8 @@ impl ServerHandle {
     /// Handle logic current tab wht a `&mut Tab` as lambda parameter.
     /// Only use to bypass the fucking borrow checker.
     fn handle_with_cur_tab<F, R>(&self, handle: F) -> Result<R, String>
-        where
-            F: Fn(&mut Tab) -> Result<R, String>,
+    where
+        F: Fn(&mut Tab) -> Result<R, String>,
     {
         let map_state_lock = self.map_state.lock().unwrap();
         match map_state_lock.1 {
@@ -94,8 +94,8 @@ impl ServerHandle {
     }
 
     fn handle_rpc_with_cur_tab<F, R>(&self, handle: F) -> Result<Response<R>, Status>
-        where
-            F: Fn(&mut Tab) -> Result<R, String>,
+    where
+        F: Fn(&mut Tab) -> Result<R, String>,
     {
         match self.handle_with_cur_tab(handle) {
             Ok(success) => Ok(Response::new(success)),
@@ -113,8 +113,8 @@ impl ServerHandle {
     }
 
     fn get_history_since<T>(&self, version: usize) -> Vec<T>
-        where
-            Modification: Into<T> + Clone,
+    where
+        Modification: Into<T> + Clone,
     {
         let lock = self.history.lock().unwrap();
         lock[version..]
@@ -256,6 +256,7 @@ impl Editor for Arc<Mutex<ServerHandle>> {
                 let request_ref = request.get_ref();
                 let content_position = request_ref.op_range.clone().unwrap();
                 let start = content_position.start.unwrap();
+                let end = content_position.end.unwrap();
 
                 // check version correct(up to date)
                 if request_ref.version != handler.version.load(atomic::Ordering::Relaxed) as u64 {
@@ -269,6 +270,7 @@ impl Editor for Arc<Mutex<ServerHandle>> {
                 for cursor in &*cursor_lock {
                     if cursor.addr == request.remote_addr().unwrap()
                         && (start.row != cursor.row || start.col != cursor.col)
+                        && (end.row != cursor.row || end.col != cursor.col)
                     {
                         return Ok(Response::new(UpdateContentReply {
                             success: false,

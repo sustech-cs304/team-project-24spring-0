@@ -21,5 +21,5 @@ pub fn event_handler(event: WindowMenuEvent) {
 fn assembler_memory_handler(event: WindowMenuEvent) {
     todo!("update assembler memory setting");
     // you could reference other files in menu folder about how to use the event
-    // don't forage to write the comment to generate doc for frontend
+    // don't forget to write the comment to generate doc for frontend
 }

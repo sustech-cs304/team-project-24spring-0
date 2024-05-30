@@ -19,9 +19,9 @@ fn test_authorize_disconnect() {
 }
 
 #[test]
-fn test_set_cursor(){
+fn test_set_cursor() {
     let mut server = init_test_server(TEST_FILE_CONTENT).unwrap();
-    let mut client1= init_test_client(server.get_port()).unwrap();
-    let mut client2= init_test_client(server.get_port()).unwrap();
-    let mut client3= init_test_client(server.get_port()).unwrap();
+    let mut client1 = init_test_client(server.get_port()).unwrap();
+    let mut client2 = init_test_client(server.get_port()).unwrap();
+    let mut client3 = init_test_client(server.get_port()).unwrap();
 }

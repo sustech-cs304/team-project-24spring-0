@@ -3,9 +3,10 @@
 pub mod frontend_api {
     use std::{net::SocketAddr, path::Path};
 
-    use tauri::{async_runtime::block_on, State, Window};
+    use tauri::{async_runtime::block_on, Manager, State, Window};
 
     use crate::{
+        dprintln,
         interface::{
             parser::Parser,
             storage::{
@@ -14,6 +15,7 @@ pub mod frontend_api {
             },
         },
         io::file_io,
+        menu::file::close_checker,
         modules::riscv::basic::interface::{
             assembler::RiscVAssembler,
             parser::{RISCVExtension, RISCVParser, RISCV},
@@ -22,13 +24,15 @@ pub mod frontend_api {
         simulator::simulator::RISCVSimulator,
         storage::rope_store,
         types::{
+            menu_types::OpenShareFile,
             middleware_types::*,
-            rpc_types::{CursorListState, CursorPosition, FileOperation, RpcState},
+            rpc_types::{CursorPosition, FileOperation, RpcState},
         },
         utility::{
             ptr::Ptr,
             state_helper::state::{self, get_current_tab_name, set_current_tab_name},
         },
+        CURSOR_LIST,
     };
 
     /// Creates a new tab with content loaded from a specified file path.
@@ -79,19 +83,20 @@ pub mod frontend_api {
     /// success, return the new tab to focus on, else return error message.
     #[tauri::command]
     pub fn close_tab(
+        window: Window,
         cur_tab_name: State<CurTabName>,
         tab_map: State<TabMap>,
         filepath: &str,
     ) -> Optional {
         if *cur_tab_name.name.lock().unwrap() == filepath {
-            let lock = tab_map.tabs.lock().unwrap();
-            if lock.len() == 1 {
+            let tabs = tab_map.tabs.lock().unwrap();
+            if tabs.len() == 0 {
                 return Optional {
-                    success: true,
-                    message: "".to_string(),
+                    success: false,
+                    message: "No tab has been opened".to_string(),
                 };
-            } else {
-                let mut iter = lock.iter();
+            } else if tabs.len() > 1 {
+                let mut iter = tabs.iter();
                 loop {
                     let (new_name, _) = iter.next().unwrap();
                     if new_name != filepath {
@@ -101,7 +106,12 @@ pub mod frontend_api {
                 }
             }
         }
-        match tab_map.tabs.lock().unwrap().remove(filepath) {
+        let mut tabs = tab_map.tabs.lock().unwrap();
+        let mut tab = tabs.get_mut(filepath).unwrap();
+
+        close_checker(&window, filepath, tab);
+
+        match tabs.remove(filepath) {
             Some(_) => Optional {
                 success: true,
                 message: cur_tab_name.name.lock().unwrap().clone(),
@@ -113,6 +123,7 @@ pub mod frontend_api {
         }
     }
 
+    #[allow(non_snake_case)]
     /// Changes the current tab to the one specified by the new path.
     /// - `cur_name`: Current name of the tab in focus.
     /// - `newpath`: Path to the file associated with the new tab to focus.
@@ -122,6 +133,7 @@ pub mod frontend_api {
     /// The only case where it would fail is if the tab with the specified
     /// path does not exist in opened tabs.
     #[tauri::command]
+    #[allow(non_snake_case)]
     pub fn change_current_tab(
         cur_tab_name: State<CurTabName>,
         tab_map: State<TabMap>,
@@ -145,7 +157,15 @@ pub mod frontend_api {
     /// - `col`: Column number of the cursor.
     ///
     /// Returns `Optional` indicating the success or failure of the operation.
+    ///
+    /// # Deprecated
+    /// This function is deprecated and will be removed in the future. The
+    /// feature of set cursor is no longer supported.
     #[tauri::command]
+    #[deprecated(
+        since = "0.1.0",
+        note = "This function is deprecated and will be removed in the future. The feature of set cursor is no longer supported."
+    )]
     pub fn set_cursor(
         cur_tab_name: State<CurTabName>,
         tab_map: State<TabMap>,
@@ -161,7 +181,7 @@ pub mod frontend_api {
                 server.set_host_cursor(row, col);
             }
             Client => {
-                todo!("@Vollate");
+                todo!("");
             }
             Private => {}
         }
@@ -174,6 +194,7 @@ pub mod frontend_api {
     /// Updates the content of the tab associated with the given file path.
     /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: Current state of all open tabs.
+    /// - `rpc_state`: State containing the RPC server/client.
     /// - `op`: File operation to be performed.
     /// - `start`: Starting position of the content to be updated.
     /// - `end`: Ending position of the content to be updated.
@@ -182,8 +203,10 @@ pub mod frontend_api {
     /// Returns `Optional` indicating the success or failure of the update.
     #[tauri::command]
     pub fn modify_current_tab(
+        window: Window,
         cur_tab_name: State<CurTabName>,
         tab_map: State<TabMap>,
+        rpc_state: State<RpcState>,
         op: FileOperation,
         start: CursorPosition,
         end: CursorPosition,
@@ -192,20 +215,85 @@ pub mod frontend_api {
         let filepath = cur_tab_name.name.lock().unwrap().clone();
         match tab_map.tabs.lock().unwrap().get_mut(&filepath) {
             Some(tab) => {
-                match tab.text.handle_modify(&Modification {
-                    op: op.into(),
-                    op_range: OpRange { start, end },
-                    version: tab.text.get_version() as u64,
-                    modified_content: content.to_owned(),
-                }) {
-                    Ok(_) => Optional {
+                if tab.text.get_share_status() != Client {
+                    match tab.text.handle_modify(&Modification {
+                        op: op.into(),
+                        op_range: OpRange { start, end },
+                        version: tab.text.get_version() as u64,
+                        modified_content: content.to_owned(),
+                    }) {
+                        Ok(_) => Optional {
+                            success: true,
+                            message: String::new(),
+                        },
+                        Err(e) => Optional {
+                            success: false,
+                            message: e.to_string(),
+                        },
+                    }
+                } else {
+                    let mut client = rpc_state.rpc_client.lock().unwrap();
+                    for _ in 1..10 {
+                        match block_on(client.send_update_content(
+                            tab.text.get_version() as u64,
+                            &Modification {
+                                op: op.clone().into(),
+                                op_range: OpRange {
+                                    start: start.clone(),
+                                    end: end.clone(),
+                                },
+                                version: tab.text.get_version() as u64,
+                                modified_content: content.to_owned(),
+                            },
+                        )) {
+                            Ok(res) => {
+                                if res.success {
+                                    tab.text
+                                        .handle_modify(&Modification {
+                                            op: op.into(),
+                                            op_range: OpRange { start, end },
+                                            version: 0,
+                                            modified_content: content.to_owned(),
+                                        })
+                                        .unwrap();
+                                    return Optional {
+                                        success: true,
+                                        message: String::new(),
+                                    };
+                                } else {
+                                    let reply = block_on(
+                                        client.send_get_content(tab.text.get_version() as u64),
+                                    )
+                                    .unwrap();
+                                    for h in reply.history {
+                                        tab.text.handle_modify(&h.clone().into()).unwrap();
+                                        let op_range = h.op_range.as_ref().unwrap();
+                                        let start = op_range.start.as_ref().unwrap();
+                                        let end = op_range.end.as_ref().unwrap();
+                                        let _ = window.emit(
+                                            "front_update_content",
+                                            UpdateContent {
+                                                file_name: get_current_tab_name(&cur_tab_name),
+                                                op: h.op.clone() as u8,
+                                                start: (start.row, start.col),
+                                                end: (end.row, end.col),
+                                                content: h.modified_content.clone(),
+                                            },
+                                        );
+                                    }
+                                    continue;
+                                }
+                            }
+                            Err(e) => {
+                                dprintln!("Failed to send modify request: {}", e);
+                                break;
+                            }
+                        }
+                    }
+                    Optional {
                         success: true,
                         message: String::new(),
-                    },
-                    Err(e) => Optional {
-                        success: false,
-                        message: e.to_string(),
-                    },
+                    }
                 }
             }
             None => Optional {
@@ -675,7 +763,6 @@ pub mod frontend_api {
         cur_tab_name: State<CurTabName>,
         tab_map: State<TabMap>,
         rpc_state: State<RpcState>,
-        cursor_list: State<CursorListState>,
         port: u16,
         password: &str,
     ) -> Optional {
@@ -704,7 +791,7 @@ pub mod frontend_api {
         if let Err(e) = server_lock.start_server(
             state::get_current_tab_name(&cur_tab_name),
             Ptr::new(&tab_map),
-            &cursor_list.cursors,
+            &CURSOR_LIST,
         ) {
             Optional {
                 success: false,
@@ -768,6 +855,10 @@ pub mod frontend_api {
             Ok(val) => {
                 let mut client_text = rope_store::Text::from_str(Path::new(&val.0), &val.2);
                 client_text.change_share_status(Client);
+                let emit_val = OpenShareFile {
+                    file_path: val.0.clone(),
+                    content: val.2,
+                };
                 let client_tab = Tab {
                     text: Box::new(client_text),
                     parser: Box::new(RISCVParser::new(&vec![RISCVExtension::RV32I])),
@@ -781,7 +872,7 @@ pub mod frontend_api {
                     .unwrap()
                     .insert(val.0.clone(), client_tab);
                 set_current_tab_name(&cur_tab_name, &val.0);
-                if let Err(e) = window.emit("front_share_client", { /*@Vollate*/ }) {
+                if let Err(e) = window.emit("front_share_client", emit_val) {
                     return Optional {
                         success: false,
                         message: e.to_string(),
@@ -885,7 +976,7 @@ pub mod backend_api {
     ///
     /// This function will emit a `front_simulator_update` event to the
     /// frontend, and the payload is a `SimulatorData` containing the
-    /// current pc index, register and memory values.
+    /// current pc index, register 5and memory values.
     ///
     /// [SimulatorData](crate::types::middleware_types::SimulatorData):
     /// - `filepath`: string
