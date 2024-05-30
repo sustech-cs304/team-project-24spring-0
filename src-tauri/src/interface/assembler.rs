@@ -74,7 +74,7 @@ impl<IS: ParserInstSet + InstructionSetTrait> InstructionSet<IS> {
     pub fn new(instruction: Instruction<IS>) -> Self {
         InstructionSet {
             line_number: 0,
-            instruction: instruction,
+            instruction,
             address: 0,
             code: 0,
             basic: String::new(),

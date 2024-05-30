@@ -16,7 +16,7 @@ impl From<u32> for Immediate20 {
         if i > 1048575 {
             panic!("Value out of range for U12 type");
         }
-        Immediate20(u20::try_from(i as u32).unwrap())
+        Immediate20(u20::try_from(i).unwrap())
     }
 }
 impl From<u32> for Immediate12 {

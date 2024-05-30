@@ -1,8 +1,10 @@
-use std::{net::Ipv4Addr, path::PathBuf, str::FromStr, sync::Mutex};
+use std::{error::Error, net::Ipv4Addr, path::PathBuf, str::FromStr};
 
-use once_cell::sync::Lazy;
+use tauri::async_runtime::block_on;
 
+use super::{CURSOR_LIST, TAB_MAP};
 use crate::{
+    interface::remote::RpcClient,
     modules::riscv::basic::interface::{
         assembler::RiscVAssembler,
         parser::{RISCVExtension, RISCVParser},
@@ -10,29 +12,22 @@ use crate::{
     remote::{client::RpcClientImpl, server::RpcServerImpl, utils::get_free_port},
     simulator::simulator::RISCVSimulator,
     storage::rope_store,
+    tests::remote::{MAX_PORT_RETRY, TEST_FILE_NAME, TEST_PASSWD},
     types::middleware_types::{Tab, TabMap},
     utility::ptr::Ptr,
 };
 
-static TEST_FILE_NAME: &str = "/foo/bar/test_file.txt";
-
-static TEST_PASSWD: &str = "fdsfs";
-
-static MAX_PROT_RETRY: usize = 1145;
-
-static TABMAP: Lazy<Mutex<Option<TabMap>>> = Lazy::new(|| Mutex::new(None));
-
-pub fn init_test_server(content: &str) -> Result<RpcServerImpl, String> {
-    if TABMAP.lock().unwrap().as_ref().is_none() {
+pub fn init_test_server(content: &str) -> Result<RpcServerImpl, Box<dyn Error>> {
+    if TAB_MAP.lock().unwrap().as_ref().is_none() {
         {
-            let mut static_lock = TABMAP.lock().unwrap();
+            let mut static_lock = TAB_MAP.lock().unwrap();
             *static_lock = Some(TabMap::default());
         }
         let content = rope_store::Text::from_str(
             PathBuf::from_str(TEST_FILE_NAME).unwrap().as_path(),
             content,
         );
-        let mut static_lock = TABMAP.lock().unwrap();
+        let mut static_lock = TAB_MAP.lock().unwrap();
         let static_tabmap = static_lock.as_mut().unwrap();
         let mut static_tab = static_tabmap.tabs.lock().unwrap();
         let tab = Tab {
@@ -44,19 +39,30 @@ pub fn init_test_server(content: &str) -> Result<RpcServerImpl, String> {
         };
         static_tab.insert(TEST_FILE_NAME.to_string(), tab);
     }
+    if CURSOR_LIST.lock().unwrap().is_none() {
+        let mut static_lock = CURSOR_LIST.lock().unwrap();
+        *static_lock = Some(Default::default());
+    }
     let mut server = RpcServerImpl::default();
-    let _ = server
-        .start_server(
-            TEST_FILE_NAME.to_string(),
-            Ptr::new(TABMAP.lock().unwrap().as_ref().unwrap()),
-        )
-        .unwrap();
+
     server.change_password(TEST_PASSWD);
     let _ = server
-        .set_port(get_free_port(Ipv4Addr::from_str("127.0.0.1").unwrap(), MAX_PROT_RETRY).unwrap());
+        .set_port(get_free_port(Ipv4Addr::from_str("0.0.0.0").unwrap(), MAX_PORT_RETRY).unwrap());
+    server
+        .start_server(
+            TEST_FILE_NAME.to_string(),
+            Ptr::new(TAB_MAP.lock().unwrap().as_ref().unwrap()),
+            &CURSOR_LIST.lock().unwrap().as_ref().unwrap().cursors,
+        )
+        .unwrap();
     Ok(server)
 }
 
-pub fn init_test_client(port: u16) -> RpcClientImpl {
-    todo!("init_test_client");
+pub fn init_test_client(port: u16) -> Result<RpcClientImpl, Box<dyn Error>> {
+    let mut client = RpcClientImpl::default();
+    client
+        .set_server_addr(format!("0.0.0.0:{}", port).parse().unwrap())
+        .unwrap();
+    block_on(client.connect()).unwrap();
+    Ok(client)
 }

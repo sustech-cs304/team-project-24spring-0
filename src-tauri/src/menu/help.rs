@@ -17,15 +17,15 @@ pub fn event_handler(event: WindowMenuEvent) {
 }
 
 fn manual_handler(_event: &WindowMenuEvent) {
-    if let Some(app_handle) = APP_HANDLE.lock().unwrap().as_ref() {
-        let _window = tauri::WindowBuilder::new(
-            app_handle,
-            "manual",
-            tauri::WindowUrl::App("/doc/riscv/index.html".parse().unwrap()),
-        )
-        .title("Manual")
-        .menu(Menu::new())
-        .build()
-        .unwrap();
-    }
+    let handle_lock = APP_HANDLE.lock().unwrap();
+    let app_handle = handle_lock.as_ref().unwrap();
+    let _window = tauri::WindowBuilder::new(
+        app_handle,
+        "manual",
+        tauri::WindowUrl::App("/doc/riscv/index.html".parse().unwrap()),
+    )
+    .title("Manual")
+    .menu(Menu::new())
+    .build()
+    .unwrap();
 }

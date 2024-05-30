@@ -1,7 +1,4 @@
-use std::{
-    collections::{HashMap, LinkedList},
-    sync::Mutex,
-};
+use std::{collections::HashMap, sync::Mutex};
 
 use ropey::Rope;
 use serde::{Deserialize, Serialize};
@@ -14,13 +11,12 @@ use crate::{
         storage::MFile,
     },
     modules::riscv::basic::interface::parser::RISCV,
-    remote::{client::RpcClientImpl, server::RpcServerImpl, ClientCursor, Modification},
+    remote::Modification,
+    types::rpc_types::CursorList,
 };
 
-pub type Cursor = LinkedList<ClientCursor>;
-
 pub struct Tab {
-    pub text: Box<dyn MFile<Rope, Modification, Cursor>>,
+    pub text: Box<dyn MFile<Rope, Modification, CursorList>>,
     pub parser: Box<dyn Parser<RISCV>>,
     pub assembler: Box<dyn Assembler<RISCV>>,
     pub simulator: Box<dyn Simulator>,
@@ -30,8 +26,6 @@ pub struct Tab {
 #[derive(Default)]
 pub struct TabMap {
     pub tabs: Mutex<HashMap<String, Tab>>,
-    pub rpc_server: Mutex<RpcServerImpl>,
-    pub rpc_client: Mutex<RpcClientImpl>,
 }
 
 pub struct CurTabName {
@@ -42,12 +36,6 @@ pub struct CurTabName {
 pub struct Optional {
     pub success: bool,
     pub message: String,
-}
-
-#[derive(Clone, Deserialize)]
-pub struct CursorPosition {
-    pub row: u64,
-    pub col: u64,
 }
 
 /// both start and len are aligned by 4
@@ -180,9 +168,12 @@ impl Default for AssemblerConfig {
     }
 }
 
-#[derive(Deserialize)]
-pub enum FileOperation {
-    Insert = 0,
-    Delete = 1,
-    Replace = 2,
+/// Use for event `front_update_content`
+#[derive(Clone, Serialize)]
+pub struct UpdateContent {
+    pub file_name: String,
+    pub op: u8,
+    pub start: (u64, u64),
+    pub end: (u64, u64),
+    pub content: String,
 }

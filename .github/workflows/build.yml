@@ -34,7 +34,7 @@ jobs:
             npm install
             npm run format-check
 
-      - name: RUst format check
+      - name: Rust format check
         working-directory: ./src-tauri
         run: cargo fmt -- --check
 
@@ -54,6 +54,8 @@ jobs:
       - name: Cargo test
         working-directory: ./src-tauri
         run: cargo test
+        env:
+          RUSTFLAGS: "--cfg ci"
 
       #- name: Cargo build
         #working-directory: ./src-tauri

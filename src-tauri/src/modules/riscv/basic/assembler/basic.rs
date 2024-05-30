@@ -18,7 +18,7 @@ macro_rules! all_into {
 }
 
 pub trait ImmediateFormatter {
-    fn immediate<'a>(&'a mut self, imm: u12) -> &'a mut Self;
+    fn immediate(&mut self, imm: u12) -> &mut Self;
 }
 
 #[derive(Default, Builder)]
@@ -94,7 +94,7 @@ pub struct SInstruction {
 }
 
 impl ImmediateFormatter for SInstructionBuilder {
-    fn immediate<'a>(&'a mut self, imm: u12) -> &'a mut Self {
+    fn immediate(&mut self, imm: u12) -> &mut Self {
         let imm: u32 = imm.into();
         let imm11_5: u7 = ((imm >> 5) & 0b1111111).try_into().unwrap();
         let imm4_0: u5 = (imm & 0b11111).try_into().unwrap();
@@ -126,7 +126,7 @@ pub struct BInstruction {
 }
 
 impl ImmediateFormatter for BInstructionBuilder {
-    fn immediate<'a>(&'a mut self, imm: u12) -> &'a mut Self {
+    fn immediate(&mut self, imm: u12) -> &mut Self {
         let imm: u32 = imm.into();
         let imm12: u1 = (imm >> 11).try_into().unwrap();
         let imm10_5: u6 = ((imm >> 5) & 0b111111).try_into().unwrap();

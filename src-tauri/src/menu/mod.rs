@@ -1,4 +1,4 @@
-mod file;
+pub mod file;
 mod help;
 mod setting;
 mod test;
@@ -9,7 +9,7 @@ use tauri::{
     WindowMenuEvent,
 };
 
-fn display_dialog(
+pub fn display_dialog(
     kind: MessageDialogKind,
     buttons: MessageDialogButtons,
     title: &str,
@@ -39,7 +39,7 @@ macro_rules! create_menu {
                 }
             )+
                 else {
-                    println!("unknow menu event: {:?}", event.menu_item_id());
+                    println!("unknown menu event: {:?}", event.menu_item_id());
                 }
         }
     };
