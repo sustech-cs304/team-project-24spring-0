@@ -1,19 +1,19 @@
-'use client'
+'use client';
 
-import MultifileCode from '@/components/MultifileCode'
-import Register from '@/components/Register'
-import MessageIO from '@/components/MessageIO'
-import { Card, CardBody, Textarea } from '@nextui-org/react'
-import { useEffect } from 'react'
-import { listen } from '@tauri-apps/api/event'
-import useFileStore from '@/utils/state'
-import useOutputStore from '@/utils/outputState'
+import MultifileCode from '@/components/MultifileCode';
+import Register from '@/components/Register';
+import MessageIO from '@/components/MessageIO';
+import { Card, CardBody, Textarea } from '@nextui-org/react';
+import { useEffect } from 'react';
+import { listen } from '@tauri-apps/api/event';
+import useFileStore from '@/utils/state';
+import useOutputStore from '@/utils/outputState';
 
 export default function Home() {
   useEffect(() => {
     const unListenedFileOpen = listen('front_file_open', event => {
       // setOutput(prevOutput => prevOutput + '\nEvent received:\n' + JSON.stringify(event.payload));
-      const state = useFileStore.getState()
+      const state = useFileStore.getState();
 
       state.addFile({
         fileName: event.payload['file_path'],
@@ -57,21 +57,23 @@ export default function Home() {
           { name: 'pc', number: '32', value: 0 },
         ],
         memory: [
-          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-          0, 0, 0, 0,
+          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         ],
         baseAddress: 0x10010000,
         started: false,
         paused: false,
         shared: false,
-      })
+      });
       // return event.payload;
-    })
+    });
 
     const unListenedFileSave = listen('front_file_save', event => {
-      const state = useFileStore.getState()
-      const file = state.files.find(file => file.fileName === state.currentFile)
+      const state = useFileStore.getState();
+      const file = state.files.find(
+        file => file.fileName === state.currentFile,
+      );
       state.updateFile(
         state.currentFile,
         file.code,
@@ -84,12 +86,14 @@ export default function Home() {
         file.started,
         file.paused,
         file.shared,
-      )
-    })
+      );
+    });
 
     const unListenedFileSaveAs = listen('front_file_save_as', event => {
-      const state = useFileStore.getState()
-      const file = state.files.find(file => file.fileName === state.currentFile)
+      const state = useFileStore.getState();
+      const file = state.files.find(
+        file => file.fileName === state.currentFile,
+      );
       state.updateFile(
         state.currentFile,
         file.code,
@@ -102,77 +106,84 @@ export default function Home() {
         file.started,
         file.paused,
         file.shared,
-      )
-    })
+      );
+    });
 
-    const unListenedSimulatorUpdate = listen('front_simulator_update', event => {
-      // the payload is a SimulatorData containing the current pc index, register and memory values.
-      //
-      //     SimulatorData:
-      //
-      // filepath: string
-      // success: bool
-      // has_current_text: bool
-      // current_text: u64
-      // registers: Vec<Register>
-      // data: Vec
-      // message: string
-      console.log('simulator update event received', event.payload)
-      const outputStore = useOutputStore.getState()
-      if (event.payload['success'] === false) {
-        outputStore.addOutput('Simulator Update Failed. Message: ' + event.payload['message'])
-      } else {
-        outputStore.addOutput('Simulator Updated Successfully')
-      }
+    const unListenedSimulatorUpdate = listen(
+      'front_simulator_update',
+      event => {
+        // the payload is a SimulatorData containing the current pc index, register and memory values.
+        //
+        //     SimulatorData:
+        //
+        // filepath: string
+        // success: bool
+        // has_current_text: bool
+        // current_text: u64
+        // registers: Vec<Register>
+        // data: Vec
+        // message: string
+        console.log('simulator update event received', event.payload);
+        const outputStore = useOutputStore.getState();
+        if (event.payload['success'] === false) {
+          outputStore.addOutput(
+            'Simulator Update Failed. Message: ' + event.payload['message'],
+          );
+        } else {
+          outputStore.addOutput('Simulator Updated Successfully');
+        }
 
-      const state = useFileStore.getState()
-      const file = state.files.find(file => file.fileName === state.currentFile)
-      file.register = event.payload['registers']
-      file.memory = event.payload['data']
-      if (event.payload['has_current_text']) {
-        file.runLines = event.payload['current_text']
-      } else {
-        file.runLines = ''
-      }
-      state.updateFile(
-        state.currentFile,
-        file.code,
-        file.code,
-        file.assembly,
-        file.runLines,
-        file.register,
-        file.memory,
-        file.baseAddress,
-        file.started,
-        event.payload['paused'],
-        file.shared,
-      )
-    })
+        const state = useFileStore.getState();
+        const file = state.files.find(
+          file => file.fileName === state.currentFile,
+        );
+        file.register = event.payload['registers'];
+        file.memory = event.payload['data'];
+        if (event.payload['has_current_text']) {
+          file.runLines = event.payload['current_text'];
+        } else {
+          file.runLines = '';
+        }
+        state.updateFile(
+          state.currentFile,
+          file.code,
+          file.code,
+          file.assembly,
+          file.runLines,
+          file.register,
+          file.memory,
+          file.baseAddress,
+          file.started,
+          event.payload['paused'],
+          file.shared,
+        );
+      },
+    );
 
     return () => {
-      unListenedFileOpen.then(dispose => dispose())
-      unListenedFileSave.then(dispose => dispose())
-      unListenedFileSaveAs.then(dispose => dispose())
-      unListenedSimulatorUpdate.then(dispose => dispose())
-    }
-  }, [])
+      unListenedFileOpen.then(dispose => dispose());
+      unListenedFileSave.then(dispose => dispose());
+      unListenedFileSaveAs.then(dispose => dispose());
+      unListenedSimulatorUpdate.then(dispose => dispose());
+    };
+  }, []);
 
   return (
-    <main className="h-[calc(100vh-45px)]">
-      <div className="grid grid-cols-7 gap-4 p-2 max-h-[calc(100vh-45px)] w-full">
-        <div className="col-span-5 ">
-          <div className="grid grid-rows-8 gap-4 max-h-[calc(100vh-45px)] h-screen grow">
-            <div className="row-span-5">
-              <Card className="h-full w-full">
-                <CardBody className="h-full w-full overflow-y-auto overflow-x-auto">
+    <main className='h-[calc(100vh-45px)]'>
+      <div className='grid grid-cols-7 gap-4 p-2 max-h-[calc(100vh-45px)] w-full'>
+        <div className='col-span-5 '>
+          <div className='grid grid-rows-8 gap-4 max-h-[calc(100vh-45px)] h-screen grow'>
+            <div className='row-span-5'>
+              <Card className='h-full w-full'>
+                <CardBody className='h-full w-full overflow-y-auto overflow-x-auto'>
                   <MultifileCode />
                 </CardBody>
               </Card>
             </div>
 
-            <div className="row-span-3">
-              <Card className="h-full w-full">
-                <CardBody className="h-full w-full">
+            <div className='row-span-3'>
+              <Card className='h-full w-full'>
+                <CardBody className='h-full w-full'>
                   <MessageIO />
                 </CardBody>
               </Card>
@@ -180,14 +191,14 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="col-span-2">
-          <Card className="h-full w-full">
-            <CardBody className="h-full w-full">
+        <div className='col-span-2'>
+          <Card className='h-full w-full'>
+            <CardBody className='h-full w-full'>
               <Register />
             </CardBody>
           </Card>
         </div>
       </div>
     </main>
-  )
+  );
 }

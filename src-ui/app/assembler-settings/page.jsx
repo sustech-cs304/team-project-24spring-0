@@ -1,6 +1,6 @@
-'use client'
+'use client';
 
-import React, { useState } from 'react'
+import React, { useState } from 'react';
 import {
   Button,
   Card,
@@ -17,11 +17,11 @@ import {
   TableBody,
   Table,
   TableRow,
-} from '@nextui-org/react'
-import { invoke } from '@tauri-apps/api/tauri'
+} from '@nextui-org/react';
+import { invoke } from '@tauri-apps/api/tauri';
 
 export default function AssemblerSettingsPage() {
-  const [choice, setChoice] = useState('default')
+  const [choice, setChoice] = useState('default');
 
   const value_table = {
     default: {
@@ -78,32 +78,32 @@ export default function AssemblerSettingsPage() {
       text_limit_address: 0x00000ffc,
       dot_text_base_address: 0x00000000,
     },
-  }
+  };
 
   const changeNameFromKey = key => {
     // replace all dot with .
     // replace all _ with space
-    return key.replace(/_/g, ' ').replace(/dot/g, '.')
-  }
+    return key.replace(/_/g, ' ').replace(/dot/g, '.');
+  };
 
   function toHex(decimal) {
-    return '0x' + decimal.toString(16).padStart(8, '0')
+    return '0x' + decimal.toString(16).padStart(8, '0');
   }
 
   const generateTable = choice => {
     // group the key-value pairs by 4 for one row
-    let rows = []
-    let row = []
-    let count = 0
+    let rows = [];
+    let row = [];
+    let count = 0;
     for (let [key, value] of Object.entries(value_table[choice])) {
       if (count === 2) {
-        rows.push(row)
-        row = []
-        count = 0
+        rows.push(row);
+        row = [];
+        count = 0;
       }
-      row.push(changeNameFromKey(key))
-      row.push(toHex(value))
-      count++
+      row.push(changeNameFromKey(key));
+      row.push(toHex(value));
+      count++;
     }
 
     return (
@@ -124,34 +124,36 @@ export default function AssemblerSettingsPage() {
           ))}
         </TableBody>
       </Table>
-    )
-  }
+    );
+  };
 
   const handleAssemblerSettingsChange = async () => {
     // send the new settings to the backend
-    console.log('New settings: ', value_table[choice])
+    console.log('New settings: ', value_table[choice]);
     let result = await invoke('update_assembler_settings', {
       settings: value_table[choice],
-    })
+    });
     if (result.success) {
-      alert('Assembler settings changed successfully!')
+      alert('Assembler settings changed successfully!');
     } else {
-      alert('Failed to change assembler settings. Reason: ' + result.message + '.')
+      alert(
+        'Failed to change assembler settings. Reason: ' + result.message + '.',
+      );
     }
-  }
+  };
 
   return (
     <Card>
       <CardHeader>
         <RadioGroup
-          label="Configuration"
-          orientation="horizontal"
-          defaultValue="default"
+          label='Configuration'
+          orientation='horizontal'
+          defaultValue='default'
           onValueChange={value => setChoice(value)}
         >
-          <Radio value="default">Default</Radio>
-          <Radio value="compact_data_0">Compact, Data at Address 0</Radio>
-          <Radio value="compact_text_0">Compact, Text at Address 0</Radio>
+          <Radio value='default'>Default</Radio>
+          <Radio value='compact_data_0'>Compact, Data at Address 0</Radio>
+          <Radio value='compact_text_0'>Compact, Text at Address 0</Radio>
         </RadioGroup>
       </CardHeader>
       <Divider />
@@ -159,13 +161,13 @@ export default function AssemblerSettingsPage() {
       <Divider />
       <CardFooter>
         <Button
-          className="p-2 w-full"
-          color="primary"
+          className='p-2 w-full'
+          color='primary'
           onClick={() => handleAssemblerSettingsChange()}
         >
           Apply
         </Button>
       </CardFooter>
     </Card>
-  )
+  );
 }
