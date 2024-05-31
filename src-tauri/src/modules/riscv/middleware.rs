@@ -369,6 +369,7 @@ pub mod frontend_api {
         let code = tab.text.to_string();
         let cache = &mut tab.assembly_cache;
         if cache.code != code {
+            cache.parser_cache = Default::default();
             cache.parser_result = Default::default();
             cache.assembler_result = Default::default();
         }
@@ -420,7 +421,7 @@ pub mod frontend_api {
         }
     }
 
-    /// Placeholder for a function to dump data from all tabs.
+    /// Dump the code in the currently active tab.
     /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: State containing the map of all tabs.
     ///
@@ -972,6 +973,7 @@ pub mod backend_api {
     /// [SimulatorData](crate::types::middleware_types::SimulatorData):
     /// - `filepath`: string
     /// - `success`: bool
+    /// - `paused`: bool
     /// - `has_current_text`: bool
     /// - `current_text`: u64
     /// - `registers`: Vec<[Register](crate::types::middleware_types::Register)>
@@ -980,6 +982,7 @@ pub mod backend_api {
     pub fn simulator_update(
         simulator: &mut dyn Simulator,
         simulator_res: Optional,
+        paused: bool,
     ) -> Result<(), String> {
         if let Some(app_handle) = APP_HANDLE.lock().unwrap().as_ref() {
             if let Ok(_) = app_handle.emit_all(
@@ -987,6 +990,7 @@ pub mod backend_api {
                 SimulatorData {
                     filepath: simulator.get_filepath().to_string(),
                     success: simulator_res.success,
+                    paused,
                     has_current_text: simulator.get_pc_idx().is_some(),
                     current_text: simulator.get_pc_idx().unwrap_or(0) as u64,
                     registers: simulator

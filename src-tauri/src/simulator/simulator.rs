@@ -149,6 +149,10 @@ impl Simulator for RISCVSimulator {
         self.conf = config.clone();
         if old_status == SimulatorStatus::Stopped {
             self._reset();
+            self.update(Optional {
+                success: true,
+                message: "config updated".to_string(),
+            });
         }
         self.set_status(old_status);
         Ok(())
@@ -197,6 +201,9 @@ impl Simulator for RISCVSimulator {
     }
 
     fn step(&mut self) -> Result<(), String> {
+        if self.pc_idx >= self.inst.as_ref().unwrap().instruction.len() {
+            return Err("Simulator finished".to_string());
+        }
         if !self.cas_status(SimulatorStatus::Stopped, SimulatorStatus::Running) {
             if !self.cas_status(SimulatorStatus::Paused, SimulatorStatus::Running) {
                 return Err("Invalid operation".to_string());
@@ -219,6 +226,10 @@ impl Simulator for RISCVSimulator {
         }
         self._reset();
         self.set_status(SimulatorStatus::Stopped);
+        self.update(Optional {
+            success: true,
+            message: "reset".to_string(),
+        });
         Ok(())
     }
 
@@ -248,6 +259,10 @@ impl Simulator for RISCVSimulator {
             self.mem.set_range(h.mem_addr, &h.mem[..h.mem_len as usize]);
         }
         self.set_status(SimulatorStatus::Paused);
+        self.update(Optional {
+            success: true,
+            message: "undo".to_string(),
+        });
         Ok(())
     }
 
@@ -274,6 +289,7 @@ impl Simulator for RISCVSimulator {
                 if let Ok(val) = input.parse::<u32>() {
                     self.reg[RV32IRegister::A0 as usize] = val;
                     self.wait_input = WaitStatus::Not;
+                    self.pc_idx += 1;
                     self.resume()
                 } else {
                     Err("Invalid input".to_string())
@@ -288,11 +304,13 @@ impl Simulator for RISCVSimulator {
                 let data = input.as_bytes();
                 self.mem.set_range(addr, &data[..len as usize]);
                 self.wait_input = WaitStatus::Not;
+                self.pc_idx += 1;
                 self.resume()
             }
             WaitStatus::Char => {
                 self.reg[RV32IRegister::A0 as usize] = input.as_bytes()[0] as u32;
                 self.wait_input = WaitStatus::Not;
+                self.pc_idx += 1;
                 self.resume()
             }
         }
@@ -372,6 +390,14 @@ impl Simulator for RISCVSimulator {
             Err("Invalid range".to_string())
         } else {
             self.mem_range = range;
+            if self.get_status() == SimulatorStatus::Stopped
+                || self.get_status() == SimulatorStatus::Paused
+            {
+                self.update(Optional {
+                    success: true,
+                    message: "memory return range updated".to_string(),
+                });
+            }
             Ok(())
         }
     }
@@ -420,6 +446,7 @@ impl RISCVSimulator {
             self.history.push_back(history);
             if matches!(res, Ok(SimulatorStatus::Running))
                 && self.debug
+                && self.pc_idx < self.breakpoints.len()
                 && self.breakpoints[self.pc_idx]
             {
                 Ok(SimulatorStatus::Paused)
@@ -506,7 +533,8 @@ impl RISCVSimulator {
     }
 
     fn update(&mut self, res: Optional) {
-        match simulator_update(self, res) {
+        let paused = self.get_status() == SimulatorStatus::Paused;
+        match simulator_update(self, res, paused) {
             Ok(_) => {}
             Err(e) => {
                 dprintln!("{}", e);
