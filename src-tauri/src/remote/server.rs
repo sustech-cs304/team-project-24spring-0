@@ -21,6 +21,7 @@ use editor_rpc::{
     UpdateContentReply,
     UpdateContentRequest,
 };
+use tauri::{Manager, Window};
 use tokio::task::JoinHandle;
 use tonic::{transport::Server, Request, Response, Status};
 
@@ -33,8 +34,13 @@ use super::{
 use crate::{
     dprintln,
     interface::remote::RpcServer,
-    types::middleware_types::{Cursor, Tab, TabMap},
+    types::{
+        middleware_types::{Tab, TabMap, UpdateContent},
+        rpc_types::CursorList,
+        ResultVoid,
+    },
     utility::ptr::Ptr,
+    APP_HANDLE,
 };
 
 pub mod editor_rpc {
@@ -43,11 +49,12 @@ pub mod editor_rpc {
 
 #[derive(Default)]
 struct ServerHandle {
+    window: Option<Window>,
     map_state: Mutex<(String, Option<Ptr<TabMap>>)>,
     version: atomic::AtomicUsize,
     password: Mutex<String>,
     clients: Mutex<Vec<SocketAddr>>,
-    cursor_pos: Mutex<Cursor>,
+    cursor_lsit: Arc<Mutex<CursorList>>,
     history: Mutex<Vec<Modification>>,
 }
 
@@ -60,7 +67,7 @@ impl ServerHandle {
 
     /// Update host cursor position.
     fn set_host_cursor(&mut self, row: u64, col: u64, port: u16) {
-        let mut lock = self.cursor_pos.lock().unwrap();
+        let mut lock = self.cursor_lsit.lock().unwrap();
         list_insert_or_replace_asc::<CursorAsc>(
             &mut *lock,
             ClientCursor {
@@ -72,7 +79,7 @@ impl ServerHandle {
     }
 
     /// Handle logic current tab wht a `&mut Tab` as lambda parameter.
-    /// Only use to bypass the fxxking borrow checker.
+    /// Only use to bypass the fucking borrow checker.
     fn handle_with_cur_tab<F, R>(&self, handle: F) -> Result<R, String>
     where
         F: Fn(&mut Tab) -> Result<R, String>,
@@ -85,16 +92,16 @@ impl ServerHandle {
                 let mut tab = tabs_lock.get_mut(&map_state_lock.0).unwrap();
                 handle(&mut tab)
             }
-            None => Err("TabMap has not been iniitilized".to_string()),
+            None => Err("TabMap has not been initialized".to_string()),
         }
     }
 
-    fn handle_rpc_with_cur_tab<F, R>(&self, handle: F) -> Result<tonic::Response<R>, Status>
+    fn handle_rpc_with_cur_tab<F, R>(&self, handle: F) -> Result<Response<R>, Status>
     where
         F: Fn(&mut Tab) -> Result<R, String>,
     {
         match self.handle_with_cur_tab(handle) {
-            Ok(success) => Ok(tonic::Response::new(success)),
+            Ok(success) => Ok(Response::new(success)),
             Err(err) => Err(Status::internal(err)),
         }
     }
@@ -173,8 +180,9 @@ impl Editor for Arc<Mutex<ServerHandle>> {
             .position(|x| *x == request.remote_addr().unwrap())
         {
             clients.remove(pos);
-            let mut cursor_lock = handler.cursor_pos.lock().unwrap();
-            success = list_check_and_del::<CursorAsc>(
+            success = true;
+            let mut cursor_lock = handler.cursor_lsit.lock().unwrap();
+            _ = list_check_and_del::<CursorAsc>(
                 &mut cursor_lock,
                 &ClientCursor {
                     addr: request.remote_addr().unwrap(),
@@ -192,7 +200,7 @@ impl Editor for Arc<Mutex<ServerHandle>> {
     ) -> Result<Response<SetCursorReply>, Status> {
         let handler = self.lock().unwrap();
         handler.check_ip_authorized(request.remote_addr().unwrap())?;
-        let mut cursor_lock = handler.cursor_pos.lock().unwrap();
+        let mut cursor_lock = handler.cursor_lsit.lock().unwrap();
         list_insert_or_replace_asc::<CursorAsc>(
             &mut *cursor_lock,
             ClientCursor {
@@ -214,19 +222,19 @@ impl Editor for Arc<Mutex<ServerHandle>> {
         return handler.handle_rpc_with_cur_tab(
             |tab: &mut Tab| -> Result<GetContentReply, String> {
                 if request.get_ref().full_content {
-                    return Ok(editor_rpc::GetContentReply {
+                    return Ok(GetContentReply {
                         history: vec![],
                         full_content: tab.text.to_string(),
                     });
                 } else if request.get_ref().version
                     == handler.version.load(atomic::Ordering::Relaxed) as u64
                 {
-                    Ok(editor_rpc::GetContentReply {
+                    Ok(GetContentReply {
                         history: vec![],
                         full_content: String::new(),
                     })
                 } else {
-                    Ok(editor_rpc::GetContentReply {
+                    Ok(GetContentReply {
                         history: handler.get_history_since(request.get_ref().version as usize),
                         full_content: String::new(),
                     })
@@ -247,10 +255,11 @@ impl Editor for Arc<Mutex<ServerHandle>> {
                 let tab_map = tab_map_ptr.as_ref();
                 let mut tabs_lock = tab_map.tabs.lock().unwrap();
                 let tab = tabs_lock.get_mut(&map_state_lock.0).unwrap();
-                let cursor_lock = handler.cursor_pos.lock().unwrap();
+                let cursor_lock = handler.cursor_lsit.lock().unwrap();
                 let request_ref = request.get_ref();
                 let content_position = request_ref.op_range.clone().unwrap();
                 let start = content_position.start.unwrap();
+                let end = content_position.end.unwrap();
 
                 // check version correct(up to date)
                 if request_ref.version != handler.version.load(atomic::Ordering::Relaxed) as u64 {
@@ -264,6 +273,7 @@ impl Editor for Arc<Mutex<ServerHandle>> {
                 for cursor in &*cursor_lock {
                     if cursor.addr == request.remote_addr().unwrap()
                         && (start.row != cursor.row || start.col != cursor.col)
+                        && (end.row != cursor.row || end.col != cursor.col)
                     {
                         return Ok(Response::new(UpdateContentReply {
                             success: false,
@@ -275,19 +285,39 @@ impl Editor for Arc<Mutex<ServerHandle>> {
                 // handle operation
                 match tab.text.merge_history(
                     &vec![Modification::from(request_ref.clone())],
-                    &mut *handler.cursor_pos.lock().unwrap(),
+                    &mut *handler.cursor_lsit.lock().unwrap(),
                 ) {
-                    Ok(_) => Ok(Response::new(UpdateContentReply {
-                        success: true,
-                        message: String::new(),
-                    })),
+                    Ok(_) => {
+                        let start = request_ref
+                            .op_range
+                            .as_ref()
+                            .unwrap()
+                            .start
+                            .as_ref()
+                            .unwrap();
+                        let end = request_ref.op_range.as_ref().unwrap().end.as_ref().unwrap();
+                        let _ = APP_HANDLE.lock().unwrap().as_ref().unwrap().emit_all(
+                            "front_update_content",
+                            UpdateContent {
+                                file_name: tab.text.get_path_str(),
+                                op: request_ref.op,
+                                start: (start.row, start.col),
+                                end: (end.row, end.col),
+                                content: request_ref.modified_content.clone(),
+                            },
+                        );
+                        Ok(Response::new(UpdateContentReply {
+                            success: true,
+                            message: String::new(),
+                        }))
+                    }
                     Err(e) => Ok(Response::new(UpdateContentReply {
                         success: false,
                         message: e.to_string(),
                     })),
                 }
             }
-            None => Err(Status::internal("TabMap have not been iniitilized")),
+            None => Err(Status::internal("TabMap have not been initialized")),
         }
     }
 }
@@ -295,7 +325,7 @@ impl Editor for Arc<Mutex<ServerHandle>> {
 pub struct RpcServerImpl {
     port: AtomicU16,
     tokio_runtime: tokio::runtime::Runtime,
-    server_handle: Option<JoinHandle<()>>,
+    rpc_server_handle: Option<JoinHandle<()>>,
     shared_handler: Arc<Mutex<ServerHandle>>,
 }
 
@@ -303,27 +333,29 @@ impl RpcServerImpl {
     /// Start the service with a tab map.
     ///
     /// If the server is already running, return an error.
-    pub fn start_service(
+    pub fn start_server(
         &mut self,
         cur_tab_name: String,
         tab_map: Ptr<TabMap>,
-    ) -> Result<(), Box<dyn std::error::Error>> {
-        self.shared_handler.lock().unwrap().map_state = Mutex::new((cur_tab_name, Some(tab_map)));
+        cursor_list: &Arc<Mutex<CursorList>>,
+    ) -> ResultVoid {
         if self.is_running() {
             return Err("Server already running".into());
         }
+        self.shared_handler.lock().unwrap().map_state = Mutex::new((cur_tab_name, Some(tab_map)));
+        self.shared_handler.lock().unwrap().cursor_lsit = cursor_list.clone();
         self.start()?;
         Ok(())
     }
 
-    pub fn stop_service(&mut self) {
+    pub fn stop_server(&mut self) {
         self.stop();
     }
 
     /// Set the port for the server.
     ///
     /// If the server is already running, return an error.
-    pub fn set_port(&mut self, port: u16) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn set_port(&mut self, port: u16) -> Result<(), Box<dyn Error>> {
         if self.is_running() {
             return Err("Server already running".into());
         }
@@ -339,7 +371,7 @@ impl RpcServerImpl {
 
     /// Check if the server is running.
     pub fn is_running(&self) -> bool {
-        self.server_handle.is_some()
+        self.rpc_server_handle.is_some()
     }
 
     /// Get the port of the server.
@@ -370,7 +402,7 @@ impl Default for RpcServerImpl {
                 .enable_all()
                 .build()
                 .unwrap(),
-            server_handle: None,
+            rpc_server_handle: None,
             shared_handler: Arc::new(Mutex::new(Default::default())),
         }
     }
@@ -378,7 +410,7 @@ impl Default for RpcServerImpl {
 
 impl RpcServer for RpcServerImpl {
     fn start(&mut self) -> Result<(), Box<dyn Error>> {
-        if self.server_handle.is_some() {
+        if self.rpc_server_handle.is_some() {
             return Err("Server already running".into());
         }
         let addr = format!("0.0.0.0:{}", self.port.load(atomic::Ordering::Relaxed))
@@ -394,12 +426,12 @@ impl RpcServer for RpcServerImpl {
                 .await
                 .unwrap();
         });
-        self.server_handle = Some(server_handle);
+        self.rpc_server_handle = Some(server_handle);
         Ok(())
     }
 
     fn stop(&mut self) {
-        if let Some(handle) = self.server_handle.take() {
+        if let Some(handle) = self.rpc_server_handle.take() {
             handle.abort();
         }
     }

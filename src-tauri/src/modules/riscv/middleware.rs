@@ -1,19 +1,38 @@
 /// This module provides API functions for the frontend. Could be used by
 /// `invoke` in EMCAScript
 pub mod frontend_api {
-    use tauri::State;
+    use std::{net::SocketAddr, path::Path};
+
+    use tauri::{async_runtime::block_on, State, Window};
 
     use crate::{
-        interface::parser::Parser,
+        dprintln,
+        interface::{
+            parser::Parser,
+            storage::{
+                FileShareStatus::{Client, Private, Server},
+                HistorianFile,
+            },
+        },
         io::file_io,
+        menu::file::close_checker,
         modules::riscv::basic::interface::{
             assembler::RiscVAssembler,
             parser::{RISCVExtension, RISCVParser, RISCV},
         },
         remote::{Modification, OpRange},
+        simulator::simulator::RISCVSimulator,
         storage::rope_store,
-        types::middleware_types::*,
-        utility::{ptr::Ptr, state_helper::state},
+        types::{
+            menu_types::OpenShareFile,
+            middleware_types::*,
+            rpc_types::{CursorPosition, FileOperation, RpcState},
+        },
+        utility::{
+            ptr::Ptr,
+            state_helper::state::{self, get_current_tab_name, set_current_tab_name},
+        },
+        CURSOR_LIST,
     };
 
     /// Creates a new tab with content loaded from a specified file path.
@@ -35,7 +54,7 @@ pub mod frontend_api {
                     text: Box::new(content),
                     parser: Box::new(RISCVParser::new(&vec![RISCVExtension::RV32I])),
                     assembler: Box::new(RiscVAssembler::new()),
-                    data_return_range: Default::default(),
+                    simulator: Box::new(RISCVSimulator::new(filepath)),
                     assembly_cache: Default::default(),
                 };
                 tab_map
@@ -56,6 +75,7 @@ pub mod frontend_api {
     }
 
     /// Closes the tab associated with the given file path.
+    /// - `window`: Window handle.
     /// - `cur_name`: Current name of the tab in focus.
     /// - `tab_map`: Current state of all open tabs.
     /// - `filepath`: Path to the file associated with the tab to close.
@@ -64,37 +84,26 @@ pub mod frontend_api {
     /// success, return the new tab to focus on, else return error message.
     #[tauri::command]
     pub fn close_tab(
+        window: Window,
         cur_tab_name: State<CurTabName>,
         tab_map: State<TabMap>,
         filepath: &str,
     ) -> Optional {
-        if *cur_tab_name.name.lock().unwrap() == filepath {
-            let lock = tab_map.tabs.lock().unwrap();
-            if lock.len() == 1 {
-                return Optional {
-                    success: true,
-                    message: "".to_string(),
-                };
-            } else {
-                let mut iter = lock.iter();
-                loop {
-                    let (new_name, _) = iter.next().unwrap();
-                    if new_name != filepath {
-                        *cur_tab_name.name.lock().unwrap() = new_name.clone();
-                        break;
-                    }
-                }
-            }
-        }
-        match tab_map.tabs.lock().unwrap().remove(filepath) {
-            Some(_) => Optional {
-                success: true,
-                message: cur_tab_name.name.lock().unwrap().clone(),
-            },
+        let mut tabs = tab_map.tabs.lock().unwrap();
+        match tabs.get_mut(filepath) {
             None => Optional {
                 success: false,
                 message: "Tab not found".to_string(),
             },
+            Some(tab) => {
+                close_checker(&window, filepath, tab);
+                tabs.remove(filepath);
+                cur_tab_name.name.lock().unwrap().clear();
+                Optional {
+                    success: true,
+                    message: String::new(),
+                }
+            }
         }
     }
 
@@ -121,38 +130,69 @@ pub mod frontend_api {
         }
     }
 
-    /// Sets the cursor position in the tab associated with the given file path.
-    /// This could be useful for live sharing of code.
+    /// Sets the cursor position in current tab associated with the given file
+    /// path. This could be useful for live sharing of code.
+    /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: Current state of all open tabs.
-    /// - `filepath`: Path to the file associated with the tab to update.
+    /// - `rpc_state`: State containing the RPC server/client.
     /// - `row`: Row number of the cursor.
     /// - `col`: Column number of the cursor.
     ///
-    /// Returns `bool` indicating whether the cursor was successfully set.
+    /// Returns `Optional` indicating the success or failure of the operation.
+    ///
+    /// # Deprecated
+    /// This function is deprecated and will be removed in the future. The
+    /// feature of set cursor is no longer supported.
     #[tauri::command]
-    pub fn set_cursor(tab_map: State<TabMap>, filepath: &str, row: u64, col: u64) -> bool {
-        let mut server = tab_map.rpc_server.lock().unwrap();
-        if server.is_running() {
-            server.set_host_cursor(row, col);
-            true
-        } else {
-            false
+    #[deprecated(
+        since = "0.1.0",
+        note = "This function is deprecated and will be removed in the future. The feature of set cursor is no longer supported."
+    )]
+    pub fn set_cursor(
+        cur_tab_name: State<CurTabName>,
+        tab_map: State<TabMap>,
+        rpc_state: State<RpcState>,
+        row: u64,
+        col: u64,
+    ) -> Optional {
+        let mut tabs = tab_map.tabs.lock().unwrap();
+        let mut tab = tabs.get_mut(&get_current_tab_name(&cur_tab_name)).unwrap();
+        match tab.text.get_share_status() {
+            Server => {
+                let mut server = rpc_state.rpc_server.lock().unwrap();
+                server.set_host_cursor(row, col);
+            }
+            Client => {
+                todo!("");
+            }
+            Private => {}
+        }
+        Optional {
+            success: true,
+            message: String::new(),
         }
     }
 
     /// Updates the content of the tab associated with the given file path.
+    /// - `window`: Window handle.
     /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: Current state of all open tabs.
+    /// - `rpc_state`: State containing the RPC server/client.
     /// - `op`: File operation to be performed.
     /// - `start`: Starting position of the content to be updated.
     /// - `end`: Ending position of the content to be updated.
     /// - `content`: New content to be inserted.
     ///
+    /// Will emit event: `front_update_content`
+    /// - [payload](crate::types::middleware_types::UpdateContent)
+    ///
     /// Returns `Optional` indicating the success or failure of the update.
     #[tauri::command]
     pub fn modify_current_tab(
+        window: Window,
         cur_tab_name: State<CurTabName>,
         tab_map: State<TabMap>,
+        rpc_state: State<RpcState>,
         op: FileOperation,
         start: CursorPosition,
         end: CursorPosition,
@@ -161,20 +201,84 @@ pub mod frontend_api {
         let filepath = cur_tab_name.name.lock().unwrap().clone();
         match tab_map.tabs.lock().unwrap().get_mut(&filepath) {
             Some(tab) => {
-                match tab.text.handle_modify(&Modification {
-                    op: op.into(),
-                    op_range: OpRange { start, end },
-                    version: tab.text.get_version() as u64,
-                    modified_content: content.to_owned(),
-                }) {
-                    Ok(_) => Optional {
+                if tab.text.get_share_status() != Client {
+                    match tab.text.handle_modify(&Modification {
+                        op: op.into(),
+                        op_range: OpRange { start, end },
+                        version: tab.text.get_version() as u64,
+                        modified_content: content.to_owned(),
+                    }) {
+                        Ok(_) => Optional {
+                            success: true,
+                            message: String::new(),
+                        },
+                        Err(e) => Optional {
+                            success: false,
+                            message: e.to_string(),
+                        },
+                    }
+                } else {
+                    let mut client = rpc_state.rpc_client.lock().unwrap();
+                    for _ in 1..10 {
+                        match block_on(client.send_update_content(
+                            tab.text.get_version() as u64,
+                            &Modification {
+                                op: op.clone().into(),
+                                op_range: OpRange {
+                                    start: start.clone(),
+                                    end: end.clone(),
+                                },
+                                version: tab.text.get_version() as u64,
+                                modified_content: content.to_owned(),
+                            },
+                        )) {
+                            Ok(res) => {
+                                if res.success {
+                                    tab.text
+                                        .handle_modify(&Modification {
+                                            op: op.into(),
+                                            op_range: OpRange { start, end },
+                                            version: 0,
+                                            modified_content: content.to_owned(),
+                                        })
+                                        .unwrap();
+                                    return Optional {
+                                        success: true,
+                                        message: String::new(),
+                                    };
+                                } else {
+                                    let reply = block_on(
+                                        client.send_get_content(tab.text.get_version() as u64),
+                                    )
+                                    .unwrap();
+                                    let mut emit_val = Vec::new();
+                                    for h in reply.history {
+                                        tab.text.handle_modify(&h.clone().into()).unwrap();
+                                        let op_range = h.op_range.as_ref().unwrap();
+                                        let start = op_range.start.as_ref().unwrap();
+                                        let end = op_range.end.as_ref().unwrap();
+                                        emit_val.push(UpdateContent {
+                                            file_name: get_current_tab_name(&cur_tab_name),
+                                            op: h.op.clone() as i32,
+                                            start: (start.row, start.col),
+                                            end: (end.row, end.col),
+                                            content: h.modified_content.clone(),
+                                        });
+                                    }
+                                    let _ = window.emit("front_update_content", emit_val);
+                                    continue;
+                                }
+                            }
+                            Err(e) => {
+                                dprintln!("Failed to send modify request: {}", e);
+                                break;
+                            }
+                        }
+                    }
+                    Optional {
                         success: true,
                         message: String::new(),
-                    },
-                    Err(e) => Optional {
-                        success: false,
-                        message: e.to_string(),
-                    },
+                    }
                 }
             }
             None => Optional {
@@ -203,7 +307,7 @@ pub mod frontend_api {
         }
     }
 
-    /// Writes data in specific tab to the file file path.
+    /// Writes data in specific tab to the file path.
     /// - `filepath`: Path to the file where data should be written.
     /// - `data`: Content to write to the file.
     ///
@@ -227,22 +331,29 @@ pub mod frontend_api {
     /// simulator for the current tab. Default is [0, 0].
     /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: State containing the map of all tabs.
-    /// - `start`: Start of the range (included).
-    /// - `end`: End of the range (included).
+    /// - `start`: Start of the range (aligned to 4 bytes)
+    /// - `len`: Length of the range (aligned to 4 bytes)
     ///
-    /// Returns `Vec<Data>` containing the data in the specified range.
+    /// Returns `Optional` indicating the success or failure of the operation.
     #[tauri::command]
     pub fn set_return_data_range(
         cur_tab_name: State<CurTabName>,
         tab_map: State<TabMap>,
-        start: u64,
-        end: u64,
-    ) -> Vec<Data> {
+        range: MemoryReturnRange,
+    ) -> Optional {
         let name = cur_tab_name.name.lock().unwrap().clone();
         let mut lock = tab_map.tabs.lock().unwrap();
         let tab = lock.get_mut(&name).unwrap();
-        tab.data_return_range = (start, end);
-        todo!("call simulator to get data");
+        match tab.simulator.set_memory_return_range(range) {
+            Ok(_) => Optional {
+                success: true,
+                message: String::new(),
+            },
+            Err(e) => Optional {
+                success: false,
+                message: e.to_string(),
+            },
+        }
     }
 
     /// Assembles the code in the currently active tab.
@@ -258,6 +369,7 @@ pub mod frontend_api {
         let code = tab.text.to_string();
         let cache = &mut tab.assembly_cache;
         if cache.code != code {
+            cache.parser_cache = Default::default();
             cache.parser_result = Default::default();
             cache.assembler_result = Default::default();
         }
@@ -269,19 +381,26 @@ pub mod frontend_api {
         } else {
             match tab.assembler.assemble(cache.parser_cache.clone().unwrap()) {
                 Ok(res) => {
-                    todo!("load result to simulator");
+                    if let Err(e) = tab.simulator.load_inst(res) {
+                        return AssembleResult::Error(vec![AssembleError {
+                            line: 0,
+                            column: 0,
+                            msg: e.to_string(),
+                        }]);
+                    }
                     cache.assembler_result = Some(AssembleResult::Success(AssembleSuccess {
-                        data: res.data
-                            [tab.data_return_range.0 as usize..=tab.data_return_range.1 as usize]
-                            .to_vec(),
-                        text: res
+                        text: tab
+                            .simulator
+                            .get_raw_inst()
+                            .as_ref()
+                            .unwrap()
                             .instruction
                             .iter()
-                            .map(|inst| Text {
-                                line: inst.line_number + 1,
+                            .map(|inst| AssembleText {
+                                line: inst.line_number,
                                 address: inst.address,
                                 code: inst.code,
-                                basic: Default::default(),
+                                basic: inst.basic.to_string(),
                             })
                             .collect(),
                     }));
@@ -302,7 +421,7 @@ pub mod frontend_api {
         }
     }
 
-    /// Placeholder for a function to dump data from all tabs.
+    /// Dump the code in the currently active tab.
     /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: State containing the map of all tabs.
     ///
@@ -354,109 +473,239 @@ pub mod frontend_api {
     /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: State containing the map of all tabs.
     ///
-    /// Returns `SimulatorResult` indicating whether the debug session was
-    /// successfully started.
+    /// Returns `Optional` indicating whether the run session was successfully
+    /// started.
     #[tauri::command]
-    pub fn run(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> SimulatorResult {
-        todo!("Implement debug")
+    pub fn run(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> Optional {
+        let name = cur_tab_name.name.lock().unwrap().clone();
+        let mut lock = tab_map.tabs.lock().unwrap();
+        let tab = lock.get_mut(&name).unwrap();
+        match tab.simulator.run() {
+            Ok(_) => Optional {
+                success: true,
+                message: String::new(),
+            },
+            Err(e) => Optional {
+                success: false,
+                message: e.to_string(),
+            },
+        }
     }
 
     /// Run the code in the currently active tab in debug mode.
     /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: State containing the map of all tabs.
     ///
-    /// Returns `SimulatorResult` indicating whether the debug session was
-    /// successfully started.
+    /// Returns `Optional` indicating whether the debug session was successfully
+    /// started.
     #[tauri::command]
-    pub fn debug(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> SimulatorResult {
-        todo!("Implement debug")
+    pub fn debug(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> Optional {
+        let name = cur_tab_name.name.lock().unwrap().clone();
+        let mut lock = tab_map.tabs.lock().unwrap();
+        let tab = lock.get_mut(&name).unwrap();
+        match tab.simulator.debug() {
+            Ok(_) => Optional {
+                success: true,
+                message: String::new(),
+            },
+            Err(e) => Optional {
+                success: false,
+                message: e.to_string(),
+            },
+        }
+    }
+
+    /// Stops the currently active tab's simulator.
+    /// - `cur_tab_name`: State containing the current tab name.
+    /// - `tab_map`: State containing the map of all tabs.
+    ///
+    /// Returns `Optional` indicating whether the stop was successful.
+    #[tauri::command]
+    pub fn stop(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> Optional {
+        let name = cur_tab_name.name.lock().unwrap().clone();
+        let mut lock = tab_map.tabs.lock().unwrap();
+        let tab = lock.get_mut(&name).unwrap();
+        match tab.simulator.stop() {
+            Ok(_) => Optional {
+                success: true,
+                message: String::new(),
+            },
+            Err(e) => Optional {
+                success: false,
+                message: e.to_string(),
+            },
+        }
+    }
+
+    /// Resumes the currently active tab's simulator.
+    /// - `cur_tab_name`: State containing the current tab name.
+    /// - `tab_map`: State containing the map of all tabs.
+    ///
+    /// Returns `Optional` indicating whether the resume was successful.
+    #[tauri::command]
+    pub fn resume(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> Optional {
+        let name = cur_tab_name.name.lock().unwrap().clone();
+        let mut lock = tab_map.tabs.lock().unwrap();
+        let tab = lock.get_mut(&name).unwrap();
+        match tab.simulator.resume() {
+            Ok(_) => Optional {
+                success: true,
+                message: String::new(),
+            },
+            Err(e) => Optional {
+                success: false,
+                message: e.to_string(),
+            },
+        }
     }
 
     /// Steps through the code in the currently active tab.
     /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: State containing the map of all tabs.
     ///
-    /// Returns `SimulatorResult` indicating whether the step was successful.
+    /// Returns `Optional` indicating whether the step was successful.
     #[tauri::command]
-    pub fn step(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> SimulatorResult {
-        todo!("Implement step")
+    pub fn step(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> Optional {
+        let name = cur_tab_name.name.lock().unwrap().clone();
+        let mut lock = tab_map.tabs.lock().unwrap();
+        let tab = lock.get_mut(&name).unwrap();
+        match tab.simulator.step() {
+            Ok(_) => Optional {
+                success: true,
+                message: String::new(),
+            },
+            Err(e) => Optional {
+                success: false,
+                message: e.to_string(),
+            },
+        }
     }
 
     /// Resets the state of the currently active tab's simulator.
     /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: State containing the map of all tabs.
     ///
-    /// Returns `SimulatorResult` indicating whether the reset was successful.
+    /// Returns `Optional` indicating whether the reset was successful.
     #[tauri::command]
-    pub fn reset(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> SimulatorResult {
-        todo!("Implement reset")
+    pub fn reset(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> Optional {
+        let name = cur_tab_name.name.lock().unwrap().clone();
+        let mut lock = tab_map.tabs.lock().unwrap();
+        let tab = lock.get_mut(&name).unwrap();
+        match tab.simulator.reset() {
+            Ok(_) => Optional {
+                success: true,
+                message: String::new(),
+            },
+            Err(e) => Optional {
+                success: false,
+                message: e.to_string(),
+            },
+        }
     }
 
     /// Undoes the last instruction for current activate tab's simulator.
     /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: State containing the map of all tabs.
     ///
-    /// Returns `SimulatorResult` indicating whether the undo was successful.
+    /// Returns `Optional` indicating whether the undo was successful.
     #[tauri::command]
-    pub fn undo(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> SimulatorResult {
-        todo!("Implement undo")
+    pub fn undo(cur_tab_name: State<CurTabName>, tab_map: State<TabMap>) -> Optional {
+        let name = cur_tab_name.name.lock().unwrap().clone();
+        let mut lock = tab_map.tabs.lock().unwrap();
+        let tab = lock.get_mut(&name).unwrap();
+        match tab.simulator.undo() {
+            Ok(_) => Optional {
+                success: true,
+                message: String::new(),
+            },
+            Err(e) => Optional {
+                success: false,
+                message: e.to_string(),
+            },
+        }
     }
 
     /// Sets a breakpoint at a specified line in the code of the current tab.
+    /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: State containing the map of all tabs.
     /// - `line`: Line number at which to set the breakpoint.
     ///
-    /// Returns `bool` indicating whether the breakpoint was successfully set.
+    /// Returns `Optional` indicating whether the breakpoint was successfully
+    /// set.
     #[tauri::command]
-    pub fn set_breakpoint(tab_map: State<TabMap>, line: usize) -> bool {
-        todo!("Implement setBreakPoint")
+    pub fn set_breakpoint(
+        cur_tab_name: State<CurTabName>,
+        tab_map: State<TabMap>,
+        line: u64,
+    ) -> Optional {
+        let name = cur_tab_name.name.lock().unwrap().clone();
+        let mut lock = tab_map.tabs.lock().unwrap();
+        let tab = lock.get_mut(&name).unwrap();
+        match tab.simulator.set_breakpoint(line as usize) {
+            Ok(_) => Optional {
+                success: true,
+                message: String::new(),
+            },
+            Err(e) => Optional {
+                success: false,
+                message: e.to_string(),
+            },
+        }
     }
 
     /// Removes a breakpoint at a specified line in the code of the current tab.
+    /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: State containing the map of all tabs.
     /// - `line`: Line number at which to remove the breakpoint.
     ///
-    /// Returns `bool` indicating whether the breakpoint was successfully
+    /// Returns `Optional` indicating whether the breakpoint was successfully
     /// removed.
     #[tauri::command]
-    pub fn remove_breakpoint(tab_map: State<TabMap>, line: u64) -> bool {
-        todo!("Implement removeBreakPoint")
+    pub fn remove_breakpoint(
+        cur_tab_name: State<CurTabName>,
+        tab_map: State<TabMap>,
+        line: u64,
+    ) -> Optional {
+        let name = cur_tab_name.name.lock().unwrap().clone();
+        let mut lock = tab_map.tabs.lock().unwrap();
+        let tab = lock.get_mut(&name).unwrap();
+        match tab.simulator.remove_breakpoint(line as usize) {
+            Ok(_) => Optional {
+                success: true,
+                message: String::new(),
+            },
+            Err(e) => Optional {
+                success: false,
+                message: e.to_string(),
+            },
+        }
     }
 
     /// Send a syscall input to current tab's simulator.
     /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: State containing the map of all tabs.
-    /// - `inputType`: Type of the input, should be one of the following:
-    ///    - "Int"
-    ///    - "Float"
-    ///    - "Double"
-    ///    - "String"
-    ///    - "Char"
-    ///    - "Long"
     /// - `val`: Value of the input as a string.
     ///
-    /// Returns `bool` indicating whether the syscall input was successfully
+    /// Returns `Optional` indicating whether the syscall input was successfully
     #[tauri::command]
-    #[allow(non_snake_case)]
     pub fn syscall_input(
         cur_tab_name: State<CurTabName>,
         tab_map: State<TabMap>,
-        inputType: &str,
         val: String,
-    ) -> bool {
+    ) -> Optional {
         let name = cur_tab_name.name.lock().unwrap().clone();
         let mut lock = tab_map.tabs.lock().unwrap();
         let tab = lock.get_mut(&name).unwrap();
-        let val = match inputType {
-            "Int" => SyscallDataType::Int(val.parse::<i32>().unwrap()),
-            "Float" => SyscallDataType::Float(val.parse::<f32>().unwrap()),
-            "Double" => SyscallDataType::Double(val.parse::<f64>().unwrap()),
-            "String" => SyscallDataType::String(val.bytes().collect()),
-            "Char" => SyscallDataType::Char(val.bytes().next().unwrap()),
-            "Long" => SyscallDataType::Long(val.parse::<i64>().unwrap()),
-            _ => return false,
-        };
-        todo!("call simulator syscall_input with val");
+        match tab.simulator.syscall_input(&val) {
+            Ok(_) => Optional {
+                success: true,
+                message: String::new(),
+            },
+            Err(e) => Optional {
+                success: false,
+                message: e.to_string(),
+            },
+        }
     }
 
     /// Updates the assembler settings for the current tab.
@@ -464,20 +713,34 @@ pub mod frontend_api {
     /// - `tab_map`: State containing the map of all tabs.
     /// - `settings`: New assembler settings to be applied.
     ///
-    /// Returns `bool` indicating whether the settings were successfully
+    /// Returns `Optional` indicating whether the settings were successfully
     /// updated.
     #[tauri::command]
     pub fn update_assembler_settings(
         cur_tab_name: State<CurTabName>,
         tab_map: State<TabMap>,
         settings: AssemblerConfig,
-    ) -> bool {
-        todo!("Implement updateAssemblerSettings");
+    ) -> Optional {
+        let name = cur_tab_name.name.lock().unwrap().clone();
+        let mut lock = tab_map.tabs.lock().unwrap();
+        let tab = lock.get_mut(&name).unwrap();
+        if let Err(e) = tab.simulator.update_config(&settings) {
+            return Optional {
+                success: false,
+                message: e.to_string(),
+            };
+        }
+        tab.assembler.update_config(&settings);
+        Optional {
+            success: true,
+            message: String::new(),
+        }
     }
 
     /// Starts the RPC server for the current tab.
     /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: State containing the map of all tabs.
+    /// - `rpc_state`: State containing the RPC server/client.
     /// - `password`: Password to be used for the RPC server.
     ///
     /// Returns `Optional` indicating the success or failure of the RPC server
@@ -485,71 +748,162 @@ pub mod frontend_api {
     pub fn start_share_server(
         cur_tab_name: State<CurTabName>,
         tab_map: State<TabMap>,
+        rpc_state: State<RpcState>,
         port: u16,
         password: &str,
     ) -> Optional {
-        if tab_map.tabs.lock().unwrap().len() == 0 {
+        let mut tabs_lock = tab_map.tabs.lock().unwrap();
+        if tabs_lock.len() == 0 {
             return Optional {
                 success: false,
                 message: "No tab had been opened".to_string(),
             };
         }
-        let mut rpc_lock = tab_map.rpc_server.lock().unwrap();
-        rpc_lock.stop_service();
-        rpc_lock.change_password(password);
-        if let Err(e) = rpc_lock.set_port(port) {
+
+        let mut server_lock = rpc_state.rpc_server.lock().unwrap();
+        if server_lock.is_running() {
+            return Optional {
+                success: false,
+                message: "Server already running".to_string(),
+            };
+        } else if let Err(e) = server_lock.set_port(port) {
             return Optional {
                 success: false,
                 message: e.to_string(),
             };
-        } else if let Err(e) = rpc_lock.start_service(
+        }
+
+        server_lock.change_password(password);
+        if let Err(e) = server_lock.start_server(
             state::get_current_tab_name(&cur_tab_name),
             Ptr::new(&tab_map),
+            &CURSOR_LIST,
         ) {
-            return Optional {
+            Optional {
                 success: false,
                 message: e.to_string(),
-            };
+            }
         } else {
-            return Optional {
+            let mut tab = tabs_lock
+                .get_mut(&get_current_tab_name(&cur_tab_name))
+                .unwrap();
+            tab.text.change_share_status(Server);
+            Optional {
                 success: true,
                 message: String::new(),
-            };
+            }
         }
     }
 
     /// Authorize and connect to a remote RPC server as client.
     /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: State containing the map of all tabs.
+    /// - `rpc_state`: State containing the RPC server/client.
     /// - `ip`: IPV4 address of the remote server.
     /// - `port`: Port number of the remote server.
     /// - `password`: Password to be used for the connection.
     ///
+    /// Will emit event `front_share_client`
+    /// - [payload](crate::types::menu_types::OpenShareFile)
+    ///
     /// Returns `Optional` indicating the success or failure of the connection.
     #[tauri::command]
-    pub fn authorize(
+    pub fn authorize_share_client(
+        window: Window,
         cur_tab_name: State<CurTabName>,
         tab_map: State<TabMap>,
+        rpc_state: State<RpcState>,
         ip: String,
         port: u16,
         password: String,
     ) -> Optional {
-        todo!("Implement authorize as client");
-        //TODO:@Vollate
+        let mut client = rpc_state.rpc_client.lock().unwrap();
+        let addr: SocketAddr = match format!("{}:{}", ip, port).parse() {
+            Ok(val) => val,
+            Err(_) => {
+                return Optional {
+                    success: false,
+                    message: "Invalid IP or port".to_string(),
+                };
+            }
+        };
+
+        if let Err(e) = client.set_server_addr(addr) {
+            return Optional {
+                success: false,
+                message: e.to_string(),
+            };
+        } else if let Err(e) = client.start() {
+            return Optional {
+                success: false,
+                message: e.to_string(),
+            };
+        }
+
+        match block_on(client.send_authorize(&password)) {
+            Ok(val) => {
+                let mut client_text = rope_store::Text::from_str(Path::new(&val.0), &val.2);
+                client_text.change_share_status(Client);
+                let emit_val = OpenShareFile {
+                    file_path: val.0.clone(),
+                    content: val.2,
+                };
+                let client_tab = Tab {
+                    text: Box::new(client_text),
+                    parser: Box::new(RISCVParser::new(&vec![RISCVExtension::RV32I])),
+                    assembler: Box::new(RiscVAssembler::new()),
+                    simulator: Box::new(RISCVSimulator::new(&val.0)),
+                    assembly_cache: Default::default(),
+                };
+                tab_map
+                    .tabs
+                    .lock()
+                    .unwrap()
+                    .insert(val.0.clone(), client_tab);
+                set_current_tab_name(&cur_tab_name, &val.0);
+                if let Err(e) = window.emit("front_share_client", emit_val) {
+                    return Optional {
+                        success: false,
+                        message: e.to_string(),
+                    };
+                } else {
+                    Optional {
+                        success: true,
+                        message: String::new(),
+                    }
+                }
+            }
+            Err(e) => {
+                let _ = client.stop();
+                Optional {
+                    success: false,
+                    message: e.to_string(),
+                }
+            }
+        }
     }
 
     /// Stop the share server for the current tab.
+    /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: State containing the map of all tabs.
+    /// - `rpc_state`: State containing the RPC server/client.
     ///
     /// Returns `bool` indicating the success or failure, failure means the
     /// server is not running.
     #[tauri::command]
-    pub fn stop_share_server(tab_map: State<TabMap>) -> bool {
-        let mut server = tab_map.rpc_server.lock().unwrap();
+    pub fn stop_share_server(
+        cur_tab_name: State<CurTabName>,
+        tab_map: State<TabMap>,
+        rpc_state: State<RpcState>,
+    ) -> bool {
+        let mut server = rpc_state.rpc_server.lock().unwrap();
         if !server.is_running() {
             false
         } else {
-            server.stop_service();
+            server.stop_server();
+            let mut tabs = tab_map.tabs.lock().unwrap();
+            let mut tab = tabs.get_mut(&get_current_tab_name(&cur_tab_name)).unwrap();
+            tab.text.change_share_status(Private);
             true
         }
     }
@@ -589,30 +943,94 @@ pub mod frontend_api {
 /// to emit event to the frontend, and the frontend needs to handle the event by
 /// `listen`.
 pub mod backend_api {
+    use strum::VariantArray;
     use tauri::Manager;
 
     use crate::{
-        types::middleware_types::{SyscallDataType, SyscallOutput, SyscallRequest},
+        interface::simulator::Simulator,
+        modules::riscv::basic::interface::parser::RV32IRegister,
+        types::middleware_types::{
+            Optional,
+            Register,
+            SimulatorData,
+            SyscallOutput,
+            SyscallRequest,
+        },
         APP_HANDLE,
     };
+
+    /// Emits a simulator update event to the frontend.
+    /// - `simulator`: Simulator instance to update its state.
+    /// - `simulator_res`: Result of the simulator operation.
+    ///
+    /// Returns `Result` indicating the success or failure of the event
+    /// emission.
+    ///
+    /// This function will emit a `front_simulator_update` event to the
+    /// frontend, and the payload is a `SimulatorData` containing the
+    /// current pc index, register and memory values.
+    ///
+    /// [SimulatorData](crate::types::middleware_types::SimulatorData):
+    /// - `filepath`: string
+    /// - `success`: bool
+    /// - `paused`: bool
+    /// - `has_current_text`: bool
+    /// - `current_text`: u64
+    /// - `registers`: Vec<[Register](crate::types::middleware_types::Register)>
+    /// - `data`: Vec<u32>
+    /// - `message`: string
+    pub fn simulator_update(
+        simulator: &mut dyn Simulator,
+        simulator_res: Optional,
+        paused: bool,
+    ) -> Result<(), String> {
+        if let Some(app_handle) = APP_HANDLE.lock().unwrap().as_ref() {
+            if let Ok(_) = app_handle.emit_all(
+                "front_simulator_update",
+                SimulatorData {
+                    filepath: simulator.get_filepath().to_string(),
+                    success: simulator_res.success,
+                    paused,
+                    has_current_text: simulator.get_pc_idx().is_some(),
+                    current_text: simulator.get_pc_idx().unwrap_or(0) as u64,
+                    registers: simulator
+                        .get_register()
+                        .iter()
+                        .enumerate()
+                        .map(|(i, &val)| Register {
+                            name: RV32IRegister::VARIANTS[i].to_string(),
+                            number: i.to_string(),
+                            value: val as u64,
+                        })
+                        .collect(),
+                    data: simulator.get_memory(),
+                    message: simulator_res.message,
+                },
+            ) {
+                Ok(())
+            } else {
+                Err("Failed to emit simulator update event!".to_string())
+            }
+        } else {
+            Err("AppHandle is not initialized!".to_string())
+        }
+    }
 
     /// Emits a print syscall output event to the frontend.
     /// - `pathname`: Identifier for the tab to which the output should be sent.
     /// - `output`: Output to be printed.
     ///
-    /// Returns `Option` containing an error if the event could not be emitted.
+    /// Returns `Result` indicating the success or failure of the event
+    /// emission.
     ///
     /// This function will emit a `front_syscall_print` event to the frontend,
     /// and the payload is a `SyscallOutput` containing the filepath and output
     /// to be printed.
     ///
-    /// SyscallOutput:
+    /// [SyscallOutput](crate::types::middleware_types::SyscallOutput):
     /// - `filepath`: string
     /// - `data`: string
-    pub fn syscall_output_print(
-        pathname: &str,
-        output: &str,
-    ) -> Option<Box<dyn std::error::Error>> {
+    pub fn syscall_output_print(pathname: &str, output: &str) -> Result<(), String> {
         if let Some(app_handle) = APP_HANDLE.lock().unwrap().as_ref() {
             if let Ok(_) = app_handle.emit_all(
                 "front_syscall_print",
@@ -621,60 +1039,40 @@ pub mod backend_api {
                     data: output.to_string(),
                 },
             ) {
-                None
+                Ok(())
             } else {
-                Some(Box::new(std::io::Error::new(
-                    std::io::ErrorKind::Other,
-                    "Failed to emit syscall output print event!",
-                )))
+                Err("Failed to emit syscall output print event!".to_string())
             }
         } else {
-            Some(Box::new(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                "AppHandle is not initialized!",
-            )))
+            Err("AppHandle is not initialized!".to_string())
         }
     }
 
-    /// Emits a syscall input request event to the frontend.
-    /// - `pathname`: Identifier for the tab to which the request should be
-    ///   sent.
-    /// - `acquire_type`: Type of the input to be acquired.
+    /// Emits a print syscall output event to the frontend.
+    /// - `pathname`: Identifier for the tab to which the output should be sent.
     ///
-    /// Returns `Option` containing an error if the event could not be emitted.
+    /// Returns `Result` indicating the success or failure of the event
+    /// emission.
     ///
     /// This function will emit a `front_syscall_request` event to the frontend,
-    /// and the payload is one of the following string:
-    /// - "Int"
-    /// - "Float"
-    /// - "Double"
-    /// - "String"
-    /// - "Char"
-    /// - "Long"
-    pub fn syscall_input_request(
-        pathname: &str,
-        acquire_type: SyscallDataType,
-    ) -> Option<Box<dyn std::error::Error>> {
+    /// and the payload is a `SyscallRequest` containing the filepath.
+    ///
+    /// [SyscallRequest](crate::types::middleware_types::SyscallRequest):
+    /// - `filepath`: string
+    pub fn syscall_input_request(pathname: &str) -> Result<(), String> {
         if let Some(app_handle) = APP_HANDLE.lock().unwrap().as_ref() {
             if let Ok(_) = app_handle.emit_all(
                 "front_syscall_request",
                 SyscallRequest {
-                    path: pathname.to_string(),
-                    syscall: acquire_type.to_string(),
+                    filepath: pathname.to_string(),
                 },
             ) {
-                None
+                Ok(())
             } else {
-                Some(Box::new(std::io::Error::new(
-                    std::io::ErrorKind::Other,
-                    "Failed to emit syscall input request event!",
-                )))
+                Err("Failed to emit syscall input request event!".to_string())
             }
         } else {
-            Some(Box::new(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                "AppHandle is not initialized!",
-            )))
+            Err("AppHandle is not initialized!".to_string())
         }
     }
 }

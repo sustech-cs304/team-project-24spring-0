@@ -1,5 +1,7 @@
 use tauri::{CustomMenuItem, Menu, Submenu, WindowMenuEvent};
 
+use crate::APP_HANDLE;
+
 pub fn new() -> Submenu {
     Submenu::new(
         "Setting",
@@ -19,7 +21,15 @@ pub fn event_handler(event: WindowMenuEvent) {
 }
 
 fn assembler_memory_handler(event: WindowMenuEvent) {
-    todo!("update assembler memory setting");
-    // you could reference other files in menu folder about how to use the event
-    // don't forage to write the comment to generate doc for frontend
+    let handle_lock = APP_HANDLE.lock().unwrap();
+    let app_handle = handle_lock.as_ref().unwrap();
+    let _window = tauri::WindowBuilder::new(
+        app_handle,
+        "assembler_memory",
+        tauri::WindowUrl::App("/assembler-settings".parse().unwrap()),
+    )
+    .title("Set Memory")
+    .menu(Menu::new())
+    .build()
+    .unwrap();
 }

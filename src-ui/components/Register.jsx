@@ -1,16 +1,46 @@
+'use client';
+
 import React from 'react';
+import { Tabs, Tab, Card, CardBody } from '@nextui-org/react';
 import {
-  Card,
-  CardBody,
   Table,
-  TableBody,
-  TableCell,
-  TableColumn,
   TableHeader,
+  TableBody,
   TableRow,
+  TableColumn,
+  TableCell,
 } from '@nextui-org/react';
+import useFileStore from '@/utils/state';
+
+function toHex(decimal) {
+  return '0x' + decimal.toString(16).padStart(8, '0');
+}
 
 export default function Register() {
+  const fileStore = useFileStore();
+  const files = useFileStore(state => state.files);
+  const currentFile = files.find(
+    file => file.fileName === fileStore.currentFile,
+  );
+
+  function getRegisterTable() {
+    if (currentFile === undefined) {
+      return <TableBody></TableBody>;
+    } else {
+      return (
+        <TableBody>
+          {Array.from({ length: currentFile.register.length }, (_, index) => (
+            <TableRow key={index}>
+              <TableCell>{currentFile.register[index].name}</TableCell>
+              <TableCell>{currentFile.register[index].number}</TableCell>
+              <TableCell>{toHex(currentFile.register[index].value)}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      );
+    }
+  }
+
   return (
     <div className='flex flex-col max-h-[calc(100vh-60px)] overflow-scroll'>
       <Card className='h-full'>
@@ -20,21 +50,11 @@ export default function Register() {
             aria-label='Example static collection table'
           >
             <TableHeader>
-              <TableColumn>Register</TableColumn>
+              <TableColumn>Name</TableColumn>
+              <TableColumn>Number</TableColumn>
               <TableColumn>Value</TableColumn>
             </TableHeader>
-            <TableBody>
-              <TableRow key='0'>
-                <TableCell>x0</TableCell>
-                <TableCell>0</TableCell>
-              </TableRow>
-              {Array.from({ length: 31 }, (_, index) => (
-                <TableRow key={index + 1}>
-                  <TableCell>{`x${index}`}</TableCell>
-                  <TableCell>0</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
+            {getRegisterTable()}
           </Table>
         </CardBody>
       </Card>

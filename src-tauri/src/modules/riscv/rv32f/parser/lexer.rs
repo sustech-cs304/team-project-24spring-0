@@ -86,11 +86,9 @@ impl RV32FOpToken {
 
 impl From<RV32FOpToken> for RISCVOpToken {
     fn from(op: RV32FOpToken) -> RISCVOpToken {
-        unsafe {
-            RISCVOpToken {
-                val: *std::mem::transmute::<&_, &u8>(&op),
-                get_opd_set_fn: |v| &OP_LIST[v as usize],
-            }
+        RISCVOpToken {
+            val: op as u8,
+            get_opd_set_fn: |v| &OP_LIST[v as usize],
         }
     }
 }

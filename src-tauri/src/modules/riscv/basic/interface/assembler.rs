@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 pub use crate::modules::riscv::basic::assembler::assembler::RiscVAssembler;
 use crate::{
-    interface::assembler::{InstructionSet, InstructionSetTrait, Operand},
+    interface::assembler::{InstructionSet, InstructionSetTrait},
     modules::riscv::basic::interface::parser::*,
 };
 
@@ -30,20 +30,5 @@ impl Display for InstructionSet<RISCV> {
         )
         .expect("panic");
         Ok(())
-    }
-}
-
-impl Display for Operand<RISCV> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Operand::Reg(reg) => {
-                write!(f, " {:?}", reg)?;
-                Ok(())
-            }
-            Operand::Operator(imm) => {
-                write!(f, " {:?}", imm)?;
-                Ok(())
-            }
-        }
     }
 }

@@ -2,30 +2,37 @@ use std::path::Path;
 
 use tauri::{
     api::dialog::{FileDialogBuilder, MessageDialogButtons, MessageDialogKind},
+    async_runtime::block_on,
     CustomMenuItem,
     Manager,
     Menu,
     Submenu,
+    Window,
     WindowMenuEvent,
 };
 
 use super::display_dialog;
 use crate::{
+    dprintln,
+    interface::storage::FileShareStatus::{Client, Server},
     io::file_io,
     modules::riscv::basic::interface::{
         assembler::RiscVAssembler,
         parser::{RISCVExtension, RISCVParser},
     },
+    simulator::simulator::RISCVSimulator,
     storage::rope_store,
     types::{
         menu_types,
         middleware_types::{Tab, TabMap},
+        rpc_types::RpcState,
         ResultVoid,
     },
     utility::{
         ptr::Ptr,
         state_helper::event::{get_current_tab_name, set_current_tab_name},
     },
+    APP_HANDLE,
 };
 
 pub fn new() -> Submenu {
@@ -73,41 +80,70 @@ pub fn event_handler(event: WindowMenuEvent) {
 fn open_handler(event: WindowMenuEvent) {
     let picker = FileDialogBuilder::new();
     picker.pick_file(move |file_path| match file_path {
-        Some(file_path) => match new_tab(&event, file_path.as_path()) {
-            Ok(_) => {
-                let name = get_current_tab_name(&event);
-                let tab_map = event.window().state::<TabMap>();
-                let lock = tab_map.tabs.lock().unwrap();
-                let tab = lock.get(&name).unwrap();
-                let content = tab.text.to_string();
-                event
-                    .window()
-                    .emit(
-                        "front_file_open",
-                        menu_types::OpenFile {
-                            file_path: file_path.to_str().unwrap().to_owned(),
-                            content,
-                        },
+        Some(file_path) => {
+            if let Some(_) = event
+                .window()
+                .state::<TabMap>()
+                .tabs
+                .lock()
+                .unwrap()
+                .get(file_path.to_str().unwrap())
+            {
+                display_dialog(
+                    MessageDialogKind::Info,
+                    MessageDialogButtons::Ok,
+                    format!(
+                        "{} has already opened",
+                        file_path.file_name().unwrap().to_str().unwrap()
                     )
-                    .unwrap();
+                    .as_str(),
+                    format!("Full path: {}", file_path.to_str().unwrap()).as_str(),
+                    |_| {},
+                );
+                return;
             }
-            Err(e) => display_dialog(
-                MessageDialogKind::Info,
-                MessageDialogButtons::Ok,
-                format!("Failed to open {:?}", file_path.file_name().unwrap()).as_str(),
-                &e.to_string(),
-                |_| {},
-            ),
-        },
+            match new_tab(&event, file_path.as_path()) {
+                Ok(_) => {
+                    let name = get_current_tab_name(&event);
+                    let tab_map = event.window().state::<TabMap>();
+                    let lock = tab_map.tabs.lock().unwrap();
+                    let tab = lock.get(&name).unwrap();
+                    let content = tab.text.to_string();
+                    event
+                        .window()
+                        .emit(
+                            "front_file_open",
+                            menu_types::OpenFile {
+                                file_path: file_path.to_str().unwrap().to_owned(),
+                                content,
+                            },
+                        )
+                        .unwrap();
+                }
+                Err(e) => display_dialog(
+                    MessageDialogKind::Info,
+                    MessageDialogButtons::Ok,
+                    format!("Failed to open {}", file_path.to_str().unwrap()).as_str(),
+                    &e.to_string(),
+                    |_| {},
+                ),
+            }
+        }
         _ => {}
     });
 }
 
 /// event emit: front_file_save
-/// payload: String
+/// payload: String fn save_handler(event: &WindowMenuEvent) { let name =
+/// get_current_tab_name(&event); let tab_map =
+/// event.window().state::<TabMap>(); let mut lock =
+/// tab_map.tabs.lock().unwrap();
 fn save_handler(event: &WindowMenuEvent) {
-    let name = get_current_tab_name(&event);
     let tab_map = event.window().state::<TabMap>();
+    if tab_map.tabs.lock().unwrap().len() == 0 {
+        return;
+    }
+    let name = get_current_tab_name(&event);
     let mut lock = tab_map.tabs.lock().unwrap();
     let tab = lock.get_mut(&name).unwrap();
     match tab.text.save() {
@@ -139,7 +175,7 @@ fn save_as_handler(event: WindowMenuEvent) {
         let tab = lock.get(&name).unwrap();
         tab.text.to_string()
     };
-    let picker = tauri::api::dialog::FileDialogBuilder::new();
+    let picker = FileDialogBuilder::new();
     picker.save_file(move |file_path| match file_path {
         Some(file_path) => match file_io::write_file(file_path.as_path(), &content) {
             Ok(_) => {
@@ -160,10 +196,12 @@ fn save_as_handler(event: WindowMenuEvent) {
 }
 
 fn share_handler(event: &WindowMenuEvent) {
+    let handle_lock = APP_HANDLE.lock().unwrap();
+    let app_handle = handle_lock.as_ref().unwrap();
     let _window = tauri::WindowBuilder::new(
-        &event.window().app_handle(),
-        "live_share", /* the unique window label */
-        tauri::WindowUrl::External("https://tauri.app/".parse().unwrap()),
+        app_handle,
+        "live_share",
+        tauri::WindowUrl::App("/share".parse().unwrap()),
     )
     .title("Live Share")
     .menu(Menu::new())
@@ -178,7 +216,7 @@ fn close_handler(event: &WindowMenuEvent) {
     let mut lock = tab_map.tabs.lock().unwrap();
     match lock.get_mut(&name) {
         Some(tab) => {
-            dirty_close_checker(event, &name, tab);
+            close_checker(event.window(), &name, tab);
         }
         None => {}
     }
@@ -195,7 +233,7 @@ fn exit_handler(event: &WindowMenuEvent) {
     let tab_map = window.state::<TabMap>();
     let mut lock = tab_map.tabs.lock().unwrap();
     for (name, tab) in lock.iter_mut() {
-        dirty_close_checker(event, name, tab);
+        close_checker(event.window(), name, tab);
     }
     window.app_handle().exit(0);
 }
@@ -211,8 +249,7 @@ fn new_tab(event: &WindowMenuEvent, file_path: &Path) -> ResultVoid {
         text: Box::new(content),
         parser: Box::new(RISCVParser::new(&vec![RISCVExtension::RV32I])),
         assembler: Box::new(RiscVAssembler::new()),
-        //simulator: Box::new(Default::default()),
-        data_return_range: Default::default(),
+        simulator: Box::new(RISCVSimulator::new(file_path.to_str().unwrap())),
         assembly_cache: Default::default(),
     };
     tab_map
@@ -229,10 +266,39 @@ fn new_tab(event: &WindowMenuEvent, file_path: &Path) -> ResultVoid {
 /// If user choose not to save, close the tab directly.
 ///
 /// This function will emit a `front_close_tab` event to the window.
-fn dirty_close_checker(event: &WindowMenuEvent, name: &str, tab: &mut Tab) {
+pub fn close_checker(window: &Window, name: &str, tab: &mut Tab) {
     let tab_ptr = Ptr::new(tab);
-    let event_ptr = Ptr::new(event);
-    if tab.text.is_dirty() {
+    let window_ptr = Ptr::new(window);
+    let mut text = &mut tab.text;
+    let share_status = text.get_share_status();
+    if share_status == Server {
+        window
+            .state::<RpcState>()
+            .rpc_server
+            .lock()
+            .unwrap()
+            .stop_server();
+    } else if share_status == Client {
+        if let Err(e) = block_on(
+            window
+                .state::<RpcState>()
+                .rpc_client
+                .lock()
+                .unwrap()
+                .send_disconnect(),
+        ) {
+            dprintln!("{}", e.to_string());
+        }
+        window
+            .state::<RpcState>()
+            .rpc_client
+            .lock()
+            .unwrap()
+            .stop()
+            .unwrap();
+        return;
+    }
+    if text.is_dirty() {
         display_dialog(
             MessageDialogKind::Warning,
             MessageDialogButtons::YesNo,
@@ -258,8 +324,7 @@ fn dirty_close_checker(event: &WindowMenuEvent, name: &str, tab: &mut Tab) {
                         }
                     }
                 }
-                let event = event_ptr.as_ref();
-                let _ = event.window().emit("front_close_tab", true);
+                let _ = window_ptr.as_mut().emit("front_close_tab", true);
             },
         )
     }

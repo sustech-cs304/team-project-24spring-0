@@ -22,7 +22,7 @@ pub trait InstructionSetTrait {
 
 #[derive(Clone)]
 pub struct AssembleResult<IS: ParserInstSet + InstructionSetTrait> {
-    pub data: Vec<u32>,
+    pub data: Vec<u8>,
     pub instruction: Vec<InstructionSet<IS>>,
 }
 
@@ -41,11 +41,8 @@ pub struct Instruction<IS: ParserInstSet + InstructionSetTrait> {
     pub operands: Vec<Operand<IS>>,
 }
 
-#[derive(Clone)]
-pub enum Operand<IS: ParserInstSet + InstructionSetTrait> {
-    Reg(IS::Register),
-    Operator(IS::Immediate),
-}
+#[allow(type_alias_bounds)]
+pub type Operand<IS: ParserInstSet + InstructionSetTrait> = IS::Immediate;
 
 pub struct Memory {
     pub data: String,
@@ -77,7 +74,7 @@ impl<IS: ParserInstSet + InstructionSetTrait> InstructionSet<IS> {
     pub fn new(instruction: Instruction<IS>) -> Self {
         InstructionSet {
             line_number: 0,
-            instruction: instruction,
+            instruction,
             address: 0,
             code: 0,
             basic: String::new(),

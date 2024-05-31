@@ -1,6 +1,6 @@
-import { Button, Input, Textarea } from '@nextui-org/react';
+import { Input, Button, Textarea } from '@nextui-org/react';
 import { invoke } from '@tauri-apps/api/tauri';
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { listen } from '@tauri-apps/api/event';
 import useFileStore from '@/utils/state';
 

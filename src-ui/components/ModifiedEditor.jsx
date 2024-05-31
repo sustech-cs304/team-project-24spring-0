@@ -13,7 +13,7 @@ function getDifference(a, b) {
   var result = '';
 
   while (j < b.length) {
-    if (a[i] !== b[j] || i === a.length) result += b[j];
+    if (a[i] != b[j] || i == a.length) result += b[j];
     else i++;
     j++;
   }
@@ -33,29 +33,34 @@ export default function ModifiedEditor({ fileName }) {
     // you can store it in `useRef` for further usage
     editorRef.current = editor;
     monacoRef.current = monaco;
-  }
 
-  var handleEditorChange = async value => {
-    let newInput = getDifference(file.code, value);
-    state.updateFile(
-      fileName,
-      value,
-      file.original,
-      file.assembly,
-      file.runLines,
-    );
-    let position = editorRef.current.getPosition();
-    let line = position.lineNumber;
-    let column = position.column;
-    console.log(
-      'Current: line: ',
-      line,
-      'column: ',
-      column,
-      'value: ',
-      newInput,
-    );
-  };
+    // 假设 editor 是您已经创建好的 Monaco Editor 实例
+    editor.onDidChangeModelContent(async function (event) {
+      for (const change of event.changes) {
+        var op =
+          change.text.length > 0
+            ? change.range.startColumn == change.range.endColumn
+              ? `Insert`
+              : `Replace`
+            : `Delete`;
+        var text = change.text;
+        var startPosition = {
+          row: change.range.startLineNumber - 1,
+          col: change.range.startColumn - 1,
+        };
+        var endPosition = {
+          row: change.range.endLineNumber - 1,
+          col: change.range.endColumn - 1,
+        };
+        invoke('modify_current_tab', {
+          op: op.toString(),
+          content: text,
+          start: startPosition,
+          end: endPosition,
+        });
+      }
+    });
+  }
 
   var handleClickedRun = async () => {
     var line = editorRef.current.getPosition();
@@ -78,24 +83,40 @@ export default function ModifiedEditor({ fileName }) {
         language={language_id}
         className='overflow-hidden h-full'
         value={file.code}
-        onChange={handleEditorChange}
         onMount={handleEditorDidMount}
+        onChange={async (value, event) => {
+          state.updateFile(
+            fileName,
+            value,
+            file.original,
+            file.assembly,
+            file.runLines,
+            file.register,
+            file.memory,
+            file.baseAddress,
+            file.started,
+            file.paused,
+            file.shared,
+          );
+        }}
         options={{ hover: { enabled: true } }}
         beforeMount={LoadMonacoConfig}
       />
       <div className='absolute right-2 top-0 flex-row gap-2'>
-        <button
-          className='bg-gray-100 rounded-2xl hover:bg-gray-200'
-          onClick={handleClickedRun}
-        >
-          <Image alt='run icon' src='/icons/run.svg' width={16} height={16} />
-        </button>
+        {/*<button className="bg-gray-100 rounded-2xl hover:bg-gray-200" onClick={handleClickedRun}>*/}
+        {/*  <Image alt="run icon" src="/icons/run.svg" width={16} height={16} />*/}
+        {/*</button>*/}
       </div>
     </div>
   );
 }
 
 function LoadMonacoConfig(monaco) {
+  // check whether the language is registered or not
+  if (monaco.languages.getLanguages().some(({ id }) => id === language_id)) {
+    return;
+  }
+
   monaco.languages.register({ id: language_id });
 
   monaco.languages.setMonarchTokensProvider(

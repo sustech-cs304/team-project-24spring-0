@@ -1,6 +1,7 @@
 use crate::{
-    interface::assembler::Assembler,
+    interface::assembler::{AssembleResult, Assembler, AssemblyError},
     modules::riscv::basic::{assembler::assembler::RiscVAssembler, interface::parser::*},
+    types::middleware_types::AssemblerConfig,
 };
 
 #[test]
@@ -111,20 +112,50 @@ L2:
             }
             let ast = p.parse(&rope.clone().to_string()).unwrap();
             let assembled_result = riscv_assembler.assemble(ast);
-            match assembled_result {
-                Ok(res) => {
-                    for data in res.data {
-                        println!("0x{:08x}", data);
-                    }
-                    for instruction in res.instruction {
-                        println!("{}", instruction.to_string());
-                    }
-                }
-                Err(err) => {
-                    for e in err {
-                        println!("{}", e.to_string());
-                    }
-                }
+            check_assembler(assembled_result);
+            let ast = p.parse(&rope.clone().to_string()).unwrap();
+            let mut new_configuration = AssemblerConfig {
+                memory_map_limit_address: 0x00007fff,
+                kernel_space_high_address: 0x00007fff,
+                mmio_base_address: 0x00007f00,
+                kernel_space_base_address: 0x00004000,
+                user_space_high_address: 0x00003fff,
+                data_segment_limit_address: 0x00002fff,
+                stack_base_address: 0x00002ffc,
+                stack_pointer_sp: 0x00002ffc,
+                stack_limit_address: 0x00002000,
+                heap_base_address: 0x00002000,
+                dot_data_base_address: 0x00000000,
+                global_pointer_gp: 0x00001800,
+                data_segment_base_address: 0x00000000,
+                dot_extern_base_address: 0x00001000,
+                text_limit_address: 0x00003ffc,
+                dot_text_base_address: 0x00003000,
+            };
+            riscv_assembler.update_config(&new_configuration);
+            let assembled_result = riscv_assembler.assemble(ast);
+            check_assembler(assembled_result);
+            riscv_assembler.update_config(&AssemblerConfig::default());
+            let ast = p.parse(&rope.clone().to_string()).unwrap();
+            let assembled_result = riscv_assembler.assemble(ast);
+            check_assembler(assembled_result);
+        }
+        Err(err) => {
+            for e in err {
+                println!("{}", e.to_string());
+            }
+        }
+    }
+}
+
+fn check_assembler(assembled_result: Result<AssembleResult<RISCV>, Vec<AssemblyError>>) {
+    match assembled_result {
+        Ok(res) => {
+            for data in res.data {
+                println!("0x{:02x}", data);
+            }
+            for instruction in res.instruction {
+                println!("{}", instruction.to_string());
             }
         }
         Err(err) => {
