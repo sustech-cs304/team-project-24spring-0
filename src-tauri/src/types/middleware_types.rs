@@ -172,7 +172,7 @@ impl Default for AssemblerConfig {
 #[derive(Clone, Serialize)]
 pub struct UpdateContent {
     pub file_name: String,
-    pub op: u8,
+    pub op: i32,
     pub start: (u64, u64),
     pub end: (u64, u64),
     pub content: String,

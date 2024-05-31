@@ -21,6 +21,7 @@ use editor_rpc::{
     UpdateContentReply,
     UpdateContentRequest,
 };
+use tauri::{Manager, Window};
 use tokio::task::JoinHandle;
 use tonic::{transport::Server, Request, Response, Status};
 
@@ -34,11 +35,12 @@ use crate::{
     dprintln,
     interface::remote::RpcServer,
     types::{
-        middleware_types::{Tab, TabMap},
+        middleware_types::{Tab, TabMap, UpdateContent},
         rpc_types::CursorList,
         ResultVoid,
     },
     utility::ptr::Ptr,
+    APP_HANDLE,
 };
 
 pub mod editor_rpc {
@@ -47,6 +49,7 @@ pub mod editor_rpc {
 
 #[derive(Default)]
 struct ServerHandle {
+    window: Option<Window>,
     map_state: Mutex<(String, Option<Ptr<TabMap>>)>,
     version: atomic::AtomicUsize,
     password: Mutex<String>,
@@ -284,10 +287,30 @@ impl Editor for Arc<Mutex<ServerHandle>> {
                     &vec![Modification::from(request_ref.clone())],
                     &mut *handler.cursor_lsit.lock().unwrap(),
                 ) {
-                    Ok(_) => Ok(Response::new(UpdateContentReply {
-                        success: true,
-                        message: String::new(),
-                    })),
+                    Ok(_) => {
+                        let start = request_ref
+                            .op_range
+                            .as_ref()
+                            .unwrap()
+                            .start
+                            .as_ref()
+                            .unwrap();
+                        let end = request_ref.op_range.as_ref().unwrap().end.as_ref().unwrap();
+                        let _ = APP_HANDLE.lock().unwrap().as_ref().unwrap().emit_all(
+                            "front_update_content",
+                            UpdateContent {
+                                file_name: tab.text.get_path_str(),
+                                op: request_ref.op,
+                                start: (start.row, start.col),
+                                end: (end.row, end.col),
+                                content: request_ref.modified_content.clone(),
+                            },
+                        );
+                        Ok(Response::new(UpdateContentReply {
+                            success: true,
+                            message: String::new(),
+                        }))
+                    }
                     Err(e) => Ok(Response::new(UpdateContentReply {
                         success: false,
                         message: e.to_string(),
