@@ -1072,7 +1072,6 @@
 <a href="#1072" id="1072">1072</a>
 <a href="#1073" id="1073">1073</a>
 <a href="#1074" id="1074">1074</a>
-<a href="#1075" id="1075">1075</a>
 </pre></div><pre class="rust"><code><span class="doccomment">/// This module provides API functions for the frontend. Could be used by
 /// `invoke` in EMCAScript
 </span><span class="kw">pub mod </span>frontend_api {
@@ -1326,22 +1325,21 @@
                                         client.send_get_content(tab.text.get_version() <span class="kw">as </span>u64),
                                     )
                                     .unwrap();
+                                    <span class="kw">let </span><span class="kw-2">mut </span>emit_val = Vec::new();
                                     <span class="kw">for </span>h <span class="kw">in </span>reply.history {
                                         tab.text.handle_modify(<span class="kw-2">&amp;</span>h.clone().into()).unwrap();
                                         <span class="kw">let </span>op_range = h.op_range.as_ref().unwrap();
                                         <span class="kw">let </span>start = op_range.start.as_ref().unwrap();
                                         <span class="kw">let </span>end = op_range.end.as_ref().unwrap();
-                                        <span class="kw">let _ </span>= window.emit(
-                                            <span class="string">"front_update_content"</span>,
-                                            UpdateContent {
-                                                file_name: get_current_tab_name(<span class="kw-2">&amp;</span>cur_tab_name),
-                                                op: h.op.clone() <span class="kw">as </span>u8,
-                                                start: (start.row, start.col),
-                                                end: (end.row, end.col),
-                                                content: h.modified_content.clone(),
-                                            },
-                                        );
+                                        emit_val.push(UpdateContent {
+                                            file_name: get_current_tab_name(<span class="kw-2">&amp;</span>cur_tab_name),
+                                            op: h.op.clone() <span class="kw">as </span>i32,
+                                            start: (start.row, start.col),
+                                            end: (end.row, end.col),
+                                            content: h.modified_content.clone(),
+                                        });
                                     }
+                                    <span class="kw">let _ </span>= window.emit(<span class="string">"front_update_content"</span>, emit_val);
                                     <span class="kw">continue</span>;
                                 }
                             }
