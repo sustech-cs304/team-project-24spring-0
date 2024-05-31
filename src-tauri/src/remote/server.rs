@@ -288,51 +288,21 @@ impl Editor for Arc<Mutex<ServerHandle>> {
                     &mut *handler.cursor_lsit.lock().unwrap(),
                 ) {
                     Ok(_) => {
+                        let start = request_ref
+                            .op_range
+                            .as_ref()
+                            .unwrap()
+                            .start
+                            .as_ref()
+                            .unwrap();
+                        let end = request_ref.op_range.as_ref().unwrap().end.as_ref().unwrap();
                         let _ = APP_HANDLE.lock().unwrap().as_ref().unwrap().emit_all(
                             "front_update_content",
                             UpdateContent {
                                 file_name: tab.text.get_path_str(),
                                 op: request_ref.op,
-                                start: (
-                                    request_ref
-                                        .op_range
-                                        .as_ref()
-                                        .unwrap()
-                                        .start
-                                        .as_ref()
-                                        .unwrap()
-                                        .row
-                                        .clone(),
-                                    request_ref
-                                        .op_range
-                                        .as_ref()
-                                        .unwrap()
-                                        .start
-                                        .as_ref()
-                                        .unwrap()
-                                        .col
-                                        .clone(),
-                                ),
-                                end: (
-                                    request_ref
-                                        .op_range
-                                        .as_ref()
-                                        .unwrap()
-                                        .end
-                                        .as_ref()
-                                        .unwrap()
-                                        .row
-                                        .clone(),
-                                    request_ref
-                                        .op_range
-                                        .as_ref()
-                                        .unwrap()
-                                        .end
-                                        .as_ref()
-                                        .unwrap()
-                                        .col
-                                        .clone(),
-                                ),
+                                start: (start.row, start.col),
+                                end: (end.row, end.col),
                                 content: request_ref.modified_content.clone(),
                             },
                         );
