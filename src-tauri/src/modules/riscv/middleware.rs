@@ -873,10 +873,13 @@ pub mod frontend_api {
                     }
                 }
             }
-            Err(e) => Optional {
-                success: false,
-                message: e.to_string(),
-            },
+            Err(e) => {
+                let _ = client.stop();
+                Optional {
+                    success: false,
+                    message: e.to_string(),
+                }
+            }
         }
     }
 
