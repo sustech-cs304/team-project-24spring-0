@@ -214,6 +214,7 @@ export default function Home() {
       unListenedFileSave.then(dispose => dispose())
       unListenedFileSaveAs.then(dispose => dispose())
       unListenedSimulatorUpdate.then(dispose => dispose())
+        unListenedSharedFileOpen.then(dispose => dispose())
     }
   }, [])
 

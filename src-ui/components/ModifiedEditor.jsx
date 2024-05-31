@@ -6,6 +6,7 @@ import useOutputStore from '@/utils/outputState'
 import useFileStore from '@/utils/state'
 import rv32i from '@/constants/riscv/rv32i.json'
 const language_id = 'riscv'
+import { listen } from '@tauri-apps/api/event'
 
 function getDifference(a, b) {
   var i = 0
@@ -26,6 +27,25 @@ export default function ModifiedEditor({ fileName }) {
   const state = useFileStore()
   const file = useFileStore(state => state.files.find(file => file.fileName === fileName))
 
+  useEffect(() => {
+    const unListenedFrontUpdateContent = listen('front_update_content', event => {
+        if (event.payload['file_name'] === fileName) {
+          console.log('front_update_content event received', event.payload)
+            const text = event.payload['content']
+          const start = event.payload['start']
+            const end = event.payload['end']
+          var range = new monaco.Range(start.row,  start.col, end.line, end.col)
+          var id = { major: 1, minor: 1 }
+          var op = { identifier: id, range: range, text: text, forceMoveMarkers: false }
+          editorRef.current.executeEdits('my-source', [op])
+        }
+    });
+
+    return () => {
+        unListenedFrontUpdateContent.then(dispose => dispose())
+    }
+  }, [])
+
   function handleEditorDidMount(editor, monaco) {
     // here is the editor instance
     // you can store it in `useRef` for further usage
@@ -34,10 +54,9 @@ export default function ModifiedEditor({ fileName }) {
 
     // 假设 editor 是您已经创建好的 Monaco Editor 实例
     editor.onDidChangeModelContent(async function (event) {
-      console.log('用户进行了以下编辑操作：')
       for (const change of event.changes) {
-        console.log('操作类型：', change.text.length > 0 ? '添加或替换' : '删除')
-        console.log('操作内容：', change.text)
+        console.log(change.text.length > 0 ? '添加或替换' : '删除')
+        console.log(change.text)
         console.log(
           '操作起始位置：',
           '行：' + change.range.startLineNumber + '，列：' + change.range.startColumn,
@@ -46,7 +65,15 @@ export default function ModifiedEditor({ fileName }) {
           '操作结束位置：',
           '行：' + change.range.endLineNumber + '，列：' + change.range.endColumn,
         )
-        var op = change.text.length > 0 ? `Insert` : `Delete`
+        let op = change.text.length > 0 ? `Insert` : `Delete`;
+        const length_of_change = change.text.length
+        const start_index = editorRef.current.getModel().getOffsetAt(change.range.getStartPosition())
+        const end_index = editorRef.current.getModel().getOffsetAt(change.range.getEndPosition())
+        const length_of_original = end_index - start_index + 1
+        op = length_of_original !== length_of_change ? `Replace` : op
+
+        console.log('file code', file)
+
         var text = change.text
         var startPosition = {
           row: change.range.startLineNumber - 1,
@@ -102,11 +129,6 @@ export default function ModifiedEditor({ fileName }) {
         options={{ hover: { enabled: true } }}
         beforeMount={LoadMonacoConfig}
       />
-      <div className="absolute right-2 top-0 flex-row gap-2">
-        {/*<button className="bg-gray-100 rounded-2xl hover:bg-gray-200" onClick={handleClickedRun}>*/}
-        {/*  <Image alt="run icon" src="/icons/run.svg" width={16} height={16} />*/}
-        {/*</button>*/}
-      </div>
     </div>
   )
 }
