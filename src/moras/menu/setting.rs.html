@@ -23,7 +23,19 @@
 <a href="#23" id="23">23</a>
 <a href="#24" id="24">24</a>
 <a href="#25" id="25">25</a>
+<a href="#26" id="26">26</a>
+<a href="#27" id="27">27</a>
+<a href="#28" id="28">28</a>
+<a href="#29" id="29">29</a>
+<a href="#30" id="30">30</a>
+<a href="#31" id="31">31</a>
+<a href="#32" id="32">32</a>
+<a href="#33" id="33">33</a>
+<a href="#34" id="34">34</a>
+<a href="#35" id="35">35</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>tauri::{CustomMenuItem, Menu, Submenu, WindowMenuEvent};
+
+<span class="kw">use </span><span class="kw">crate</span>::APP_HANDLE;
 
 <span class="kw">pub fn </span>new() -&gt; Submenu {
     Submenu::new(
@@ -44,8 +56,16 @@
 }
 
 <span class="kw">fn </span>assembler_memory_handler(event: WindowMenuEvent) {
-    <span class="macro">todo!</span>(<span class="string">"update assembler memory setting"</span>);
-    <span class="comment">// you could reference other files in menu folder about how to use the event
-    // don't forget to write the comment to generate doc for frontend
-</span>}
+    <span class="kw">let </span>handle_lock = APP_HANDLE.lock().unwrap();
+    <span class="kw">let </span>app_handle = handle_lock.as_ref().unwrap();
+    <span class="kw">let </span>_window = tauri::WindowBuilder::new(
+        app_handle,
+        <span class="string">"assembler_memory"</span>,
+        tauri::WindowUrl::App(<span class="string">"/assembler-settings"</span>.parse().unwrap()),
+    )
+    .title(<span class="string">"Set Memory"</span>)
+    .menu(Menu::new())
+    .build()
+    .unwrap();
+}
 </code></pre></div></section></main></body></html>

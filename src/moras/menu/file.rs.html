@@ -326,6 +326,9 @@
 <a href="#326" id="326">326</a>
 <a href="#327" id="327">327</a>
 <a href="#328" id="328">328</a>
+<a href="#329" id="329">329</a>
+<a href="#330" id="330">330</a>
+<a href="#331" id="331">331</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::path::Path;
 
 <span class="kw">use </span>tauri::{
@@ -360,6 +363,7 @@
         ptr::Ptr,
         state_helper::event::{get_current_tab_name, set_current_tab_name},
     },
+    APP_HANDLE,
 };
 
 <span class="kw">pub fn </span>new() -&gt; Submenu {
@@ -523,10 +527,12 @@
 }
 
 <span class="kw">fn </span>share_handler(event: <span class="kw-2">&amp;</span>WindowMenuEvent) {
+    <span class="kw">let </span>handle_lock = APP_HANDLE.lock().unwrap();
+    <span class="kw">let </span>app_handle = handle_lock.as_ref().unwrap();
     <span class="kw">let </span>_window = tauri::WindowBuilder::new(
-        <span class="kw-2">&amp;</span>event.window().app_handle(),
-        <span class="string">"live_share"</span>, <span class="comment">/* the unique window label */
-        </span>tauri::WindowUrl::External(<span class="string">"https://tauri.app/"</span>.parse().unwrap()),
+        app_handle,
+        <span class="string">"live_share"</span>,
+        tauri::WindowUrl::App(<span class="string">"/share"</span>.parse().unwrap()),
     )
     .title(<span class="string">"Live Share"</span>)
     .menu(Menu::new())

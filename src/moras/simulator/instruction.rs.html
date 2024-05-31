@@ -514,6 +514,15 @@
 <a href="#514" id="514">514</a>
 <a href="#515" id="515">515</a>
 <a href="#516" id="516">516</a>
+<a href="#517" id="517">517</a>
+<a href="#518" id="518">518</a>
+<a href="#519" id="519">519</a>
+<a href="#520" id="520">520</a>
+<a href="#521" id="521">521</a>
+<a href="#522" id="522">522</a>
+<a href="#523" id="523">523</a>
+<a href="#524" id="524">524</a>
+<a href="#525" id="525">525</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::ops::Index;
 
 <span class="kw">use </span>once_cell::sync::Lazy;
@@ -524,7 +533,7 @@
     interface::assembler::Operand,
     modules::riscv::{
         basic::interface::parser::RISCV,
-        middleware::backend_api::syscall_output_print,
+        middleware::backend_api::{syscall_input_request, syscall_output_print},
         rv32i::constants::<span class="kw-2">*</span>,
     },
     utility::{enum_map::EnumMap, ptr::Ptr},
@@ -742,6 +751,7 @@
                 arg.get_path(),
                 <span class="kw-2">&amp;</span>((arg.reg(RV32IRegister::A0 <span class="kw">as </span>i32) <span class="kw">as </span>i32).to_string()),
             )<span class="question-mark">?</span>;
+            arg.pc_step();
             <span class="prelude-val">Ok</span>(SimulatorStatus::Running)
         }
         <span class="number">4 </span>=&gt; {
@@ -757,14 +767,17 @@
             }
             <span class="kw">let </span>s = String::from_utf8(buf).unwrap();
             syscall_output_print(arg.get_path(), <span class="kw-2">&amp;</span>s)<span class="question-mark">?</span>;
+            arg.pc_step();
             <span class="prelude-val">Ok</span>(SimulatorStatus::Running)
         }
         <span class="number">5 </span>=&gt; {
             arg.sim.as_mut().wait_input = WaitStatus::Int;
+            syscall_input_request(arg.get_path())<span class="question-mark">?</span>;
             <span class="prelude-val">Ok</span>(SimulatorStatus::Paused)
         }
         <span class="number">8 </span>=&gt; {
             arg.sim.as_mut().wait_input = WaitStatus::String;
+            syscall_input_request(arg.get_path())<span class="question-mark">?</span>;
             <span class="prelude-val">Ok</span>(SimulatorStatus::Paused)
         }
         <span class="number">10 </span>=&gt; <span class="prelude-val">Ok</span>(SimulatorStatus::Stopped),
@@ -773,10 +786,12 @@
                 arg.get_path(),
                 <span class="kw-2">&amp;</span>((arg.reg(RV32IRegister::A0 <span class="kw">as </span>i32) <span class="kw">as </span>u8 <span class="kw">as </span>char).to_string()),
             )<span class="question-mark">?</span>;
+            arg.pc_step();
             <span class="prelude-val">Ok</span>(SimulatorStatus::Running)
         }
         <span class="number">12 </span>=&gt; {
             arg.sim.as_mut().wait_input = WaitStatus::Char;
+            syscall_input_request(arg.get_path())<span class="question-mark">?</span>;
             <span class="prelude-val">Ok</span>(SimulatorStatus::Paused)
         }
         <span class="number">34 </span>=&gt; {
@@ -784,6 +799,7 @@
                 arg.get_path(),
                 <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"0x{:08x}"</span>, arg.sim.as_ref().reg[RV32IRegister::A0 <span class="kw">as </span>usize]),
             )<span class="question-mark">?</span>;
+            arg.pc_step();
             <span class="prelude-val">Ok</span>(SimulatorStatus::Running)
         }
         <span class="number">35 </span>=&gt; {
@@ -794,6 +810,7 @@
                     arg.sim.as_ref().reg[RV32IRegister::A0 <span class="kw">as </span>usize]
                 ),
             )<span class="question-mark">?</span>;
+            arg.pc_step();
             <span class="prelude-val">Ok</span>(SimulatorStatus::Running)
         }
         <span class="number">36 </span>=&gt; {
@@ -801,6 +818,7 @@
                 arg.get_path(),
                 <span class="kw-2">&amp;</span>((arg.reg(RV32IRegister::A0 <span class="kw">as </span>i32)).to_string()),
             )<span class="question-mark">?</span>;
+            arg.pc_step();
             <span class="prelude-val">Ok</span>(SimulatorStatus::Running)
         }
         <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(<span class="string">"Invalid ecall number"</span>.to_string()),

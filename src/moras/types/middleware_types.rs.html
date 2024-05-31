@@ -177,6 +177,7 @@
 <a href="#177" id="177">177</a>
 <a href="#178" id="178">178</a>
 <a href="#179" id="179">179</a>
+<a href="#180" id="180">180</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::{collections::HashMap, sync::Mutex};
 
 <span class="kw">use </span>ropey::Rope;
@@ -279,6 +280,7 @@
 </span><span class="kw">pub struct </span>SimulatorData {
     <span class="kw">pub </span>filepath: String,
     <span class="kw">pub </span>success: bool,
+    <span class="kw">pub </span>paused: bool,
     <span class="kw">pub </span>has_current_text: bool,
     <span class="kw">pub </span>current_text: u64,
     <span class="kw">pub </span>registers: Vec&lt;Register&gt;,

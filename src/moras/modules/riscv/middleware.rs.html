@@ -1072,6 +1072,10 @@
 <a href="#1072" id="1072">1072</a>
 <a href="#1073" id="1073">1073</a>
 <a href="#1074" id="1074">1074</a>
+<a href="#1075" id="1075">1075</a>
+<a href="#1076" id="1076">1076</a>
+<a href="#1077" id="1077">1077</a>
+<a href="#1078" id="1078">1078</a>
 </pre></div><pre class="rust"><code><span class="doccomment">/// This module provides API functions for the frontend. Could be used by
 /// `invoke` in EMCAScript
 </span><span class="kw">pub mod </span>frontend_api {
@@ -1443,6 +1447,7 @@
         <span class="kw">let </span>code = tab.text.to_string();
         <span class="kw">let </span>cache = <span class="kw-2">&amp;mut </span>tab.assembly_cache;
         <span class="kw">if </span>cache.code != code {
+            cache.parser_cache = Default::default();
             cache.parser_result = Default::default();
             cache.assembler_result = Default::default();
         }
@@ -1494,7 +1499,7 @@
         }
     }
 
-    <span class="doccomment">/// Placeholder for a function to dump data from all tabs.
+    <span class="doccomment">/// Dump the code in the currently active tab.
     /// - `cur_tab_name`: State containing the current tab name.
     /// - `tab_map`: State containing the map of all tabs.
     ///
@@ -2046,6 +2051,7 @@
     /// [SimulatorData](crate::types::middleware_types::SimulatorData):
     /// - `filepath`: string
     /// - `success`: bool
+    /// - `paused`: bool
     /// - `has_current_text`: bool
     /// - `current_text`: u64
     /// - `registers`: Vec&lt;[Register](crate::types::middleware_types::Register)&gt;
@@ -2054,6 +2060,7 @@
     </span><span class="kw">pub fn </span>simulator_update(
         simulator: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>Simulator,
         simulator_res: Optional,
+        paused: bool,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(), String&gt; {
         <span class="kw">if let </span><span class="prelude-val">Some</span>(app_handle) = APP_HANDLE.lock().unwrap().as_ref() {
             <span class="kw">if let </span><span class="prelude-val">Ok</span>(<span class="kw">_</span>) = app_handle.emit_all(
@@ -2061,6 +2068,7 @@
                 SimulatorData {
                     filepath: simulator.get_filepath().to_string(),
                     success: simulator_res.success,
+                    paused,
                     has_current_text: simulator.get_pc_idx().is_some(),
                     current_text: simulator.get_pc_idx().unwrap_or(<span class="number">0</span>) <span class="kw">as </span>u64,
                     registers: simulator

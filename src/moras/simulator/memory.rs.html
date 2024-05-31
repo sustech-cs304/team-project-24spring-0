@@ -242,10 +242,10 @@
             <span class="kw">return </span>Vec::new();
         }
         <span class="kw">let </span>start = start <span class="kw">as </span>usize;
-        <span class="kw">let </span>end = start + (len - <span class="number">1</span>) <span class="kw">as </span>usize;
+        <span class="kw">let </span>end = start + len <span class="kw">as </span>usize;
         <span class="kw">let </span>self_ptr = Ptr::new(<span class="self">self</span>);
         <span class="kw">let </span>mut_self = self_ptr.as_mut();
-        <span class="kw">let </span><span class="kw-2">mut </span>result = Vec::with_capacity(end - start + <span class="number">1</span>);
+        <span class="kw">let </span><span class="kw-2">mut </span>result = Vec::with_capacity(len <span class="kw">as </span>usize);
         <span class="kw">let </span>start_page = <span class="self">Self</span>::align(start);
         <span class="kw">let </span>end_page = <span class="self">Self</span>::align(end);
         <span class="kw">if </span>start_page == end_page {
