@@ -35,7 +35,12 @@ export default function ModifiedEditor({ fileName }) {
     // 假设 editor 是您已经创建好的 Monaco Editor 实例
     editor.onDidChangeModelContent(async function (event) {
       for (const change of event.changes) {
-        var op = change.text.length > 0 ? change.range.startColumn == change.range.endColumn ? `Insert` : `Replace` : `Delete`
+        var op =
+          change.text.length > 0
+            ? change.range.startColumn == change.range.endColumn
+              ? `Insert`
+              : `Replace`
+            : `Delete`
         var text = change.text
         var startPosition = {
           row: change.range.startLineNumber - 1,
@@ -84,7 +89,7 @@ export default function ModifiedEditor({ fileName }) {
             file.baseAddress,
             file.started,
             file.paused,
-              file.shared
+            file.shared,
           )
         }}
         options={{ hover: { enabled: true } }}

@@ -40,7 +40,7 @@ export default function MultifileCode() {
         currentFile.baseAddress,
         currentFile.started,
         currentFile.paused,
-          currentFile.shared
+        currentFile.shared,
       )
       console.log('updated file')
       console.log(currentFile)
@@ -75,17 +75,17 @@ export default function MultifileCode() {
   }
 
   const handleDump = async () => {
-    var result = await invoke('dump');
-    console.log('Invoke handle dump result: ', result);
+    var result = await invoke('dump')
+    console.log('Invoke handle dump result: ', result)
     if ('Success' in result) {
-        const outputStore = useOutputStore.getState();
-        outputStore.addOutput('Dump Successfully!');
+      const outputStore = useOutputStore.getState()
+      outputStore.addOutput('Dump Successfully!')
     } else {
       const outputStore = useOutputStore.getState()
       var i = 0
       for (var error of result.Error) {
         outputStore.addOutput(
-            'Error ' + i + ' at line ' + error.line + ', column ' + error.column + ': ' + error.msg,
+          'Error ' + i + ' at line ' + error.line + ', column ' + error.column + ': ' + error.msg,
         )
       }
     }
@@ -103,14 +103,14 @@ export default function MultifileCode() {
     const currentFile = state.files.find(file => file.fileName === state.currentFile)
     if (currentFile && currentFile.assembly.length != 0) {
       if (currentFile.paused) {
-        return false;
+        return false
       }
       if (currentFile.started && currentFile.runLines.length == 0) {
-        return true;
+        return true
       }
-      return false;
+      return false
     }
-    return true;
+    return true
   }
 
   const getResumeButtonisDisabled = () => {
@@ -123,13 +123,13 @@ export default function MultifileCode() {
 
   const getUndoButtonisDisabled = () => {
     const currentFile = state.files.find(file => file.fileName === state.currentFile)
-    if (!currentFile){
-      return true;
+    if (!currentFile) {
+      return true
     }
     // if (currentFile.paused) {
     //   return true
     // }
-    return !currentFile.started || currentFile.paused;
+    return !currentFile.started || currentFile.paused
   }
 
   const getResetButtonisDisabled = () => {
@@ -157,7 +157,6 @@ export default function MultifileCode() {
     return true
   }
 
-
   return (
     <Tabs size="small" aria-label="Files">
       {files.map(file => (
@@ -173,7 +172,12 @@ export default function MultifileCode() {
             <Code fileName={file.fileName} />
             <div className="absolute right-4 top-1 flex-row gap-2">
               <ButtonGroup>
-                <Button color="success" size="sm" isDisabled={getAssemblyButtonisDisabled()} onClick={() => handleAssembly(file.fileName)}>
+                <Button
+                  color="success"
+                  size="sm"
+                  isDisabled={getAssemblyButtonisDisabled()}
+                  onClick={() => handleAssembly(file.fileName)}
+                >
                   Assembly
                 </Button>
                 <Button
@@ -229,24 +233,29 @@ export default function MultifileCode() {
                   Reset
                 </Button>
                 <Button
-                    color="primary"
-                    size="sm"
-                    className="w-full"
-                    isDisabled={getStopButtonisDisabled()}
-                    onClick={() => handleSimulatorOperation('stop')}
+                  color="primary"
+                  size="sm"
+                  className="w-full"
+                  isDisabled={getStopButtonisDisabled()}
+                  onClick={() => handleSimulatorOperation('stop')}
                 >
                   Stop
                 </Button>
                 <Button
-                    color="info"
-                    size="sm"
-                    className="w-full"
-                    isDisabled={getDumpButtonisDisabled()}
-                    onClick={() => handleDump()}
+                  color="info"
+                  size="sm"
+                  className="w-full"
+                  isDisabled={getDumpButtonisDisabled()}
+                  onClick={() => handleDump()}
                 >
                   Dump
                 </Button>
-                <Button color="danger" size="sm" isDisabled={getCloseButtonisDisabled()} onClick={() => deleteFile(file.fileName)}>
+                <Button
+                  color="danger"
+                  size="sm"
+                  isDisabled={getCloseButtonisDisabled()}
+                  onClick={() => deleteFile(file.fileName)}
+                >
                   Close
                 </Button>
               </ButtonGroup>
