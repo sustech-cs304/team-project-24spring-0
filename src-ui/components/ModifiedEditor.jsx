@@ -34,19 +34,8 @@ export default function ModifiedEditor({ fileName }) {
 
     // 假设 editor 是您已经创建好的 Monaco Editor 实例
     editor.onDidChangeModelContent(async function (event) {
-      console.log('用户进行了以下编辑操作：')
       for (const change of event.changes) {
-        console.log('操作类型：', change.text.length > 0 ? '添加或替换' : '删除')
-        console.log('操作内容：', change.text)
-        console.log(
-          '操作起始位置：',
-          '行：' + change.range.startLineNumber + '，列：' + change.range.startColumn,
-        )
-        console.log(
-          '操作结束位置：',
-          '行：' + change.range.endLineNumber + '，列：' + change.range.endColumn,
-        )
-        var op = change.text.length > 0 ? `Insert` : `Delete`
+        var op = change.text.length > 0 ? change.range.startColumn == change.range.endColumn ? `Insert` : `Replace` : `Delete`
         var text = change.text
         var startPosition = {
           row: change.range.startLineNumber - 1,
@@ -56,13 +45,12 @@ export default function ModifiedEditor({ fileName }) {
           row: change.range.endLineNumber - 1,
           col: change.range.endColumn - 1,
         }
-        var result = await invoke('modify_current_tab', {
+        invoke('modify_current_tab', {
           op: op.toString(),
           content: text,
           start: startPosition,
           end: endPosition,
         })
-        console.log('Invoke modify_current_tab result: ', result)
       }
     })
   }
