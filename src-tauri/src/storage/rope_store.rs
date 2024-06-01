@@ -315,8 +315,8 @@ mod rope_test {
 
     #[test]
     fn test_to_string() {
-        std::fs::write("/tmp/file.txt", "Hello, world!\nThis is a test file.\n").unwrap();
-        let file_path = PathBuf::from("/tmp/file.txt");
+        std::fs::write("/tmp/file2.txt", "Hello, world!\nThis is a test file.\n").unwrap();
+        let file_path = PathBuf::from("/tmp/file2.txt");
         let text = Text::from_path(&file_path).unwrap();
 
         assert_eq!(text.to_string(), "Hello, world!\nThis is a test file.\n");
