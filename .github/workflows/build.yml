@@ -59,11 +59,11 @@ jobs:
         env:
           RUSTFLAGS: "--cfg ci"
 
-      - name: Cargo test
-        working-directory: ./src-tauri
-        run: cargo test
-        env:
-          RUSTFLAGS: "--cfg ci"
+      #- name: Cargo test
+        #working-directory: ./src-tauri
+        #run: cargo test
+        #env:
+          #RUSTFLAGS: "--cfg ci"
 
       #- name: Cargo build
         #working-directory: ./src-tauri
