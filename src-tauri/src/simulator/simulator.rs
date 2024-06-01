@@ -126,6 +126,10 @@ impl Simulator for RISCVSimulator {
         self.breakpoints = vec![false; inst.instruction.len()];
         self.inst = Some(inst);
         self._reset();
+        self.update(Optional {
+            success: true,
+            message: "instruction loaded".to_string(),
+        });
         self.set_status(SimulatorStatus::Stopped);
         Ok(())
     }
@@ -466,7 +470,7 @@ impl RISCVSimulator {
         self.pc_idx = 0;
         self.mem.reset();
         self.mem.set_range(
-            self.conf.dot_text_base_address as u32,
+            self.conf.dot_data_base_address as u32,
             self.inst.as_ref().unwrap().data.as_slice(),
         );
         if let Some(t) = self.thread.take() {

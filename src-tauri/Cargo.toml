@@ -40,4 +40,4 @@ ux = { git = "https://github.com/kjetilkjeka/uX.git", rev = "1081930" }
 custom-protocol = ["tauri/custom-protocol"]
 [profile.dev]
 incremental = false
-
+overflow-checks = false

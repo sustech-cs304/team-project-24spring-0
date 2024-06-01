@@ -159,7 +159,7 @@ function LoadMonacoConfig(monaco) {
 function getRiscvMonarchTokensProvider() {
   let directive = rv32i.directive
   return {
-    seperator: /[,:\s]/,
+    seperator: /[,:\(\)\s]/,
 
     register: Object.keys(rv32i.register),
     operator: Object.keys(rv32i.operator),
@@ -167,7 +167,7 @@ function getRiscvMonarchTokensProvider() {
     tokenizer: {
       root: [
         [/#.*$/, 'comment'],
-        [/(0[xX][0-9a-fA-F]+|\d+)(?=@seperator|$)/, 'number'],
+        [/([-]?(?:0[xX][0-9a-fA-F]+|\d+))(?=@seperator|$)/, 'number'],
         [/"(?:[^\\"]*(?:\\.)*)*"/, 'string'],
         [
           /[a-zA-Z_][\w.]*(?=@seperator|$)/,
@@ -180,7 +180,7 @@ function getRiscvMonarchTokensProvider() {
           },
         ],
         [new RegExp(`(${directive.join('|').replace(/\./g, '\\.')})(?=@seperator|$)`), 'directive'],
-        [/[^,:\s][\.\w]*(?=\W|$)/, 'unknown'],
+        [/[^,:\(\)\s][\.\w]*(?=\W|$)/, 'unknown'],
       ],
     },
   }

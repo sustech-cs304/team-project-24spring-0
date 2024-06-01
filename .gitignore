@@ -8,3 +8,4 @@
 # debuger storage
 .gdb_history
 .tasks
+src-ui/tmp/
