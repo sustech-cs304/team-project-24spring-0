@@ -1,4 +1,15 @@
+<div align="center">
+
+![poster](reports/img/poster.png)
+
 # Moras
+
+![Tauri](https://img.shields.io/badge/Tauri-1.6.2-brightgreen?style=flat-square)
+![Rust](https://img.shields.io/badge/rust--analyzer-0.0.1-brightgreen?style=flat-square)
+![NextJS](https://img.shields.io/badge/NextJS-^14.1.4-brightgreen?style=flat-square)
+
+</div>
+
 
 ## 开发规范
 
