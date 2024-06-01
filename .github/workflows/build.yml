@@ -67,6 +67,13 @@ jobs:
         run: |
           cargo doc --no-deps
 
+      - name: Generate Report
+        if: github.ref == 'refs/heads/main'
+        working-directory: ./src-tauri
+        run: |
+          ../scripts/reoport.sh
+          mv *.html target/doc/report.html
+
       - name: Deploy Doc
         uses: peaceiris/actions-gh-pages@v4
         if: github.ref == 'refs/heads/main'

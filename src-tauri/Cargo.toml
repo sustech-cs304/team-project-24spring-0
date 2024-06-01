@@ -16,6 +16,7 @@ tauri-build = { version = "1.5.1", features = [] }
 tonic-build = "0.11"
 
 [dependencies]
+clippy = "0.0.302"
 derive_builder = "0.20.0"
 logos = "0.14.0"
 once_cell = "1.19.0"
