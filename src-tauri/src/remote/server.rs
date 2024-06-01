@@ -280,6 +280,9 @@ impl Editor for Arc<Mutex<ServerHandle>> {
                 //     }
                 // }
 
+                let mut history = handler.history.lock().unwrap();
+                history.append(&mut vec![Modification::from(request_ref.clone())]);
+
                 // handle operation
                 match tab.text.merge_history(
                     &vec![Modification::from(request_ref.clone())],

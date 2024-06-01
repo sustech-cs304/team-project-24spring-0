@@ -34,7 +34,7 @@ mod local_test {
     }
 
     #[test]
-    fn test_update_content() {
+    fn test_update_and_get_content() {
         let mut server = init_test_server(TEST_FILE_CONTENT).unwrap();
         thread::sleep(Duration::from_secs(2));
         let mut client1 = init_test_client(server.get_port()).unwrap();
@@ -80,6 +80,11 @@ mod local_test {
             },
         ));
         assert_eq!(res.as_ref().unwrap().success, false);
+
+        let res = block_on(client1.send_get_content(0));
+        assert_eq!(res.as_ref().unwrap().history.len(), 1);
+        assert_eq!(res.as_ref().unwrap().history[0].version, 0);
+        assert_eq!(res.as_ref().unwrap().history[0].modified_content, "Test");
 
         let _ = block_on(client1.send_disconnect());
         client1.stop().unwrap();
