@@ -1,7 +1,7 @@
 use std::{
     error::Error,
     path::{Path, PathBuf},
-    sync::{Arc, Condvar, Mutex},
+    sync::{Arc, Mutex},
     time::SystemTime,
 };
 
@@ -22,7 +22,7 @@ use crate::{
 };
 
 pub struct ConcurrencyShare {
-    condition_pair: Arc<(Mutex<bool>, Condvar)>,
+    mutex: Mutex<()>,
     update_thread: Option<std::thread::JoinHandle<()>>,
     cursor_list: Option<Arc<Mutex<CursorList>>>,
 }
@@ -34,7 +34,7 @@ pub struct Text {
     version: usize,
     dirty: bool,
     last_modified: SystemTime,
-    concurrent_share: Option<ConcurrencyShare>,
+    concurrent_share: ConcurrencyShare,
 }
 
 impl BasicFile<Rope, Modification> for Text {
@@ -94,20 +94,14 @@ impl BasicFile<Rope, Modification> for Text {
                 Ok(())
             }
             Server => {
-                let cursor_list = self
-                    .concurrent_share
-                    .as_ref()
-                    .unwrap()
-                    .cursor_list
-                    .as_ref()
-                    .unwrap()
-                    .clone();
+                let cursor_list = self.concurrent_share.cursor_list.as_ref().unwrap().clone();
                 self.merge_history(&vec![modify.clone()], &mut cursor_list.lock().unwrap())?;
                 self.dirty = true;
                 Ok(())
             }
             Client => {
-                self.lock();
+                let concur_lock = self.concurrent_share.mutex.lock().unwrap();
+
                 let raw_rope = self.data.as_mut();
                 let range = &modify.op_range;
                 let start_idx =
@@ -129,7 +123,6 @@ impl BasicFile<Rope, Modification> for Text {
                 }
                 self.version += 1;
                 self.dirty = true;
-                self.unlock();
                 Ok(())
             }
         }
@@ -141,13 +134,17 @@ impl Text {
         match file_io::read_file(file_path) {
             Ok(content) => match file_io::get_last_modified(file_path) {
                 Ok(last_modified) => Ok(Text {
-                    share_status: Default::default(),
+                    share_status: FileShareStatus::default(),
                     data: Box::new(Rope::from_str(&all_to_lf(&content))),
                     path: PathBuf::from(file_path),
                     version: 0,
                     dirty: false,
                     last_modified,
-                    concurrent_share: None,
+                    concurrent_share: ConcurrencyShare {
+                        mutex: Mutex::new(()),
+                        update_thread: None,
+                        cursor_list: None,
+                    },
                 }),
                 Err(e) => Err(e),
             },
@@ -161,13 +158,17 @@ impl Text {
 
     pub fn from_str(file_path: &Path, text: &str) -> Self {
         Text {
-            share_status: Default::default(),
+            share_status: FileShareStatus::default(),
             data: Box::new(Rope::from_str(text)),
             path: file_path.to_path_buf(),
             version: 0,
             dirty: false,
             last_modified: SystemTime::now(),
-            concurrent_share: None,
+            concurrent_share: ConcurrencyShare {
+                mutex: Mutex::new(()),
+                update_thread: None,
+                cursor_list: None,
+            },
         }
     }
 }
@@ -182,7 +183,8 @@ impl HistorianFile<Rope, Modification, CursorList> for Text {
     }
 
     fn merge_history(&mut self, modifies: &[Modification], cursors: &mut CursorList) -> ResultVoid {
-        self.lock();
+        let concur_lock = self.concurrent_share.mutex.lock().unwrap();
+
         for modify in modifies {
             let increase_lines = lines_count(&modify.modified_content);
             let raw_rope = self.data.as_mut();
@@ -241,7 +243,6 @@ impl HistorianFile<Rope, Modification, CursorList> for Text {
         }
         self.dirty = true;
         self.version += modifies.len();
-        self.unlock();
         Ok(())
     }
 
@@ -250,54 +251,24 @@ impl HistorianFile<Rope, Modification, CursorList> for Text {
             self.share_status = status;
             true
         } else if self.share_status == Private && status == Server {
-            self.concurrent_share = Some(ConcurrencyShare {
-                condition_pair: Arc::new((Mutex::new(true), Condvar::new())),
+            self.concurrent_share = ConcurrencyShare {
+                mutex: Mutex::new(()),
                 update_thread: None,
                 cursor_list: Some(CURSOR_LIST.clone()),
-            });
+            };
             self.share_status = status;
             true
         } else if self.share_status == Private && status == Client {
-            self.concurrent_share = Some(ConcurrencyShare {
-                condition_pair: Arc::new((Mutex::new(true), Condvar::new())),
+            self.concurrent_share = ConcurrencyShare {
+                mutex: Mutex::new(()),
                 update_thread: None,
                 cursor_list: None,
-            });
+            };
             self.share_status = status;
             true
         } else {
             false
         }
-    }
-
-    fn lock(&mut self) {
-        let cs = self
-            .concurrent_share
-            .as_ref()
-            .unwrap()
-            .condition_pair
-            .clone();
-        let (lock, cvar) = &*cs;
-        let mut val = lock.lock().unwrap();
-
-        while !*val {
-            val = cvar.wait(val).unwrap();
-        }
-
-        *val = false;
-    }
-
-    fn unlock(&mut self) {
-        let cs = self
-            .concurrent_share
-            .as_ref()
-            .unwrap()
-            .condition_pair
-            .clone();
-        let (lock, cvar) = &*cs;
-        let mut val = lock.lock().unwrap();
-        *val = true;
-        cvar.notify_one();
     }
 }
 
@@ -376,8 +347,8 @@ mod rope_test {
 
     #[test]
     fn test_handle_modify() {
-        std::fs::write("/tmp/file.txt", "Hello, world!\nThis is a test file.\n").unwrap();
-        let file_path = PathBuf::from("/tmp/file.txt");
+        std::fs::write("/tmp/file1.txt", "Hello, world!\nThis is a test file.\n").unwrap();
+        let file_path = PathBuf::from("/tmp/file1.txt");
         let mut text = Text::from_path(&file_path).unwrap();
 
         let modify = Modification {
