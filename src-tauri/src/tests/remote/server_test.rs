@@ -19,7 +19,7 @@ mod local_test {
     #[test]
     fn test_authorize_disconnect() {
         let mut server = init_test_server(TEST_FILE_CONTENT).unwrap();
-        thread::sleep(Duration::from_secs(5));
+        thread::sleep(Duration::from_secs(2));
         let mut client = init_test_client(server.get_port()).unwrap();
 
         let (filename, version, content) = block_on(client.send_authorize(TEST_PASSWD)).unwrap();
@@ -29,14 +29,14 @@ mod local_test {
 
         let _ = block_on(client.send_disconnect()).unwrap();
         client.stop().unwrap();
-        thread::sleep(Duration::from_secs(5));
+        thread::sleep(Duration::from_secs(2));
         server.stop_server();
     }
 
     #[test]
     fn test_update_content() {
         let mut server = init_test_server(TEST_FILE_CONTENT).unwrap();
-        thread::sleep(Duration::from_secs(5));
+        thread::sleep(Duration::from_secs(2));
         let mut client1 = init_test_client(server.get_port()).unwrap();
 
         let (filename, version, content) = block_on(client1.send_authorize(TEST_PASSWD)).unwrap();
@@ -67,10 +67,23 @@ mod local_test {
             let res = tab.text.get_raw().to_string();
             assert_eq!(res, expected);
         }
+        let res = block_on(client1.send_update_content(
+            0,
+            &Modification {
+                op: OperationType::Insert,
+                version: 0,
+                op_range: OpRange {
+                    start: CursorPosition { row: 0, col: 5 },
+                    end: CursorPosition { row: 0, col: 0 },
+                },
+                modified_content: "Bar".to_string(),
+            },
+        ));
+        assert_eq!(res.as_ref().unwrap().success, false);
 
         let _ = block_on(client1.send_disconnect());
         client1.stop().unwrap();
-        thread::sleep(Duration::from_secs(5));
+        thread::sleep(Duration::from_secs(2));
         server.stop_server();
     }
 }
