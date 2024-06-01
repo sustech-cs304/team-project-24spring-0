@@ -2,7 +2,7 @@
 
 ![Logo](assets/index_logo.png)
 
-# Moras <small>0.1.0</small>
+# Moras <small>0.2.0</small>
 
 > A modern RISC-V IDE with fully functional RISC-V backend and AI integration.🚀
 
