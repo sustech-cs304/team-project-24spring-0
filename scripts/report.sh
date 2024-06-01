@@ -1,6 +1,6 @@
 #!/bin/bash
 
-Deps=cargo-tarpaulin rust-audit
+Deps=cargo-tarpaulin 
 cargo install ${Deps}
 cargo tarpaulin --out Html
 
