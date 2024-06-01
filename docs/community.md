@@ -3,7 +3,7 @@
 > Join the vibrant Moras community. This section invites you to contribute, collaborate, and seek support. Discover how 
 > you can be a part of the project and connect with fellow users.
 
-## Contribution
+## 👐Contribution
 
 **How to Contribute**:
 1. **Fork the Repository**: Start by forking the Moras repository on [GitHub](https://github.com/sustech-cs304/team-project-24spring-0).
@@ -17,7 +17,7 @@
 - Update the documentation to reflect any changes.
 - Be respectful and constructive in your communication with other contributors.
 
-## Support
+## 🛠️Support
 
 **We're Here to Help**: If you need assistance or have questions, our support community is ready to jump in.
 

@@ -3,7 +3,7 @@
 > Push the boundaries of what you can do with Moras. Advanced Topics cover the integration of AI, 
 > and other sophisticated features in the future. Enhance your skills and knowledge with these in-depth discussions.
 
-## AI Integration
+## 🤖AI Integration
 
 **Harnessing the Power of Artificial Intelligence**:
 

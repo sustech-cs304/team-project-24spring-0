@@ -3,7 +3,7 @@
 > Embark on your coding journey with Moras. This section provides all the necessary information to get you set up and 
 > ready. From installation to creating your first project, we’ll guide you through each step to ensure a smooth start.
 
-## Installation
+## 💿Installation
 
 **Step 1: Download the Installer**
 Begin by downloading the latest version of Moras from our official website or GitHub repository. Look for the file named `moras_v0.2.0.exe` for Windows `moras_v0.2.0.dmg` for macOS.
@@ -20,7 +20,7 @@ Select the destination folder where you want Moras to be installed. The default 
 **Step 5: Complete the Installation**
 After selecting the installation location, click 'Install' to begin the process. A progress bar will indicate the installation status. Once completed, click 'Finish' to exit the installer.
 
-## Setup
+## 🔧Setup
 
 **Step 1:** Launch Moras Find the Moras icon on your desktop or in your applications folder and double-click to open the IDE.
 
@@ -38,7 +38,7 @@ Take a moment to familiarize yourself with the layout of Moras. Notice the toolb
 
 With MORAS installed and set up, you’re now ready to begin your coding adventure. Should you encounter any issues, refer to the help document for assistance.
 
-## First Project —— Creating "*Hello Moras!*"
+## 👋First Project —— Creating "*Hello Moras!*"
 
 The most basic code that could be made in C is something like:
 

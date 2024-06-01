@@ -3,7 +3,7 @@
 > Meet the minds behind Moras. The About section gives you a glimpse into the team, the version history, and the 
 > licensing details. Understand the ethos and evolution of our IDE.
 
-## The Team
+## 👫The Team
 
 [@Vollate](https://github.com/vollate)
 
@@ -15,6 +15,6 @@
 
 [@houfm](https://github.com/houfm)
 
-## License
+## 📜License
 
 Moras is licensed under the MIT License, reflecting our commitment to the open-source community.

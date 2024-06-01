@@ -3,7 +3,7 @@
 > Maximize your efficiency with Moras. Here, we explain how to use the IDE to its full potential. Whether it’s writing 
 > code, inspecting memory, or accessing documentation, this section helps you become proficient with the IDE’s tools.
 
-## Writing Code
+## 💻Writing Code
 
 **Effortless Coding with MORAS**:
 
@@ -22,7 +22,7 @@ And change to `Execute`, you can see the assembly result here.
 
 ![image](assets/excute.png)
 
-## Inspecting Memory
+## 🔍Inspecting Memory
 
 **Deep Dive into Your Program's Memory**:
 
@@ -41,11 +41,11 @@ effectively.
 ![image](assets/memory_config.png)
 
 
-## Using Documentation
+## 📄Using Documentation
 
 **Instant Access to Information**: 
 
-Built-in documentation is at the core of MORAS.
+Built-in documentation is at the core of Moras.
 
 <div align="middle"><img src="assets/help_document.png" alt="image" width="80%"> </div>
 
@@ -54,7 +54,7 @@ at your fingertips. This feature is especially useful when learning new concepts
 a particular topic. The documentation is constantly updated to ensure you have the most current and relevant 
 information.
 
-![image](assets/document.png)
+<div align="middle"><img src="assets/document.png" alt="image" width="90%"> </div>
 
 Also, there are also some general documents for your reference
 

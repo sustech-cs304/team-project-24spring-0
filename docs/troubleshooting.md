@@ -3,7 +3,7 @@
 > Encounter an issue? Don’t worry; we’ve got you covered. Troubleshooting provides solutions to common problems, answers
 > to FAQs, and tips to keep you moving forward without any hiccups.
 
-## Common Issues
+## ⚠️Common Issues
 
 Encountering issues is a natural part of the learning process. In this section, we address some of the most common 
 issues users may face while working with MORAS and provide straightforward solutions.
@@ -20,7 +20,7 @@ issues users may face while working with MORAS and provide straightforward solut
 - **Symptom**: Error messages when trying to open or save project files.
 - **Solution**: Check the file permissions and ensure that the files are not corrupted. If you're using version control, ensure that there are no conflicts or locks.
 
-## FAQs
+## ❓FAQs
 
 **Q: Can I use Moras on multiple devices?**
 A: Yes, Moras is designed to be cross-platform. You can install and use it on different devices, provided you adhere to the licensing agreement.
