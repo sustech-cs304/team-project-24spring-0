@@ -50,7 +50,7 @@ export default function MultifileCode() {
       var i = 0
       for (var error of result.Error) {
         outputStore.addOutput(
-          'Error ' + i + ' at line ' + error.line + ', column ' + error.column + ': ' + error.msg,
+          'Error ' + i + ' at line ' + (error.line+1) + ', column ' + (error.column+1) + ': ' + error.msg,
         )
       }
     }
@@ -85,7 +85,7 @@ export default function MultifileCode() {
       var i = 0
       for (var error of result.Error) {
         outputStore.addOutput(
-            'Error ' + i + ' at line ' + error.line + ', column ' + error.column + ': ' + error.msg,
+            'Error ' + i + ' at line ' + (error.line+1) + ', column ' + (error.column+1) + ': ' + error.msg,
         )
       }
     }
