@@ -302,3 +302,99 @@ impl HistorianFile<Rope, Modification, CursorList> for Text {
 }
 
 impl MFile<Rope, Modification, CursorList> for Text {}
+
+#[cfg(test)]
+mod rope_test {
+    use super::*;
+    use crate::{
+        interface::storage::BasicFile,
+        remote::{server::editor_rpc::OperationType, Modification, OpRange},
+        types::rpc_types::CursorPosition,
+    };
+
+    #[test]
+    fn test_get_path() {
+        std::fs::write("/tmp/file.txt", "Hello, world!\nThis is a test file.\n").unwrap();
+        let file_path = PathBuf::from("/tmp/file.txt");
+        let text = Text::from_path(&file_path).unwrap();
+
+        assert_eq!(text.get_path(), &file_path);
+    }
+
+    #[test]
+    fn test_get_path_str() {
+        std::fs::write("/tmp/file.txt", "Hello, world!\nThis is a test file.\n").unwrap();
+        let file_path = PathBuf::from("/tmp/file.txt");
+        let text = Text::from_path(&file_path).unwrap();
+
+        assert_eq!(text.get_path_str(), "/tmp/file.txt");
+    }
+
+    #[test]
+    fn test_is_dirty() {
+        std::fs::write("/tmp/file.txt", "Hello, world!\nThis is a test file.\n").unwrap();
+        let file_path = PathBuf::from("/tmp/file.txt");
+        let mut text = Text::from_path(&file_path).unwrap();
+
+        assert_eq!(text.is_dirty(), false);
+
+        text.set_dirty(true);
+        assert_eq!(text.is_dirty(), true);
+    }
+
+    #[test]
+    fn test_to_string() {
+        std::fs::write("/tmp/file.txt", "Hello, world!\nThis is a test file.\n").unwrap();
+        let file_path = PathBuf::from("/tmp/file.txt");
+        let text = Text::from_path(&file_path).unwrap();
+
+        assert_eq!(text.to_string(), "Hello, world!\nThis is a test file.\n");
+    }
+
+    #[test]
+    fn test_save() {
+        std::fs::write("/tmp/file.txt", "Hello, world!\nThis is a test file.\n").unwrap();
+        let file_path = PathBuf::from("/tmp/file.txt");
+        let mut text = Text::from_path(&file_path).unwrap();
+
+        text.set_dirty(true);
+        let _ = text.save();
+
+        assert_eq!(text.is_dirty(), false);
+    }
+
+    #[test]
+    fn test_get_raw() {
+        std::fs::write("/tmp/file.txt", "Hello, world!\nThis is a test file.\n").unwrap();
+        let file_path = PathBuf::from("/tmp/file.txt");
+        let mut text = Text::from_path(&file_path).unwrap();
+
+        let path = text.get_path_str();
+
+        assert_eq!(path.len(), "/tmp/file.txt".len());
+    }
+
+    #[test]
+    fn test_handle_modify() {
+        std::fs::write("/tmp/file.txt", "Hello, world!\nThis is a test file.\n").unwrap();
+        let file_path = PathBuf::from("/tmp/file.txt");
+        let mut text = Text::from_path(&file_path).unwrap();
+
+        let modify = Modification {
+            op: OperationType::Insert,
+            version: 0,
+            op_range: OpRange {
+                start: CursorPosition { row: 0, col: 0 },
+                end: CursorPosition { row: 0, col: 0 },
+            },
+            modified_content: "Test".to_string(),
+        };
+
+        text.handle_modify(&modify).unwrap();
+
+        assert_eq!(
+            text.to_string(),
+            "TestHello, world!\nThis is a test file.\n"
+        );
+    }
+}
