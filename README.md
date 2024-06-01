@@ -15,7 +15,7 @@
 文档链接：
 
 - [API文档](https://sustech-cs304.github.io/team-project-24spring-0/moras/)
-- [用户手册]()
+- [用户手册](https://rosswasd.github.io/team-project-24spring-0/)
 - [Project Proposal](https://github.com/sustech-cs304/team-project-24spring-0/blob/main/reports/Team%20Project%20-%20Proposal.md)
 - [Sprint 1](https://github.com/sustech-cs304/team-project-24spring-0/blob/main/reports/sprint1/design-team0.md)
 - [Sprint 2]()
