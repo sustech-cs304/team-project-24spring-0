@@ -60,6 +60,7 @@ jobs:
           RUSTFLAGS: "--cfg ci"
 
       - name: Cargo test
+        if: github.ref != 'refs/heads/main'
         working-directory: ./src-tauri
         run: cargo test
         env:

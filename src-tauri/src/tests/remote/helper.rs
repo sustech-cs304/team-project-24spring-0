@@ -17,7 +17,13 @@ use crate::{
     utility::ptr::Ptr,
 };
 
-pub fn init_test_server(content: &str) -> Result<RpcServerImpl, Box<dyn Error>> {
+pub(super) fn insert_str_at_utf8_char_index(s: &mut String, insert_str: &str, char_index: usize) {
+    let mut char_indices = s.char_indices();
+    let byte_index = char_indices.nth(char_index).map_or(s.len(), |(i, _)| i);
+    s.insert_str(byte_index, insert_str);
+}
+
+pub(super) fn init_test_server(content: &str) -> Result<RpcServerImpl, Box<dyn Error>> {
     if TAB_MAP.lock().unwrap().as_ref().is_none() {
         {
             let mut static_lock = TAB_MAP.lock().unwrap();
@@ -47,7 +53,7 @@ pub fn init_test_server(content: &str) -> Result<RpcServerImpl, Box<dyn Error>> 
 
     server.change_password(TEST_PASSWD);
     let _ = server
-        .set_port(get_free_port(Ipv4Addr::from_str("0.0.0.0").unwrap(), MAX_PORT_RETRY).unwrap());
+        .set_port(get_free_port(Ipv4Addr::from_str("127.0.0.1").unwrap(), MAX_PORT_RETRY).unwrap());
     server
         .start_server(
             TEST_FILE_NAME.to_string(),
@@ -58,10 +64,10 @@ pub fn init_test_server(content: &str) -> Result<RpcServerImpl, Box<dyn Error>> 
     Ok(server)
 }
 
-pub fn init_test_client(port: u16) -> Result<RpcClientImpl, Box<dyn Error>> {
+pub(super) fn init_test_client(port: u16) -> Result<RpcClientImpl, Box<dyn Error>> {
     let mut client = RpcClientImpl::default();
     client
-        .set_server_addr(format!("0.0.0.0:{}", port).parse().unwrap())
+        .set_server_addr(format!("127.0.0.1:{}", port).parse().unwrap())
         .unwrap();
     block_on(client.connect()).unwrap();
     Ok(client)
