@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/remote/server.rs`."><title>server.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="moras" data-themes="" data-resource-suffix="" data-rustdoc-version="1.80.0-nightly (ada5e2c7b 2024-05-31)" data-channel="nightly" data-search-js="search-d52510db62a78183.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/remote/server.rs`."><title>server.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="moras" data-themes="" data-resource-suffix="" data-rustdoc-version="1.80.0-nightly (f67a1acc0 2024-06-01)" data-channel="nightly" data-search-js="search-d52510db62a78183.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -501,7 +501,6 @@
 </span><span class="kw">struct </span>ServerHandle {
     window: <span class="prelude-ty">Option</span>&lt;Window&gt;,
     map_state: Mutex&lt;(String, <span class="prelude-ty">Option</span>&lt;Ptr&lt;TabMap&gt;&gt;)&gt;,
-    version: atomic::AtomicUsize,
     password: Mutex&lt;String&gt;,
     clients: Mutex&lt;Vec&lt;SocketAddr&gt;&gt;,
     cursor_list: Arc&lt;Mutex&lt;CursorList&gt;&gt;,
@@ -565,12 +564,12 @@
         }
     }
 
-    <span class="kw">fn </span>get_history_since&lt;T&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, version: usize) -&gt; Vec&lt;T&gt;
+    <span class="kw">fn </span>get_history_since&lt;T&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, start_version: usize) -&gt; Vec&lt;T&gt;
     <span class="kw">where
         </span>Modification: Into&lt;T&gt; + Clone,
     {
         <span class="kw">let </span>lock = <span class="self">self</span>.history.lock().unwrap();
-        lock[version..]
+        lock[start_version..]
             .to_vec()
             .into_iter()
             .map(Into::into)
@@ -593,7 +592,7 @@
                     <span class="prelude-val">Ok</span>(AuthorizeReply {
                         success: <span class="bool-val">true</span>,
                         file_name: tab.text.get_path_str(),
-                        version: handler.version.load(atomic::Ordering::Relaxed) <span class="kw">as </span>u64,
+                        version: tab.text.get_version() <span class="kw">as </span>u64,
                         content: tab.text.to_string(),
                     })
                 } <span class="kw">else </span>{
@@ -602,7 +601,7 @@
                     <span class="prelude-val">Ok</span>(AuthorizeReply {
                         success: <span class="bool-val">true</span>,
                         file_name: tab.text.get_path_str(),
-                        version: handler.version.load(atomic::Ordering::Relaxed) <span class="kw">as </span>u64,
+                        version: tab.text.get_version() <span class="kw">as </span>u64,
                         content: tab.text.to_string(),
                     })
                 }
@@ -676,9 +675,7 @@
                         history: <span class="macro">vec!</span>[],
                         full_content: tab.text.to_string(),
                     });
-                } <span class="kw">else if </span>request.get_ref().version
-                    == handler.version.load(atomic::Ordering::Relaxed) <span class="kw">as </span>u64
-                {
+                } <span class="kw">else if </span>request.get_ref().version == tab.text.get_version() <span class="kw">as </span>u64 {
                     <span class="prelude-val">Ok</span>(GetContentReply {
                         history: <span class="macro">vec!</span>[],
                         full_content: String::new(),
@@ -713,7 +710,7 @@
                 <span class="kw">let </span>end = content_position.end.unwrap();
 
                 <span class="comment">// check version correct(up to date)
-                </span><span class="kw">if </span>request_ref.version != handler.version.load(atomic::Ordering::Relaxed) <span class="kw">as </span>u64 {
+                </span><span class="kw">if </span>request_ref.version != tab.text.get_version() <span class="kw">as </span>u64 {
                     <span class="kw">return </span><span class="prelude-val">Ok</span>(Response::new(UpdateContentReply {
                         success: <span class="bool-val">false</span>,
                         message: <span class="string">"Version mismatch"</span>.to_string(),
@@ -733,7 +730,10 @@
                 //     }
                 // }
 
-                // handle operation
+                </span><span class="kw">let </span><span class="kw-2">mut </span>history = handler.history.lock().unwrap();
+                history.append(<span class="kw-2">&amp;mut </span><span class="macro">vec!</span>[Modification::from(request_ref.clone())]);
+
+                <span class="comment">// handle operation
                 </span><span class="kw">match </span>tab.text.merge_history(
                     <span class="kw-2">&amp;</span><span class="macro">vec!</span>[Modification::from(request_ref.clone())],
                     <span class="kw-2">&amp;mut *</span>cursor_lock,
