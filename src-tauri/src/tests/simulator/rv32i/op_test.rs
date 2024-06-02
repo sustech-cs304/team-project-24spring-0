@@ -2,7 +2,7 @@ use crate::{
     interface::{assembler::*, simulator::Simulator},
     modules::riscv::{
         basic::interface::parser::{ParserRISCVInstOp, RISCV},
-        rv32i::constants::{RISCVImmediate, RV32IInstruction, RV32IRegister},
+        rv32i::constants::{RISCVImmediate, RV32IInstruction},
     },
     simulator::simulator::*,
 };
