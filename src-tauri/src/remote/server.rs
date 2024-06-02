@@ -51,7 +51,6 @@ pub mod editor_rpc {
 struct ServerHandle {
     window: Option<Window>,
     map_state: Mutex<(String, Option<Ptr<TabMap>>)>,
-    version: atomic::AtomicUsize,
     password: Mutex<String>,
     clients: Mutex<Vec<SocketAddr>>,
     cursor_list: Arc<Mutex<CursorList>>,
@@ -115,12 +114,12 @@ impl ServerHandle {
         }
     }
 
-    fn get_history_since<T>(&self, version: usize) -> Vec<T>
+    fn get_history_since<T>(&self, start_version: usize) -> Vec<T>
     where
         Modification: Into<T> + Clone,
     {
         let lock = self.history.lock().unwrap();
-        lock[version..]
+        lock[start_version..]
             .to_vec()
             .into_iter()
             .map(Into::into)
@@ -143,7 +142,7 @@ impl Editor for Arc<Mutex<ServerHandle>> {
                     Ok(AuthorizeReply {
                         success: true,
                         file_name: tab.text.get_path_str(),
-                        version: handler.version.load(atomic::Ordering::Relaxed) as u64,
+                        version: tab.text.get_version() as u64,
                         content: tab.text.to_string(),
                     })
                 } else {
@@ -152,7 +151,7 @@ impl Editor for Arc<Mutex<ServerHandle>> {
                     Ok(AuthorizeReply {
                         success: true,
                         file_name: tab.text.get_path_str(),
-                        version: handler.version.load(atomic::Ordering::Relaxed) as u64,
+                        version: tab.text.get_version() as u64,
                         content: tab.text.to_string(),
                     })
                 }
@@ -226,9 +225,7 @@ impl Editor for Arc<Mutex<ServerHandle>> {
                         history: vec![],
                         full_content: tab.text.to_string(),
                     });
-                } else if request.get_ref().version
-                    == handler.version.load(atomic::Ordering::Relaxed) as u64
-                {
+                } else if request.get_ref().version == tab.text.get_version() as u64 {
                     Ok(GetContentReply {
                         history: vec![],
                         full_content: String::new(),
@@ -263,7 +260,7 @@ impl Editor for Arc<Mutex<ServerHandle>> {
                 let end = content_position.end.unwrap();
 
                 // check version correct(up to date)
-                if request_ref.version != handler.version.load(atomic::Ordering::Relaxed) as u64 {
+                if request_ref.version != tab.text.get_version() as u64 {
                     return Ok(Response::new(UpdateContentReply {
                         success: false,
                         message: "Version mismatch".to_string(),
@@ -282,6 +279,9 @@ impl Editor for Arc<Mutex<ServerHandle>> {
                 //         }));
                 //     }
                 // }
+
+                let mut history = handler.history.lock().unwrap();
+                history.append(&mut vec![Modification::from(request_ref.clone())]);
 
                 // handle operation
                 match tab.text.merge_history(
