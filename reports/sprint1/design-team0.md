@@ -1,6 +1,6 @@
 <div align=center>
 
-![sprint1-ui1](img/sprint1-ui1)
+![sprint1-ui1](img/sprint1-ui1.png)
 
 # Moras - Sprint1
 

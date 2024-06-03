@@ -18,6 +18,7 @@ use super::{
     Modification,
 };
 use crate::{
+    dprintln,
     interface::remote::RpcClient,
     remote::server::editor_rpc::UpdateContentReply,
     types::ResultVoid,
@@ -178,6 +179,7 @@ impl RpcClientImpl {
             Ok(reply) => reply?,
             Err(_) => return Err("Timeout".into()),
         };
+        dprintln!("{:?}", reply.get_ref());
         Ok(reply.get_ref().clone())
     }
 }

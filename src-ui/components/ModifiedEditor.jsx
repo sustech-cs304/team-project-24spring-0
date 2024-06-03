@@ -1,95 +1,115 @@
-import Editor, { useMonaco } from '@monaco-editor/react'
-import React, { useEffect, useRef } from 'react'
-import Image from 'next/image'
-import { invoke } from '@tauri-apps/api/tauri'
-import useOutputStore from '@/utils/outputState'
-import useFileStore from '@/utils/state'
-import rv32i from '@/constants/riscv/rv32i.json'
-const language_id = 'riscv'
-import { listen } from '@tauri-apps/api/event'
+import Editor, { useMonaco } from '@monaco-editor/react';
+import React, { useEffect, useRef } from 'react';
+import Image from 'next/image';
+import { invoke } from '@tauri-apps/api/tauri';
+import useOutputStore from '@/utils/outputState';
+import useFileStore from '@/utils/state';
+import rv32i from '@/constants/riscv/rv32i.json';
+const language_id = 'riscv';
+import { listen } from '@tauri-apps/api/event';
 
 function getDifference(a, b) {
-  var i = 0
-  var j = 0
-  var result = ''
+  var i = 0;
+  var j = 0;
+  var result = '';
 
   while (j < b.length) {
-    if (a[i] != b[j] || i == a.length) result += b[j]
-    else i++
-    j++
+    if (a[i] != b[j] || i == a.length) result += b[j];
+    else i++;
+    j++;
   }
-  return result
+  return result;
 }
 
 export default function ModifiedEditor({ fileName }) {
-  const monacoRef = useRef(null)
-  const editorRef = useRef(null)
-  const state = useFileStore()
-  const file = useFileStore(state => state.files.find(file => file.fileName === fileName))
+  const monacoRef = useRef(null);
+  const editorRef = useRef(null);
+  const state = useFileStore();
+  const file = useFileStore(state =>
+    state.files.find(file => file.fileName === fileName),
+  );
 
   useEffect(() => {
-    const unListenedFrontUpdateContent = listen('front_update_content', event => {
+    const unListenedFrontUpdateContent = listen(
+      'front_update_content',
+      event => {
         if (event.payload['file_name'] === fileName) {
-          console.log('front_update_content event received', event.payload)
-            const text = event.payload['content']
-          const start = event.payload['start']
-            const end = event.payload['end']
-          var range = new monaco.Range(start.row,  start.col, end.line, end.col)
-          var id = { major: 1, minor: 1 }
-          var op = { identifier: id, range: range, text: text, forceMoveMarkers: false }
-          editorRef.current.executeEdits('my-source', [op])
+          console.log('front_update_content event received', event.payload);
+          const text = event.payload['content'];
+          const start = event.payload['start'];
+          const end = event.payload['end'];
+          var range = new monaco.Range(start.row, start.col, end.line, end.col);
+          var id = { major: 1, minor: 1 };
+          var op = {
+            identifier: id,
+            range: range,
+            text: text,
+            forceMoveMarkers: false,
+          };
+          editorRef.current.executeEdits('my-source', [op]);
         }
-    });
+      },
+    );
 
     return () => {
-        unListenedFrontUpdateContent.then(dispose => dispose())
-    }
-  }, [])
+      unListenedFrontUpdateContent.then(dispose => dispose());
+    };
+  }, []);
 
   function handleEditorDidMount(editor, monaco) {
     // here is the editor instance
     // you can store it in `useRef` for further usage
-    editorRef.current = editor
-    monacoRef.current = monaco
+    editorRef.current = editor;
+    monacoRef.current = monaco;
 
     // 假设 editor 是您已经创建好的 Monaco Editor 实例
     editor.onDidChangeModelContent(async function (event) {
       for (const change of event.changes) {
-        var op = change.text.length > 0 ? change.range.startColumn == change.range.endColumn ? `Insert` : `Replace` : `Delete`
-        var text = change.text
+        var op =
+          change.text.length > 0
+            ? change.range.startColumn == change.range.endColumn
+              ? `Insert`
+              : `Replace`
+            : `Delete`;
+        var text = change.text;
         var startPosition = {
           row: change.range.startLineNumber - 1,
           col: change.range.startColumn - 1,
-        }
+        };
         var endPosition = {
           row: change.range.endLineNumber - 1,
           col: change.range.endColumn - 1,
-        }
+        };
         invoke('modify_current_tab', {
           op: op.toString(),
           content: text,
           start: startPosition,
           end: endPosition,
-        })
+        });
       }
-    })
+    });
   }
 
   var handleClickedRun = async () => {
-    var line = editorRef.current.getPosition()
-    var range = new monaco.Range(line.lineNumber, 1, line.lineNumber, 1)
-    var id = { major: 1, minor: 1 }
-    var text = 'FOO'
-    var op = { identifier: id, range: range, text: text, forceMoveMarkers: false }
-    editorRef.current.executeEdits('my-source', [op])
-  }
+    var line = editorRef.current.getPosition();
+    var range = new monaco.Range(line.lineNumber, 1, line.lineNumber, 1);
+    var id = { major: 1, minor: 1 };
+    var text = 'FOO';
+    var op = {
+      identifier: id,
+      range: range,
+      text: text,
+      forceMoveMarkers: false,
+    };
+    editorRef.current.executeEdits('my-source', [op]);
+  };
 
   return (
-    <div className="h-full relative">
+    <div className='h-full relative'>
       <Editor
         theme={language_id}
         language={language_id}
-        className="overflow-hidden h-full"
+        className='overflow-hidden h-full'
         value={file.code}
         onMount={handleEditorDidMount}
         onChange={async (value, event) => {
@@ -104,29 +124,40 @@ export default function ModifiedEditor({ fileName }) {
             file.baseAddress,
             file.started,
             file.paused,
-              file.shared
-          )
+            file.shared,
+          );
         }}
         options={{ hover: { enabled: true } }}
         beforeMount={LoadMonacoConfig}
       />
+      <div className='absolute right-2 top-0 flex-row gap-2'>
+        {/*<button className="bg-gray-100 rounded-2xl hover:bg-gray-200" onClick={handleClickedRun}>*/}
+        {/*  <Image alt="run icon" src="/icons/run.svg" width={16} height={16} />*/}
+        {/*</button>*/}
+      </div>
     </div>
-  )
+  );
 }
 
 function LoadMonacoConfig(monaco) {
   // check whether the language is registered or not
   if (monaco.languages.getLanguages().some(({ id }) => id === language_id)) {
-    return
+    return;
   }
 
-  monaco.languages.register({ id: language_id })
+  monaco.languages.register({ id: language_id });
 
-  monaco.languages.setMonarchTokensProvider(language_id, getRiscvMonarchTokensProvider())
+  monaco.languages.setMonarchTokensProvider(
+    language_id,
+    getRiscvMonarchTokensProvider(),
+  );
 
-  monaco.languages.registerCompletionItemProvider(language_id, getRiscvCompletionProvider())
+  monaco.languages.registerCompletionItemProvider(
+    language_id,
+    getRiscvCompletionProvider(),
+  );
 
-  monaco.languages.registerHoverProvider(language_id, getRiscvHoverProvider())
+  monaco.languages.registerHoverProvider(language_id, getRiscvHoverProvider());
 
   monaco.editor.defineTheme(language_id, {
     base: 'vs-dark',
@@ -153,11 +184,11 @@ function LoadMonacoConfig(monaco) {
       'editorLineNumber.activeForeground': '#F8F8F0',
       'editorCursor.background': '#A7A7A7',
     },
-  })
+  });
 }
 
 function getRiscvMonarchTokensProvider() {
-  let directive = rv32i.directive
+  let directive = rv32i.directive;
   return {
     seperator: /[,:\(\)\s]/,
 
@@ -179,19 +210,24 @@ function getRiscvMonarchTokensProvider() {
             },
           },
         ],
-        [new RegExp(`(${directive.join('|').replace(/\./g, '\\.')})(?=@seperator|$)`), 'directive'],
+        [
+          new RegExp(
+            `(${directive.join('|').replace(/\./g, '\\.')})(?=@seperator|$)`,
+          ),
+          'directive',
+        ],
         [/[^,:\(\)\s][\.\w]*(?=\W|$)/, 'unknown'],
       ],
     },
-  }
+  };
 }
 
 function getRiscvCompletionProvider() {
-  let directive = rv32i.directive
-  let register_map = rv32i.register
-  let register_key = Object.keys(register_map)
-  let operator_map = rv32i.operator
-  let operator_key = Object.keys(operator_map)
+  let directive = rv32i.directive;
+  let register_map = rv32i.register;
+  let register_key = Object.keys(register_map);
+  let operator_map = rv32i.operator;
+  let operator_key = Object.keys(operator_map);
 
   let directive_items = directive.map(directive => {
     return {
@@ -201,8 +237,8 @@ function getRiscvCompletionProvider() {
       sortText: '2' + directive,
       range: null,
       insertText: directive,
-    }
-  })
+    };
+  });
 
   let register_items = register_key.map((register, idx) => {
     return {
@@ -212,10 +248,10 @@ function getRiscvCompletionProvider() {
       sortText: '1' + String(idx).padStart(2, '0'),
       range: null,
       insertText: register,
-    }
-  })
+    };
+  });
 
-  let operator_items = []
+  let operator_items = [];
   for (let operator of operator_key) {
     if (operator_map[operator].length === 0) {
       operator_items.push({
@@ -225,7 +261,7 @@ function getRiscvCompletionProvider() {
         sortText: '3' + operator,
         range: null,
         insertText: operator,
-      })
+      });
     } else {
       for (let hint of operator_map[operator]) {
         operator_items.push({
@@ -235,13 +271,13 @@ function getRiscvCompletionProvider() {
           sortText: '3' + operator,
           range: null,
           insertText: operator,
-        })
+        });
       }
     }
   }
 
-  let all_items = directive_items.concat(register_items).concat(operator_items)
-  let items_without_operator = directive_items.concat(register_items)
+  let all_items = directive_items.concat(register_items).concat(operator_items);
+  let items_without_operator = directive_items.concat(register_items);
 
   return {
     triggerCharacters: [
@@ -253,34 +289,49 @@ function getRiscvCompletionProvider() {
     ],
 
     provideCompletionItems: (model, position, context, token) => {
-      let find = model.findPreviousMatch(/[\w\.]*/, position, true, true, null, false)
-      let range
+      let find = model.findPreviousMatch(
+        /[\w\.]*/,
+        position,
+        true,
+        true,
+        null,
+        false,
+      );
+      let range;
       if (find === null) {
         range = {
           startLineNumber: position.lineNumber,
           startColumn: position.column,
           endLineNumber: position.lineNumber,
           endColumn: position.column,
-        }
+        };
       } else {
-        range = find.range
+        range = find.range;
       }
       let prev_range = {
         startLineNumber: range.startLineNumber,
         startColumn: 0,
         endLineNumber: range.startLineNumber,
         endColumn: range.startColumn - 1,
-      }
-      let prev_word = model.findMatches(/[\w\.]+/, prev_range, true, true, null, false, 1)
+      };
+      let prev_word = model.findMatches(
+        /[\w\.]+/,
+        prev_range,
+        true,
+        true,
+        null,
+        false,
+        1,
+      );
       if (prev_word.length > 0) {
-        items_without_operator.forEach(item => (item.range = range))
-        return { suggestions: items_without_operator }
+        items_without_operator.forEach(item => (item.range = range));
+        return { suggestions: items_without_operator };
       } else {
-        all_items.forEach(item => (item.range = range))
-        return { suggestions: all_items }
+        all_items.forEach(item => (item.range = range));
+        return { suggestions: all_items };
       }
     },
-  }
+  };
 }
 
 function getRiscvHoverProvider() {
@@ -291,43 +342,57 @@ function getRiscvHoverProvider() {
         startColumn: position.column,
         endLineNumber: position.lineNumber,
         endColumn: position.column + 1,
-      })
+      });
       if (!/[\w\.]*/.test(c)) {
-        return null
+        return null;
       }
-      let prev_range = model.findPreviousMatch(/[\w\.]*/, position, true, true, null, false)
-      let next_range = model.findNextMatch(/[\w\.]*/, position, true, true, null, false)
+      let prev_range = model.findPreviousMatch(
+        /[\w\.]*/,
+        position,
+        true,
+        true,
+        null,
+        false,
+      );
+      let next_range = model.findNextMatch(
+        /[\w\.]*/,
+        position,
+        true,
+        true,
+        null,
+        false,
+      );
       let range = {
         startLineNumber: prev_range.range.startLineNumber,
         startColumn: prev_range.range.startColumn,
         endLineNumber: next_range.range.endLineNumber,
         endColumn: next_range.range.endColumn,
-      }
-      let word = model.getValueInRange(range)
-      let register = rv32i.register[word]
-      let operator_list = rv32i.operator[word]
-      let directive = rv32i.directive.includes(word) ? word : undefined
-      let title, detail
-      let markdown_string_list = []
+      };
+      let word = model.getValueInRange(range);
+      let register = rv32i.register[word];
+      let operator_list = rv32i.operator[word];
+      let directive = rv32i.directive.includes(word) ? word : undefined;
+      let title, detail;
+      let markdown_string_list = [];
       if (register !== undefined) {
-        title = `Register: ${word}`
-        detail = [register]
+        title = `Register: ${word}`;
+        detail = [register];
       } else if (operator_list !== undefined) {
-        title = `Operator: ${word}`
-        detail = operator_list
+        title = `Operator: ${word}`;
+        detail = operator_list;
       } else if (directive !== undefined) {
-        title = `Directive: ${word}`
-        detail = [word]
+        title = `Directive: ${word}`;
+        detail = [word];
       }
       if (title !== undefined) {
-        markdown_string_list.push({ value: `**${title}**` })
-        markdown_string_list.push(...detail.map(d => ({ value: `\`${d}\`` })))
-        console.log(markdown_string_list)
+        markdown_string_list.push({ value: `**${title}**` });
+        markdown_string_list.push(...detail.map(d => ({ value: `\`${d}\`` })));
+        console.log(markdown_string_list);
       }
       return {
         contents: markdown_string_list,
         range: range,
-      }
+      };
     },
-  }
+  };
 }

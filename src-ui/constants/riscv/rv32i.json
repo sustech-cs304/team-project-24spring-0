@@ -151,7 +151,10 @@
       "lhu t1, 0x100000 (t1 = 0x100000[12:31](i32); t1 = (u16)mem[t1 + 0x100000[0:11](i32)])",
       "lhu t1, label (t1 = pc + delta[12:31]; t1 = (u16)mem[t1 + delta[0:11]])"
     ],
-    "lui": ["lui t1, 0x1000 (t1 = 0x1000(u20))", "lui t1, label (t1 = label[12:31])"],
+    "lui": [
+      "lui t1, 0x1000 (t1 = 0x1000(u20))",
+      "lui t1, label (t1 = label[12:31])"
+    ],
     "lw": [
       "lw t1, -0x1(t2) (t1 = mem[t2 + -0x1(i12)])",
       "lw t1, (t2) (t1 = mem[t2])",
@@ -214,7 +217,9 @@
     "blez": ["blez t1, label (if t1 <= 0 goto label) (signed)"],
     "bltz": ["bltz t1, label (if t1 < 0 goto label) (signed)"],
     "bnez": ["bnez t1, label (if t1 != 0 goto label)"],
-    "call": ["call label (t1 = pc + delta[12:31]; ra = pc + 4; pc = t1 + delta[0:11])"],
+    "call": [
+      "call label (t1 = pc + delta[12:31]; ra = pc + 4; pc = t1 + delta[0:11])"
+    ],
     "csrc": ["csrc t1, csr (csr &= ~ t1)"],
     "csrci": ["csrci csr, 0x1(u5) (csr &= ~ 0x1(u5))"],
     "csrr": ["csrr t1, csr (t1 = csr)"],

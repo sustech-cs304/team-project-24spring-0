@@ -51,7 +51,16 @@ jobs:
             src-tauri/target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
+      - name: Generate Report
+        if: github.ref == 'refs/heads/main'
+        working-directory: ./src-tauri
+        run: |
+          ../scripts/report.sh
+        env:
+          RUSTFLAGS: "--cfg ci"
+
       - name: Cargo test
+        if: github.ref != 'refs/heads/main'
         working-directory: ./src-tauri
         run: cargo test
         env:
@@ -66,6 +75,7 @@ jobs:
         working-directory: ./src-tauri
         run: |
           cargo doc --no-deps
+          mv *.html target/doc/report.html
 
       - name: Deploy Doc
         uses: peaceiris/actions-gh-pages@v4

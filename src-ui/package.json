@@ -7,8 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "format": "f -w",
-    "format:check": "f"
+    "format": "prettier --write '{app,components,constants}/**/*.{js,jsx,json}'",
+    "format-check": "prettier --check '{app,components,constants}/**/*.{js,jsx,json}'"
   },
   "dependencies": {
     "@magic/format": "^0.0.59",
