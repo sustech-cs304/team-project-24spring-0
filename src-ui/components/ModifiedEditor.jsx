@@ -31,11 +31,11 @@ export default function ModifiedEditor({ fileName }) {
   );
 
   useEffect(() => {
+    console.log('front_update_content event received', event.payload);
     const unListenedFrontUpdateContent = listen(
       'front_update_content',
       event => {
         if (event.payload['file_name'] === fileName) {
-          console.log('front_update_content event received', event.payload);
           const text = event.payload['content'];
           const start = event.payload['start'];
           const end = event.payload['end'];
@@ -47,8 +47,9 @@ export default function ModifiedEditor({ fileName }) {
             text: text,
             forceMoveMarkers: false,
           };
-          editorRef.current.executeEdits('my-source', [op]);
           updateEventRef.current = true;
+          editorRef.current.executeEdits('my-source', [op]);
+
         }
       },
     );
@@ -59,6 +60,7 @@ export default function ModifiedEditor({ fileName }) {
   }, []);
 
   function invokeChange(args) {
+    console.log('invoke change event ref', updateEventRef.current);
     if (updateEventRef.current){
         updateEventRef.current = false;
         console.log('skip change as a result of event', args);
