@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "SET /A R=%RANDOM% && next dev",
+    "dev": "rm -rf tmp&&python -c \"import os; import random; os.environ['R'] = str(random.randint(0, 32767)); os.system('next dev')\"",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
