@@ -144,16 +144,20 @@ export default function MultifileCode() {
   };
 
   const getUndoButtonisDisabled = () => {
-    const currentFile = state.files.find(
-      file => file.fileName === state.currentFile,
-    );
-    if (!currentFile) {
-      return true;
-    }
-    // if (currentFile.paused) {
-    //   return true
+    // const currentFile = state.files.find(
+    //   file => file.fileName === state.currentFile,
+    // );
+    // if (!currentFile) {
+    //   return true;
     // }
-    return !currentFile.started;
+    // return !currentFile.started;
+    const currentFile = state.files.find(
+        file => file.fileName === state.currentFile,
+    );
+    if (currentFile && currentFile.assembly.length != 0) {
+      return false;
+    }
+    return true;
   };
 
   const getResetButtonisDisabled = () => {
