@@ -205,9 +205,9 @@ impl Assembler<RISCV> for RiscVAssembler {
                                 | RV32IInstruction::Sw => {
                                     extract_opds!(self, inst, S, rs1, rs2, imm, index);
                                     result.operands = Vec::from([
+                                        rs2 as RISCVImmediate,
                                         imm,
                                         rs1 as RISCVImmediate,
-                                        rs2 as RISCVImmediate,
                                     ]);
                                 }
                                 RV32IInstruction::Jal => {
