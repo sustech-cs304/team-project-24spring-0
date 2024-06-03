@@ -58,6 +58,16 @@ export default function ModifiedEditor({ fileName }) {
     };
   }, []);
 
+  function invokeChange(args) {
+    if (updateEventRef.current){
+        updateEventRef.current = false;
+        console.log('skip change as a result of event', args);
+        return;
+    }
+    invoke('modify_current_tab', args);
+    console.log('invoke change', args);
+  }
+
   function handleEditorDidMount(editor, monaco) {
     // here is the editor instance
     // you can store it in `useRef` for further usage
@@ -87,11 +97,17 @@ export default function ModifiedEditor({ fileName }) {
           row: change.range.endLineNumber - 1,
           col: change.range.endColumn - 1,
         };
-        invoke('modify_current_tab', {
-          op: op.toString(),
-          content: text,
-          start: startPosition,
-          end: endPosition,
+        // invoke('modify_current_tab', {
+        //   op: op.toString(),
+        //   content: text,
+        //   start: startPosition,
+        //   end: endPosition,
+        // });
+        invokeChange({
+            op: op.toString(),
+            content: text,
+            start: startPosition,
+            end: endPosition,
         });
       }
     });
