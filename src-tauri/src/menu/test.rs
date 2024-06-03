@@ -52,7 +52,7 @@ pub fn event_handler(event: WindowMenuEvent) {
                 window.state::<CurTabName>(),
                 window.state::<TabMap>(),
                 window.state::<RpcState>(),
-                "127.0.0.1".to_string(),
+                "10.32.7.228".to_string(),
                 11451,
                 "foo".to_string(),
             );
