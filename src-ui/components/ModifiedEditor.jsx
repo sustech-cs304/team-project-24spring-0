@@ -24,6 +24,7 @@ function getDifference(a, b) {
 export default function ModifiedEditor({ fileName }) {
   const monacoRef = useRef(null);
   const editorRef = useRef(null);
+  const updateEventRef = useRef(null);
   const state = useFileStore();
   const file = useFileStore(state =>
     state.files.find(file => file.fileName === fileName),
@@ -38,7 +39,7 @@ export default function ModifiedEditor({ fileName }) {
           const text = event.payload['content'];
           const start = event.payload['start'];
           const end = event.payload['end'];
-          var range = new monaco.Range(start.row, start.col, end.line, end.col);
+          var range = new monaco.Range(start[0]+1, start[1]+1, end[0]+1, end[1]+1);
           var id = { major: 1, minor: 1 };
           var op = {
             identifier: id,
@@ -47,6 +48,7 @@ export default function ModifiedEditor({ fileName }) {
             forceMoveMarkers: false,
           };
           editorRef.current.executeEdits('my-source', [op]);
+          updateEventRef.current = true;
         }
       },
     );
@@ -65,6 +67,11 @@ export default function ModifiedEditor({ fileName }) {
     // 假设 editor 是您已经创建好的 Monaco Editor 实例
     editor.onDidChangeModelContent(async function (event) {
       for (const change of event.changes) {
+        console.log(event)
+        if (updateEventRef.current) {
+            updateEventRef.current = false;
+            break;
+        }
         var op =
           change.text.length > 0
             ? change.range.startColumn == change.range.endColumn
