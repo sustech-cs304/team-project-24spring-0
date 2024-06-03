@@ -10,7 +10,7 @@ import {
 import useOutputStore from '@/utils/outputState';
 import useFileStore from '@/utils/state';
 import openAIClient from '@/utils/openAI';
-import React, {useState, useEffect, useRef} from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { listen } from '@tauri-apps/api/event';
 import { invoke } from '@tauri-apps/api/tauri';
 
