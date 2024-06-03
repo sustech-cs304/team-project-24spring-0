@@ -39,7 +39,12 @@ export default function ModifiedEditor({ fileName }) {
           const text = event.payload['content'];
           const start = event.payload['start'];
           const end = event.payload['end'];
-          var range = new monaco.Range(start[0]+1, start[1]+1, end[0]+1, end[1]+1);
+          var range = new monaco.Range(
+            start[0] + 1,
+            start[1] + 1,
+            end[0] + 1,
+            end[1] + 1,
+          );
           var id = { major: 1, minor: 1 };
           var op = {
             identifier: id,
@@ -49,7 +54,6 @@ export default function ModifiedEditor({ fileName }) {
           };
           updateEventRef.current = true;
           editorRef.current.executeEdits('my-source', [op]);
-
         }
       },
     );
@@ -61,10 +65,10 @@ export default function ModifiedEditor({ fileName }) {
 
   function invokeChange(args) {
     console.log('invoke change event ref', updateEventRef.current);
-    if (updateEventRef.current){
-        updateEventRef.current = false;
-        console.log('skip change as a result of event', args);
-        return;
+    if (updateEventRef.current) {
+      updateEventRef.current = false;
+      console.log('skip change as a result of event', args);
+      return;
     }
     invoke('modify_current_tab', args);
     console.log('invoke change', args);
@@ -101,10 +105,10 @@ export default function ModifiedEditor({ fileName }) {
         //   end: endPosition,
         // });
         invokeChange({
-            op: op.toString(),
-            content: text,
-            start: startPosition,
-            end: endPosition,
+          op: op.toString(),
+          content: text,
+          start: startPosition,
+          end: endPosition,
         });
       }
     });
