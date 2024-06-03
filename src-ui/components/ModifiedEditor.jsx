@@ -24,7 +24,7 @@ function getDifference(a, b) {
 export default function ModifiedEditor({ fileName }) {
   const monacoRef = useRef(null);
   const editorRef = useRef(null);
-  const updateEventRef = useRef(null);
+  const updateEventRef = useRef(false);
   const state = useFileStore();
   const file = useFileStore(state =>
     state.files.find(file => file.fileName === fileName),
@@ -77,11 +77,6 @@ export default function ModifiedEditor({ fileName }) {
     // 假设 editor 是您已经创建好的 Monaco Editor 实例
     editor.onDidChangeModelContent(async function (event) {
       for (const change of event.changes) {
-        console.log(event)
-        if (updateEventRef.current) {
-            updateEventRef.current = false;
-            break;
-        }
         var op =
           change.text.length > 0
             ? change.range.startColumn == change.range.endColumn
