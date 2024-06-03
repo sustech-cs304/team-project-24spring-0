@@ -153,7 +153,7 @@ export default function MultifileCode() {
     // if (currentFile.paused) {
     //   return true
     // }
-    return !currentFile.started || currentFile.paused;
+    return !currentFile.started;
   };
 
   const getResetButtonisDisabled = () => {

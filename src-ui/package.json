@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "python -c \"import os;import shutil; import random;shutil.rmtree('tmp/'); os.environ['R'] = str(random.randint(0, 32767)); os.system('next dev')\"",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
