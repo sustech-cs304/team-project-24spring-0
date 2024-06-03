@@ -7,12 +7,21 @@ use std::{
 
 use ropey::Rope;
 
-use crate::{interface::storage::{
-    BasicFile,
-    FileShareStatus::{self, Client, Private, Server},
-    HistorianFile,
-    MFile,
-}, io::file_io, remote::{server::editor_rpc::OperationType, Modification}, types::{rpc_types::CursorList, ResultVoid}, utility::text_helper::{all_to_lf, lines_count}, CURSOR_LIST, HISTORY, dprintln};
+use crate::{
+    dprintln,
+    interface::storage::{
+        BasicFile,
+        FileShareStatus::{self, Client, Private, Server},
+        HistorianFile,
+        MFile,
+    },
+    io::file_io,
+    remote::{server::editor_rpc::OperationType, Modification},
+    types::{rpc_types::CursorList, ResultVoid},
+    utility::text_helper::{all_to_lf, lines_count},
+    CURSOR_LIST,
+    HISTORY,
+};
 
 pub struct ConcurrencyShare {
     mutex: Mutex<()>,
@@ -61,7 +70,7 @@ impl BasicFile<Rope, Modification> for Text {
     }
 
     fn handle_modify(&mut self, modify: &Modification) -> ResultVoid {
-        dprintln!("handle_modify, version {}",self.version);
+        dprintln!("handle_modify, version {}", self.version);
         let modified_content = all_to_lf(&modify.modified_content);
         match &self.share_status {
             Private => {

@@ -205,8 +205,7 @@ fn share_handler(event: &WindowMenuEvent) {
     )
     .title("Live Share")
     .menu(Menu::new())
-    .build()
-    .unwrap();
+    .build();
 }
 
 fn close_handler(event: &WindowMenuEvent) {
