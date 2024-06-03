@@ -10,7 +10,7 @@ import {
 import useOutputStore from '@/utils/outputState';
 import useFileStore from '@/utils/state';
 import openAIClient from '@/utils/openAI';
-import { useState, useEffect } from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import { listen } from '@tauri-apps/api/event';
 import { invoke } from '@tauri-apps/api/tauri';
 
@@ -22,6 +22,7 @@ export default function MessageIO() {
   const [answer, setAnswer] = useState('');
   const [ioContent, setIOContent] = useState('');
   const [ioWindowBlocked, setIOWindowBlocked] = useState(true);
+  let areaRef = useRef();
 
   useEffect(() => {
     // handle backend input and output api
@@ -59,6 +60,7 @@ export default function MessageIO() {
     for (var i = 0; i < array.length; i++) {
       output += array[i] + '\n';
     }
+    areaRef.current.scrollTop = areaRef.current.scrollHeight;
     return output;
   };
 
@@ -144,6 +146,7 @@ export default function MessageIO() {
                 <textarea
                   id='message'
                   rows='4'
+                  ref={areaRef}
                   readOnly
                   className='w-8/9 h-full block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500'
                   value={generateOutputFromArray(outputs)}
