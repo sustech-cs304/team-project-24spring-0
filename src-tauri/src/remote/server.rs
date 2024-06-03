@@ -93,8 +93,8 @@ impl ServerHandle {
     /// Handle logic current tab wht a `&mut Tab` as lambda parameter.
     /// Only use to bypass the fucking borrow checker.
     fn handle_with_cur_tab<F, R>(&self, handle: F) -> Result<R, String>
-        where
-            F: Fn(&mut Tab) -> Result<R, String>,
+    where
+        F: Fn(&mut Tab) -> Result<R, String>,
     {
         let map_state_lock = self.map_state.lock().unwrap();
         match map_state_lock.1 {
@@ -109,8 +109,8 @@ impl ServerHandle {
     }
 
     fn handle_rpc_with_cur_tab<F, R>(&self, handle: F) -> Result<Response<R>, Status>
-        where
-            F: Fn(&mut Tab) -> Result<R, String>,
+    where
+        F: Fn(&mut Tab) -> Result<R, String>,
     {
         match self.handle_with_cur_tab(handle) {
             Ok(success) => Ok(Response::new(success)),
@@ -128,8 +128,8 @@ impl ServerHandle {
     }
 
     fn get_history_since<T>(&self, start_version: usize) -> Vec<T>
-        where
-            Modification: Into<T> + Clone,
+    where
+        Modification: Into<T> + Clone,
     {
         let lock = self.history.lock().unwrap();
         lock[start_version..]
@@ -276,7 +276,11 @@ impl Editor for Arc<Mutex<ServerHandle>> {
                 if request_ref.version != tab.text.get_version() as u64 {
                     return Ok(Response::new(UpdateContentReply {
                         success: false,
-                        message: format!("server version: {}, your version {}", tab.text.get_version(), request_ref.version),
+                        message: format!(
+                            "server version: {}, your version {}",
+                            tab.text.get_version(),
+                            request_ref.version
+                        ),
                     }));
                 }
 
@@ -439,8 +443,8 @@ impl RpcServer for RpcServerImpl {
             RpcServerImpl::get_ip(),
             self.port.load(atomic::Ordering::Relaxed)
         )
-            .parse()
-            .unwrap();
+        .parse()
+        .unwrap();
         dprintln!("Server listening on: {}", addr);
         let handler = Arc::clone(&self.shared_handler);
 

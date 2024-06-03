@@ -13,10 +13,9 @@
 
 use std::sync::{Arc, Mutex};
 
+use modules::riscv::middleware::frontend_api;
 use once_cell::sync::Lazy;
 use tauri::{AppHandle, Manager};
-
-use modules::riscv::middleware::frontend_api;
 use types::{middleware_types, rpc_types};
 
 use crate::remote::Modification;
