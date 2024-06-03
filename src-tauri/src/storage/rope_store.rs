@@ -19,6 +19,7 @@ use crate::{
     types::{rpc_types::CursorList, ResultVoid},
     utility::text_helper::{all_to_lf, lines_count},
     CURSOR_LIST,
+    HISTORY,
 };
 
 pub struct ConcurrencyShare {
@@ -95,6 +96,8 @@ impl BasicFile<Rope, Modification> for Text {
             }
             Server => {
                 let cursor_list = self.concurrent_share.cursor_list.as_ref().unwrap().clone();
+                let mut histories_mutex = HISTORY.lock().unwrap();
+                histories_mutex.push(modify.clone());
                 self.merge_history(&vec![modify.clone()], &mut cursor_list.lock().unwrap())?;
                 self.dirty = true;
                 Ok(())
