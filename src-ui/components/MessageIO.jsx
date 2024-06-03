@@ -28,10 +28,7 @@ export default function MessageIO() {
     const unListenSyscallOutputPrint = listen('front_syscall_print', event => {
       var filepath = event.payload['filepath'];
       var output = event.payload['data'];
-      setIOContent(
-        prevContent =>
-          prevContent + 'File ' + filepath + ' output:\n' + output + '\n',
-      );
+      setIOContent(prevContent => prevContent + output);
     });
 
     const unListenSyscallInputRequest = listen(

@@ -79,6 +79,9 @@ pub(super) static INST_HANDLER_MAP: Lazy<EnumMap<RV32IInstruction, InstHandler>>
         )
     });
 
+static FAKE_ZERO: Lazy<u32> = Lazy::new(|| 0);
+static FAKE_ZERO_PTR: Lazy<Ptr<u32>> = Lazy::new(|| Ptr::new(&FAKE_ZERO));
+
 macro_rules! load_helper {
     ($arg:expr, $size:expr, $t:ty) => {{
         let addr = $arg.reg($arg[2]) + $arg[1] as u32;
@@ -143,49 +146,61 @@ pub(super) fn andi_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, Strin
 }
 
 pub(super) fn auipc_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, String> {
-    *arg.reg_mut(arg[0]) = arg.pc() + arg[1] as u32;
+    *arg.reg_mut(arg[0]) = arg.pc() + ((arg[1] as u32) << 12);
     arg.pc_step();
     Ok(SimulatorStatus::Running)
 }
 
 pub(super) fn beq_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, String> {
     if arg.reg(arg[0]) == arg.reg(arg[1]) {
-        jump_helper(&arg, arg[2] as u32)?;
+        jump_offset_helper(&arg, arg[2] as u32)?;
+    } else {
+        arg.pc_step();
     }
     Ok(SimulatorStatus::Running)
 }
 
 pub(super) fn bge_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, String> {
     if arg.reg(arg[0]) as i32 >= arg.reg(arg[1]) as i32 {
-        jump_helper(&arg, arg[2] as u32)?;
+        jump_offset_helper(&arg, arg[2] as u32)?;
+    } else {
+        arg.pc_step();
     }
     Ok(SimulatorStatus::Running)
 }
 
 pub(super) fn bgeu_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, String> {
     if arg.reg(arg[0]) >= arg.reg(arg[1]) {
-        jump_helper(&arg, arg[2] as u32)?;
+        jump_offset_helper(&arg, arg[2] as u32)?;
+    } else {
+        arg.pc_step();
     }
     Ok(SimulatorStatus::Running)
 }
 
 pub(super) fn blt_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, String> {
     if (arg.reg(arg[0]) as i32) < (arg.reg(arg[1]) as i32) {
-        jump_helper(&arg, arg[2] as u32)?;
+        jump_offset_helper(&arg, arg[2] as u32)?;
+    } else {
+        arg.pc_step();
     }
     Ok(SimulatorStatus::Running)
 }
 
 pub(super) fn bltu_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, String> {
     if arg.reg(arg[0]) < arg.reg(arg[1]) {
-        jump_helper(&arg, arg[2] as u32)?;
+        jump_offset_helper(&arg, arg[2] as u32)?;
+    } else {
+        arg.pc_step();
     }
     Ok(SimulatorStatus::Running)
 }
 
 pub(super) fn bne_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, String> {
     if arg.reg(arg[0]) != arg.reg(arg[1]) {
-        jump_helper(&arg, arg[2] as u32)?;
+        jump_offset_helper(&arg, arg[2] as u32)?;
+    } else {
+        arg.pc_step();
     }
     Ok(SimulatorStatus::Running)
 }
@@ -312,8 +327,8 @@ pub(super) fn fence_i_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, St
 
 pub(super) fn jal_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, String> {
     let pc = arg.pc();
-    *arg.reg_mut(arg[0]) = pc + 4;
     jump_helper(&arg, pc + arg[1] as u32)?;
+    *arg.reg_mut(arg[0]) = pc + 4;
     Ok(SimulatorStatus::Running)
 }
 
@@ -340,7 +355,7 @@ pub(super) fn lhu_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, String
 }
 
 pub(super) fn lui_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, String> {
-    *arg.reg_mut(arg[0]) = (arg[1] << 12) as u32;
+    *arg.reg_mut(arg[0]) = (arg[1] as u32) << 12;
     arg.pc_step();
     Ok(SimulatorStatus::Running)
 }
@@ -467,12 +482,16 @@ pub(super) fn xori_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, Strin
     Ok(SimulatorStatus::Running)
 }
 
-fn jump_helper(arg: &InstHandlerArg, offset: u32) -> Result<(), String> {
-    if arg.set_pc(arg.pc() + offset) {
+fn jump_helper(arg: &InstHandlerArg, addr: u32) -> Result<(), String> {
+    if arg.set_pc(addr) {
         Ok(())
     } else {
         Err("Invalid aim pc".to_string())
     }
+}
+
+fn jump_offset_helper(arg: &InstHandlerArg, offset: u32) -> Result<(), String> {
+    jump_helper(arg, arg.pc() + offset)
 }
 
 impl<'a> Index<usize> for InstHandlerArg<'a> {
@@ -489,6 +508,9 @@ impl<'a> InstHandlerArg<'a> {
     }
 
     fn reg_mut(&self, index: Operand<RISCV>) -> &mut u32 {
+        if index == 0 {
+            return FAKE_ZERO_PTR.as_mut();
+        }
         let sim = self.sim.as_mut();
         let history = self.history.as_mut();
         history.reg_idx = index as i32;

@@ -152,7 +152,7 @@ export default function MultifileCode() {
     // }
     // return !currentFile.started;
     const currentFile = state.files.find(
-        file => file.fileName === state.currentFile,
+      file => file.fileName === state.currentFile,
     );
     if (currentFile && currentFile.assembly.length != 0) {
       return false;
@@ -185,7 +185,7 @@ export default function MultifileCode() {
     const currentFile = state.files.find(
       file => file.fileName === state.currentFile,
     );
-    if (currentFile && currentFile.started) {
+    if (currentFile && currentFile.assembly.length != 0) {
       return false;
     }
     return true;

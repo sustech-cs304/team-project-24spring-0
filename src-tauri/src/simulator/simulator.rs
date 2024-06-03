@@ -254,7 +254,7 @@ impl Simulator for RISCVSimulator {
         } else {
             return Err("Invalid operation".to_string());
         }
-        let h = self.history.pop_front().unwrap();
+        let h = self.history.pop_back().unwrap();
         if h.reg_idx != -1 {
             self.reg[h.reg_idx as usize] = h.reg_val;
         }
@@ -466,7 +466,7 @@ impl RISCVSimulator {
 
     fn _reset(&mut self) {
         self.reg = [0; 32];
-        self.reg[RV32IRegister::Sp as usize] = self.conf.stack_base_address as u32;
+        self.reg[RV32IRegister::Sp as usize] = self.conf.stack_pointer_sp as u32;
         self.pc_idx = 0;
         self.mem.reset();
         self.mem.set_range(
