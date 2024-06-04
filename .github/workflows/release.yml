@@ -17,8 +17,8 @@ jobs:
         settings:
           - platform: 'macos-latest' # for Arm based macs (M1 and above).
             args: '--target aarch64-apple-darwin'
-          #- platform: 'macos-latest' # for Intel based macs.
-            #args: '--target x86_64-apple-darwin'
+          - platform: 'macos-13' # for Intel based macs.
+            args: '--target x86_64-apple-darwin'
           - platform: 'ubuntu-22.04' # for Tauri v1 you could replace this with ubuntu-20.04.
             args: ''
           - platform: 'windows-latest'
@@ -27,10 +27,6 @@ jobs:
     runs-on: ${{ matrix.settings.platform }}
     steps:
       - uses: actions/checkout@v4
-
-      - name: Get version from tag
-        id: get_version
-        run: echo "VERSION=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_ENV
 
       - name: install dependencies (ubuntu only)
         if: matrix.settings.platform == 'ubuntu-22.04' # This must match the platform value defined above.
@@ -49,7 +45,7 @@ jobs:
           echo "PROTOC=$protocPath" >> $Env:GITHUB_ENV
 
       - name: install dependencies (mac only)
-        if: matrix.settings.platform == 'macos-latest' || matrix.settings.platform == 'aarch64-apple-darwin,x86_64-apple-darwin'
+        if: matrix.settings.platform == 'macos-latest'|| matrix.settings.platform == 'macos-13' || matrix.settings.platform == 'aarch64-apple-darwin,x86_64-apple-darwin'
         run: |
           brew install protobuf
 
@@ -84,9 +80,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tagName: ${{ env.VERSION }}
-          releaseName: 'App ${{ env.VERSION }}'
-          releaseBody: 'See the assets to download this version and install.'
+          tagName: '__VERSION__'
+          releaseName: 'App v__VERSION__'
+          releaseBody: 'See the assets to download this version and install ～(∠・ω< )⌒★!'
           releaseDraft: true
           prerelease: false
           args: ${{ matrix.settings.args }}
