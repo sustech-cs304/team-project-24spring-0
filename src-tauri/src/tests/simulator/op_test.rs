@@ -24,23 +24,17 @@ use once_cell::sync::Lazy;
 use RV32IInstruction::*;
 use RV32IRegister::*;
 
-struct Change {
-    reg_change: bool,
-    reg_idx: usize,
-    reg_val: u32,
-    data_change: bool,
-    data_idx: usize,
-    data_len: usize,
-    data_val: [u8; 4],
-}
+type RegChange = (Reg, u32);
+type DataChange = (usize, Vec<u8>);
 
 /// - `pc_idx`: aim pc_idx
-/// - `change`: changes that the instruction makes (can be generated through
-///   `change!`)
-/// - `output`: expect output for syscall (can be None)
+/// - `reg_change`: expect register change
+/// - `data_change`: expect data change (index, value)
+/// - `output`: expect output for syscall
 struct Expect {
     pc_idx: Option<usize>,
-    change: Change,
+    reg_change: Option<RegChange>,
+    data_change: Option<DataChange>,
     output: Option<String>,
 }
 
@@ -69,53 +63,6 @@ impl FakeMiddlewareTrait for FakeMiddleware {
     fn update(&mut self, res: crate::types::middleware_types::Optional) {
         self.cv.0.notify_one();
     }
-}
-
-macro_rules! change {
-    () => {
-        Change {
-            reg_change: false,
-            reg_idx: 0,
-            reg_val: 0,
-            data_change: false,
-            data_idx: 0,
-            data_len: 0,
-            data_val: [0; 4],
-        }
-    };
-    ($reg: expr, $val:expr) => {
-        Change {
-            reg_change: true,
-            reg_idx: $reg as usize,
-            reg_val: $val as u32,
-            data_change: false,
-            data_idx: 0,
-            data_len: 0,
-            data_val: [0; 4],
-        }
-    };
-    ($data:expr) => {
-        Change {
-            reg_change: false,
-            reg_idx: 0,
-            reg_val: 0,
-            data_change: true,
-            data_idx: 0,
-            data_len: $data.len(),
-            data_val: $data,
-        }
-    };
-    ($reg: expr, $val:expr, $data:expr) => {
-        Change {
-            reg_change: true,
-            reg_idx: $reg as usize,
-            reg_val: $val as u32,
-            data_change: true,
-            data_idx: 0,
-            data_len: $data.len(),
-            data_val: $data,
-        }
-    };
 }
 
 macro_rules! opd {
@@ -207,17 +154,17 @@ fn test_helper(
     for &(reg, val) in &reg {
         expect_reg[reg as usize] = val;
     }
-    if expect.change.reg_change {
-        expect_reg[expect.change.reg_idx as usize] = expect.change.reg_val;
+    if let &Some((reg, val)) = &expect.reg_change {
+        expect_reg[reg as usize] = val;
     }
     sim.run().unwrap();
     drop(mid.cv.0.wait(mid.cv.1.lock().unwrap()));
     assert_eq!(sim.get_pc_idx(), expect.pc_idx);
     assert_eq!(sim.get_register(), &expect_reg);
-    if expect.change.data_change {
+    if let Some((idx, val)) = &expect.data_change {
         sim.set_memory_return_range(MemoryReturnRange {
-            start: CONFIG.dot_data_base_address + expect.change.data_idx as u64,
-            len: expect.change.data_len as u64,
+            start: CONFIG.dot_data_base_address + *idx as u64,
+            len: val.len() as u64,
         })
         .unwrap();
     }
@@ -230,9 +177,8 @@ fn test_helper(
 /// - `op`: operator
 /// - `opd`: operand list (can be generated through `opd!`)
 /// - `reg`: initial register value
-/// - `change`: changes that the instruction makes (can be generated through
-///   `change!`)
-fn test_helper_only_reg(op: Op, opd: Vec<Opd>, reg: Vec<(Reg, u32)>, change: Change) {
+/// - `change`: changes that the instruction makes
+fn test_helper_only_reg(op: Op, opd: Vec<Opd>, reg: Vec<(Reg, u32)>, change: RegChange) {
     test_helper(
         op,
         opd,
@@ -240,9 +186,10 @@ fn test_helper_only_reg(op: Op, opd: Vec<Opd>, reg: Vec<(Reg, u32)>, change: Cha
         vec![],
         None,
         Expect {
-            change,
-            output: None,
             pc_idx: None,
+            reg_change: Some(change),
+            data_change: None,
+            output: None,
         },
         0,
     );
@@ -272,17 +219,18 @@ fn test_helper_jump(
         vec![],
         None,
         Expect {
-            change: {
+            pc_idx: Some(reg_len + pc_idx),
+            reg_change: {
                 match store_pc {
-                    Some(store_pc) => change!(
+                    Some(store_pc) => Some((
                         store_pc,
-                        CONFIG.dot_text_base_address as usize + 4 * reg_len + 4
-                    ),
-                    None => change!(),
+                        CONFIG.dot_text_base_address as u32 + 4 * reg_len as u32 + 4,
+                    )),
+                    None => None,
                 }
             },
+            data_change: None,
             output: None,
-            pc_idx: Some(reg_len + pc_idx),
         },
         ebreak_placeholder,
     );
@@ -294,14 +242,9 @@ fn test() {
         Add,
         opd![A0, A1, A2],
         vec![(A1, 123), (A2, 234)],
-        change!(A0, 123 + 234),
+        (A0, 123 + 234),
     );
-    test_helper_only_reg(
-        Addi,
-        opd![A0, A1, 234],
-        vec![(A1, 123)],
-        change!(A0, 123 + 234),
-    );
+    test_helper_only_reg(Addi, opd![A0, A1, 234], vec![(A1, 123)], (A0, 123 + 234));
 
     test_helper_jump(Jal, opd![A0, 8], vec![], 3, Some(A0), 3);
     test_helper_jump(
