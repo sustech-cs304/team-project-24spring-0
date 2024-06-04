@@ -8,10 +8,13 @@ use super::{
 };
 use crate::{
     dprintln,
-    interface::{assembler::AssembleResult, simulator::Simulator},
+    interface::{
+        assembler::AssembleResult,
+        simulator::{FakeMiddlewareTrait, Simulator},
+    },
     modules::riscv::{
         basic::interface::parser::{ParserRISCVInstOp, RV32IRegister, RISCV},
-        middleware::backend_api::simulator_update,
+        middleware::backend_api::{simulator_update, syscall_input_request, syscall_output_print},
     },
     types::middleware_types::{AssemblerConfig, MemoryReturnRange, Optional},
     utility::ptr::Ptr,
@@ -52,6 +55,7 @@ pub struct RISCVSimulator {
     status: AtomicU8,
     history: VecDeque<History>,
     mem_range: MemoryReturnRange,
+    fake_middleware: Option<&'static mut dyn FakeMiddlewareTrait>,
 }
 
 pub(super) struct History {
@@ -79,6 +83,7 @@ impl RISCVSimulator {
             file: file.to_string(),
             history: VecDeque::with_capacity(MAX_HISTORY_SIZE),
             mem_range: Default::default(),
+            fake_middleware: None,
         }
     }
 
@@ -113,6 +118,29 @@ impl RISCVSimulator {
 
     pub(super) fn to_text_addr(&self, idx: usize) -> u32 {
         (self.conf.dot_text_base_address as usize + idx * 4) as u32
+    }
+
+    pub(super) fn request_input(&mut self, wait_status: WaitStatus) -> Result<(), String> {
+        match &mut self.fake_middleware {
+            None => {
+                self.wait_input = wait_status;
+                syscall_input_request(&self.file)
+            }
+            Some(middleware) => {
+                middleware.request_input();
+                Ok(())
+            }
+        }
+    }
+
+    pub(super) fn output(&mut self, msg: &str) -> Result<(), String> {
+        match &mut self.fake_middleware {
+            None => syscall_output_print(&self.file, msg),
+            Some(middleware) => {
+                middleware.output(msg);
+                Ok(())
+            }
+        }
     }
 }
 
@@ -405,6 +433,10 @@ impl Simulator for RISCVSimulator {
             Ok(())
         }
     }
+
+    fn set_fake_middleware(&mut self, middleware: Option<&'static mut dyn FakeMiddlewareTrait>) {
+        self.fake_middleware = middleware;
+    }
 }
 
 impl RISCVSimulator {
@@ -537,12 +569,17 @@ impl RISCVSimulator {
     }
 
     fn update(&mut self, res: Optional) {
-        let paused = self.get_status() == SimulatorStatus::Paused;
-        match simulator_update(self, res, paused) {
-            Ok(_) => {}
-            Err(e) => {
-                dprintln!("{}", e);
+        match self.fake_middleware.as_mut() {
+            None => {
+                let paused = self.get_status() == SimulatorStatus::Paused;
+                match simulator_update(self, res, paused) {
+                    Ok(_) => {}
+                    Err(e) => {
+                        dprintln!("{}", e);
+                    }
+                }
             }
+            Some(middleware) => middleware.update(res),
         }
     }
 }

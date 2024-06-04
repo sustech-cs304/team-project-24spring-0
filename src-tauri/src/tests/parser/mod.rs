@@ -1,2 +1,2 @@
-pub mod rv32i;
-pub mod sample;
+mod rv32i;
+mod sample;
