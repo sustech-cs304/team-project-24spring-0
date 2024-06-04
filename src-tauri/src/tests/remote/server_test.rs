@@ -10,10 +10,9 @@ mod local_test {
         TEST_PASSWD,
     };
     use crate::{
-        dprintln,
         remote::{server::editor_rpc::OperationType, Modification, OpRange},
         tests::remote::{helper::insert_str_at_utf8_char_index, TAB_MAP},
-        types::{middleware_types::TabMap, rpc_types::CursorPosition},
+        types::rpc_types::CursorPosition,
     };
 
     #[test]

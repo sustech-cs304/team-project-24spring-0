@@ -251,21 +251,22 @@ pub mod frontend_api {
                                         client.send_get_content(tab.text.get_version() as u64),
                                     )
                                     .unwrap();
-                                    let mut emit_val = Vec::new();
                                     for h in reply.history {
                                         tab.text.handle_modify(&h.clone().into()).unwrap();
                                         let op_range = h.op_range.as_ref().unwrap();
                                         let start = op_range.start.as_ref().unwrap();
                                         let end = op_range.end.as_ref().unwrap();
-                                        emit_val.push(UpdateContent {
-                                            file_name: get_current_tab_name(&cur_tab_name),
-                                            op: h.op.clone() as i32,
-                                            start: (start.row, start.col),
-                                            end: (end.row, end.col),
-                                            content: h.modified_content.clone(),
-                                        });
+                                        let _ = window.emit(
+                                            "front_update_content",
+                                            UpdateContent {
+                                                file_name: get_current_tab_name(&cur_tab_name),
+                                                op: h.op.clone() as i32,
+                                                start: (start.row, start.col),
+                                                end: (end.row, end.col),
+                                                content: h.modified_content.clone(),
+                                            },
+                                        );
                                     }
-                                    let _ = window.emit("front_update_content", emit_val);
                                     continue;
                                 }
                             }

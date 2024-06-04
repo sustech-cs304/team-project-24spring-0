@@ -6,6 +6,7 @@ import useOutputStore from '@/utils/outputState';
 import useFileStore from '@/utils/state';
 import rv32i from '@/constants/riscv/rv32i.json';
 const language_id = 'riscv';
+import { listen } from '@tauri-apps/api/event';
 
 function getDifference(a, b) {
   var i = 0;
@@ -23,10 +24,55 @@ function getDifference(a, b) {
 export default function ModifiedEditor({ fileName }) {
   const monacoRef = useRef(null);
   const editorRef = useRef(null);
+  const updateEventRef = useRef(false);
   const state = useFileStore();
   const file = useFileStore(state =>
     state.files.find(file => file.fileName === fileName),
   );
+
+  useEffect(() => {
+    console.log('front_update_content event received', event.payload);
+    const unListenedFrontUpdateContent = listen(
+      'front_update_content',
+      event => {
+        if (event.payload['file_name'] === fileName) {
+          const text = event.payload['content'];
+          const start = event.payload['start'];
+          const end = event.payload['end'];
+          var range = new monaco.Range(
+            start[0] + 1,
+            start[1] + 1,
+            end[0] + 1,
+            end[1] + 1,
+          );
+          var id = { major: 1, minor: 1 };
+          var op = {
+            identifier: id,
+            range: range,
+            text: text,
+            forceMoveMarkers: false,
+          };
+          updateEventRef.current = true;
+          editorRef.current.executeEdits('my-source', [op]);
+        }
+      },
+    );
+
+    return () => {
+      unListenedFrontUpdateContent.then(dispose => dispose());
+    };
+  }, []);
+
+  function invokeChange(args) {
+    console.log('invoke change event ref', updateEventRef.current);
+    if (updateEventRef.current) {
+      updateEventRef.current = false;
+      console.log('skip change as a result of event', args);
+      return;
+    }
+    invoke('modify_current_tab', args);
+    console.log('invoke change', args);
+  }
 
   function handleEditorDidMount(editor, monaco) {
     // here is the editor instance
@@ -52,7 +98,13 @@ export default function ModifiedEditor({ fileName }) {
           row: change.range.endLineNumber - 1,
           col: change.range.endColumn - 1,
         };
-        invoke('modify_current_tab', {
+        // invoke('modify_current_tab', {
+        //   op: op.toString(),
+        //   content: text,
+        //   start: startPosition,
+        //   end: endPosition,
+        // });
+        invokeChange({
           op: op.toString(),
           content: text,
           start: startPosition,
@@ -162,7 +214,7 @@ function LoadMonacoConfig(monaco) {
 function getRiscvMonarchTokensProvider() {
   let directive = rv32i.directive;
   return {
-    seperator: /[,:\s]/,
+    seperator: /[,:\(\)\s]/,
 
     register: Object.keys(rv32i.register),
     operator: Object.keys(rv32i.operator),
@@ -170,7 +222,7 @@ function getRiscvMonarchTokensProvider() {
     tokenizer: {
       root: [
         [/#.*$/, 'comment'],
-        [/(0[xX][0-9a-fA-F]+|\d+)(?=@seperator|$)/, 'number'],
+        [/([-]?(?:0[xX][0-9a-fA-F]+|\d+))(?=@seperator|$)/, 'number'],
         [/"(?:[^\\"]*(?:\\.)*)*"/, 'string'],
         [
           /[a-zA-Z_][\w.]*(?=@seperator|$)/,
@@ -188,7 +240,7 @@ function getRiscvMonarchTokensProvider() {
           ),
           'directive',
         ],
-        [/[^,:\s][\.\w]*(?=\W|$)/, 'unknown'],
+        [/[^,:\(\)\s][\.\w]*(?=\W|$)/, 'unknown'],
       ],
     },
   };

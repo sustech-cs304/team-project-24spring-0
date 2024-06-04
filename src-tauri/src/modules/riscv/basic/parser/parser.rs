@@ -9,7 +9,7 @@ use super::{
     oplist::{RISCVExpectImm, RISCVExpectToken, RISCVOpdSetAim, RISCVOpdSetAimOpd},
     r#macro::MacroData,
 };
-use crate::utility::ptr::Ptr;
+use crate::{dprintln, utility::ptr::Ptr};
 
 pub struct RISCVParser {
     symbol_list: HashMap<&'static str, Symbol<'static>>,
@@ -20,6 +20,7 @@ pub struct RISCVParser {
 impl Parser<RISCV> for RISCVParser {
     fn parse(&mut self, code_str: &String) -> Result<ParserResult<RISCV>, Vec<ParserError>> {
         self.init();
+        dprintln!("parse code:\n{}", code_str);
         let mut _status = RISCVParserStatus::new(code_str);
         let status_ptr = Ptr::new(&_status);
         let status = status_ptr.as_mut();

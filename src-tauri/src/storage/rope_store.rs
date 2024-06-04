@@ -8,6 +8,7 @@ use std::{
 use ropey::Rope;
 
 use crate::{
+    dprintln,
     interface::storage::{
         BasicFile,
         FileShareStatus::{self, Client, Private, Server},
@@ -19,6 +20,7 @@ use crate::{
     types::{rpc_types::CursorList, ResultVoid},
     utility::text_helper::{all_to_lf, lines_count},
     CURSOR_LIST,
+    HISTORY,
 };
 
 pub struct ConcurrencyShare {
@@ -68,6 +70,7 @@ impl BasicFile<Rope, Modification> for Text {
     }
 
     fn handle_modify(&mut self, modify: &Modification) -> ResultVoid {
+        dprintln!("handle_modify, version {}", self.version);
         let modified_content = all_to_lf(&modify.modified_content);
         match &self.share_status {
             Private => {
@@ -95,6 +98,8 @@ impl BasicFile<Rope, Modification> for Text {
             }
             Server => {
                 let cursor_list = self.concurrent_share.cursor_list.as_ref().unwrap().clone();
+                let mut histories_mutex = HISTORY.lock().unwrap();
+                histories_mutex.push(modify.clone());
                 self.merge_history(&vec![modify.clone()], &mut cursor_list.lock().unwrap())?;
                 self.dirty = true;
                 Ok(())
@@ -283,10 +288,18 @@ mod rope_test {
         types::rpc_types::CursorPosition,
     };
 
+    fn get_full_path(name: &str) -> String {
+        match std::env::var("TEMP") {
+            Ok(val) => format!("{}/{}", val, name),
+            Err(_e) => format!("/tmp/{}", name),
+        }
+    }
+
     #[test]
     fn test_get_path() {
-        std::fs::write("/tmp/file.txt", "Hello, world!\nThis is a test file.\n").unwrap();
-        let file_path = PathBuf::from("/tmp/file.txt");
+        let file_name = get_full_path("moras_test.txt");
+        std::fs::write(&file_name, "Hello, world!\nThis is a test file.\n").unwrap();
+        let file_path = PathBuf::from(&file_name);
         let text = Text::from_path(&file_path).unwrap();
 
         assert_eq!(text.get_path(), &file_path);
@@ -294,17 +307,19 @@ mod rope_test {
 
     #[test]
     fn test_get_path_str() {
-        std::fs::write("/tmp/file.txt", "Hello, world!\nThis is a test file.\n").unwrap();
-        let file_path = PathBuf::from("/tmp/file.txt");
+        let file_name = get_full_path("moras_test.txt");
+        std::fs::write(&file_name, "Hello, world!\nThis is a test file.\n").unwrap();
+        let file_path = PathBuf::from(&file_name);
         let text = Text::from_path(&file_path).unwrap();
 
-        assert_eq!(text.get_path_str(), "/tmp/file.txt");
+        assert_eq!(text.get_path_str(), file_name);
     }
 
     #[test]
     fn test_is_dirty() {
-        std::fs::write("/tmp/file.txt", "Hello, world!\nThis is a test file.\n").unwrap();
-        let file_path = PathBuf::from("/tmp/file.txt");
+        let file_name = get_full_path("moras_test.txt");
+        std::fs::write(&file_name, "Hello, world!\nThis is a test file.\n").unwrap();
+        let file_path = PathBuf::from(&file_name);
         let mut text = Text::from_path(&file_path).unwrap();
 
         assert_eq!(text.is_dirty(), false);
@@ -315,8 +330,9 @@ mod rope_test {
 
     #[test]
     fn test_to_string() {
-        std::fs::write("/tmp/file2.txt", "Hello, world!\nThis is a test file.\n").unwrap();
-        let file_path = PathBuf::from("/tmp/file2.txt");
+        let file_name = get_full_path("moras_test2.txt");
+        std::fs::write(&file_name, "Hello, world!\nThis is a test file.\n").unwrap();
+        let file_path = PathBuf::from(&file_name);
         let text = Text::from_path(&file_path).unwrap();
 
         assert_eq!(text.to_string(), "Hello, world!\nThis is a test file.\n");
@@ -324,8 +340,9 @@ mod rope_test {
 
     #[test]
     fn test_save() {
-        std::fs::write("/tmp/file.txt", "Hello, world!\nThis is a test file.\n").unwrap();
-        let file_path = PathBuf::from("/tmp/file.txt");
+        let file_name = get_full_path("moras_test.txt");
+        std::fs::write(&file_name, "Hello, world!\nThis is a test file.\n").unwrap();
+        let file_path = PathBuf::from(&file_name);
         let mut text = Text::from_path(&file_path).unwrap();
 
         text.set_dirty(true);
@@ -336,19 +353,21 @@ mod rope_test {
 
     #[test]
     fn test_get_raw() {
-        std::fs::write("/tmp/file.txt", "Hello, world!\nThis is a test file.\n").unwrap();
-        let file_path = PathBuf::from("/tmp/file.txt");
+        let file_name = get_full_path("moras_test.txt");
+        std::fs::write(&file_name, "Hello, world!\nThis is a test file.\n").unwrap();
+        let file_path = PathBuf::from(&file_name);
         let mut text = Text::from_path(&file_path).unwrap();
 
         let path = text.get_path_str();
 
-        assert_eq!(path.len(), "/tmp/file.txt".len());
+        assert_eq!(path.len(), file_name.len());
     }
 
     #[test]
     fn test_handle_modify() {
-        std::fs::write("/tmp/file1.txt", "Hello, world!\nThis is a test file.\n").unwrap();
-        let file_path = PathBuf::from("/tmp/file1.txt");
+        let file_name = get_full_path("moras_test1.txt");
+        std::fs::write(&file_name, "Hello, world!\nThis is a test file.\n").unwrap();
+        let file_path = PathBuf::from(&file_name);
         let mut text = Text::from_path(&file_path).unwrap();
 
         let modify = Modification {

@@ -53,9 +53,9 @@ export default function MultifileCode() {
           'Error ' +
             i +
             ' at line ' +
-            error.line +
+            (error.line + 1) +
             ', column ' +
-            error.column +
+            (error.column + 1) +
             ': ' +
             error.msg,
         );
@@ -97,9 +97,9 @@ export default function MultifileCode() {
           'Error ' +
             i +
             ' at line ' +
-            error.line +
+            (error.line + 1) +
             ', column ' +
-            error.column +
+            (error.column + 1) +
             ': ' +
             error.msg,
         );
@@ -144,16 +144,20 @@ export default function MultifileCode() {
   };
 
   const getUndoButtonisDisabled = () => {
+    // const currentFile = state.files.find(
+    //   file => file.fileName === state.currentFile,
+    // );
+    // if (!currentFile) {
+    //   return true;
+    // }
+    // return !currentFile.started;
     const currentFile = state.files.find(
       file => file.fileName === state.currentFile,
     );
-    if (!currentFile) {
-      return true;
+    if (currentFile && currentFile.assembly.length != 0) {
+      return false;
     }
-    // if (currentFile.paused) {
-    //   return true
-    // }
-    return !currentFile.started || currentFile.paused;
+    return true;
   };
 
   const getResetButtonisDisabled = () => {
@@ -181,7 +185,7 @@ export default function MultifileCode() {
     const currentFile = state.files.find(
       file => file.fileName === state.currentFile,
     );
-    if (currentFile && currentFile.started) {
+    if (currentFile && currentFile.assembly.length != 0) {
       return false;
     }
     return true;
@@ -193,6 +197,7 @@ export default function MultifileCode() {
         <Tab
           key={file.fileName}
           title={
+            (file.shared ? '[Shared] ' : '') +
             file.fileName.split('/').pop().split('\\').pop() +
             (file.code != file.original ? ' *' : '')
           }

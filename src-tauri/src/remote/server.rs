@@ -41,20 +41,33 @@ use crate::{
     },
     utility::ptr::Ptr,
     APP_HANDLE,
+    HISTORY,
 };
 
 pub mod editor_rpc {
     tonic::include_proto!("editor");
 }
 
-#[derive(Default)]
 struct ServerHandle {
     window: Option<Window>,
     map_state: Mutex<(String, Option<Ptr<TabMap>>)>,
     password: Mutex<String>,
     clients: Mutex<Vec<SocketAddr>>,
     cursor_list: Arc<Mutex<CursorList>>,
-    history: Mutex<Vec<Modification>>,
+    history: Arc<Mutex<Vec<Modification>>>,
+}
+
+impl Default for ServerHandle {
+    fn default() -> Self {
+        Self {
+            window: None,
+            map_state: Mutex::new((String::new(), None)),
+            password: Mutex::new(String::new()),
+            clients: Mutex::new(Vec::new()),
+            cursor_list: Arc::new(Mutex::new(Default::default())),
+            history: HISTORY.clone(),
+        }
+    }
 }
 
 impl ServerHandle {
@@ -263,7 +276,11 @@ impl Editor for Arc<Mutex<ServerHandle>> {
                 if request_ref.version != tab.text.get_version() as u64 {
                     return Ok(Response::new(UpdateContentReply {
                         success: false,
-                        message: "Version mismatch".to_string(),
+                        message: format!(
+                            "server version: {}, your version {}",
+                            tab.text.get_version(),
+                            request_ref.version
+                        ),
                     }));
                 }
 

@@ -11,6 +11,15 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 #![feature(linked_list_cursors)]
 
+use std::sync::{Arc, Mutex};
+
+use modules::riscv::middleware::frontend_api;
+use once_cell::sync::Lazy;
+use tauri::{AppHandle, Manager};
+use types::{middleware_types, rpc_types};
+
+use crate::remote::Modification;
+
 /// front_end api is under [`middleware.rs`]
 ///
 /// [`middleware.rs`]: crate::modules::riscv::middleware
@@ -28,17 +37,12 @@ mod utility;
 #[cfg(test)]
 mod tests;
 
-use std::sync::{Arc, Mutex};
-
-use modules::riscv::middleware::frontend_api;
-use once_cell::sync::Lazy;
-use tauri::{AppHandle, Manager};
-use types::{middleware_types, rpc_types};
-
 static APP_HANDLE: Lazy<Arc<Mutex<Option<AppHandle>>>> = Lazy::new(|| Arc::new(Mutex::new(None)));
 static CURSOR_LIST: Lazy<Arc<Mutex<rpc_types::CursorList>>> =
     Lazy::new(|| Arc::new(Mutex::new(Default::default())));
 
+static HISTORY: Lazy<Arc<Mutex<Vec<Modification>>>> =
+    Lazy::new(|| Arc::new(Mutex::new(Vec::new())));
 fn main() {
     tauri::Builder::default()
         .menu(menu::init_menu())
