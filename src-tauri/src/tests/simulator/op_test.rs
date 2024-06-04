@@ -43,6 +43,7 @@ struct FakeMiddleware {
     pub input_res: Option<Result<(), String>>,
     pub output: Option<String>,
     pub sim_ptr: Ptr<RISCVSimulator>,
+    pub success: bool,
     pub cv: (Condvar, Mutex<()>),
 }
 
@@ -62,6 +63,7 @@ impl FakeMiddlewareTrait for FakeMiddleware {
 
     fn update(&mut self, res: crate::types::middleware_types::Optional) {
         self.cv.0.notify_one();
+        self.success = res.success;
     }
 }
 
@@ -98,6 +100,7 @@ fn test_helper(
         output: None,
         sim_ptr,
         cv: (Condvar::new(), Mutex::new(())),
+        success: false,
     };
     let mid_ptr = Ptr::new(&mid);
     let mid = mid_ptr.as_mut();
@@ -171,6 +174,7 @@ fn test_helper(
     if let Some(output) = expect.output {
         assert_eq!(mid.output.as_ref().unwrap(), &output);
     }
+    assert!(!mid.success);
 }
 
 /// Test operator not need data section and not jump
