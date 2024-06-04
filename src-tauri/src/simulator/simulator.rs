@@ -8,10 +8,13 @@ use super::{
 };
 use crate::{
     dprintln,
-    interface::{assembler::AssembleResult, simulator::Simulator},
+    interface::{
+        assembler::AssembleResult,
+        simulator::{FakeMiddlewareTrait, Simulator},
+    },
     modules::riscv::{
         basic::interface::parser::{ParserRISCVInstOp, RV32IRegister, RISCV},
-        middleware::backend_api::simulator_update,
+        middleware::backend_api::{simulator_update, syscall_input_request, syscall_output_print},
     },
     types::middleware_types::{AssemblerConfig, MemoryReturnRange, Optional},
     utility::ptr::Ptr,
@@ -52,6 +55,7 @@ pub struct RISCVSimulator {
     status: AtomicU8,
     history: VecDeque<History>,
     mem_range: MemoryReturnRange,
+    fake_middleware: Option<&'static mut dyn FakeMiddlewareTrait>,
 }
 
 pub(super) struct History {
@@ -79,6 +83,7 @@ impl RISCVSimulator {
             file: file.to_string(),
             history: VecDeque::with_capacity(MAX_HISTORY_SIZE),
             mem_range: Default::default(),
+            fake_middleware: None,
         }
     }
 
@@ -113,6 +118,27 @@ impl RISCVSimulator {
 
     pub(super) fn to_text_addr(&self, idx: usize) -> u32 {
         (self.conf.dot_text_base_address as usize + idx * 4) as u32
+    }
+
+    pub(super) fn request_input(&mut self, wait_status: WaitStatus) -> Result<(), String> {
+        self.wait_input = wait_status;
+        match &mut self.fake_middleware {
+            None => syscall_input_request(&self.file),
+            Some(middleware) => {
+                middleware.request_input();
+                Ok(())
+            }
+        }
+    }
+
+    pub(super) fn output(&mut self, msg: &str) -> Result<(), String> {
+        match &mut self.fake_middleware {
+            None => syscall_output_print(&self.file, msg),
+            Some(middleware) => {
+                middleware.output(msg);
+                Ok(())
+            }
+        }
     }
 }
 
@@ -205,9 +231,6 @@ impl Simulator for RISCVSimulator {
     }
 
     fn step(&mut self) -> Result<(), String> {
-        if self.pc_idx >= self.inst.as_ref().unwrap().instruction.len() {
-            return Err("Simulator finished".to_string());
-        }
         if !self.cas_status(SimulatorStatus::Stopped, SimulatorStatus::Running) {
             if !self.cas_status(SimulatorStatus::Paused, SimulatorStatus::Running) {
                 return Err("Invalid operation".to_string());
@@ -405,6 +428,10 @@ impl Simulator for RISCVSimulator {
             Ok(())
         }
     }
+
+    fn set_fake_middleware(&mut self, middleware: Option<&'static mut dyn FakeMiddlewareTrait>) {
+        self.fake_middleware = middleware;
+    }
 }
 
 impl RISCVSimulator {
@@ -498,14 +525,24 @@ impl RISCVSimulator {
                         step += 1;
                     }
                 }
+                if _self.pc_idx == max_pc_idx {
+                    _self.set_status(SimulatorStatus::Stopped);
+                    _self.update(Optional {
+                        success: true,
+                        message: "finished running".to_string(),
+                    });
+                    break;
+                }
                 match _self._step() {
-                    Ok(SimulatorStatus::Paused) => {
-                        _self.set_status(SimulatorStatus::Paused);
-                        _self.update(Optional {
-                            success: true,
-                            message: "paused".to_string(),
-                        });
-                        break;
+                    Ok(status) => {
+                        _self.set_status(status);
+                        if status == SimulatorStatus::Paused {
+                            _self.update(Optional {
+                                success: true,
+                                message: "paused".to_string(),
+                            });
+                            break;
+                        }
                     }
                     Err(e) => {
                         _self.set_status(SimulatorStatus::Stopped);
@@ -515,15 +552,6 @@ impl RISCVSimulator {
                         });
                         break;
                     }
-                    _ => {}
-                }
-                if _self.pc_idx == max_pc_idx {
-                    _self.set_status(SimulatorStatus::Stopped);
-                    _self.update(Optional {
-                        success: true,
-                        message: "finished running".to_string(),
-                    });
-                    break;
                 }
                 if _self.get_status() != SimulatorStatus::Running {
                     _self.update(Optional {
@@ -537,11 +565,20 @@ impl RISCVSimulator {
     }
 
     fn update(&mut self, res: Optional) {
-        let paused = self.get_status() == SimulatorStatus::Paused;
-        match simulator_update(self, res, paused) {
-            Ok(_) => {}
-            Err(e) => {
-                dprintln!("{}", e);
+        match self.fake_middleware.as_mut() {
+            None => {
+                let paused = self.get_status() == SimulatorStatus::Paused;
+                match simulator_update(self, res, paused) {
+                    Ok(_) => {}
+                    Err(e) => {
+                        dprintln!("{}", e);
+                    }
+                }
+            }
+            Some(middleware) => {
+                if self.wait_input == WaitStatus::Not {
+                    middleware.update(res)
+                }
             }
         }
     }

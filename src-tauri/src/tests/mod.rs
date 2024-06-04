@@ -1,3 +1,4 @@
-pub mod assembler;
-pub mod parser;
+mod assembler;
+mod parser;
 mod remote;
+mod simulator;

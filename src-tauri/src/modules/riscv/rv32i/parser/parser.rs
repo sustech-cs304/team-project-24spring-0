@@ -1,18 +1,20 @@
-use std::{io::Write, str::FromStr};
+#[cfg(export_lexers)]
+use std::io::Write;
+use std::str::FromStr;
 
 use once_cell::sync::Lazy;
 use strum::VariantArray;
 
-#[cfg(debug_assertions)]
-use super::super::super::basic::interface::parser::{export_list, export_pair};
+#[cfg(export_lexers)]
+use super::super::super::basic::{
+    interface::parser::{export_list, export_pair},
+    parser::lexer::RISCVOpToken,
+};
 use super::{
     super::super::{
         basic::{
             interface::parser::{ParserRISCVCsr, ParserRISCVInstOp, ParserRISCVRegister},
-            parser::{
-                lexer::{RISCVOpToken, Symbol},
-                parser::RISCVSymbolList,
-            },
+            parser::{lexer::Symbol, parser::RISCVSymbolList},
         },
         rv32i::constants::{RV32ICsr, RV32IInstruction, RV32IRegister, RV32I_REGISTER_VALID_NAME},
     },
@@ -47,8 +49,7 @@ pub static CSR_TOKEN: Lazy<Vec<(&'static str, Symbol<'static>)>> = Lazy::new(|| 
         .collect()
 });
 
-#[cfg(debug_assertions)]
-#[allow(dead_code)]
+#[cfg(export_lexers)]
 pub fn export(folder: &str) -> std::io::Result<()> {
     let path = format!("{}/rv32i.json", folder);
     let mut file = std::fs::File::create(&path)?;

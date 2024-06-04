@@ -1,7 +1,7 @@
 use crate::{
     interface::assembler::AssembleResult,
     modules::riscv::basic::interface::parser::RISCV,
-    types::middleware_types::{AssemblerConfig, MemoryReturnRange},
+    types::middleware_types::{AssemblerConfig, MemoryReturnRange, Optional},
 };
 
 pub trait Simulator: Send + Sync {
@@ -24,4 +24,11 @@ pub trait Simulator: Send + Sync {
     fn get_filepath(&self) -> &str;
     fn get_memory_return_range(&self) -> MemoryReturnRange;
     fn set_memory_return_range(&mut self, range: MemoryReturnRange) -> Result<(), String>;
+    fn set_fake_middleware(&mut self, middleware: Option<&'static mut dyn FakeMiddlewareTrait>);
+}
+
+pub trait FakeMiddlewareTrait: Send + Sync {
+    fn request_input(&mut self);
+    fn output(&mut self, output: &str);
+    fn update(&mut self, res: Optional);
 }
