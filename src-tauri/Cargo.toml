@@ -1,6 +1,6 @@
 [package]
 name = "moras"
-version = "0.2.0"
+version = "1.0.0"
 description = "A Tauri App"
 authors = ["you"]
 license = ""
@@ -28,7 +28,7 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 strum = { version = "0.26", features = ["derive"] }
 strum_macros = "0.26"
-tauri = { version = "1.6.2", features = [ "dialog-all", "fs-read-dir", "fs-create-dir", "fs-exists", "notification-all"] }
+tauri = { version = "1.6.2", features = ["dialog-all", "fs-read-dir", "fs-create-dir", "fs-exists", "notification-all"] }
 tokio = { version = "1.29.1", features = ["rt-multi-thread", "macros"] }
 tonic = "0.11.0"
 ux = { git = "https://github.com/kjetilkjeka/uX.git", rev = "1081930" }
