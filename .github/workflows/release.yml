@@ -66,7 +66,6 @@ jobs:
           # Those targets are only used on macos runners so it's in an `if` to slightly speed up windows and linux builds.
           targets: ${{ matrix.settings.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
 
-
       - name: Rust cache
         uses: swatinem/rust-cache@v2
         with:
@@ -77,9 +76,9 @@ jobs:
         # If you don't have `beforeBuildCommand` configured you may want to build your frontend here too.
         run: npm install # change this to npm or pnpm depending on which one you use.
 
-      - name: build frontend
-        working-directory: src-ui
-        run: npm run build # change this to npm or pnpm depending on which one you use.
+      #- name: build frontend
+        #working-directory: src-ui
+        #run: npm run build # change this to npm or pnpm depending on which one you use.
 
       - uses: tauri-apps/tauri-action@v0
         env:
