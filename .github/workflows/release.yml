@@ -17,7 +17,7 @@ jobs:
         settings:
           - platform: 'macos-latest' # for Arm based macs (M1 and above).
             args: '--target aarch64-apple-darwin'
-          - platform: 'macos-latest' # for Intel based macs.
+          - platform: 'macos-13' # for Intel based macs.
             args: '--target x86_64-apple-darwin'
           - platform: 'ubuntu-22.04' # for Tauri v1 you could replace this with ubuntu-20.04.
             args: ''
@@ -45,7 +45,7 @@ jobs:
           echo "PROTOC=$protocPath" >> $Env:GITHUB_ENV
 
       - name: install dependencies (mac only)
-        if: matrix.settings.platform == 'macos-latest' || matrix.settings.platform == 'aarch64-apple-darwin,x86_64-apple-darwin'
+        if: matrix.settings.platform == 'macos-latest'|| matrix.settings.platform == 'macos-13' || matrix.settings.platform == 'aarch64-apple-darwin,x86_64-apple-darwin'
         run: |
           brew install protobuf
 
