@@ -16,9 +16,9 @@
 
 - [API文档](https://sustech-cs304.github.io/team-project-24spring-0/moras/)
 - [用户手册](https://rosswasd.github.io/team-project-24spring-0/)
-- [Project Proposal](https://github.com/sustech-cs304/team-project-24spring-0/blob/main/reports/Team%20Project%20-%20Proposal.md)
-- [Sprint 1](https://github.com/sustech-cs304/team-project-24spring-0/blob/main/reports/sprint1/design-team0.md)
-- [Sprint 2]()
+- [Project Proposal](./reports/proposal/Team%20Project%20-%20Proposal.md)
+- [Sprint 1](./reports/sprint1/design-team0.md)
+- [Sprint 2](./reports/sprint2/final-report-team0.md)
 
 ## Project Overview
 
@@ -96,7 +96,3 @@ We will use **Tauri** to develop our application. The operating environment is d
   - doc-xxx（文档）
 - commit message 规范：使用[约定式提交](https://www.conventionalcommits.org/zh-hans/v1.0.0/)
 - rust 代码提交时需要进行格式化，否则无法通过 CI，可以使用 "cargo fmt" 一键格式化
-
-## 开启多个实例
-
-注意！因为distDir不能重复，之前多开会有NextJS加载不上的问题，现在每次开启Moras都会在src-ui下生成一个数字的文件夹作为distDir，记得及时清理。
