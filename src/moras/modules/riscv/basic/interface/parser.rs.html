@@ -150,9 +150,8 @@
 <a href="#150" id="150">150</a>
 <a href="#151" id="151">151</a>
 <a href="#152" id="152">152</a>
-<a href="#153" id="153">153</a>
-<a href="#154" id="154">154</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>std::io::Write;
+</pre></div><pre class="rust"><code><span class="attr">#[cfg(export_lexers)]
+</span><span class="kw">use </span>std::io::Write;
 
 <span class="kw">use </span><span class="kw">super</span>::<span class="kw">super</span>::parser::parser::RISCVSymbolList;
 <span class="kw">pub use </span><span class="kw">super</span>::<span class="kw">super</span>::{
@@ -230,8 +229,7 @@
         }
     }
 
-    <span class="attr">#[cfg(debug_assertions)]
-    #[allow(dead_code)]
+    <span class="attr">#[cfg(export_lexers)]
     </span><span class="kw">pub fn </span>export(<span class="kw-2">&amp;</span><span class="self">self</span>, folder: <span class="kw-2">&amp;</span>str) -&gt; std::io::Result&lt;()&gt; {
         <span class="kw">match </span><span class="self">self </span>{
             RISCVExtension::RV32I =&gt; <span class="kw">super</span>::<span class="kw">super</span>::<span class="kw">super</span>::rv32i::parser::parser::export(folder),
@@ -239,8 +237,7 @@
     }
 }
 
-<span class="attr">#[cfg(debug_assertions)]
-#[allow(dead_code)]
+<span class="attr">#[cfg(export_lexers)]
 </span><span class="kw">pub fn </span>export_pair&lt;T, KFn, VFn, K, W&gt;(
     pairs: <span class="kw-2">&amp;</span>[T],
     key_fn: KFn,
@@ -276,8 +273,7 @@
     <span class="prelude-val">Ok</span>(())
 }
 
-<span class="attr">#[cfg(debug_assertions)]
-#[allow(dead_code)]
+<span class="attr">#[cfg(export_lexers)]
 </span><span class="kw">pub fn </span>export_list&lt;T, F, V, W&gt;(
     list: <span class="kw-2">&amp;</span>[T],
     val_fn: F,

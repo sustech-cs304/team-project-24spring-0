@@ -25,10 +25,17 @@
 <a href="#25" id="25">25</a>
 <a href="#26" id="26">26</a>
 <a href="#27" id="27">27</a>
+<a href="#28" id="28">28</a>
+<a href="#29" id="29">29</a>
+<a href="#30" id="30">30</a>
+<a href="#31" id="31">31</a>
+<a href="#32" id="32">32</a>
+<a href="#33" id="33">33</a>
+<a href="#34" id="34">34</a>
 </pre></div><pre class="rust"><code><span class="kw">use crate</span>::{
     interface::assembler::AssembleResult,
     modules::riscv::basic::interface::parser::RISCV,
-    types::middleware_types::{AssemblerConfig, MemoryReturnRange},
+    types::middleware_types::{AssemblerConfig, MemoryReturnRange, Optional},
 };
 
 <span class="kw">pub trait </span>Simulator: Send + Sync {
@@ -51,5 +58,12 @@
     <span class="kw">fn </span>get_filepath(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>str;
     <span class="kw">fn </span>get_memory_return_range(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; MemoryReturnRange;
     <span class="kw">fn </span>set_memory_return_range(<span class="kw-2">&amp;mut </span><span class="self">self</span>, range: MemoryReturnRange) -&gt; <span class="prelude-ty">Result</span>&lt;(), String&gt;;
+    <span class="kw">fn </span>set_fake_middleware(<span class="kw-2">&amp;mut </span><span class="self">self</span>, middleware: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'static </span><span class="kw-2">mut </span><span class="kw">dyn </span>FakeMiddlewareTrait&gt;);
+}
+
+<span class="kw">pub trait </span>FakeMiddlewareTrait: Send + Sync {
+    <span class="kw">fn </span>request_input(<span class="kw-2">&amp;mut </span><span class="self">self</span>);
+    <span class="kw">fn </span>output(<span class="kw-2">&amp;mut </span><span class="self">self</span>, output: <span class="kw-2">&amp;</span>str);
+    <span class="kw">fn </span>update(<span class="kw-2">&amp;mut </span><span class="self">self</span>, res: Optional);
 }
 </code></pre></div></section></main></body></html>

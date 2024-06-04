@@ -526,25 +526,6 @@
 <a href="#526" id="526">526</a>
 <a href="#527" id="527">527</a>
 <a href="#528" id="528">528</a>
-<a href="#529" id="529">529</a>
-<a href="#530" id="530">530</a>
-<a href="#531" id="531">531</a>
-<a href="#532" id="532">532</a>
-<a href="#533" id="533">533</a>
-<a href="#534" id="534">534</a>
-<a href="#535" id="535">535</a>
-<a href="#536" id="536">536</a>
-<a href="#537" id="537">537</a>
-<a href="#538" id="538">538</a>
-<a href="#539" id="539">539</a>
-<a href="#540" id="540">540</a>
-<a href="#541" id="541">541</a>
-<a href="#542" id="542">542</a>
-<a href="#543" id="543">543</a>
-<a href="#544" id="544">544</a>
-<a href="#545" id="545">545</a>
-<a href="#546" id="546">546</a>
-<a href="#547" id="547">547</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::ops::Index;
 
 <span class="kw">use </span>once_cell::sync::Lazy;
@@ -553,11 +534,7 @@
 <span class="kw">use </span><span class="kw">super</span>::simulator::<span class="kw-2">*</span>;
 <span class="kw">use crate</span>::{
     interface::assembler::Operand,
-    modules::riscv::{
-        basic::interface::parser::RISCV,
-        middleware::backend_api::{syscall_input_request, syscall_output_print},
-        rv32i::constants::<span class="kw-2">*</span>,
-    },
+    modules::riscv::{basic::interface::parser::RISCV, rv32i::constants::<span class="kw-2">*</span>},
     utility::{enum_map::EnumMap, ptr::Ptr},
 };
 
@@ -784,10 +761,7 @@
 <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>ecall_handler(arg: InstHandlerArg) -&gt; <span class="prelude-ty">Result</span>&lt;SimulatorStatus, String&gt; {
     <span class="kw">match </span>arg.reg(RV32IRegister::A7 <span class="kw">as </span>i32) {
         <span class="number">1 </span>=&gt; {
-            syscall_output_print(
-                arg.get_path(),
-                <span class="kw-2">&amp;</span>((arg.reg(RV32IRegister::A0 <span class="kw">as </span>i32) <span class="kw">as </span>i32).to_string()),
-            )<span class="question-mark">?</span>;
+            arg.output(<span class="kw-2">&amp;</span>((arg.reg(RV32IRegister::A0 <span class="kw">as </span>i32) <span class="kw">as </span>i32).to_string()))<span class="question-mark">?</span>;
             arg.pc_step();
             <span class="prelude-val">Ok</span>(SimulatorStatus::Running)
         }
@@ -803,58 +777,46 @@
                 buf.push(byte);
             }
             <span class="kw">let </span>s = String::from_utf8(buf).unwrap();
-            syscall_output_print(arg.get_path(), <span class="kw-2">&amp;</span>s)<span class="question-mark">?</span>;
+            arg.output(<span class="kw-2">&amp;</span>s)<span class="question-mark">?</span>;
             arg.pc_step();
             <span class="prelude-val">Ok</span>(SimulatorStatus::Running)
         }
         <span class="number">5 </span>=&gt; {
-            arg.sim.as_mut().wait_input = WaitStatus::Int;
-            syscall_input_request(arg.get_path())<span class="question-mark">?</span>;
+            arg.request_input(WaitStatus::Int)<span class="question-mark">?</span>;
             <span class="prelude-val">Ok</span>(SimulatorStatus::Paused)
         }
         <span class="number">8 </span>=&gt; {
-            arg.sim.as_mut().wait_input = WaitStatus::String;
-            syscall_input_request(arg.get_path())<span class="question-mark">?</span>;
+            arg.request_input(WaitStatus::String)<span class="question-mark">?</span>;
             <span class="prelude-val">Ok</span>(SimulatorStatus::Paused)
         }
         <span class="number">10 </span>=&gt; <span class="prelude-val">Ok</span>(SimulatorStatus::Stopped),
         <span class="number">11 </span>=&gt; {
-            syscall_output_print(
-                arg.get_path(),
-                <span class="kw-2">&amp;</span>((arg.reg(RV32IRegister::A0 <span class="kw">as </span>i32) <span class="kw">as </span>u8 <span class="kw">as </span>char).to_string()),
-            )<span class="question-mark">?</span>;
+            arg.output(<span class="kw-2">&amp;</span>((arg.reg(RV32IRegister::A0 <span class="kw">as </span>i32) <span class="kw">as </span>u8 <span class="kw">as </span>char).to_string()))<span class="question-mark">?</span>;
             arg.pc_step();
             <span class="prelude-val">Ok</span>(SimulatorStatus::Running)
         }
         <span class="number">12 </span>=&gt; {
-            arg.sim.as_mut().wait_input = WaitStatus::Char;
-            syscall_input_request(arg.get_path())<span class="question-mark">?</span>;
+            arg.request_input(WaitStatus::Char)<span class="question-mark">?</span>;
             <span class="prelude-val">Ok</span>(SimulatorStatus::Paused)
         }
         <span class="number">34 </span>=&gt; {
-            syscall_output_print(
-                arg.get_path(),
-                <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"0x{:08x}"</span>, arg.sim.as_ref().reg[RV32IRegister::A0 <span class="kw">as </span>usize]),
-            )<span class="question-mark">?</span>;
+            arg.output(<span class="kw-2">&amp;</span><span class="macro">format!</span>(
+                <span class="string">"0x{:08x}"</span>,
+                arg.sim.as_ref().reg[RV32IRegister::A0 <span class="kw">as </span>usize]
+            ))<span class="question-mark">?</span>;
             arg.pc_step();
             <span class="prelude-val">Ok</span>(SimulatorStatus::Running)
         }
         <span class="number">35 </span>=&gt; {
-            syscall_output_print(
-                arg.get_path(),
-                <span class="kw-2">&amp;</span><span class="macro">format!</span>(
-                    <span class="string">"0x{:032b}"</span>,
-                    arg.sim.as_ref().reg[RV32IRegister::A0 <span class="kw">as </span>usize]
-                ),
-            )<span class="question-mark">?</span>;
+            arg.output(<span class="kw-2">&amp;</span><span class="macro">format!</span>(
+                <span class="string">"0b{:032b}"</span>,
+                arg.sim.as_ref().reg[RV32IRegister::A0 <span class="kw">as </span>usize]
+            ))<span class="question-mark">?</span>;
             arg.pc_step();
             <span class="prelude-val">Ok</span>(SimulatorStatus::Running)
         }
         <span class="number">36 </span>=&gt; {
-            syscall_output_print(
-                arg.get_path(),
-                <span class="kw-2">&amp;</span>((arg.reg(RV32IRegister::A0 <span class="kw">as </span>i32)).to_string()),
-            )<span class="question-mark">?</span>;
+            arg.output(<span class="kw-2">&amp;</span>((arg.reg(RV32IRegister::A0 <span class="kw">as </span>i32)).to_string()))<span class="question-mark">?</span>;
             arg.pc_step();
             <span class="prelude-val">Ok</span>(SimulatorStatus::Running)
         }
@@ -1065,10 +1027,6 @@
         <span class="kw-2">&amp;mut </span>sim.reg[index <span class="kw">as </span>usize]
     }
 
-    <span class="kw">fn </span>pc_idx(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
-        <span class="self">self</span>.sim.as_ref().pc_idx
-    }
-
     <span class="kw">fn </span>pc(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u32 {
         <span class="self">self</span>.sim.as_ref().to_text_addr(<span class="self">self</span>.sim.as_ref().pc_idx)
     }
@@ -1088,8 +1046,12 @@
         <span class="self">self</span>.sim.as_mut().pc_idx += <span class="number">1</span>;
     }
 
-    <span class="kw">fn </span>get_path(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>str {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.sim.as_ref().file
+    <span class="kw">fn </span>request_input(<span class="kw-2">&amp;</span><span class="self">self</span>, wait_status: WaitStatus) -&gt; <span class="prelude-ty">Result</span>&lt;(), String&gt; {
+        <span class="self">self</span>.sim.as_mut().request_input(wait_status)
+    }
+
+    <span class="kw">fn </span>output(<span class="kw-2">&amp;</span><span class="self">self</span>, output: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;(), String&gt; {
+        <span class="self">self</span>.sim.as_mut().output(output)
     }
 }
 </code></pre></div></section></main></body></html>

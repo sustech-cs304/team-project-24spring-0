@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"trait":["Simulator"]};
+window.SIDEBAR_ITEMS = {"trait":["FakeMiddlewareTrait","Simulator"]};
