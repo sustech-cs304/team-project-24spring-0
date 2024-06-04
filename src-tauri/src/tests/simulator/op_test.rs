@@ -294,12 +294,7 @@ fn test() {
         3,
     );
 
-    test_helper_only_reg(
-        Lui,
-        opd![A0, 0b1100],
-        vec![],
-        (A0, (0b1100 as u32) << 12),
-    );
+    test_helper_only_reg(Lui, opd![A0, 0b1100], vec![], (A0, (0b1100 as u32) << 12));
 
     test_helper_only_reg(
         Or,
