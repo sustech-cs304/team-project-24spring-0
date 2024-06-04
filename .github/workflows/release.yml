@@ -36,6 +36,11 @@ jobs:
         # webkitgtk 4.0 is for Tauri v1 - webkitgtk 4.1 is for Tauri v2.
         # You can remove the one that doesn't apply to your app to speed up the workflow a bit.
 
+      - name: install dependencies (mac only)
+        if: matrix.settings.platform == 'macos-latest' || matrix.settings.platform == 'aarch64-apple-darwin,x86_64-apple-darwin'
+        run: |
+          brew install protobuf
+
       - name: setup node
         uses: actions/setup-node@v4
         with:
