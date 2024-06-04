@@ -247,9 +247,98 @@ fn test() {
         vec![(A1, 123), (A2, 234)],
         (A0, 123 + 234),
     );
-    test_helper_only_reg(Addi, opd![A0, A1, 234], vec![(A1, 123)], (A0, 123 + 234));
 
-    test_helper_jump(Jal, opd![A0, 8], vec![], 3, Some(A0), 3);
+    test_helper_only_reg(
+        Addi,
+        opd![A0, A1, 234],
+        vec![(A1, 123)],
+        (A0, 123 + 234),
+    );
+
+    test_helper_only_reg(
+        And,
+        opd![A0, A1, A2],
+        vec![(A1, 0b1010), (A2, 0b1100)],
+        (A0, 0b1000)
+    );
+
+    test_helper_only_reg(
+        Andi,
+        opd![A0, A1, 0b1100],
+        vec![(A1, 0b1010)],
+        (A0, 0b1010 & 0b1100),
+    );
+
+    test_helper_only_reg(
+        Auipc,
+        opd![A0, 4],
+        vec![],
+        (A0, CONFIG.dot_text_base_address as u32 + ((4 as u32)<<12)),
+    );
+
+    test_helper_jump(
+        Beq,
+        opd![A0, A1, 8],
+        vec![],
+        3,
+        None,
+        3
+    );
+
+    test_helper_jump(
+        Bge,
+        opd![A0, A1, 8],
+        vec![(A0, 1)],
+        3,
+        None,
+        3
+    );
+
+    test_helper_jump(
+        Bgeu,
+        opd![A0, A1, 8],
+        vec![],
+        3,
+        None,
+        3
+    );
+
+    test_helper_jump(
+        Blt,
+        opd![A0, A1, 8],
+        vec![(A1, 1)],
+        3,
+        None,
+        3
+    );
+
+    test_helper_jump(
+        Bltu,
+        opd![A0, A1, 8],
+        vec![(A1, 1)],
+        3,
+        None,
+        3
+    );
+
+    test_helper_jump(
+        Bne,
+        opd![A0, A1, 8],
+        vec![(A1, 1)],
+        3,
+        None,
+        3
+    );
+
+    test_helper_jump(
+        Jal,
+        opd![A0, 8],
+        vec![],
+        3,
+        Some(A0),
+        3
+    );
+
     test_helper_jump(
         Jalr,
         opd![A0, A1, 8],
@@ -258,4 +347,127 @@ fn test() {
         Some(A0),
         3,
     );
+
+    test_helper_only_reg(
+        Or,
+        opd![A0, A1, A2],
+        vec![
+            (A1, 0b1010),
+            (A2, 0b1100)
+        ],
+        (A0, 0b1110)
+    );
+
+    test_helper_only_reg(
+        Ori,
+        opd![A0, A1, 0b1100],
+        vec![
+            (A1, 0b1010),
+            (A2, 0b1100)
+        ],
+        (A0, 0b1110)
+    );
+
+    test_helper_only_reg(
+        Ori,
+        opd![A0, A1, 0b1100],
+        vec![
+            (A1, 0b1010),
+            (A2, 0b1100)
+        ],
+        (A0, 0b1110)
+    );
+
+    test_helper_only_reg(
+        Sll,
+        opd![A0, A1, A2],
+        vec![ (A1, 0b1010), (A2, 0b1100)],
+        (A0, 0b1010 << (0b1100 as u32 & 0x1f))
+    );
+
+    test_helper_only_reg(
+        Slli,
+        opd![A0, A1, 0b1100],
+        vec![ (A1, 0b1010), (A2, 0b1100)],
+        (A0, 0b1010 << (0b1100 as u32 & 0x1f))
+    );
+
+    test_helper_only_reg(
+        Slt,
+        opd![A0, A1, A2],
+        vec![(A1, 1), (A2, 234)],
+        (A0, 1),
+    );
+
+    test_helper_only_reg(
+        Slti,
+        opd![A0, A1, 2],
+        vec![(A1, 1), (A2, 234)],
+        (A0, 1),
+    );
+
+    test_helper_only_reg(
+        Sltiu,
+        opd![A0, A1, 2],
+        vec![(A1, 1), (A2, 234)],
+        (A0, 1),
+    );
+
+    test_helper_only_reg(
+        Sltu,
+        opd![A0, A1, A2],
+        vec![(A1, 1), (A2, 234)],
+        (A0, 1),
+    );
+
+    test_helper_only_reg(
+        Sra,
+        opd![A0, A1, A2],
+        vec![(A1, 1), (A2, 234)],
+        (A0, 1 >> (234 as u32 & 0x1f) as u32),
+    );
+
+    test_helper_only_reg(
+        Srai,
+        opd![A0, A1, 234],
+        vec![(A1, 1), (A2, 234)],
+        (A0, 1 >> (234 as u32 & 0x1f) as u32),
+    );
+
+    test_helper_only_reg(
+        Srl,
+        opd![A4, A5, A6],
+        vec![(A5, 1), (A6, 234)],
+        (A0, 1 >> (234 as u32 & 0x1f) as u32),
+    );
+
+    test_helper_only_reg(
+        Srli,
+        opd![A4, A5, 2],
+        vec![(A5, 1)],
+        (A4, 1 >> 2),
+    );
+
+    test_helper_only_reg(
+        Sub,
+        opd![S4, S5, S6],
+        vec![(S5, 123), (S6, 23)],
+        (S4, 123 - 23),
+    );
+
+    test_helper_only_reg(
+        Xor,
+        opd![S4, S5, S6],
+        vec![(S5, 123), (S6, 23)],
+        (S4, 123 ^ 23),
+    );
+
+    test_helper_only_reg(
+        Xori,
+        opd![S4, S5, 23],
+        vec![(S5, 123), (S6, 23)],
+        (S4, 123 ^ 23),
+    );
+
+
 }
