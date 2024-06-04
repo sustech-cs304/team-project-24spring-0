@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/simulator/instruction.rs`."><title>instruction.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="moras" data-themes="" data-resource-suffix="" data-rustdoc-version="1.80.0-nightly (f67a1acc0 2024-06-01)" data-channel="nightly" data-search-js="search-d52510db62a78183.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/simulator/instruction.rs`."><title>instruction.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="moras" data-themes="" data-resource-suffix="" data-rustdoc-version="1.80.0-nightly (7c52d2db6 2024-06-03)" data-channel="nightly" data-search-js="search-d52510db62a78183.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -523,6 +523,28 @@
 <a href="#523" id="523">523</a>
 <a href="#524" id="524">524</a>
 <a href="#525" id="525">525</a>
+<a href="#526" id="526">526</a>
+<a href="#527" id="527">527</a>
+<a href="#528" id="528">528</a>
+<a href="#529" id="529">529</a>
+<a href="#530" id="530">530</a>
+<a href="#531" id="531">531</a>
+<a href="#532" id="532">532</a>
+<a href="#533" id="533">533</a>
+<a href="#534" id="534">534</a>
+<a href="#535" id="535">535</a>
+<a href="#536" id="536">536</a>
+<a href="#537" id="537">537</a>
+<a href="#538" id="538">538</a>
+<a href="#539" id="539">539</a>
+<a href="#540" id="540">540</a>
+<a href="#541" id="541">541</a>
+<a href="#542" id="542">542</a>
+<a href="#543" id="543">543</a>
+<a href="#544" id="544">544</a>
+<a href="#545" id="545">545</a>
+<a href="#546" id="546">546</a>
+<a href="#547" id="547">547</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::ops::Index;
 
 <span class="kw">use </span>once_cell::sync::Lazy;
@@ -604,6 +626,9 @@
         )
     });
 
+<span class="kw">static </span>FAKE_ZERO: Lazy&lt;u32&gt; = Lazy::new(|| <span class="number">0</span>);
+<span class="kw">static </span>FAKE_ZERO_PTR: Lazy&lt;Ptr&lt;u32&gt;&gt; = Lazy::new(|| Ptr::new(<span class="kw-2">&amp;</span>FAKE_ZERO));
+
 <span class="macro">macro_rules!</span> load_helper {
     (<span class="macro-nonterminal">$arg</span>:expr, <span class="macro-nonterminal">$size</span>:expr, <span class="macro-nonterminal">$t</span>:ty) =&gt; {{
         <span class="kw">let </span>addr = <span class="macro-nonterminal">$arg</span>.reg(<span class="macro-nonterminal">$arg</span>[<span class="number">2</span>]) + <span class="macro-nonterminal">$arg</span>[<span class="number">1</span>] <span class="kw">as </span>u32;
@@ -668,49 +693,61 @@
 }
 
 <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>auipc_handler(arg: InstHandlerArg) -&gt; <span class="prelude-ty">Result</span>&lt;SimulatorStatus, String&gt; {
-    <span class="kw-2">*</span>arg.reg_mut(arg[<span class="number">0</span>]) = arg.pc() + arg[<span class="number">1</span>] <span class="kw">as </span>u32;
+    <span class="kw-2">*</span>arg.reg_mut(arg[<span class="number">0</span>]) = arg.pc() + ((arg[<span class="number">1</span>] <span class="kw">as </span>u32) &lt;&lt; <span class="number">12</span>);
     arg.pc_step();
     <span class="prelude-val">Ok</span>(SimulatorStatus::Running)
 }
 
 <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>beq_handler(arg: InstHandlerArg) -&gt; <span class="prelude-ty">Result</span>&lt;SimulatorStatus, String&gt; {
     <span class="kw">if </span>arg.reg(arg[<span class="number">0</span>]) == arg.reg(arg[<span class="number">1</span>]) {
-        jump_helper(<span class="kw-2">&amp;</span>arg, arg[<span class="number">2</span>] <span class="kw">as </span>u32)<span class="question-mark">?</span>;
+        jump_offset_helper(<span class="kw-2">&amp;</span>arg, arg[<span class="number">2</span>] <span class="kw">as </span>u32)<span class="question-mark">?</span>;
+    } <span class="kw">else </span>{
+        arg.pc_step();
     }
     <span class="prelude-val">Ok</span>(SimulatorStatus::Running)
 }
 
 <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>bge_handler(arg: InstHandlerArg) -&gt; <span class="prelude-ty">Result</span>&lt;SimulatorStatus, String&gt; {
     <span class="kw">if </span>arg.reg(arg[<span class="number">0</span>]) <span class="kw">as </span>i32 &gt;= arg.reg(arg[<span class="number">1</span>]) <span class="kw">as </span>i32 {
-        jump_helper(<span class="kw-2">&amp;</span>arg, arg[<span class="number">2</span>] <span class="kw">as </span>u32)<span class="question-mark">?</span>;
+        jump_offset_helper(<span class="kw-2">&amp;</span>arg, arg[<span class="number">2</span>] <span class="kw">as </span>u32)<span class="question-mark">?</span>;
+    } <span class="kw">else </span>{
+        arg.pc_step();
     }
     <span class="prelude-val">Ok</span>(SimulatorStatus::Running)
 }
 
 <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>bgeu_handler(arg: InstHandlerArg) -&gt; <span class="prelude-ty">Result</span>&lt;SimulatorStatus, String&gt; {
     <span class="kw">if </span>arg.reg(arg[<span class="number">0</span>]) &gt;= arg.reg(arg[<span class="number">1</span>]) {
-        jump_helper(<span class="kw-2">&amp;</span>arg, arg[<span class="number">2</span>] <span class="kw">as </span>u32)<span class="question-mark">?</span>;
+        jump_offset_helper(<span class="kw-2">&amp;</span>arg, arg[<span class="number">2</span>] <span class="kw">as </span>u32)<span class="question-mark">?</span>;
+    } <span class="kw">else </span>{
+        arg.pc_step();
     }
     <span class="prelude-val">Ok</span>(SimulatorStatus::Running)
 }
 
 <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>blt_handler(arg: InstHandlerArg) -&gt; <span class="prelude-ty">Result</span>&lt;SimulatorStatus, String&gt; {
     <span class="kw">if </span>(arg.reg(arg[<span class="number">0</span>]) <span class="kw">as </span>i32) &lt; (arg.reg(arg[<span class="number">1</span>]) <span class="kw">as </span>i32) {
-        jump_helper(<span class="kw-2">&amp;</span>arg, arg[<span class="number">2</span>] <span class="kw">as </span>u32)<span class="question-mark">?</span>;
+        jump_offset_helper(<span class="kw-2">&amp;</span>arg, arg[<span class="number">2</span>] <span class="kw">as </span>u32)<span class="question-mark">?</span>;
+    } <span class="kw">else </span>{
+        arg.pc_step();
     }
     <span class="prelude-val">Ok</span>(SimulatorStatus::Running)
 }
 
 <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>bltu_handler(arg: InstHandlerArg) -&gt; <span class="prelude-ty">Result</span>&lt;SimulatorStatus, String&gt; {
     <span class="kw">if </span>arg.reg(arg[<span class="number">0</span>]) &lt; arg.reg(arg[<span class="number">1</span>]) {
-        jump_helper(<span class="kw-2">&amp;</span>arg, arg[<span class="number">2</span>] <span class="kw">as </span>u32)<span class="question-mark">?</span>;
+        jump_offset_helper(<span class="kw-2">&amp;</span>arg, arg[<span class="number">2</span>] <span class="kw">as </span>u32)<span class="question-mark">?</span>;
+    } <span class="kw">else </span>{
+        arg.pc_step();
     }
     <span class="prelude-val">Ok</span>(SimulatorStatus::Running)
 }
 
 <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>bne_handler(arg: InstHandlerArg) -&gt; <span class="prelude-ty">Result</span>&lt;SimulatorStatus, String&gt; {
     <span class="kw">if </span>arg.reg(arg[<span class="number">0</span>]) != arg.reg(arg[<span class="number">1</span>]) {
-        jump_helper(<span class="kw-2">&amp;</span>arg, arg[<span class="number">2</span>] <span class="kw">as </span>u32)<span class="question-mark">?</span>;
+        jump_offset_helper(<span class="kw-2">&amp;</span>arg, arg[<span class="number">2</span>] <span class="kw">as </span>u32)<span class="question-mark">?</span>;
+    } <span class="kw">else </span>{
+        arg.pc_step();
     }
     <span class="prelude-val">Ok</span>(SimulatorStatus::Running)
 }
@@ -837,8 +874,8 @@
 
 <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>jal_handler(arg: InstHandlerArg) -&gt; <span class="prelude-ty">Result</span>&lt;SimulatorStatus, String&gt; {
     <span class="kw">let </span>pc = arg.pc();
-    <span class="kw-2">*</span>arg.reg_mut(arg[<span class="number">0</span>]) = pc + <span class="number">4</span>;
     jump_helper(<span class="kw-2">&amp;</span>arg, pc + arg[<span class="number">1</span>] <span class="kw">as </span>u32)<span class="question-mark">?</span>;
+    <span class="kw-2">*</span>arg.reg_mut(arg[<span class="number">0</span>]) = pc + <span class="number">4</span>;
     <span class="prelude-val">Ok</span>(SimulatorStatus::Running)
 }
 
@@ -865,7 +902,7 @@
 }
 
 <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>lui_handler(arg: InstHandlerArg) -&gt; <span class="prelude-ty">Result</span>&lt;SimulatorStatus, String&gt; {
-    <span class="kw-2">*</span>arg.reg_mut(arg[<span class="number">0</span>]) = (arg[<span class="number">1</span>] &lt;&lt; <span class="number">12</span>) <span class="kw">as </span>u32;
+    <span class="kw-2">*</span>arg.reg_mut(arg[<span class="number">0</span>]) = (arg[<span class="number">1</span>] <span class="kw">as </span>u32) &lt;&lt; <span class="number">12</span>;
     arg.pc_step();
     <span class="prelude-val">Ok</span>(SimulatorStatus::Running)
 }
@@ -992,12 +1029,16 @@
     <span class="prelude-val">Ok</span>(SimulatorStatus::Running)
 }
 
-<span class="kw">fn </span>jump_helper(arg: <span class="kw-2">&amp;</span>InstHandlerArg, offset: u32) -&gt; <span class="prelude-ty">Result</span>&lt;(), String&gt; {
-    <span class="kw">if </span>arg.set_pc(arg.pc() + offset) {
+<span class="kw">fn </span>jump_helper(arg: <span class="kw-2">&amp;</span>InstHandlerArg, addr: u32) -&gt; <span class="prelude-ty">Result</span>&lt;(), String&gt; {
+    <span class="kw">if </span>arg.set_pc(addr) {
         <span class="prelude-val">Ok</span>(())
     } <span class="kw">else </span>{
         <span class="prelude-val">Err</span>(<span class="string">"Invalid aim pc"</span>.to_string())
     }
+}
+
+<span class="kw">fn </span>jump_offset_helper(arg: <span class="kw-2">&amp;</span>InstHandlerArg, offset: u32) -&gt; <span class="prelude-ty">Result</span>&lt;(), String&gt; {
+    jump_helper(arg, arg.pc() + offset)
 }
 
 <span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Index&lt;usize&gt; <span class="kw">for </span>InstHandlerArg&lt;<span class="lifetime">'a</span>&gt; {
@@ -1014,6 +1055,9 @@
     }
 
     <span class="kw">fn </span>reg_mut(<span class="kw-2">&amp;</span><span class="self">self</span>, index: Operand&lt;RISCV&gt;) -&gt; <span class="kw-2">&amp;mut </span>u32 {
+        <span class="kw">if </span>index == <span class="number">0 </span>{
+            <span class="kw">return </span>FAKE_ZERO_PTR.as_mut();
+        }
         <span class="kw">let </span>sim = <span class="self">self</span>.sim.as_mut();
         <span class="kw">let </span>history = <span class="self">self</span>.history.as_mut();
         history.reg_idx = index <span class="kw">as </span>i32;
