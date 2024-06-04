@@ -1,6 +1,6 @@
 {
   "name": "ui",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "python -c \"import os;import shutil; import random;shutil.rmtree('tmp/'); os.environ['R'] = str(random.randint(0, 32767)); os.system('next dev')\"",
