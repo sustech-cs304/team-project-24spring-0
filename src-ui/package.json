@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "python -c \"import os;import shutil; import random;shutil.rmtree('tmp/'); os.environ['R'] = str(random.randint(0, 32767)); os.system('next dev')\"",
-    "build": "next build",
+    "build": "python -c \"import os; os.environ['NODE_ENV'] = 'release'; os.system('next build')\"",
     "start": "next start",
     "lint": "next lint",
     "format": "prettier --write '{app,components,constants}/**/*.{js,jsx,json}'",

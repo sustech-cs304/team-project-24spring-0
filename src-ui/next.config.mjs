@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'export',
-  distDir: 'tmp/' + process.env.R,
+    output: 'export',
+    distDir: process.env.NODE_ENV === 'release' ? 'out' : 'tmp/' + process.env.R,
 }
 
 export default nextConfig
