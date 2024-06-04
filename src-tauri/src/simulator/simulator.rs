@@ -121,11 +121,9 @@ impl RISCVSimulator {
     }
 
     pub(super) fn request_input(&mut self, wait_status: WaitStatus) -> Result<(), String> {
+        self.wait_input = wait_status;
         match &mut self.fake_middleware {
-            None => {
-                self.wait_input = wait_status;
-                syscall_input_request(&self.file)
-            }
+            None => syscall_input_request(&self.file),
             Some(middleware) => {
                 middleware.request_input();
                 Ok(())
@@ -233,9 +231,6 @@ impl Simulator for RISCVSimulator {
     }
 
     fn step(&mut self) -> Result<(), String> {
-        if self.pc_idx >= self.inst.as_ref().unwrap().instruction.len() {
-            return Err("Simulator finished".to_string());
-        }
         if !self.cas_status(SimulatorStatus::Stopped, SimulatorStatus::Running) {
             if !self.cas_status(SimulatorStatus::Paused, SimulatorStatus::Running) {
                 return Err("Invalid operation".to_string());
@@ -530,14 +525,24 @@ impl RISCVSimulator {
                         step += 1;
                     }
                 }
+                if _self.pc_idx == max_pc_idx {
+                    _self.set_status(SimulatorStatus::Stopped);
+                    _self.update(Optional {
+                        success: true,
+                        message: "finished running".to_string(),
+                    });
+                    break;
+                }
                 match _self._step() {
-                    Ok(SimulatorStatus::Paused) => {
-                        _self.set_status(SimulatorStatus::Paused);
-                        _self.update(Optional {
-                            success: true,
-                            message: "paused".to_string(),
-                        });
-                        break;
+                    Ok(status) => {
+                        _self.set_status(status);
+                        if status == SimulatorStatus::Paused {
+                            _self.update(Optional {
+                                success: true,
+                                message: "paused".to_string(),
+                            });
+                            break;
+                        }
                     }
                     Err(e) => {
                         _self.set_status(SimulatorStatus::Stopped);
@@ -547,15 +552,6 @@ impl RISCVSimulator {
                         });
                         break;
                     }
-                    _ => {}
-                }
-                if _self.pc_idx == max_pc_idx {
-                    _self.set_status(SimulatorStatus::Stopped);
-                    _self.update(Optional {
-                        success: true,
-                        message: "finished running".to_string(),
-                    });
-                    break;
                 }
                 if _self.get_status() != SimulatorStatus::Running {
                     _self.update(Optional {
@@ -579,7 +575,11 @@ impl RISCVSimulator {
                     }
                 }
             }
-            Some(middleware) => middleware.update(res),
+            Some(middleware) => {
+                if self.wait_input == WaitStatus::Not {
+                    middleware.update(res)
+                }
+            }
         }
     }
 }

@@ -10,6 +10,7 @@ use crate::{
         rv32i::constants::{RV32IInstruction, RV32IRegister},
     },
     simulator::simulator::RISCVSimulator,
+    tests::simulator::helper::FakeMiddleware,
     types::middleware_types::{AssemblerConfig, MemoryReturnRange},
     utility::ptr::Ptr,
 };
@@ -25,7 +26,7 @@ use RV32IInstruction::*;
 use RV32IRegister::*;
 
 type RegChange = (Reg, u32);
-type DataChange = (usize, Vec<u8>);
+type DataChange = (usize, Vec<u32>);
 
 /// - `pc_idx`: aim pc_idx
 /// - `reg_change`: expect register change
@@ -36,35 +37,6 @@ struct Expect {
     reg_change: Option<RegChange>,
     data_change: Option<DataChange>,
     output: Option<String>,
-}
-
-struct FakeMiddleware {
-    pub input: Option<String>,
-    pub input_res: Option<Result<(), String>>,
-    pub output: Option<String>,
-    pub sim_ptr: Ptr<RISCVSimulator>,
-    pub success: bool,
-    pub cv: (Condvar, Mutex<()>),
-}
-
-impl FakeMiddlewareTrait for FakeMiddleware {
-    fn request_input(&mut self) {
-        std::thread::sleep(std::time::Duration::from_millis(100));
-        self.input_res = Some(
-            self.sim_ptr
-                .as_mut()
-                .syscall_input(self.input.as_ref().unwrap()),
-        );
-    }
-
-    fn output(&mut self, output: &str) {
-        self.output = Some(output.to_string());
-    }
-
-    fn update(&mut self, res: crate::types::middleware_types::Optional) {
-        self.success = res.success;
-        self.cv.0.notify_one();
-    }
 }
 
 macro_rules! opd {
@@ -118,7 +90,7 @@ fn test_helper(
                     line_number: 0,
                     instruction: Instruction::<RISCV> {
                         operation: <RISCV as ParserInstSet>::Operator::RV32I(Addi),
-                        operands: vec![reg as Opd, Zero as Opd, val as Opd],
+                        operands: vec![reg as Opd, A2 as Opd, val as Opd],
                     },
                     address: 0,
                     code: 0,
@@ -140,7 +112,7 @@ fn test_helper(
                     line_number: 0,
                     instruction: Instruction::<RISCV> {
                         operation: <RISCV as ParserInstSet>::Operator::RV32I(Ebreak),
-                        operands: opd!(),
+                        operands: opd![],
                     },
                     address: 0,
                     code: 0,
@@ -159,16 +131,21 @@ fn test_helper(
     if let &Some((reg, val)) = &expect.reg_change {
         expect_reg[reg as usize] = val;
     }
-    sim.run().unwrap();
+    let thread_sim = sim_ptr.clone();
+    std::thread::spawn(move || {
+        std::thread::sleep(std::time::Duration::from_millis(10));
+        thread_sim.as_mut().run().unwrap();
+    });
     drop(mid.cv.0.wait(mid.cv.1.lock().unwrap()));
     assert_eq!(sim.get_pc_idx(), expect.pc_idx);
     assert_eq!(sim.get_register(), &expect_reg);
     if let Some((idx, val)) = &expect.data_change {
         sim.set_memory_return_range(MemoryReturnRange {
             start: CONFIG.dot_data_base_address + *idx as u64,
-            len: val.len() as u64,
+            len: 4 * val.len() as u64,
         })
         .unwrap();
+        assert_eq!(&sim.get_memory(), val);
     }
     if let Some(output) = expect.output {
         assert_eq!(mid.output.as_ref().unwrap(), &output);
@@ -239,6 +216,40 @@ fn test_helper_jump(
     );
 }
 
+fn test_helper_load(op: Op, offset: u32, data: Vec<u8>, expect_val: u32) {
+    test_helper(
+        op,
+        opd![A0, offset, A1],
+        vec![(A1, CONFIG.dot_data_base_address as u32)],
+        data,
+        None,
+        Expect {
+            pc_idx: None,
+            reg_change: Some((A0, expect_val)),
+            data_change: None,
+            output: None,
+        },
+        0,
+    );
+}
+
+fn test_helper_store(op: Op, val: u32, expect_data: Vec<u32>) {
+    test_helper(
+        op,
+        opd![A0, 0, A1],
+        vec![(A0, val), (A1, CONFIG.dot_data_base_address as u32)],
+        vec![],
+        None,
+        Expect {
+            pc_idx: None,
+            reg_change: None,
+            data_change: Some((0, expect_data)),
+            output: None,
+        },
+        0,
+    );
+}
+
 #[test]
 fn test() {
     test_helper_only_reg(
@@ -249,6 +260,7 @@ fn test() {
     );
 
     test_helper_only_reg(Addi, opd![A0, A1, 234], vec![(A1, 123)], (A0, 123 + 234));
+    test_helper_only_reg(Addi, opd![Zero, A1, 234], vec![(A1, 123)], (Zero, 0));
 
     test_helper_only_reg(
         And,
@@ -272,16 +284,171 @@ fn test() {
     );
 
     test_helper_jump(Beq, opd![A0, A1, 8], vec![], 3, None, 3);
+    test_helper_jump(Beq, opd![A0, A1, 8], vec![(A0, 1)], 2, None, 3);
 
-    test_helper_jump(Bge, opd![A0, A1, 8], vec![(A0, 1)], 3, None, 3);
+    test_helper_jump(Bge, opd![A0, A1, 8], vec![], 3, None, 3);
+    test_helper_jump(Bge, opd![A0, A1, 8], vec![(A0, -1i32 as u32)], 2, None, 3);
 
-    test_helper_jump(Bgeu, opd![A0, A1, 8], vec![], 3, None, 3);
+    test_helper_jump(Bgeu, opd![A0, A1, 8], vec![(A0, -1i32 as u32)], 3, None, 3);
+    test_helper_jump(Bgeu, opd![A0, A1, 8], vec![(A1, 1)], 2, None, 3);
 
-    test_helper_jump(Blt, opd![A0, A1, 8], vec![(A1, 1)], 3, None, 3);
+    test_helper_jump(Blt, opd![A0, A1, 8], vec![(A0, -1i32 as u32)], 3, None, 3);
+    test_helper_jump(Blt, opd![A0, A1, 8], vec![], 2, None, 3);
 
     test_helper_jump(Bltu, opd![A0, A1, 8], vec![(A1, 1)], 3, None, 3);
+    test_helper_jump(Bltu, opd![A0, A1, 8], vec![(A0, -1i32 as u32)], 2, None, 3);
 
     test_helper_jump(Bne, opd![A0, A1, 8], vec![(A1, 1)], 3, None, 3);
+    test_helper_jump(Bne, opd![A0, A1, 8], vec![], 2, None, 3);
+
+    test_helper_only_reg(Ebreak, opd![], vec![], (Zero, 0));
+
+    test_helper(
+        Ecall,
+        opd![],
+        vec![(A7, 1), (A0, -1i32 as u32)],
+        vec![],
+        None,
+        Expect {
+            pc_idx: None,
+            reg_change: None,
+            data_change: None,
+            output: Some("-1".to_string()),
+        },
+        0,
+    );
+    test_helper(
+        Ecall,
+        opd![],
+        vec![(A7, 4), (A0, CONFIG.dot_data_base_address as u32)],
+        vec!['a' as u8, 'b' as u8, 'c' as u8, 0],
+        None,
+        Expect {
+            pc_idx: None,
+            reg_change: None,
+            data_change: None,
+            output: Some("abc".to_string()),
+        },
+        0,
+    );
+    test_helper(
+        Ecall,
+        opd![],
+        vec![(A7, 5)],
+        vec![],
+        Some("123456789".to_string()),
+        Expect {
+            pc_idx: None,
+            reg_change: Some((A0, 123456789)),
+            data_change: None,
+            output: None,
+        },
+        0,
+    );
+    test_helper(
+        Ecall,
+        opd![],
+        vec![(A7, 8), (A0, CONFIG.dot_data_base_address as u32), (A1, 3)],
+        vec![],
+        Some("abcd".to_string()),
+        Expect {
+            pc_idx: None,
+            reg_change: None,
+            data_change: Some((
+                0,
+                vec!['a' as u32 + (('b' as u32) << 8) + (('c' as u32) << 16)],
+            )),
+            output: None,
+        },
+        0,
+    );
+    test_helper(
+        Ecall,
+        opd![],
+        vec![(A7, 10)],
+        vec![],
+        None,
+        Expect {
+            pc_idx: Some(1),
+            reg_change: None,
+            data_change: None,
+            output: None,
+        },
+        2,
+    );
+    test_helper(
+        Ecall,
+        opd![],
+        vec![(A7, 11), (A0, 0x12345678)],
+        vec![],
+        None,
+        Expect {
+            pc_idx: None,
+            reg_change: None,
+            data_change: None,
+            output: Some((0x78u8 as char).to_string()),
+        },
+        0,
+    );
+    test_helper(
+        Ecall,
+        opd![],
+        vec![(A7, 12)],
+        vec![],
+        Some("12345678".to_string()),
+        Expect {
+            pc_idx: None,
+            reg_change: Some((A0, '1' as u32)),
+            data_change: None,
+            output: None,
+        },
+        0,
+    );
+    test_helper(
+        Ecall,
+        opd![],
+        vec![(A7, 34), (A0, 0x123)],
+        vec![],
+        None,
+        Expect {
+            pc_idx: None,
+            reg_change: None,
+            data_change: None,
+            output: Some("0x00000123".to_string()),
+        },
+        0,
+    );
+    test_helper(
+        Ecall,
+        opd![],
+        vec![(A7, 35), (A0, 0b101100101011)],
+        vec![],
+        None,
+        Expect {
+            pc_idx: None,
+            reg_change: None,
+            data_change: None,
+            output: Some("0b00000000000000000000101100101011".to_string()),
+        },
+        0,
+    );
+    test_helper(
+        Ecall,
+        opd![],
+        vec![(A7, 36), (A0, -1i32 as u32)],
+        vec![],
+        None,
+        Expect {
+            pc_idx: None,
+            reg_change: None,
+            data_change: None,
+            output: Some((-1i32 as u32).to_string()),
+        },
+        0,
+    );
+
+    test_helper_only_reg(Fence, opd![], vec![], (Zero, 0));
+    test_helper_only_reg(FenceI, opd![], vec![], (Zero, 0));
 
     test_helper_jump(Jal, opd![A0, 8], vec![], 3, Some(A0), 3);
 
@@ -294,7 +461,17 @@ fn test() {
         3,
     );
 
+    test_helper_load(Lb, 1, vec![0x0, 0xff, 0x2, 0x3], 0xffffffff);
+
+    test_helper_load(Lbu, 1, vec![0x0, 0xff, 0x2, 0x3], 0xff);
+
+    test_helper_load(Lh, 1, vec![0x0, 0x1, 0xff, 0x3], 0xffffff01);
+
+    test_helper_load(Lhu, 1, vec![0x0, 0x1, 0xff, 0x3], 0xff01);
+
     test_helper_only_reg(Lui, opd![A0, 0b1100], vec![], (A0, (0b1100 as u32) << 12));
+
+    test_helper_load(Lw, 1, vec![0x0, 0x1, 0x2, 0x3, 0x4, 0x5], 0x04030201);
 
     test_helper_only_reg(
         Or,
@@ -317,6 +494,10 @@ fn test() {
         (A0, 0b1110),
     );
 
+    test_helper_store(Sb, 0x12345678, vec![0x78]);
+
+    test_helper_store(Sh, 0x12345678, vec![0x5678]);
+
     test_helper_only_reg(
         Sll,
         opd![A0, A1, A2],
@@ -331,13 +512,17 @@ fn test() {
         (A0, 0b1010 << (0b1100 as u32 & 0x1f)),
     );
 
-    test_helper_only_reg(Slt, opd![A0, A1, A2], vec![(A1, 1), (A2, 234)], (A0, 1));
+    test_helper_only_reg(Slt, opd![A0, A1, A2], vec![(A1, -1i32 as u32)], (A0, 1));
+    test_helper_only_reg(Slt, opd![A0, A1, A2], vec![], (A0, 0));
 
-    test_helper_only_reg(Slti, opd![A0, A1, 2], vec![(A1, 1), (A2, 234)], (A0, 1));
+    test_helper_only_reg(Slti, opd![A0, A1, 1], vec![], (A0, 1));
+    test_helper_only_reg(Slti, opd![A0, A1, -1], vec![], (A0, 0));
 
-    test_helper_only_reg(Sltiu, opd![A0, A1, 2], vec![(A1, 1), (A2, 234)], (A0, 1));
+    test_helper_only_reg(Sltiu, opd![A0, A1, -1], vec![], (A0, 1));
+    test_helper_only_reg(Sltiu, opd![A0, A1, 0], vec![(A1, -1i32 as u32)], (A0, 0));
 
-    test_helper_only_reg(Sltu, opd![A0, A1, A2], vec![(A1, 1), (A2, 234)], (A0, 1));
+    test_helper_only_reg(Sltu, opd![A0, A1, A2], vec![(A2, -1i32 as u32)], (A0, 1));
+    test_helper_only_reg(Sltu, opd![A0, A1, A2], vec![], (A0, 0));
 
     test_helper_only_reg(
         Sra,
@@ -368,6 +553,8 @@ fn test() {
         vec![(S5, 123), (S6, 23)],
         (S4, 123 - 23),
     );
+
+    test_helper_store(Sw, 0x12345678, vec![0x12345678]);
 
     test_helper_only_reg(
         Xor,

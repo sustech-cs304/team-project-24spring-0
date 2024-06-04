@@ -281,7 +281,7 @@ pub(super) fn ecall_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, Stri
         }
         35 => {
             arg.output(&format!(
-                "0x{:032b}",
+                "0b{:032b}",
                 arg.sim.as_ref().reg[RV32IRegister::A0 as usize]
             ))?;
             arg.pc_step();
@@ -497,10 +497,6 @@ impl<'a> InstHandlerArg<'a> {
         history.reg_idx = index as i32;
         history.reg_val = sim.reg[index as usize];
         &mut sim.reg[index as usize]
-    }
-
-    fn pc_idx(&self) -> usize {
-        self.sim.as_ref().pc_idx
     }
 
     fn pc(&self) -> u32 {
