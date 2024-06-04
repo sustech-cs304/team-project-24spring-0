@@ -62,8 +62,8 @@ impl FakeMiddlewareTrait for FakeMiddleware {
     }
 
     fn update(&mut self, res: crate::types::middleware_types::Optional) {
-        self.cv.0.notify_one();
         self.success = res.success;
+        self.cv.0.notify_one();
     }
 }
 
@@ -148,7 +148,6 @@ fn test_helper(
                 };
                 ebreak_placeholder
             ]);
-            println!("{}", instruction.len());
             instruction
         },
     };
@@ -174,7 +173,7 @@ fn test_helper(
     if let Some(output) = expect.output {
         assert_eq!(mid.output.as_ref().unwrap(), &output);
     }
-    assert!(!mid.success);
+    assert!(mid.success);
 }
 
 /// Test operator not need data section and not jump
