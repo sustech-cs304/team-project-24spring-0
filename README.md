@@ -24,7 +24,7 @@
 
 Our goal is to **provide a convenient and user-friendly IDE** for **students learning computer organization**. Our target users are those who are studying this subject, and we have developed a range of features to enhance their coding experience.
 
-To achieve our goal of providing a convenient and user-friendly IDE for students learning computer organization, our IDE incorporates various functionalities. We **leverage AI's API** to enhance the capabilities of our system, offering advanced features and intelligent assistance. Additionally, our IDE supports **multi-user simultaneous editing**, encouraging collaboration and teamwork among students. It also provides **code completion, highlighting, and error tips** to assist students in writing code efficiently and accurately. For debugging purposes, **robust debug support** is available, enabling students to analyze variables and resolve issues or bugs. The **"dump" functionality** allows students to inspect memory and register values, enhancing their understanding of program execution. **Built-in documentation** offers quick access to relevant information and resources, while the **"replace same name label"** feature helps students manage and organize their code effectively. Overall, our IDE aims to create a comfortable and enriching coding experience for students studying computer organization.
+To achieve our goal of providing a convenient and user-friendly IDE for students learning computer organization, our IDE incorporates various functionalities. We **leverage AI's API** to enhance the capabilities of our system, offering advanced features and intelligent assistance. Additionally, our IDE supports **multi-user simultaneous editing**, encouraging collaboration and teamwork among students. It also provides **code completion, highlighting, and error tips** to assist students in writing code efficiently and accurately. For debugging purposes, **robust debug support** is available, enabling students to analyze variables and resolve issues or bugs. The **"dump" functionality** allows students to inspect memory and register values, enhancing their understanding of program execution. **Built-in documentation** offers quick access to relevant information and resources. Overall, our IDE aims to create a comfortable and enriching coding experience for students studying computer organization.
 
 Overall, our overall goal is to **create an IDE that simplifies the learning process for students studying computer organization**. By providing a user-friendly interface and a range of powerful features, we strive to offer students a comfortable and enriching coding experience.
 
@@ -56,10 +56,6 @@ As a embedded developer, I want to be able to dump my code into the real microco
 
 As a beginner in assembly language, I want to be able to view documentation directly within the editor, so that I can access the necessary knowledge without having to open a browser and disrupt my workflow.
 
-#### Replace Same Name Label
-
-As a picky coder, I want to do lable rename like IDE's symbol rename. So that I can reduce errors caused by misstake and improve my coding experience.
-
 ### Non-functional Requirements
 
 #### Usability
@@ -85,14 +81,3 @@ We need **assembly language documents** and **AI API keys** in this project. To 
 #### Technical Requirements
 
 We will use **Tauri** to develop our application. The operating environment is desktop OS such as Windows, MacOS, and Linux. Tauri is a **multi-platform** desktop application framework with **Rust** as backend and **Javascript** as frontend.
-
-## 开发规范
-
-- 在各个分支开发，完成后在 github 提交 pull request，审核后合并到 main 分支
-- 分支命名规则:
-  - feat-xxx（新功能）
-  - fix-xxx（修复 bug）
-  - refactor-xxx（重构）
-  - doc-xxx（文档）
-- commit message 规范：使用[约定式提交](https://www.conventionalcommits.org/zh-hans/v1.0.0/)
-- rust 代码提交时需要进行格式化，否则无法通过 CI，可以使用 "cargo fmt" 一键格式化
