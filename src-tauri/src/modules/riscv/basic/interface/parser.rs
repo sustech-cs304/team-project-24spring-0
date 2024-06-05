@@ -1,3 +1,4 @@
+#[cfg(export_lexers)]
 use std::io::Write;
 
 use super::super::parser::parser::RISCVSymbolList;
@@ -76,8 +77,7 @@ impl RISCVExtension {
         }
     }
 
-    #[cfg(debug_assertions)]
-    #[allow(dead_code)]
+    #[cfg(export_lexers)]
     pub fn export(&self, folder: &str) -> std::io::Result<()> {
         match self {
             RISCVExtension::RV32I => super::super::super::rv32i::parser::parser::export(folder),
@@ -85,8 +85,7 @@ impl RISCVExtension {
     }
 }
 
-#[cfg(debug_assertions)]
-#[allow(dead_code)]
+#[cfg(export_lexers)]
 pub fn export_pair<T, KFn, VFn, K, W>(
     pairs: &[T],
     key_fn: KFn,
@@ -122,8 +121,7 @@ where
     Ok(())
 }
 
-#[cfg(debug_assertions)]
-#[allow(dead_code)]
+#[cfg(export_lexers)]
 pub fn export_list<T, F, V, W>(
     list: &[T],
     val_fn: F,

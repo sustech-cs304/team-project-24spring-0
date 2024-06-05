@@ -6,11 +6,7 @@ use RV32IInstruction::*;
 use super::simulator::*;
 use crate::{
     interface::assembler::Operand,
-    modules::riscv::{
-        basic::interface::parser::RISCV,
-        middleware::backend_api::{syscall_input_request, syscall_output_print},
-        rv32i::constants::*,
-    },
+    modules::riscv::{basic::interface::parser::RISCV, rv32i::constants::*},
     utility::{enum_map::EnumMap, ptr::Ptr},
 };
 
@@ -237,10 +233,7 @@ pub(super) fn ebreak_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, Str
 pub(super) fn ecall_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, String> {
     match arg.reg(RV32IRegister::A7 as i32) {
         1 => {
-            syscall_output_print(
-                arg.get_path(),
-                &((arg.reg(RV32IRegister::A0 as i32) as i32).to_string()),
-            )?;
+            arg.output(&((arg.reg(RV32IRegister::A0 as i32) as i32).to_string()))?;
             arg.pc_step();
             Ok(SimulatorStatus::Running)
         }
@@ -256,58 +249,46 @@ pub(super) fn ecall_handler(arg: InstHandlerArg) -> Result<SimulatorStatus, Stri
                 buf.push(byte);
             }
             let s = String::from_utf8(buf).unwrap();
-            syscall_output_print(arg.get_path(), &s)?;
+            arg.output(&s)?;
             arg.pc_step();
             Ok(SimulatorStatus::Running)
         }
         5 => {
-            arg.sim.as_mut().wait_input = WaitStatus::Int;
-            syscall_input_request(arg.get_path())?;
+            arg.request_input(WaitStatus::Int)?;
             Ok(SimulatorStatus::Paused)
         }
         8 => {
-            arg.sim.as_mut().wait_input = WaitStatus::String;
-            syscall_input_request(arg.get_path())?;
+            arg.request_input(WaitStatus::String)?;
             Ok(SimulatorStatus::Paused)
         }
         10 => Ok(SimulatorStatus::Stopped),
         11 => {
-            syscall_output_print(
-                arg.get_path(),
-                &((arg.reg(RV32IRegister::A0 as i32) as u8 as char).to_string()),
-            )?;
+            arg.output(&((arg.reg(RV32IRegister::A0 as i32) as u8 as char).to_string()))?;
             arg.pc_step();
             Ok(SimulatorStatus::Running)
         }
         12 => {
-            arg.sim.as_mut().wait_input = WaitStatus::Char;
-            syscall_input_request(arg.get_path())?;
+            arg.request_input(WaitStatus::Char)?;
             Ok(SimulatorStatus::Paused)
         }
         34 => {
-            syscall_output_print(
-                arg.get_path(),
-                &format!("0x{:08x}", arg.sim.as_ref().reg[RV32IRegister::A0 as usize]),
-            )?;
+            arg.output(&format!(
+                "0x{:08x}",
+                arg.sim.as_ref().reg[RV32IRegister::A0 as usize]
+            ))?;
             arg.pc_step();
             Ok(SimulatorStatus::Running)
         }
         35 => {
-            syscall_output_print(
-                arg.get_path(),
-                &format!(
-                    "0x{:032b}",
-                    arg.sim.as_ref().reg[RV32IRegister::A0 as usize]
-                ),
-            )?;
+            arg.output(&format!(
+                "0b{:032b}",
+                arg.sim.as_ref().reg[RV32IRegister::A0 as usize]
+            ))?;
             arg.pc_step();
             Ok(SimulatorStatus::Running)
         }
         36 => {
-            syscall_output_print(
-                arg.get_path(),
-                &((arg.reg(RV32IRegister::A0 as i32)).to_string()),
-            )?;
+            arg.output(&((arg.reg(RV32IRegister::A0 as i32)).to_string()))?;
             arg.pc_step();
             Ok(SimulatorStatus::Running)
         }
@@ -518,10 +499,6 @@ impl<'a> InstHandlerArg<'a> {
         &mut sim.reg[index as usize]
     }
 
-    fn pc_idx(&self) -> usize {
-        self.sim.as_ref().pc_idx
-    }
-
     fn pc(&self) -> u32 {
         self.sim.as_ref().to_text_addr(self.sim.as_ref().pc_idx)
     }
@@ -541,7 +518,11 @@ impl<'a> InstHandlerArg<'a> {
         self.sim.as_mut().pc_idx += 1;
     }
 
-    fn get_path(&self) -> &str {
-        &self.sim.as_ref().file
+    fn request_input(&self, wait_status: WaitStatus) -> Result<(), String> {
+        self.sim.as_mut().request_input(wait_status)
+    }
+
+    fn output(&self, output: &str) -> Result<(), String> {
+        self.sim.as_mut().output(output)
     }
 }

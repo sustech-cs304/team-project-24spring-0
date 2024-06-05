@@ -148,7 +148,7 @@ macro_rules! load_data_helper_float {
 macro_rules! load_data_helper_string {
     ($label_list:expr, $status:expr, $data:expr, $push_zero:expr) => {
         if let RISCVToken::ImmediateString(val) = $data {
-            let mut data = Vec::from(val.as_bytes());
+            let mut data = Vec::from(val[1..val.len() - 1].as_bytes());
             if $push_zero {
                 data.push(0);
             }

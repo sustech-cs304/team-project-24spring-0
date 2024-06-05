@@ -39,7 +39,7 @@ pub struct Optional {
 }
 
 /// both start and len are aligned by 4
-#[derive(Clone, Copy, Deserialize)]
+#[derive(Clone, Copy, Debug, Deserialize, PartialEq, Eq)]
 pub struct MemoryReturnRange {
     pub start: u64,
     pub len: u64,

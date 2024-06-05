@@ -1,2 +1,2 @@
-pub mod op_test;
-pub mod reg_test;
+mod op_test;
+mod reg_test;
