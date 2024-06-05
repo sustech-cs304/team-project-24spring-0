@@ -23,23 +23,19 @@ fi
 
 # Count Lines of Code
 echo "Counting lines of code..."
-tokei_output=$(tokei)
+tokei_output=$(tokei --output json | jq '.Total.code')
 
 # Count Number of Packages
 echo "Counting number of packages..."
-packages_count=$(cd src-tauri&&cargo metadata --no-deps --format-version=1 | jq '.packages | length')
-
-# Count Number of Modules
-echo "Counting number of modules..."
-modules_count=$(cd src-tauri&&find src -name '*.rs' | wc -l)
+packages_count=2
 
 # Count Number of Source Files
 echo "Counting number of source files..."
-source_files_count=$(cd src-tauri && find . -name '*.rs' | wc -l)
+source_files_count=$(find src-tauri -name '*.rs' | wc -l) + $(find src-ui/app src-ui/components src-ui/utils -name '*.js' -o -name '*.jsx' | wc -l)
 
 # Count Number of Dependencies
 echo "Counting number of dependencies..."
-dependencies_count=$(cd src-tauri && cargo tree --prefix none --depth 1 | grep -v '^$' | wc -l)
+dependencies_count=$(cd src-tauri&&cargo metadata --no-deps --format-version=1 | jq '.packages[0].dependencies | length') + $(cd ..&&jq '.dependencies | length' package.json) + $(jq '.devDependencies | length' package.json)
 
 # Output the results
 line_separator
@@ -47,8 +43,6 @@ echo "Lines of Code:"
 echo "$tokei_output"
 echo
 echo "Number of Packages: $packages_count"
-line_separator
-echo "Number of Modules: $modules_count"
 line_separator
 echo "Number of Source Files: $source_files_count"
 line_separator
