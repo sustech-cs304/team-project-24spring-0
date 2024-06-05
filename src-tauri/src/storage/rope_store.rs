@@ -279,6 +279,10 @@ impl HistorianFile<Rope, Modification, CursorList> for Text {
 
 impl MFile<Rope, Modification, CursorList> for Text {}
 
+/// AI-generated-content
+/// tool: Copilot
+/// version: v0.1.0
+/// usage: Test the implementation of the Text struct rope_store
 #[cfg(test)]
 mod rope_test {
     use super::*;
