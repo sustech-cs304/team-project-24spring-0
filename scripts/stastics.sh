@@ -15,12 +15,6 @@ then
     cargo install tokei
 fi
 
-if ! command -v cargo-tree &> /dev/null
-then
-    echo "cargo-tree could not be found, installing it..."
-    cargo install cargo-tree
-fi
-
 # Count Lines of Code
 echo "Counting lines of code..."
 tokei_output=$(tokei --output json | jq '.Total.code')
@@ -39,9 +33,8 @@ dependencies_count=$(cd src-tauri&&cargo metadata --no-deps --format-version=1 |
 
 # Output the results
 line_separator
-echo "Lines of Code:"
-echo "$tokei_output"
-echo
+echo "Lines of Code: $tokei_output"
+line_separator
 echo "Number of Packages: $packages_count"
 line_separator
 echo "Number of Source Files: $source_files_count"
