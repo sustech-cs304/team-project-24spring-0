@@ -504,6 +504,7 @@ impl RISCVSimulator {
             t.join().unwrap();
         }
         self.wait_input = WaitStatus::Not;
+        self.history.clear();
     }
 
     fn _start(&mut self, max_step: Option<usize>) {
