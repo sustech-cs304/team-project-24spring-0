@@ -63,9 +63,9 @@ By maintaining thorough and up-to-date documentation for both end users and deve
 
 ## 3. Tests
 
-Since we use Rust as our main language, we can easily write tests in our code with the `#[test]` attribute. We have written 29 unit tests in total, covering major functions of the backend logic. However, since our backend and frontend are separated, writing tests for frontend logic is challenging, so the part that communicates with the frontend is not tested.
+Since we use Rust as our main language, we can easily write tests in our code with the `#[test]` attribute. We have written 29 unit tests in total, covering major functions of the backend logic. However, since our backend and frontend are separated, writing tests for frontend logic is challenging, so the part that communicates with the frontend is tested manually by running the application.
 
-We generate our test report with the command `cargo tarpaulin --out html`. (need to install `cargo-tarpaulin` first.) This command generates the coverage report. We also use GitHub CI to run tests, generate the coverage report, and deploy the test result to our GitHub Pages automatically. [Check the report here](https://sustech-cs304.github.io/team-project-24spring-0/report#src). We achieved a 63.85% coverage rate for our backend code.
+We generate our test report with the command `cargo tarpaulin --out html`. (need to install `cargo-tarpaulin` first.) This command generates the coverage report. We also use GitHub CI to run tests, generate the coverage report, and deploy the test result to our GitHub Pages automatically. [Check the report here](https://sustech-cs304.github.io/team-project-24spring-0/report#src). We achieved a 63.85% coverage rate for our backend code, since the rest of the code must interact with the frontend, which is hard to test automatically.
 
 ## 4. Build
 
