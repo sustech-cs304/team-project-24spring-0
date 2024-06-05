@@ -388,6 +388,10 @@
 <a href="#388" id="388">388</a>
 <a href="#389" id="389">389</a>
 <a href="#390" id="390">390</a>
+<a href="#391" id="391">391</a>
+<a href="#392" id="392">392</a>
+<a href="#393" id="393">393</a>
+<a href="#394" id="394">394</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::{
     error::Error,
     path::{Path, PathBuf},
@@ -669,7 +673,11 @@
 
 <span class="kw">impl </span>MFile&lt;Rope, Modification, CursorList&gt; <span class="kw">for </span>Text {}
 
-<span class="attr">#[cfg(test)]
+<span class="doccomment">/// AI-generated-content
+/// tool: Copilot
+/// version: v0.1.0
+/// usage: Test the implementation of the Text struct rope_store
+</span><span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>rope_test {
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
     <span class="kw">use crate</span>::{
