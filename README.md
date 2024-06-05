@@ -18,7 +18,7 @@
 - [用户手册](https://rosswasd.github.io/team-project-24spring-0/)
 - [Project Proposal](https://github.com/sustech-cs304/team-project-24spring-0/blob/main/reports/Team%20Project%20-%20Proposal.md)
 - [Sprint 1](https://github.com/sustech-cs304/team-project-24spring-0/blob/main/reports/sprint1/design-team0.md)
-- [Sprint 2]()
+- [Sprint 2](https://github.com/sustech-cs304/team-project-24spring-0/blob/main/reports/sprint2/final-report-team0.md)
 
 ## Project Overview
 

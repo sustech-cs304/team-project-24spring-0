@@ -65,7 +65,7 @@ By maintaining thorough and up-to-date documentation for both end users and deve
 
 Since we use Rust as our main language, we can easily write tests in our code with the `#[test]` attribute. We have written 29 unit tests in total, covering major functions of the backend logic. However, since our backend and frontend are separated, writing tests for frontend logic is challenging, so the part that communicates with the frontend is not tested.
 
-We generate our test report with the command `cargo tarpaulin --out html`. (need to install `cargo-tarpaulin` first.) This command generates the coverage report. We also use GitHub CI to run tests, generate the coverage report, and deploy the test result to our GitHub Pages automatically. You can check it [here](https://sustech-cs304.github.io/team-project-24spring-0/report#src). We achieved a 63.85% coverage rate for our backend code.
+We generate our test report with the command `cargo tarpaulin --out html`. (need to install `cargo-tarpaulin` first.) This command generates the coverage report. We also use GitHub CI to run tests, generate the coverage report, and deploy the test result to our GitHub Pages automatically. [Check the report here](https://sustech-cs304.github.io/team-project-24spring-0/report#src). We achieved a 63.85% coverage rate for our backend code.
 
 ## 4. Build
 
@@ -73,7 +73,7 @@ Our project leverages a highly automated and robust build process to streamline 
 
 ### Tools and Frameworks Utilized
 
-To manage our build process, we rely on a combination of `cargo` for Rust, `npm` for JavaScript dependencies, and GitHub CI/CD for continuous integration and deployment. Additionally, we use the `tauri` framework to build cross-platform applications, further enhancing our development workflow.
+To manage our build process, we rely on a combination of `cargo` for Rust, `npm` for JavaScript dependencies, and GitHub CI/CD for continuous integration and deployment. Additionally, we use the `tauri` and `Next.js` framework to build cross-platform applications, further enhancing our development workflow.
 
 ### Build Process Tasks
 
@@ -97,6 +97,8 @@ Our CD process, defined in [release.yaml](../../.github/workflows/release.yml), 
 
 The final step in our CD pipeline is the deployment of the executable to GitHub. This automated deployment ensures that our latest application version is always available for download on our [releases page](https://github.com/sustech-cs304/team-project-24spring-0/releases).
 
+Our github runner's [history](https://github.com/sustech-cs304/team-project-24spring-0/actions)
+
 ### Build Files and Configuration
 
 Our build process is defined and managed through several configuration files:
@@ -119,5 +121,7 @@ And application releases can be found [here](https://github.com/sustech-cs304/te
 
 ![img](img/collaborations.png)
 
-AI useage: To faster our develop, we us AI to generate some of our unit test cases. All test cases generate by has a comment.
+---
+
+AI useage: To faster our develop, we us AI to generate some of our unit test cases. All test cases generate by has a comment as sprint1 asked.
 
