@@ -2078,7 +2078,7 @@ dependencies = [
 
 [[package]]
 name = "moras"
-version = "1.0.0"
+version = "1.0.1"
 dependencies = [
  "derive_builder",
  "logos",
